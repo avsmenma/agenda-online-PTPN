@@ -3759,11 +3759,7 @@
       font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
       transition: background-color 0.3s ease, border-color 0.3s ease;
     }
-    .sidebar-owner:hover { width: 240px !important; box-shadow: none; }
-    .sidebar-owner:not(:hover) a { font-size: inherit; line-height: inherit; color: inherit; padding: 9px 10px; justify-content: flex-start; }
-    .sidebar-owner:not(:hover) a i { font-size: 16px; color: #6b7a99; }
-    .sidebar-owner:not(:hover) hr { display: block; }
-    .sidebar-owner:not(:hover) h4 { font-size: 13px; line-height: 1.2; justify-content: flex-start; padding: 0; }
+
 
     .dark .sidebar-owner {
       background: #1e293b;
