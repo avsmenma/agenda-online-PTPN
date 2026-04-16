@@ -389,20 +389,12 @@ class OwnerDashboardController extends Controller
         $maxBagian = collect($bagianStats)->max('count') ?: 1;
 
         // === RECENT DOCUMENTS (5 terbaru) ===
-        $recentDocuments = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'created_at')
+        $recentDocuments = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'current_handler', 'created_at')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
             ->map(function ($doc) {
-                $statusLabel = 'Menunggu';
-                $statusClass = 'status-belum';
-                if ($doc->status_pembayaran === 'sudah_dibayar' || !empty($doc->tanggal_dibayar)) {
-                    $statusLabel = 'Dibayar';
-                    $statusClass = 'status-sudah';
-                } elseif ($doc->status_pembayaran === 'siap_dibayar') {
-                    $statusLabel = 'Siap Bayar';
-                    $statusClass = 'status-siap';
-                }
+                [$statusLabel, $statusClass] = $this->resolveDocStatus($doc->status_pembayaran, $doc->tanggal_dibayar, $doc->current_handler);
                 return [
                     'id' => $doc->id,
                     'uraian_spp' => $doc->uraian_spp ?? '-',
@@ -498,20 +490,12 @@ class OwnerDashboardController extends Controller
      */
     public function getRecentDocuments(): JsonResponse
     {
-        $docs = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'created_at')
+        $docs = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'current_handler', 'created_at')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
             ->map(function ($doc) {
-                $statusLabel = 'Menunggu';
-                $statusClass = 'status-belum';
-                if ($doc->status_pembayaran === 'sudah_dibayar' || !empty($doc->tanggal_dibayar)) {
-                    $statusLabel = 'Dibayar';
-                    $statusClass = 'status-sudah';
-                } elseif ($doc->status_pembayaran === 'siap_dibayar') {
-                    $statusLabel = 'Siap Bayar';
-                    $statusClass = 'status-siap';
-                }
+                [$statusLabel, $statusClass] = $this->resolveDocStatus($doc->status_pembayaran, $doc->tanggal_dibayar, $doc->current_handler);
                 return [
                     'id' => $doc->id,
                     'uraian_spp' => $doc->uraian_spp ?? '-',
@@ -544,6 +528,41 @@ class OwnerDashboardController extends Controller
         $data   = $trend->pluck('total')->toArray();
 
         return response()->json(['success' => true, 'labels' => $labels, 'data' => $data]);
+    }
+
+    /**
+     * Resolve document status label & CSS class from status_pembayaran and current_handler.
+     * Mapping:
+     *   sudah_dibayar / tanggal_dibayar set → Dibayar
+     *   siap_dibayar                        → Siap Bayar
+     *   otherwise, based on current_handler:
+     *     operator        → Input
+     *     team_verifikasi → Verifikasi
+     *     perpajakan      → Perpajakan
+     *     akutansi        → Akuntansi
+     *     pembayaran      → Menunggu Bayar
+     *     (default)       → Menunggu
+     */
+    private function resolveDocStatus(?string $statusPembayaran, $tanggalDibayar, ?string $currentHandler): array
+    {
+        if ($statusPembayaran === 'sudah_dibayar' || !empty($tanggalDibayar)) {
+            return ['Dibayar', 'status-sudah'];
+        }
+        if ($statusPembayaran === 'siap_dibayar') {
+            return ['Siap Bayar', 'status-siap'];
+        }
+
+        // Map current_handler to human-readable label
+        $handlerMap = [
+            'operator'        => ['Input',          'status-input'],
+            'team_verifikasi' => ['Verifikasi',      'status-verifikasi'],
+            'perpajakan'      => ['Perpajakan',      'status-perpajakan'],
+            'akutansi'        => ['Akuntansi',       'status-akutansi'],
+            'pembayaran'      => ['Menunggu Bayar',  'status-pembayaran-role'],
+        ];
+
+        $handler = strtolower(trim($currentHandler ?? 'operator'));
+        return $handlerMap[$handler] ?? ['Menunggu', 'status-belum'];
     }
 
     /**

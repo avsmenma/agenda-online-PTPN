@@ -220,9 +220,15 @@
     padding: 3px 9px; border-radius: 20px;
     font-size: 10.5px; font-weight: 600;
   }
-  .status-belum { background: var(--orange-light); color: var(--orange); }
-  .status-siap  { background: var(--accent-light); color: var(--accent); }
-  .status-sudah { background: var(--green-light); color: var(--green); }
+  .status-belum              { background: var(--orange-light); color: var(--orange); }
+  .status-siap               { background: var(--accent-light); color: var(--accent); }
+  .status-sudah              { background: var(--green-light);  color: var(--green); }
+  /* Role-based status pills */
+  .status-input              { background: #f1f5f9; color: #475569; }  /* slate  — operator */
+  .status-verifikasi         { background: #f5f3ff; color: #7c3aed; }  /* purple — team verifikasi */
+  .status-perpajakan         { background: #eff6ff; color: #2563eb; }  /* blue   — perpajakan */
+  .status-akutansi           { background: #ecfeff; color: #0891b2; }  /* cyan   — akutansi */
+  .status-pembayaran-role    { background: #fffbeb; color: #d97706; }  /* amber  — menunggu bayar */
   .doc-amount { font-weight: 600; font-size: 12px; text-align: right; }
 
   /* Per Bagian horizontal bars */
