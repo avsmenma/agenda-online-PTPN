@@ -4271,7 +4271,9 @@
 
 
         @php
-          $isAuditTrailActive = request()->is('*owner/programmer-logs*') || request()->routeIs('owner.programmer-logs');
+          $isAuditTrailActive = request()->is('*owner/programmer-logs*') ||
+            request()->routeIs('owner.programmer-logs') ||
+            ($menuAuditTrail ?? '') === 'active';
         @endphp
         <a href="{{ url('/owner/programmer-logs') }}" class="owner-nav-item {{ $isAuditTrailActive ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">

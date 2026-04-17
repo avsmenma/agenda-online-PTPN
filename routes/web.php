@@ -830,9 +830,10 @@ Route::middleware(['auth', 'role:programmer'])
 // =============================================================================
 Route::middleware(['auth', 'role:owner,admin'])
     ->group(function () {
-        Route::get('/owner/programmer-logs', [\App\Http\Controllers\ProgrammerLogController::class, 'index'])
+        Route::get('/owner/programmer-logs', [\App\Http\Controllers\ProgrammerLogController::class, 'ownerIndex'])
             ->name('owner.programmer-logs');
 
         Route::get('/owner/notification-logs', [\App\Http\Controllers\WhatsAppNotificationLogController::class, 'index'])
             ->name('owner.notification-logs');
     });
+
