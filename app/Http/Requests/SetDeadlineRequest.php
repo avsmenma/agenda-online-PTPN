@@ -22,57 +22,35 @@ final class SetDeadlineRequest extends FormRequest
 
         $user = auth()->user();
 
-        // Log user information for debugging
-        \Log::info('SetDeadlineRequest authorization check', [
-            'user_id' => $user->id ?? 'unknown',
-            'user_class' => get_class($user),
-            'has_role_method' => method_exists($user, 'getRoleNames'),
-            'has_role_field' => isset($user->role),
-            'has_name_field' => isset($user->name),
-        ]);
+        // [FIX LOG BLOATING] Dihapus: 4x Log::info authorization debug
+        // yang sebelumnya menulis log di setiap request SetDeadline
 
         // Try multiple methods to get user role
         if (method_exists($user, 'getRoleNames')) {
             // Using Spatie Laravel-permission
             $roles = $user->getRoleNames();
-            $hasRole = $roles->contains('ibuB') || $roles->contains('IbuB') || $roles->contains('ibub');
-            \Log::info('SetDeadlineRequest: Using getRoleNames', [
-                'roles' => $roles->toArray(),
-                'has_ibuB_role' => $hasRole
-            ]);
+            $hasRole = $roles->contains('Team Verifikasi') || $roles->contains('Team Verifikasi') || $roles->contains('Team Verifikasi');
             return $hasRole;
         }
 
         // Fallback to role field - check multiple possible values
         if (isset($user->role)) {
             $role = strtolower(trim($user->role));
-            $hasRole = in_array($role, ['ibub', 'ibu b', 'ibub', 'ibuB', 'IbuB']);
-            \Log::info('SetDeadlineRequest: Using role field', [
-                'role_value' => $user->role,
-                'normalized_role' => $role,
-                'has_ibuB_role' => $hasRole
-            ]);
+            $hasRole = in_array($role, ['Team Verifikasi', 'ibu b', 'Team Verifikasi', 'Team Verifikasi', 'Team Verifikasi']);
             return $hasRole;
         }
 
         // Fallback to name field mapping
         if (isset($user->name)) {
             $name = strtolower(trim($user->name));
-            $hasRole = in_array($name, ['ibub', 'ibu b', 'ibub']);
-            \Log::info('SetDeadlineRequest: Using name field', [
-                'name_value' => $user->name,
-                'normalized_name' => $name,
-                'has_ibuB_role' => $hasRole
-            ]);
+            $hasRole = in_array($name, ['Team Verifikasi', 'ibu b', 'Team Verifikasi']);
             return $hasRole;
         }
 
-        // Check if user has any role that might indicate ibuB access
+        // Check if user has any role that might indicate Team Verifikasi access
         // This is a more permissive check - allow if user is authenticated
         // The actual authorization will be checked in the controller
-        \Log::warning('SetDeadlineRequest: No role detection method found, allowing authenticated user', [
-            'user_id' => $user->id ?? 'unknown'
-        ]);
+        // Izinkan user terautentikasi — authorization sebenarnya dicek di controller
         
         // Allow authenticated users - actual authorization will be checked in controller
         // This prevents 403 from FormRequest and lets controller handle business logic
@@ -125,3 +103,8 @@ final class SetDeadlineRequest extends FormRequest
         ], 422));
     }
 }
+
+
+
+
+

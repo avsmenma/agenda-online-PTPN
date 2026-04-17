@@ -378,7 +378,7 @@ class CsvImportController extends Controller
                     $dokumenData['jenis_dokumen'] = 'Lainnya';
                 }
 
-                // Set created_by to 'pembayaran' or 'csv_import' to prevent appearing in IbuA module
+                // Set created_by to 'pembayaran' or 'csv_import' to prevent appearing in Operator module
                 // CSV imported documents should only appear in Pembayaran module
                 $dokumenData['created_by'] = 'csv_import';
 
@@ -445,6 +445,22 @@ class CsvImportController extends Controller
         // Ensure we have Carbon instance for bulan/tahun extraction
         $carbonDate = Carbon::parse($tanggalMasuk);
 
+        // Map month number to Indonesian month name
+        $bulanNameMap = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
         // Extract kategori and jenis_dokumen from CSV
         // KATEGORI from CSV maps to kategori field (required)
         $kategori = trim($row['KATEGORI'] ?? '');
@@ -458,6 +474,9 @@ class CsvImportController extends Controller
             $jenisDokumen = 'Lainnya'; // Default value if empty
         }
 
+        // Get tanggal_dibayar first to determine status_pembayaran
+        $tanggalDibayar = $this->getLastPaymentDate($row);
+
         return [
             // Core required fields
             'nomor_agenda' => trim($row['AGENDA'] ?? ''),
@@ -466,7 +485,7 @@ class CsvImportController extends Controller
             'nilai_rupiah' => $this->cleanNumeric($row['NILAI'] ?? 0),
 
             // Required: bulan and tahun (extracted from tanggal_masuk)
-            'bulan' => $carbonDate->format('n'), // 1-12
+            'bulan' => $bulanNameMap[(int) $carbonDate->format('n')] ?? $carbonDate->format('n'),
             'tahun' => $carbonDate->format('Y'), // YYYY
 
             // Required: kategori and jenis_dokumen
@@ -491,13 +510,13 @@ class CsvImportController extends Controller
             'tanggal_spk' => $this->parseDate($row['TGL. SPK'] ?? $row['TGL SPK'] ?? null),
             'tanggal_berakhir_spk' => $this->parseDate($row['TGL. BERAKHIR KONTRAK'] ?? $row['TGL BERAKHIR KONTRAK'] ?? null),
 
-            // Status
-            'status' => 'sent_to_pembayaran',
-            'status_pembayaran' => 'belum_dibayar',
-            'current_handler' => 'pembayaran',
-
             // Payment info
-            'tanggal_dibayar' => $this->getLastPaymentDate($row),
+            'tanggal_dibayar' => $tanggalDibayar,
+
+            // Status - if tanggal_dibayar exists, set status_pembayaran to sudah_dibayar
+            'status' => 'sent_to_pembayaran',
+            'status_pembayaran' => $tanggalDibayar ? 'sudah_dibayar' : 'belum_dibayar',
+            'current_handler' => 'pembayaran',
 
             // Kebun/Vendor info
             'kebun' => trim($row['KEBUN'] ?? null),
@@ -616,3 +635,9 @@ class CsvImportController extends Controller
         return $result;
     }
 }
+
+
+
+
+
+

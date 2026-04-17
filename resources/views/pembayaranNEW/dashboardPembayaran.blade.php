@@ -1,886 +1,3270 @@
-@extends('layouts/app')
+@extends('layouts.app')
+
 @section('content')
-
-<style>
-  h2 {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 20px;
-    font-weight: 700;
-  }
-
-  /* Modern Card Styles */
-  .stat-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    border-radius: 20px;
-    padding: 28px;
-    box-shadow: 0 4px 20px rgba(8, 62, 64, 0.08), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.1);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-    overflow: hidden;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
-    transition: all 0.6s ease;
-    opacity: 0;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 12px 40px rgba(8, 62, 64, 0.15), 0 4px 16px rgba(136, 151, 23, 0.1);
-    border-color: rgba(136, 151, 23, 0.3);
-  }
-
-  .stat-card:hover::before {
-    opacity: 1;
-    top: -60%;
-    right: -60%;
-  }
-
-  .stat-card-body {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .stat-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    color: white;
-    flex-shrink: 0;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-
-  .stat-card:hover .stat-icon {
-    transform: scale(1.15) rotate(5deg);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-  }
-
-  .stat-icon.total {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
-  }
-
-  .stat-icon.selesai {
-    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
-  }
-
-  .stat-icon.proses {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-  }
-
-  .stat-icon.dikembalikan {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-  }
-
-  .stat-content {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .stat-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #6c757d;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 8px;
-    opacity: 0.9;
-  }
-
-  .stat-value {
-    font-size: 36px;
-    font-weight: 800;
-    color: #000000 !important;
-    line-height: 1.2;
-    margin-bottom: 4px;
-    background: none !important;
-    -webkit-background-clip: unset !important;
-    -webkit-text-fill-color: #000000 !important;
-    background-clip: unset !important;
-  }
-
-  .stat-description {
-    font-size: 12px;
-    color: #6c757d;
-    font-weight: 500;
-    opacity: 0.7;
-  }
-
-  /* Legacy card styles for backward compatibility */
-  .card {
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 8px 24px rgba(8, 62, 64, 0.2), 0 2px 8px rgba(136, 151, 23, 0.1);
-  }
-
-  .card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    transition: all 0.5s ease;
-  }
-
-  .card:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 12px 32px rgba(8, 62, 64, 0.3), 0 4px 12px rgba(136, 151, 23, 0.2);
-  }
-
-  .card:hover::before {
-    top: -60%;
-    right: -60%;
-  }
-
-  .card-body {
-    position: relative;
-    z-index: 1;
-    padding: 24px !important;
-  }
-
-  .card i {
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-
-  .card:hover i {
-    transform: scale(1.15) rotate(5deg);
-  }
-
-  .text-xs {
-    font-size: 13px;
-    letter-spacing: 0.8px;
-    opacity: 0.95;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-
-  .h5 {
-    font-size: 32px;
-    font-weight: 800;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    line-height: 1.2;
-  }
-
-  .search-box {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    padding: 20px;
-    border-radius: 16px;
-    margin-bottom: 24px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
-  }
-
-  .search-box .input-group {
-    max-width: auto;
-  }
-
-  .search-box .input-group-text {
-    background: white;
-    border: 2px solid rgba(8, 62, 64, 0.1);
-    border-right: none;
-    border-radius: 10px 0 0 10px;
-    padding: 10px 14px;
-  }
-
-  .search-box .form-control {
-    border: 2px solid rgba(8, 62, 64, 0.1);
-    border-left: none;
-    border-radius: 0 10px 10px 0;
-    padding: 10px 14px;
-    font-size: 13px;
-    transition: all 0.3s ease;
-  }
-
-  .search-box .form-control:focus {
-    outline: none;
-    border-color: #889717;
-    box-shadow: 0 0 0 4px rgba(136, 151, 23, 0.1);
-  }
-
-  .table-container {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    padding: 24px;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
-  }
-
-  .table-container h6 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 2px solid rgba(8, 62, 64, 0.1);
-  }
-
-  .table-container h6 span {
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 700;
-  }
-
-  .table-container h6 a {
-    color: #889717;
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    padding: 6px 16px;
-    border-radius: 20px;
-    border: 2px solid transparent;
-  }
-
-  .table-container h6 a:hover {
-    color: white;
-    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
-    border-color: #889717;
-  }
-
-  .table {
-    margin-bottom: 0;
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .table thead {
-    background: #083E40 !important;
-    display: table-header-group !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-
-  .table thead th {
-    background: #083E40 !important;
-    color: white !important;
-    font-weight: 600 !important;
-    font-size: 14px !important;
-    letter-spacing: 0.5px;
-    padding: 16px 12px !important;
-    border: none !important;
-    vertical-align: middle !important;
-    text-align: left !important;
-    height: auto !important;
-    line-height: normal !important;
-    display: table-cell !important;
-    visibility: visible !important;
-  }
-
-  .table thead tr {
-    display: table-row !important;
-    visibility: visible !important;
-    height: auto !important;
-  }
-
-  .table tbody tr {
-    transition: all 0.3s ease;
-    border-left: 3px solid transparent;
-  }
-
-  .table tbody tr:hover {
-    background: linear-gradient(90deg, rgba(136, 151, 23, 0.05) 0%, transparent 100%);
-    border-left: 3px solid #889717;
-    transform: scale(1.002);
-  }
-
-  .table tbody tr.highlight-row {
-    background: linear-gradient(90deg, rgba(136, 151, 23, 0.15) 0%, transparent 100%);
-    border-left: 3px solid #889717;
-  }
-
-  .table tbody td {
-    padding: 14px 12px;
-    font-size: 13px;
-    vertical-align: middle;
-    border-bottom: 1px solid rgba(8, 62, 64, 0.05);
-  }
-
-  .badge {
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-  }
-
-  .badge-success {
-    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(136, 151, 23, 0.3);
-  }
-
-  .btn-view {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.3s ease;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-    color: white;
-  }
-
-  .btn-view:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 16px rgba(8, 62, 64, 0.3);
-  }
-
-  .btn-view:active {
-    transform: translateY(-1px);
-  }
-
-  /* Badge Styles */
-  .badge-status {
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    display: inline-block;
-  }
-
-  .badge-selesai {
-    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
-    color: white;
-    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
-  }
-
-  .badge-proses {
-    background: linear-gradient(135deg, #ffc107 0%, #ffcd39 100%);
-    color: #333;
-    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
-  }
-
-  /* Detail Row Styles */
-  .detail-row {
-    display: none;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  }
-
-  .detail-row.show {
-    display: table-row;
-  }
-
-  .detail-content {
-    padding: 20px;
-    border-top: 2px solid rgba(8, 62, 64, 0.1);
-  }
-
-  .detail-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 16px;
-  }
-
-  .detail-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .detail-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #083E40;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .detail-value {
-    font-size: 13px;
-    color: #333;
-    font-weight: 500;
-  }
-
-  /* Action Button Styles */
-  .action-buttons {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .btn-action {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.3s ease;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-    color: white;
-  }
-
-  .btn-action:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
-  }
-
-  .btn-action i {
-    font-size: 14px;
-  }
-
-  .btn-edit {
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-  }
-
-  .btn-upload {
-    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
-    white-space: nowrap;
-  }
-
-  .btn-chevron {
-    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
-    padding: 8px 12px;
-  }
-
-  .chevron-icon {
-    transition: transform 0.3s ease;
-  }
-
-  .chevron-icon.rotate {
-    transform: rotate(180deg);
-  }
-
-  .main-row {
-    cursor: pointer;
-  }
-
-  /* Custom thead styling */
-  .table-container .table-responsive table thead tr.table-dark {
-    background: #083E40 !important;
-  }
-
-  .table-container .table-responsive table thead tr.table-dark th {
-    background: #083E40 !important;
-    color: white !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    padding: 16px 12px !important;
-    border: none !important;
-  }
-  
-  /* Override Bootstrap table-dark untuk memastikan warna hijau */
-  .table-dark {
-    background-color: #083E40 !important;
-  }
-  
-  .table-dark th {
-    background-color: #083E40 !important;
-    color: white !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-  }
-
-  /* Section Title Styling */
-  .section-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #083E40;
-    margin-top: 30px;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 3px solid #889717;
-    background: linear-gradient(135deg, #083E40 0%, #889717 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  /* Detail item full width for long text */
-  .detail-item-full {
-    grid-column: 1 / -1;
-  }
-
-  /* Responsive adjustments for cards */
-  @media (max-width: 1200px) {
-    .stat-value {
-      font-size: 30px;
+  <style>
+    /* ===== IMPORT GOOGLE FONTS ===== */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    /* ===== PREMIUM SAAS DESIGN SYSTEM ===== */
+    :root {
+      /* Core Colors */
+      --bg-primary: #fafbfc;
+      --bg-secondary: #f8fafc;
+      --bg-tertiary: #ffffff;
+
+      /* Text Colors */
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --text-muted: #cbd5e1;
+
+      /* Brand Colors - Soft Pastels */
+      --brand-primary: #10b981;
+      --brand-primary-soft: rgba(16, 185, 129, 0.1);
+      --brand-primary-glow: rgba(16, 185, 129, 0.2);
+
+      /* Status Colors - Refined */
+      --status-emerald: #10b981;
+      --status-emerald-soft: rgba(16, 185, 129, 0.12);
+      --status-emerald-glow: 0 0 20px rgba(16, 185, 129, 0.3);
+
+      --status-amber: #f59e0b;
+      --status-amber-soft: rgba(245, 158, 11, 0.12);
+      --status-amber-glow: 0 0 20px rgba(245, 158, 11, 0.3);
+
+      --status-rose: #f43f5e;
+      --status-rose-soft: rgba(244, 63, 94, 0.12);
+      --status-rose-glow: 0 0 20px rgba(244, 63, 94, 0.3);
+
+      --status-blue: #3b82f6;
+      --status-blue-soft: rgba(59, 130, 246, 0.12);
+      --status-blue-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+
+      --status-violet: #8b5cf6;
+      --status-violet-soft: rgba(139, 92, 246, 0.12);
+
+      /* Shadows & Effects */
+      --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+      --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1);
+
+      /* Glass Effect */
+      --glass-bg: rgba(255, 255, 255, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.5);
+      --glass-blur: blur(20px);
+
+      /* Border */
+      --border-light: #e2e8f0;
+      --border-lighter: #f1f5f9;
+
+      /* Radius */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --radius-2xl: 24px;
+
+      /* Transitions */
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .stat-icon {
-      width: 60px;
-      height: 60px;
-      font-size: 28px;
-    }
-  }
 
-  @media (max-width: 768px) {
+    /* ===== BASE STYLES ===== */
+    .premium-dashboard {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      min-height: 100vh;
+      padding: 2rem;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ===== HEADER SECTION ===== */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .header-content {
+      flex: 1;
+    }
+
+    .header-title {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.025em;
+      margin: 0 0 0.5rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-title-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--brand-primary) 0%, #059669 100%);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.125rem;
+    }
+
+    .header-subtitle {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .btn-export-excel {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid #16a34a;
+      background: #16a34a;
+      color: white;
+      cursor: pointer;
+      transition: var(--transition-base);
+      text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-family: inherit;
+    }
+
+    .btn-export-excel:hover {
+      background: #15803d;
+      border-color: #15803d;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+    }
+
+    .btn-export-excel i {
+      font-size: 1rem;
+    }
+
+    /* ===== BENTO GRID ===== */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Main Stats Row */
     .stat-card {
-      padding: 20px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      border: 1px solid var(--border-lighter);
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition-base);
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
     }
-    .stat-value {
-      font-size: 28px;
+
+    .stat-card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+      border-color: var(--border-light);
     }
+
+    .stat-card.active {
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px var(--brand-primary-glow);
+    }
+
+    .stat-card--total {
+      grid-column: span 3;
+    }
+
+    .stat-card--pending {
+      grid-column: span 3;
+    }
+
+    .stat-card--ready {
+      grid-column: span 3;
+    }
+
+    .stat-card--paid {
+      grid-column: span 3;
+    }
+
+    /* Total Card - Solid Green Gradient */
+    .stat-card--total {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .stat-card--total:hover {
+      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+      transform: translateY(-3px);
+    }
+
+    .stat-card--total.active {
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3), 0 8px 30px rgba(16, 185, 129, 0.4);
+    }
+
+    .stat-card--total .stat-label,
+    .stat-card--total .stat-value,
+    .stat-card--total .stat-subvalue {
+      color: white;
+    }
+
+    .stat-card--total .stat-label {
+      opacity: 0.9;
+    }
+
+    .stat-card--total .stat-subvalue {
+      opacity: 0.85;
+    }
+
+    .stat-card--total .stat-icon {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .stat-card-content {
+      display: flex;
+      flex-direction: column;
+    }
+
     .stat-icon {
-      width: 55px;
-      height: 55px;
-      font-size: 24px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
     }
-    .stat-title {
-      font-size: 11px;
+
+    .stat-icon--total {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
     }
-    .stat-description {
-      font-size: 11px;
+
+    .stat-icon--pending {
+      background: var(--status-amber-soft);
+      color: var(--status-amber);
     }
-  }
 
-  /* Animation for card entrance */
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
+    .stat-icon--ready {
+      background: var(--status-blue-soft);
+      color: var(--status-blue);
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+
+    .stat-icon--paid {
+      background: var(--status-emerald-soft);
+      color: var(--status-emerald);
     }
-  }
 
-  .stat-card {
-    animation: fadeInUp 0.6s ease-out;
-  }
+    .stat-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.375rem;
+    }
 
-  .stat-card:nth-child(1) {
-    animation-delay: 0.1s;
-  }
+    .stat-value {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      margin-bottom: 0.25rem;
+    }
 
-  .stat-card:nth-child(2) {
-    animation-delay: 0.2s;
-  }
+    .stat-subvalue {
+      font-size: 0.8125rem;
+      color: var(--status-emerald);
+      font-weight: 600;
+    }
 
-  .stat-card:nth-child(3) {
-    animation-delay: 0.3s;
-  }
+    .stat-subvalue-link {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-top: 0.25rem;
+    }
 
-  .stat-card:nth-child(4) {
-    animation-delay: 0.4s;
-  }
+    .stat-subvalue-link:hover {
+      color: var(--brand-primary);
+    }
 
-  /* Clickable card styles */
-  a .stat-card {
-    text-decoration: none;
-  }
+    /* Deadline Cards */
+    .deadline-card {
+      grid-column: span 4;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      border: 1px solid var(--border-lighter);
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition-base);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
+    }
 
-  a .stat-card:hover {
-    transform: translateY(-12px) scale(1.03);
-  }
+    .deadline-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      transition: var(--transition-base);
+    }
 
-  a:hover {
-    text-decoration: none;
-    color: inherit;
-  }
-</style>
+    .deadline-card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
 
-<h2 style="margin-bottom: 30px; font-weight: 700;">{{ $title }}</h2>
+    .deadline-card--aman::before {
+      background: var(--status-emerald);
+    }
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <!-- Total Dokumen -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-content">
-                    <div class="stat-title">Total Dokumen</div>
-                    <div class="stat-value">{{ number_format($totalDokumen ?? 0, 0, ',', '.') }}</div>
-                    <div class="stat-description">Semua dokumen pembayaran</div>
-                </div>
-                <div class="stat-icon total">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-            </div>
-        </div>
-    </div>
+    .deadline-card--peringatan::before {
+      background: var(--status-amber);
+    }
 
-    <!-- Total Dokumen Selesai -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-content">
-                    <div class="stat-title">Dokumen Selesai</div>
-                    <div class="stat-value">{{ number_format($totalSelesai ?? 0, 0, ',', '.') }}</div>
-                    <div class="stat-description">Pembayaran selesai</div>
-                </div>
-                <div class="stat-icon selesai">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-            </div>
-        </div>
-    </div>
+    .deadline-card--terlambat::before {
+      background: var(--status-rose);
+    }
 
-    <!-- Total Dokumen Proses -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-content">
-                    <div class="stat-title">Dokumen Proses</div>
-                    <div class="stat-value">{{ number_format($totalProses ?? 0, 0, ',', '.') }}</div>
-                    <div class="stat-description">Sedang diproses</div>
-                </div>
-                <div class="stat-icon proses">
-                    <i class="fas fa-clock"></i>
-                </div>
-            </div>
-        </div>
-    </div>
+    .deadline-card--aman:hover {
+      box-shadow: var(--status-emerald-glow), var(--shadow-lg);
+    }
 
-    <!-- Total Dokumen Dikembalikan -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="stat-card">
-            <div class="stat-card-body">
-                <div class="stat-content">
-                    <div class="stat-title">Dikembalikan</div>
-                    <div class="stat-value">{{ number_format($totalDikembalikan ?? 0, 0, ',', '.') }}</div>
-                    <div class="stat-description">Dokumen dikembalikan</div>
-                </div>
-                <div class="stat-icon dikembalikan">
-                    <i class="fas fa-arrow-left"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+    .deadline-card--peringatan:hover {
+      box-shadow: var(--status-amber-glow), var(--shadow-lg);
+    }
 
-       <!-- Tabel Dokumen Terbaru -->
-    <div class="table-container">
-      <h6>
-        <span style="background: linear-gradient(135deg, #083E40 0%, #889717 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-decoration: none; font-size: 24px; font-weight: 700;">Dokumen Masuk</span>
-        <a href="{{ url('/dokumensPembayaran')}}" style="color: #1a4d3e; text-decoration: none; font-size: 14px;">View All</a>
-      </h6>
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead>
-            <tr class="table table-dark">
-              <th>No</th>
-              <th>Tanggal Masuk</th>
-              <th>Nomor SPP</th>
-              <th>Tanggal SPP</th>
-              <th>Nilai Rupiah</th>
-              <th>Tanggal Dibayar</th>
-              <th>Status</th>
-              <th>Bukti</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($dokumenTerbaru as $index => $dokumen)
-              @php
-                // Handler yang dianggap "belum siap dibayar"
-                $belumSiapHandlers = ['akuntansi', 'perpajakan', 'ibu_a', 'ibu_b'];
-                
-                // Cek apakah dokumen masih di handler yang belum siap
-                $isBelumSiap = in_array($dokumen->current_handler, $belumSiapHandlers);
-                
-                // Tanggal masuk ke pembayaran (gunakan sent_to_pembayaran_at jika ada, jika tidak gunakan tanggal_masuk)
-                $tanggalMasuk = $dokumen->sent_to_pembayaran_at ?? $dokumen->tanggal_masuk;
-              @endphp
-              <tr class="main-row" onclick="toggleDetail({{ $dokumen->id }})">
-                <td style="text-align: center;">{{ $index + 1 }}</td>
-                <td>{{ $tanggalMasuk ? $tanggalMasuk->format('d/m/Y H:i') : '-' }}</td>
-                <td>{{ $dokumen->nomor_spp ?? '-' }}</td>
-                <td>{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}</td>
-                <td>Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
-                <td>{{ $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('d/m/Y H:i') : '-' }}</td>
-                <td>
-                  @if($dokumen->status_pembayaran == 'sudah_dibayar')
-                    <span class="badge-status badge-selesai">Sudah Dibayar</span>
-                  @elseif($isBelumSiap)
-                    <span class="badge-status badge-proses">Belum Siap</span>
-                  @elseif($dokumen->status_pembayaran == 'siap_dibayar')
-                    <span class="badge-status badge-proses">Siap Dibayar</span>
-                  @else
-                    <span class="badge-status badge-proses">Belum Dibayar</span>
-                  @endif
-                </td>
-                <td>
-                  @if($dokumen->bukti_pembayaran)
-                    <a href="{{ asset('storage/' . $dokumen->bukti_pembayaran) }}" target="_blank" class="btn-action btn-edit" onclick="event.stopPropagation()">
-                      <i class="fa-solid fa-eye"></i>
-                    </a>
-                  @else
-                    <span class="text-muted">-</span>
-                  @endif
-                </td>
-                <td onclick="event.stopPropagation()">
-                  <div class="action-buttons">
-                    <button class="btn-action btn-chevron" onclick="toggleDetail({{ $dokumen->id }})">
-                      <i class="fa-solid fa-chevron-down chevron-icon" id="chevron-{{ $dokumen->id }}"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              <tr class="detail-row" id="detail-{{ $dokumen->id }}">
-                <td colspan="9">
-                  <div class="detail-content">
-                    <div class="detail-grid">
-                      <div class="detail-item">
-                        <span class="detail-label">Tanggal Masuk</span>
-                        <span class="detail-value">{{ $tanggalMasuk ? $tanggalMasuk->format('d/m/Y H:i:s') : '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Bulan</span>
-                        <span class="detail-value">{{ $dokumen->bulan ?? '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Tahun</span>
-                        <span class="detail-value">{{ $dokumen->tahun ?? '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">No SPP</span>
-                        <span class="detail-value">{{ $dokumen->nomor_spp ?? '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Tanggal SPP</span>
-                        <span class="detail-value">{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}</span>
-                      </div>
-                      <div class="detail-item detail-item-full">
-                        <span class="detail-label">Uraian SPP</span>
-                        <span class="detail-value">{{ $dokumen->uraian_spp ?? '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Nilai Rp</span>
-                        <span class="detail-value">Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Kriteria CF</span>
-                        <span class="detail-value">{{ $dokumen->kategori ?? '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Sub Kriteria</span>
-                        <span class="detail-value">{{ $dokumen->jenis_dokumen ?? '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Item Sub Kriteria</span>
-                        <span class="detail-value">{{ $dokumen->jenis_sub_pekerjaan ?? '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Dibayar Kepada</span>
-                        <span class="detail-value">{{ $dokumen->dibayar_kepada ?? '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">No Berita</span>
-                        <span class="detail-value">{{ $dokumen->no_berita_acara ?? '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Tanggal Berita Acara</span>
-                        <span class="detail-value">{{ $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">No PSK</span>
-                        <span class="detail-value">{{ $dokumen->no_spk ?? '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Tanggal PSK</span>
-                        <span class="detail-value">{{ $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Tanggal Akhir PSK</span>
-                        <span class="detail-value">{{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-' }}</span>
-                      </div>
-                      @if($dokumen->dokumenPos && $dokumen->dokumenPos->count() > 0)
-                        <div class="detail-item">
-                          <span class="detail-label">No PO</span>
-                          <span class="detail-value">{{ $dokumen->dokumenPos->pluck('nomor_po')->filter()->implode(', ') ?: '-' }}</span>
-                        </div>
-                      @endif
-                      @if($dokumen->dokumenPrs && $dokumen->dokumenPrs->count() > 0)
-                        <div class="detail-item">
-                          <span class="detail-label">No PR</span>
-                          <span class="detail-value">{{ $dokumen->dokumenPrs->pluck('nomor_pr')->filter()->implode(', ') ?: '-' }}</span>
-                        </div>
-                      @endif
-                      <div class="detail-item">
-                        <span class="detail-label">No Miror</span>
-                        <span class="detail-value">{{ $dokumen->nomor_mirror ?? '-' }}</span>
-                      </div>
-                    </div>
+    .deadline-card--terlambat:hover {
+      box-shadow: var(--status-rose-glow), var(--shadow-lg);
+    }
 
-                    @if($dokumen->jenis_pph || $dokumen->dpp_pph || $dokumen->ppn_terhutang)
-                      <!-- Section Perpajakan -->
-                      <div class="section-title">Informasi Perpajakan</div>
-                      <div class="detail-grid">
-                        <div class="detail-item">
-                          <span class="detail-label">Jenis PPh</span>
-                          <span class="detail-value">{{ $dokumen->jenis_pph ?? '-' }}</span>
-                        </div>
-                        <div class="detail-item">
-                          <span class="detail-label">DPP PPh</span>
-                          <span class="detail-value">{{ $dokumen->dpp_pph ? 'Rp ' . number_format($dokumen->dpp_pph, 0, ',', '.') : '-' }}</span>
-                        </div>
-                        <div class="detail-item">
-                          <span class="detail-label">PPh Terhutang</span>
-                          <span class="detail-value">{{ $dokumen->ppn_terhutang ? 'Rp ' . number_format($dokumen->ppn_terhutang, 0, ',', '.') : '-' }}</span>
-                        </div>
-                      </div>
-                    @endif
-                  </div>
-                </td>
-              </tr>
-            @empty
-              <tr>
-                <td colspan="9" style="text-align: center; padding: 40px;">
-                  <p style="color: #6c757d; font-size: 14px;">Tidak ada dokumen masuk</p>
-                </td>
-              </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
-    </div>
+    .deadline-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
 
-<script>
-  function toggleDetail(dokumenId) {
-    const detailRow = document.getElementById('detail-' + dokumenId);
-    const chevron = document.getElementById('chevron-' + dokumenId);
+    .deadline-card--aman .deadline-icon {
+      background: var(--status-emerald-soft);
+      color: var(--status-emerald);
+    }
 
-    if (detailRow && chevron) {
-      if (detailRow.classList.contains('show')) {
-        detailRow.classList.remove('show');
-        chevron.classList.remove('rotate');
-      } else {
-        detailRow.classList.add('show');
-        chevron.classList.add('rotate');
+    .deadline-card--peringatan .deadline-icon {
+      background: var(--status-amber-soft);
+      color: var(--status-amber);
+    }
+
+    .deadline-card--terlambat .deadline-icon {
+      background: var(--status-rose-soft);
+      color: var(--status-rose);
+    }
+
+    .deadline-content {
+      flex: 1;
+    }
+
+    .deadline-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      margin-bottom: 0.25rem;
+    }
+
+    .deadline-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .deadline-desc {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      margin-top: 0.25rem;
+    }
+
+    /* ===== FILTER SECTION - FLOATING BAR ===== */
+    .filter-section {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-xl);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border-lighter);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-search {
+      flex: 1;
+      min-width: 280px;
+      position: relative;
+    }
+
+    .filter-search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+      pointer-events: none;
+    }
+
+    .filter-search input {
+      width: 100%;
+      height: 44px;
+      padding: 0 1rem 0 2.75rem;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      transition: var(--transition-fast);
+    }
+
+    .filter-search input:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px var(--brand-primary-glow);
+      background: var(--bg-tertiary);
+    }
+
+    .filter-search input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .filter-divider {
+      width: 1px;
+      height: 28px;
+      background: var(--border-light);
+    }
+
+    .filter-select-group {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .filter-select {
+      height: 44px;
+      padding: 0 2.5rem 0 1rem;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-size: 0.8125rem;
+      font-family: inherit;
+      font-weight: 500;
+      background: var(--bg-secondary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E") no-repeat right 0.75rem center;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: var(--transition-fast);
+      appearance: none;
+      min-width: 130px;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px var(--brand-primary-glow);
+      background-color: var(--bg-tertiary);
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: auto;
+    }
+
+    .btn-filter {
+      height: 44px;
+      padding: 0 1.25rem;
+      border-radius: var(--radius-md);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: var(--transition-base);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: none;
+    }
+
+    .btn-filter--primary {
+      background: var(--brand-primary);
+      color: white;
+    }
+
+    .btn-filter--primary:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+
+    .btn-filter--secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
+    }
+
+    .btn-filter--secondary:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    /* ===== TABLE SECTION ===== */
+    .table-section {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-lighter);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-lighter);
+    }
+
+    .table-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .table-title i {
+      color: var(--text-tertiary);
+    }
+
+    .table-count {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      background: var(--bg-secondary);
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      margin-left: 0.5rem;
+    }
+
+    .table-toggle {
+      display: flex;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 0.25rem;
+    }
+
+    .table-toggle-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      font-family: inherit;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+
+    .table-toggle-btn.active {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .table-toggle-btn:hover:not(.active) {
+      color: var(--text-primary);
+    }
+
+    /* Data Table */
+    .data-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th {
+      padding: 0.875rem 1rem;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-lighter);
+      white-space: nowrap;
+    }
+
+    .data-table th:first-child {
+      padding-left: 1.5rem;
+    }
+
+    .data-table th:last-child {
+      padding-right: 1.5rem;
+    }
+
+    .data-table td {
+      padding: 1rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-lighter);
+      vertical-align: middle;
+    }
+
+    .data-table td:first-child {
+      padding-left: 1.5rem;
+    }
+
+    .data-table td:last-child {
+      padding-right: 1.5rem;
+    }
+
+    .data-table tbody tr {
+      transition: var(--transition-fast);
+    }
+
+    .data-table tbody tr:hover {
+      background: var(--bg-secondary);
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Cell Styles */
+    .cell-primary {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .cell-mono {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.8125rem;
+    }
+
+    .cell-rupiah {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cell-vendor {
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cell-uraian {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Status Pills */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-pill--ready {
+      background: var(--status-violet-soft);
+      color: var(--status-violet);
+    }
+
+    .status-pill--paid {
+      background: var(--status-emerald-soft);
+      color: var(--status-emerald);
+    }
+
+    .status-pill--pending {
+      background: var(--status-amber-soft);
+      color: var(--status-amber);
+    }
+
+    .status-pill i {
+      font-size: 0.625rem;
+    }
+
+    /* Action Button */
+    .btn-action {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition-base);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .btn-action:hover {
+      background: var(--brand-primary);
+      border-color: var(--brand-primary);
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .btn-action i {
+      font-size: 0.875rem;
+    }
+
+    /* ===== VENDOR GROUP VIEW ===== */
+    .vendor-groups {
+      padding: 1rem 1.5rem;
+    }
+
+    .vendor-group {
+      margin-bottom: 0.75rem;
+      border: 1px solid var(--border-lighter);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: var(--transition-base);
+    }
+
+    .vendor-group:hover {
+      border-color: var(--border-light);
+    }
+
+    .vendor-group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      background: var(--bg-secondary);
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+
+    .vendor-group-header:hover {
+      background: var(--bg-primary);
+    }
+
+    .vendor-group-header.expanded {
+      background: var(--brand-primary-soft);
+    }
+
+    .vendor-group-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .vendor-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      background: var(--brand-primary-soft);
+      color: var(--brand-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .vendor-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.9375rem;
+    }
+
+    .vendor-count {
+      font-size: 0.8125rem;
+      color: var(--text-tertiary);
+      margin-left: 0.5rem;
+    }
+
+    .vendor-group-stats {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .vendor-stat {
+      text-align: right;
+    }
+
+    .vendor-stat-label {
+      font-size: 0.6875rem;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .vendor-stat-value {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .vendor-chevron {
+      color: var(--text-tertiary);
+      transition: var(--transition-fast);
+    }
+
+    .vendor-group-header.expanded .vendor-chevron {
+      transform: rotate(180deg);
+      color: var(--brand-primary);
+    }
+
+    .vendor-group-body {
+      display: none;
+      border-top: 1px solid var(--border-lighter);
+    }
+
+    .vendor-group-body.show {
+      display: block;
+    }
+
+    /* ===== PAGINATION ===== */
+    .pagination-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-lighter);
+    }
+
+    .pagination-info {
+      font-size: 0.8125rem;
+      color: var(--text-tertiary);
+    }
+
+    .pagination {
+      display: flex;
+      gap: 0.25rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .pagination .page-item .page-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 36px;
+      padding: 0 0.75rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: var(--transition-fast);
+    }
+
+    .pagination .page-item .page-link:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    .pagination .page-item.active .page-link {
+      background: var(--brand-primary);
+      border-color: var(--brand-primary);
+      color: white;
+    }
+
+    .pagination .page-item.disabled .page-link {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      border-radius: 50%;
+      background: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .empty-state-icon i {
+      font-size: 2rem;
+      color: var(--text-tertiary);
+    }
+
+    .empty-state-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0 0 0.5rem 0;
+    }
+
+    .empty-state-desc {
+      font-size: 0.875rem;
+      color: var(--text-tertiary);
+      max-width: 360px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .btn-empty {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--brand-primary);
+      color: white;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: var(--transition-base);
+    }
+
+    .btn-empty:hover {
+      background: #059669;
+      transform: translateY(-1px);
+      color: white;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1280px) {
+
+      .stat-card--total,
+      .stat-card--pending,
+      .stat-card--ready,
+      .stat-card--paid {
+        grid-column: span 6;
+      }
+
+      .deadline-card {
+        grid-column: span 4;
       }
     }
-  }
 
-</script>
+    @media (max-width: 992px) {
+      .deadline-card {
+        grid-column: span 6;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .premium-dashboard {
+        padding: 1rem;
+      }
+
+      .bento-grid {
+        gap: 0.75rem;
+      }
+
+      .stat-card--total,
+      .stat-card--pending,
+      .stat-card--ready,
+      .stat-card--paid,
+      .deadline-card {
+        grid-column: span 12;
+      }
+
+      .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-search {
+        min-width: 100%;
+      }
+
+      .filter-divider {
+        display: none;
+      }
+
+      .filter-select-group {
+        flex-wrap: wrap;
+      }
+
+      .filter-select {
+        flex: 1;
+        min-width: 120px;
+      }
+
+      .filter-actions {
+        margin-left: 0;
+        justify-content: stretch;
+      }
+
+      .filter-actions .btn-filter {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .header-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes countUp {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.6;
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    .animate-delay-1 {
+      animation-delay: 0.1s;
+      opacity: 0;
+    }
+
+    .animate-delay-2 {
+      animation-delay: 0.15s;
+      opacity: 0;
+    }
+
+    .animate-delay-3 {
+      animation-delay: 0.2s;
+      opacity: 0;
+    }
+
+    .animate-delay-4 {
+      animation-delay: 0.25s;
+      opacity: 0;
+    }
+
+    .animate-delay-5 {
+      animation-delay: 0.3s;
+      opacity: 0;
+    }
+
+    .animate-delay-6 {
+      animation-delay: 0.35s;
+      opacity: 0;
+    }
+
+    .animate-delay-7 {
+      animation-delay: 0.4s;
+      opacity: 0;
+    }
+
+    .count-animate {
+      animation: countUp 0.6s ease-out forwards;
+    }
+
+    /* Lucide-style icons (thin stroke) */
+    .premium-dashboard i.fas,
+    .premium-dashboard i.far {
+      font-weight: 400;
+    }
+
+    /* ============================================ */
+    /* ADVANCED FILTER PANEL STYLES */
+    /* ============================================ */
+    .advanced-filter-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition-base);
+      font-family: inherit;
+    }
+
+    .advanced-filter-toggle:hover {
+      background: var(--brand-primary);
+      color: white;
+      border-color: var(--brand-primary);
+      transform: translateY(-1px);
+    }
+
+    .advanced-filter-toggle.active {
+      background: var(--brand-primary);
+      color: white;
+      border-color: var(--brand-primary);
+    }
+
+    .advanced-filter-toggle i {
+      transition: transform 0.3s ease;
+    }
+
+    .advanced-filter-toggle.active i.fa-chevron-down {
+      transform: rotate(180deg);
+    }
+
+    .active-filters-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      background: #dc3545;
+      color: white;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      border-radius: 50%;
+      margin-left: 0.25rem;
+    }
+
+    .advanced-filter-toggle.active .active-filters-badge {
+      background: white;
+      color: var(--brand-primary);
+    }
+
+    .advanced-filter-panel {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: all 0.4s ease;
+      margin-top: 0;
+    }
+
+    .advanced-filter-panel.show {
+      max-height: 500px;
+      opacity: 1;
+      margin-top: 1rem;
+    }
+
+    .advanced-filter-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-lighter);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+    }
+
+    .advanced-filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+
+    .filter-group label {
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .filter-group label i {
+      color: var(--text-tertiary);
+    }
+
+    .filter-group select {
+      width: 100%;
+      height: 40px;
+      padding: 0 2rem 0 0.75rem;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      font-size: 0.8125rem;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--bg-tertiary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E") no-repeat right 0.5rem center;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      appearance: none;
+    }
+
+    .filter-group select:hover {
+      border-color: var(--brand-primary);
+    }
+
+    .filter-group select:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px var(--brand-primary-glow);
+    }
+
+    .advanced-filter-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .btn-advanced-reset {
+      padding: 0.625rem 1.25rem;
+      background: var(--bg-tertiary);
+      color: var(--status-rose);
+      font-weight: 600;
+      font-size: 0.8125rem;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition-base);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: inherit;
+    }
+
+    .btn-advanced-reset:hover {
+      background: var(--status-rose);
+      color: white;
+      border-color: var(--status-rose);
+    }
+
+    @media (max-width: 768px) {
+      .advanced-filter-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .advanced-filter-actions {
+        flex-direction: column;
+      }
+
+      .btn-advanced-reset {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .advanced-filter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-customize {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: transparent;
+        border: 1px solid var(--border-light);
+        color: var(--text-secondary);
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: var(--transition-base);
+      }
+
+      .btn-customize:hover {
+        background: var(--bg-surface);
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .column-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+        padding: 1rem 0;
+      }
+    }
+  </style>
+
+  <div class="premium-dashboard">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="header-content">
+        <h1 class="header-title">
+          <div class="header-title-icon">
+            <i class="fas fa-wallet"></i>
+          </div>
+          Dashboard Pembayaran
+        </h1>
+        <p class="header-subtitle">Kelola dan pantau semua dokumen pembayaran</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn-export-excel" onclick="exportDocument('excel')" title="Export Excel">
+          <i class="fas fa-file-excel"></i> Export Excel
+        </button>
+      </div>
+      <!-- Hidden export form -->
+      <form id="exportForm" method="POST" action="{{ route('reports.pembayaran.export') }}" style="display: none;">
+        @csrf
+        <input type="hidden" name="format" id="exportFormat">
+        <input type="hidden" name="status_pembayaran" value="{{ $selectedStatus ?? '' }}">
+        <input type="hidden" name="year" value="{{ $selectedYear ?? '' }}">
+        <input type="hidden" name="month" value="{{ $selectedMonth ?? '' }}">
+        <input type="hidden" name="search" value="{{ $search ?? '' }}">
+        <input type="hidden" name="mode" value="{{ $mode ?? 'normal' }}">
+        <!-- Advanced filters for export -->
+        <input type="hidden" name="filter_vendor" value="{{ request('filter_vendor') ?? '' }}">
+        <input type="hidden" name="filter_kategori" value="{{ request('filter_kategori') ?? '' }}">
+        <input type="hidden" name="filter_jenis_dokumen" value="{{ request('filter_jenis_dokumen') ?? '' }}">
+        <input type="hidden" name="filter_jenis_sub_pekerjaan" value="{{ request('filter_jenis_sub_pekerjaan') ?? '' }}">
+        <input type="hidden" name="filter_kebun" value="{{ request('filter_kebun') ?? '' }}">
+        <input type="hidden" name="filter_jenis_pembayaran" value="{{ request('filter_jenis_pembayaran') ?? '' }}">
+        <input type="hidden" name="vendor_export_mode" id="vendorExportMode" value="">
+        <div id="exportColumnsContainer"></div>
+      </form>
+    </header>
+    <!-- Bento Grid Stats -->
+    <div class="bento-grid">
+      <!-- Main Stats Row -->
+      <a href="?status_pembayaran=&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
+        class="stat-card stat-card--total animate-fade-in animate-delay-1 {{ !$selectedStatus ? 'active' : '' }}">
+        <div class="stat-card-content">
+          <div class="stat-label">Total Dokumen</div>
+          <div class="stat-value count-animate">{{ number_format($statistics['total_documents']) }}</div>
+          <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai'], 0, ',', '.') }}</div>
+        </div>
+        <div class="stat-icon stat-icon--total">
+          <i class="fas fa-layer-group"></i>
+        </div>
+      </a>
+
+      <a href="?status_pembayaran=belum_siap_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
+        class="stat-card stat-card--pending animate-fade-in animate-delay-2 {{ $selectedStatus == 'belum_siap_dibayar' ? 'active' : '' }}">
+        <div class="stat-card-content">
+          <div class="stat-label">Belum Siap Bayar</div>
+          <div class="stat-value count-animate">{{ number_format($statistics['by_status']['belum_dibayar']) }}</div>
+          <div class="stat-subvalue">Rp
+            {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}
+          </div>
+          <div class="stat-subvalue-link">
+            <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
+          </div>
+        </div>
+        <div class="stat-icon stat-icon--pending">
+          <i class="fas fa-hourglass-half"></i>
+        </div>
+      </a>
+
+      <a href="?status_pembayaran=siap_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
+        class="stat-card stat-card--ready animate-fade-in animate-delay-3 {{ $selectedStatus == 'siap_dibayar' ? 'active' : '' }}">
+        <div class="stat-card-content">
+          <div class="stat-label">Siap Dibayar</div>
+          <div class="stat-value count-animate">{{ number_format($statistics['by_status']['siap_dibayar']) }}</div>
+          <div class="stat-subvalue">Rp
+            {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}
+          </div>
+          <div class="stat-subvalue-link">
+            <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
+          </div>
+        </div>
+        <div class="stat-icon stat-icon--ready">
+          <i class="fas fa-check-circle"></i>
+        </div>
+      </a>
+
+      <a href="?status_pembayaran=sudah_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
+        class="stat-card stat-card--paid animate-fade-in animate-delay-4 {{ $selectedStatus == 'sudah_dibayar' ? 'active' : '' }}">
+        <div class="stat-card-content">
+          <div class="stat-label">Sudah Dibayar</div>
+          <div class="stat-value count-animate">{{ number_format($statistics['by_status']['sudah_dibayar']) }}</div>
+          <div class="stat-subvalue">Rp
+            {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}
+          </div>
+          <div class="stat-subvalue-link">
+            <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
+          </div>
+        </div>
+        <div class="stat-icon stat-icon--paid">
+          <i class="fas fa-check-double"></i>
+        </div>
+      </a>
+
+      <!-- Deadline Cards -->
+      <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'aman']) }}"
+        class="deadline-card deadline-card--aman animate-fade-in animate-delay-5">
+        <div class="deadline-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="deadline-content">
+          <div class="deadline-label">Aman</div>
+          <div class="deadline-value">{{ number_format($totalAman) }}</div>
+          <div class="deadline-desc">&lt; 1 Minggu</div>
+        </div>
+      </a>
+
+      <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'peringatan']) }}"
+        class="deadline-card deadline-card--peringatan animate-fade-in animate-delay-6">
+        <div class="deadline-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="deadline-content">
+          <div class="deadline-label">Peringatan</div>
+          <div class="deadline-value">{{ number_format($totalPeringatan) }}</div>
+          <div class="deadline-desc">1 - 3 Minggu</div>
+        </div>
+      </a>
+
+      <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'terlambat']) }}"
+        class="deadline-card deadline-card--terlambat animate-fade-in animate-delay-7">
+        <div class="deadline-icon">
+          <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="deadline-content">
+          <div class="deadline-label">Terlambat</div>
+          <div class="deadline-value">{{ number_format($totalTerlambat) }}</div>
+          <div class="deadline-desc">&gt; 3 Minggu</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Filter Section -->
+    <form action="{{ route('dashboard.pembayaran') }}" method="GET" class="filter-section" id="filterForm">
+      <div class="filter-row">
+        <div class="filter-search">
+          <i class="fas fa-search filter-search-icon"></i>
+          <input type="text" name="search" placeholder="Cari no agenda, SPP, vendor..." value="{{ $search ?? '' }}">
+        </div>
+
+        <div class="filter-divider"></div>
+
+        <div class="filter-select-group">
+          <select name="status_pembayaran" class="filter-select">
+            <option value="">Semua Status</option>
+            <option value="belum_siap_dibayar" {{ ($selectedStatus ?? '') == 'belum_siap_dibayar' ? 'selected' : '' }}>Belum
+              Siap</option>
+            <option value="siap_dibayar" {{ ($selectedStatus ?? '') == 'siap_dibayar' ? 'selected' : '' }}>Siap Dibayar
+            </option>
+            <option value="sudah_dibayar" {{ ($selectedStatus ?? '') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar
+            </option>
+          </select>
+
+          <select name="year" class="filter-select">
+            <option value="">Semua Tahun</option>
+            @foreach($years ?? [] as $yr)
+              <option value="{{ $yr }}" {{ ($selectedYear ?? '') == $yr ? 'selected' : '' }}>{{ $yr }}</option>
+            @endforeach
+          </select>
+
+          <select name="month" class="filter-select">
+            <option value="">Semua Bulan</option>
+            @php
+              $months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            @endphp
+            @foreach($months as $i => $m)
+              <option value="{{ $i + 1 }}" {{ ($selectedMonth ?? '') == ($i + 1) ? 'selected' : '' }}>{{ $m }}</option>
+            @endforeach
+          </select>
+        </div>
+
+        <div class="filter-actions">
+          <button type="submit" class="btn-filter btn-filter--primary">
+            <i class="fas fa-check"></i>
+            Terapkan
+          </button>
+          <a href="{{ route('dashboard.pembayaran') }}" class="btn-filter btn-filter--secondary"
+            onclick="try{localStorage.removeItem('pembayaran_columns')}catch(e){}">
+            <i class="fas fa-redo"></i>
+            Reset
+          </a>
+
+          @php
+            $activeAdvancedFilterCount = 0;
+            if (request('filter_vendor'))
+              $activeAdvancedFilterCount++;
+            if (request('filter_kategori'))
+              $activeAdvancedFilterCount++;
+            if (request('filter_jenis_dokumen'))
+              $activeAdvancedFilterCount++;
+            if (request('filter_jenis_sub_pekerjaan'))
+              $activeAdvancedFilterCount++;
+            if (request('filter_kebun'))
+              $activeAdvancedFilterCount++;
+          @endphp
+
+          <button type="button" class="advanced-filter-toggle {{ $activeAdvancedFilterCount > 0 ? 'active' : '' }}"
+            id="advancedFilterToggle">
+            <i class="fas fa-sliders-h"></i>
+            Filter Lanjutan
+            <i class="fas fa-chevron-down"></i>
+            @if($activeAdvancedFilterCount > 0)
+              <span class="active-filters-badge">{{ $activeAdvancedFilterCount }}</span>
+            @endif
+          </button>
+        </div>
+      </div>
+
+      <!-- Advanced Filter Panel -->
+      <div class="advanced-filter-panel {{ $activeAdvancedFilterCount > 0 ? 'show' : '' }}" id="advancedFilterPanel">
+        <div class="advanced-filter-content">
+          <div class="advanced-filter-grid">
+            <!-- Vendor Filter -->
+            <div class="filter-group">
+              <label for="filterVendor"><i class="fas fa-store"></i> Vendor</label>
+              <select id="filterVendor" name="filter_vendor">
+                <option value="">Semua Vendor</option>
+                @foreach($availableDibayarKepada ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_vendor') == $key ? 'selected' : '' }}>
+                    {{ Str::limit($value, 30) }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+
+            <!-- Kriteria Filter -->
+            <div class="filter-group">
+              <label for="filterKategori"><i class="fas fa-tags"></i> Kriteria CF</label>
+              <select id="filterKategori" name="filter_kategori">
+                <option value="">Semua Kriteria</option>
+                @foreach($availableKategori ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_kategori') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                @endforeach
+              </select>
+            </div>
+
+            <!-- Sub Kriteria Filter -->
+            <div class="filter-group">
+              <label for="filterJenisDokumen"><i class="fas fa-tag"></i> Sub Kriteria</label>
+              <select id="filterJenisDokumen" name="filter_jenis_dokumen">
+                <option value="">Semua Sub Kriteria</option>
+                @foreach($availableJenisDokumen ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_jenis_dokumen') == $key ? 'selected' : '' }}>{{ $value }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+
+            <!-- Item Sub Kriteria Filter -->
+            <div class="filter-group">
+              <label for="filterJenisSubPekerjaan"><i class="fas fa-th-list"></i> Item Sub Kriteria</label>
+              <select id="filterJenisSubPekerjaan" name="filter_jenis_sub_pekerjaan">
+                <option value="">Semua Item</option>
+                @foreach($availableJenisSubPekerjaan ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_jenis_sub_pekerjaan') == $key ? 'selected' : '' }}>
+                    {{ Str::limit($value, 30) }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+
+            <!-- Kebun Filter -->
+            <div class="filter-group">
+              <label for="filterKebun"><i class="fas fa-seedling"></i> Kebun</label>
+              <select id="filterKebun" name="filter_kebun">
+                <option value="">Semua Kebun</option>
+                @foreach($availableKebuns ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_kebun') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                @endforeach
+              </select>
+            </div>
+
+            <!-- Jenis Pembayaran Filter -->
+            <div class="filter-group">
+              <label for="filterJenisPembayaran"><i class="fas fa-money-bill-wave"></i> Jenis Pembayaran</label>
+              <select id="filterJenisPembayaran" name="filter_jenis_pembayaran">
+                <option value="">Semua Jenis</option>
+                @foreach($availableJenisPembayaran ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_jenis_pembayaran') == $key ? 'selected' : '' }}>{{ $value }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+          </div>
+
+          <div class="advanced-filter-actions">
+            <button type="button" class="btn-advanced-reset" onclick="resetAdvancedFilters()">
+              <i class="fas fa-times"></i>
+              Reset Filter Lanjutan
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Table Section -->
+    <div class="table-section" id="tableSection">
+      <div class="table-header">
+        <div class="table-title">
+          <i class="fas fa-list-alt"></i>
+          Daftar Dokumen
+          <span class="table-count" id="tableCount">{{ $dokumens->total() }}</span>
+        </div>
+        <div class="per-page-selector" style="display: flex; align-items: center; gap: 6px; margin-left: 16px;">
+          <label for="perPageSelect"
+            style="font-size: 13px; color: var(--text-secondary, #64748b); white-space: nowrap;">Baris per
+            halaman:</label>
+          <select id="perPageSelect" onchange="changePerPage(this.value)" style="
+                  background: var(--card-bg, #ffffff);
+                  color: var(--text-primary, #333333);
+                  border: 1px solid var(--border-color, #d1d5db);
+                  border-radius: 6px;
+                  padding: 4px 8px;
+                  font-size: 13px;
+                  cursor: pointer;
+                  outline: none;
+                ">
+            <option value="10" {{ (isset($perPage) && $perPage == 10) ? 'selected' : '' }}>10</option>
+            <option value="15" {{ (!isset($perPage) || $perPage == 15) ? 'selected' : '' }}>15</option>
+            <option value="25" {{ (isset($perPage) && $perPage == 25) ? 'selected' : '' }}>25</option>
+            <option value="50" {{ (isset($perPage) && $perPage == 50) ? 'selected' : '' }}>50</option>
+            <option value="100" {{ (isset($perPage) && $perPage == 100) ? 'selected' : '' }}>100</option>
+            <option value="all" {{ (isset($perPage) && $perPage == 999999) ? 'selected' : '' }}>Semua</option>
+          </select>
+        </div>
+        <div class="table-toggle">
+          <button type="button" class="table-toggle-btn" onclick="openColumnModal()">
+            <i class="fas fa-columns"></i> Atur Kolom
+          </button>
+          <button type="button" class="table-toggle-btn {{ $mode != 'rekapan_table' ? 'active' : '' }}"
+            onclick="setViewMode('normal')">
+            <i class="fas fa-th-list"></i> Normal
+          </button>
+          <button type="button" class="table-toggle-btn {{ $mode == 'rekapan_table' ? 'active' : '' }}"
+            onclick="setViewMode('rekapan_table')">
+            <i class="fas fa-object-group"></i> Group Vendor
+          </button>
+        </div>
+      </div>
+
+      @if($dokumens->count() > 0)
+        @if($mode == 'rekapan_table' && $rekapanByVendor)
+          <!-- Vendor Grouped View -->
+          <div class="vendor-groups">
+            @foreach($rekapanByVendor as $vendorData)
+              <div class="vendor-group">
+                <div class="vendor-group-header" onclick="toggleVendorGroup(this)">
+                  <div class="vendor-group-info">
+                    <div class="vendor-icon">
+                      <i class="fas fa-building"></i>
+                    </div>
+                    <span class="vendor-name">{{ $vendorData['vendor'] }}</span>
+                    <span class="vendor-count">{{ $vendorData['count'] }} dokumen</span>
+                  </div>
+                  <div class="vendor-group-stats">
+                    <div class="vendor-stat">
+                      <div class="vendor-stat-label">Total Nilai</div>
+                      <div class="vendor-stat-value">Rp {{ number_format($vendorData['total_nilai'], 0, ',', '.') }}</div>
+                    </div>
+                    <i class="fas fa-chevron-down vendor-chevron"></i>
+                  </div>
+                </div>
+                <div class="vendor-group-body">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>No. Agenda</th>
+                        <th>No. SPP</th>
+                        <th>Uraian</th>
+                        <th>Nilai (Rp)</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @foreach($vendorData['documents'] as $doc)
+                        <tr>
+                          <td class="cell-primary cell-mono">{{ $doc->nomor_agenda }}</td>
+                          <td class="cell-mono">{{ $doc->nomor_spp ?? '-' }}</td>
+                          <td class="cell-uraian">{{ Str::limit($doc->uraian_spp, 50) }}</td>
+                          <td class="cell-rupiah">{{ number_format($doc->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
+                          <td>
+                            @if($doc->computed_status == 'siap_dibayar')
+                              <span class="status-pill status-pill--ready">
+                                <i class="fas fa-circle"></i> Siap Dibayar
+                              </span>
+                            @elseif($doc->computed_status == 'sudah_dibayar')
+                              <span class="status-pill status-pill--paid">
+                                <i class="fas fa-circle"></i> Sudah Dibayar
+                              </span>
+                            @else
+                              <span class="status-pill status-pill--pending">
+                                <i class="fas fa-circle"></i> Belum Siap
+                              </span>
+                            @endif
+                          </td>
+                          <td>
+                            <a href="{{ route('documents.pembayaran.detail', $doc->id) }}" class="btn-action"
+                              title="Lihat Detail">
+                              <i class="fas fa-eye"></i>
+                            </a>
+                          </td>
+                        </tr>
+                      @endforeach
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            @endforeach
+          </div>
+        @else
+          <!-- Normal Table View -->
+          <!-- AJAX loading overlay -->
+          <div class="ajax-loading-overlay" id="ajaxLoadingOverlay"
+            style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);z-index:10;display:none;align-items:center;justify-content:center;border-radius:var(--radius-lg);">
+            <div style="text-align:center;">
+              <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--brand-primary);"></i>
+              <p style="margin-top:0.5rem;color:var(--text-secondary);font-size:0.875rem;">Memuat data...</p>
+            </div>
+          </div>
+          <div class="data-table-wrapper" id="dataTableWrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  @foreach($selectedColumns as $colKey)
+                    <th>{{ $availableColumns[$colKey] ?? Str::headline($colKey) }}</th>
+                  @endforeach
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+                @foreach($dokumens as $dok)
+                  <tr>
+                    @foreach($selectedColumns as $colKey)
+                      @if($colKey == 'nomor_agenda')
+                        <td class="cell-primary cell-mono">{{ $dok->nomor_agenda }}</td>
+                      @elseif($colKey == 'nomor_spp')
+                        <td class="cell-mono">{{ $dok->nomor_spp ?? '-' }}</td>
+                      @elseif($colKey == 'dibayar_kepada')
+                        <td class="cell-vendor">{{ Str::limit($dok->dibayar_kepada ?? '-', 30) }}</td>
+                      @elseif($colKey == 'uraian_spp')
+                        <td class="cell-uraian">{{ Str::limit($dok->uraian_spp ?? '-', 40) }}</td>
+                      @elseif($colKey == 'nilai_rupiah')
+                        <td class="cell-rupiah text-end">{{ number_format($dok->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
+                      @elseif($colKey == 'status_pembayaran')
+                        <td>
+                          @if($dok->computed_status == 'siap_dibayar')
+                            <span class="status-pill status-pill--ready">
+                              <i class="fas fa-circle"></i> Siap Dibayar
+                            </span>
+                          @elseif($dok->computed_status == 'sudah_dibayar')
+                            <span class="status-pill status-pill--paid">
+                              <i class="fas fa-circle"></i> Sudah Dibayar
+                            </span>
+                          @else
+                            <span class="status-pill status-pill--pending">
+                              <i class="fas fa-circle"></i> Belum Siap
+                            </span>
+                          @endif
+                        </td>
+                      @elseif($colKey == 'tgl_jatuhtempo')
+                        <td>{{ $dok->tgl_jatuhtempo ? \Carbon\Carbon::parse($dok->tgl_jatuhtempo)->format('d/m/Y') : '-' }}</td>
+                      @elseif(in_array($colKey, ['dokumen_po', 'dokumen_pr', 'dokumen_gr']))
+                        <td class="cell-mono">{{ $dok->$colKey ?? '-' }}</td>
+                      @else
+                        <td>{{ $dok->$colKey ?? '-' }}</td>
+                      @endif
+                    @endforeach
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
+        @endif
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper" id="paginationWrapper" style="{{ $dokumens->hasPages() ? '' : 'display:none;' }}">
+          <div class="pagination-info" id="paginationInfo">
+            @if($dokumens->hasPages())
+              Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }}
+            @endif
+          </div>
+          <div id="paginationLinks">
+            @if($dokumens->hasPages())
+              {{ $dokumens->links('pagination::bootstrap-4') }}
+            @endif
+          </div>
+        </div>
+      @else
+        <!-- Empty State -->
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="fas fa-inbox"></i>
+          </div>
+          <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
+          <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
+          <a href="{{ route('dashboard.pembayaran') }}" class="btn-empty"
+            onclick="try{localStorage.removeItem('pembayaran_columns')}catch(e){}">
+            <i class="fas fa-redo"></i>
+            Reset Filter
+          </a>
+        </div>
+      @endif
+    </div>
+  </div>
+
+  <!-- Column Customization Modal -->
+  <style>
+    .customization-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .customization-modal.show {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .modal-content-custom {
+      background: #fff;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 95%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      margin: 1rem;
+    }
+
+    .modal-header-custom {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header-custom h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .modal-header-custom h3 i {
+      color: #083E40;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 0.5rem;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .modal-close-btn:hover {
+      color: #1f2937;
+    }
+
+    .modal-body-custom {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .customization-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .selection-panel,
+    .preview-panel {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .panel-title {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-title i {
+      color: #083E40;
+    }
+
+    .panel-description {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 1rem;
+    }
+
+    .column-selection-list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    @media (max-width: 1000px) {
+      .column-selection-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .column-selection-list {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 500px) {
+      .column-selection-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .column-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .column-item:hover {
+      border-color: #083E40;
+      background: rgba(8, 62, 64, 0.02);
+    }
+
+    .column-item.selected {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.08);
+    }
+
+    .column-item .drag-handle {
+      color: #9ca3af;
+      cursor: grab;
+    }
+
+    .column-item.selected .drag-handle {
+      color: #083E40;
+    }
+
+    .column-item-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: #22c55e;
+      cursor: pointer;
+    }
+
+    .column-item-label {
+      flex: 1;
+      font-size: 0.875rem;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .column-item-order {
+      display: none;
+      width: 24px;
+      height: 24px;
+      background: #22c55e;
+      color: #fff;
+      border-radius: 50%;
+      font-size: 0.75rem;
+      font-weight: 600;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .column-item.selected .column-item-order {
+      display: flex;
+    }
+
+    .preview-container {
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .preview-table {
+      width: 100%;
+      font-size: 0.8rem;
+      border-collapse: collapse;
+    }
+
+    .preview-table th {
+      background: #083E40;
+      color: #fff;
+      padding: 0.75rem 0.5rem;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+
+    .preview-table td {
+      padding: 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      color: #374151;
+    }
+
+    .preview-table tr:hover td {
+      background: #f9fafb;
+    }
+
+    .empty-preview {
+      padding: 3rem 1.5rem;
+      text-align: center;
+      color: #9ca3af;
+    }
+
+    .empty-preview i {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .modal-footer-custom {
+      padding: 1rem 2rem;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .selected-count {
+      font-size: 0.875rem;
+      color: #374151;
+    }
+
+    .selected-count strong {
+      color: #22c55e;
+      font-weight: 700;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .btn-modal {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-cancel {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    .btn-cancel:hover {
+      background: #dc2626;
+    }
+
+    .btn-save {
+      background: #22c55e;
+      color: #fff;
+    }
+
+    .btn-save:hover {
+      background: #16a34a;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-select-action {
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .btn-select-action:hover {
+      border-color: #083E40;
+      color: #083E40;
+    }
+
+    .btn-select-action.btn-select-all:hover {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    .btn-select-action.btn-remove-all:hover {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+  </style>
+
+  <div class="customization-modal" id="columnCustomizationModal">
+    <div class="modal-content-custom">
+      <div class="modal-header-custom">
+        <h3>
+          <i class="fa-solid fa-table-columns"></i>
+          Kustomisasi Kolom Tabel
+        </h3>
+        <button type="button" class="modal-close-btn" onclick="closeColumnModal()">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-custom">
+        <div class="customization-grid">
+          <!-- Selection Panel -->
+          <div class="selection-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <i class="fa-solid fa-check-square"></i>
+                Pilih Kolom
+              </div>
+              <div class="panel-actions">
+                <button type="button" class="btn-select-action" onclick="applyTemplateAgenda()"
+                  style="border-color:#10b981;color:#10b981;">
+                  <i class="fa-solid fa-file-alt"></i> Template Agenda
+                </button>
+                <button type="button" class="btn-select-action btn-select-all" onclick="selectAllColumns()">
+                  <i class="fa-solid fa-check-double"></i> Pilih Semua
+                </button>
+                <button type="button" class="btn-select-action btn-remove-all" onclick="removeAllColumns()">
+                  <i class="fa-solid fa-times"></i> Hapus Semua
+                </button>
+              </div>
+            </div>
+            <div class="panel-description">
+              Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
+            </div>
+            <div class="column-selection-list" id="columnSelectionList">
+              @foreach($availableColumns as $key => $label)
+                <div class="column-item {{ in_array($key, $selectedColumns) ? 'selected' : '' }}" data-column="{{ $key }}"
+                  onclick="toggleColumnSelection(this)">
+                  <div class="drag-handle">
+                    <i class="fa-solid fa-grip-vertical"></i>
+                  </div>
+                  <input type="checkbox" class="column-item-checkbox" value="{{ $key }}" {{ in_array($key, $selectedColumns) ? 'checked' : '' }} onclick="event.stopPropagation()">
+                  <label class="column-item-label">{{ $label }}</label>
+                  <span class="column-item-order">
+                    {{ in_array($key, $selectedColumns) ? array_search($key, $selectedColumns) + 1 : '' }}
+                  </span>
+                </div>
+              @endforeach
+            </div>
+          </div>
+
+          <!-- Preview Panel -->
+          <div class="preview-panel">
+            <div class="panel-title">
+              <i class="fa-solid fa-eye"></i>
+              Preview Hasil
+            </div>
+            <div class="panel-description">
+              Preview tabel akan menampilkan kolom yang Anda pilih sesuai urutan.
+            </div>
+            <div class="preview-container">
+              <div id="tablePreview">
+                @if(count($selectedColumns) > 0)
+                  <table class="preview-table">
+                    <thead>
+                      <tr>
+                        <th>No</th>
+                        @foreach($selectedColumns as $col)
+                          <th>{{ $availableColumns[$col] ?? $col }}</th>
+                        @endforeach
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for($i = 1; $i <= 4; $i++)
+                        <tr>
+                          <td>{{ $i }}</td>
+                          @foreach($selectedColumns as $col)
+                            <td>
+                              @if($col == 'nomor_agenda')
+                                AGD/10{{ $i }}/XII/2024
+                              @elseif($col == 'nomor_spp')
+                                SPP-0010{{ $i }}/XII/2024
+                              @elseif($col == 'nilai_rupiah')
+                                Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
+                              @elseif($col == 'dibayar_kepada')
+                                CV. Contoh Vendor {{ $i }}
+                              @else
+                                Contoh Data {{ $i }}
+                              @endif
+                            </td>
+                          @endforeach
+                          <td>Edit, Kirim</td>
+                        </tr>
+                      @endfor
+                    </tbody>
+                  </table>
+                @else
+                  <div class="empty-preview">
+                    <i class="fa-solid fa-table"></i>
+                    <p>Belum ada kolom yang dipilih</p>
+                    <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                  </div>
+                @endif
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-custom">
+        <div class="selected-count">
+          <strong id="selectedColumnCount">{{ count($selectedColumns) }}</strong> kolom dipilih
+          @if(count($selectedColumns) > 0)
+                  <br><small>Kolom: {{ implode(', ', array_map(function ($col) use ($availableColumns) {
+              return $availableColumns[$col] ?? $col;
+            }, $selectedColumns)) }}</small>
+          @endif
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-modal btn-cancel" onclick="closeColumnModal()">
+            <i class="fa-solid fa-times"></i>
+            Batal
+          </button>
+          <button type="button" class="btn-modal btn-save" onclick="saveColumnCustomization()">
+            <i class="fa-solid fa-save"></i>
+            Simpan Perubahan
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Vendor Mode Confirmation Modal -->
+  <div class="customization-modal" id="exportVendorModal">
+    <div class="modal-content-custom" style="max-width: 500px;">
+      <div class="modal-header-custom">
+        <h3>
+          <i class="fa-solid fa-file-excel" style="color: #22c55e;"></i>
+          Pilih Format Export
+        </h3>
+        <button type="button" class="modal-close-btn" onclick="closeExportVendorModal()">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-custom" style="padding: 1.5rem 2rem;">
+        <p style="color: #64748b; margin-bottom: 1.5rem;">
+          Anda akan mengexport dokumen dari <strong id="vendorCountLabel">beberapa vendor</strong>.
+          Pilih format output yang diinginkan:
+        </p>
+
+        <div class="export-option-group">
+          <label class="export-option" onclick="selectExportMode('multi_sheet')">
+            <input type="radio" name="export_mode_option" value="multi_sheet" checked>
+            <div class="export-option-content">
+              <div class="export-option-icon">
+                <i class="fa-solid fa-layer-group"></i>
+              </div>
+              <div class="export-option-text">
+                <strong>Pisahkan per Sheet</strong>
+                <small>Setiap vendor akan memiliki sheet terpisah dalam file Excel</small>
+              </div>
+            </div>
+          </label>
+
+          <label class="export-option" onclick="selectExportMode('single_sheet')">
+            <input type="radio" name="export_mode_option" value="single_sheet">
+            <div class="export-option-content">
+              <div class="export-option-icon">
+                <i class="fa-solid fa-file-alt"></i>
+              </div>
+              <div class="export-option-text">
+                <strong>Gabungkan dalam 1 Sheet</strong>
+                <small>Semua vendor dalam satu sheet dengan pemisah dan total per vendor</small>
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer-custom" style="justify-content: flex-end;">
+        <div class="modal-actions">
+          <button type="button" class="btn-modal btn-cancel" onclick="closeExportVendorModal()">
+            <i class="fa-solid fa-times"></i>
+            Batal
+          </button>
+          <button type="button" class="btn-modal btn-save" onclick="confirmVendorExport()" style="background: #22c55e;">
+            <i class="fa-solid fa-download"></i>
+            Export Excel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .export-option-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .export-option {
+      display: block;
+      cursor: pointer;
+    }
+
+    .export-option input[type="radio"] {
+      display: none;
+    }
+
+    .export-option-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .export-option:hover .export-option-content {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.04);
+    }
+
+    .export-option input[type="radio"]:checked+.export-option-content {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.08);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+    }
+
+    .export-option-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .export-option-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .export-option-text strong {
+      color: #1e293b;
+      font-size: 0.9375rem;
+    }
+
+    .export-option-text small {
+      color: #64748b;
+      font-size: 0.8125rem;
+    }
+  </style>
+
+  <script>
+
+    // Column customization variables
+    let selectedColumnsOrder = @json($selectedColumns);
+    const availableColumnsData = @json($availableColumns);
+
+    function openColumnModal() {
+      document.getElementById('columnCustomizationModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeColumnModal() {
+      document.getElementById('columnCustomizationModal').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    function toggleColumnSelection(element) {
+      const checkbox = element.querySelector('.column-item-checkbox');
+      const columnKey = element.dataset.column;
+
+      checkbox.checked = !checkbox.checked;
+
+      if (checkbox.checked) {
+        element.classList.add('selected');
+        if (!selectedColumnsOrder.includes(columnKey)) {
+          selectedColumnsOrder.push(columnKey);
+        }
+      } else {
+        element.classList.remove('selected');
+        selectedColumnsOrder = selectedColumnsOrder.filter(c => c !== columnKey);
+      }
+
+      updateOrderNumbers();
+      updateSelectedCount();
+      updatePreview();
+    }
+
+    function updateOrderNumbers() {
+      document.querySelectorAll('.column-item').forEach(item => {
+        const key = item.dataset.column;
+        const orderSpan = item.querySelector('.column-item-order');
+        const idx = selectedColumnsOrder.indexOf(key);
+        if (idx !== -1) {
+          orderSpan.textContent = idx + 1;
+        } else {
+          orderSpan.textContent = '';
+        }
+      });
+    }
+
+    function updateSelectedCount() {
+      document.getElementById('selectedColumnCount').textContent = selectedColumnsOrder.length;
+      // Update column list text
+      const columnLabels = selectedColumnsOrder.map(col => availableColumnsData[col] || col);
+      const countContainer = document.querySelector('.selected-count');
+      if (countContainer) {
+        countContainer.innerHTML = `<strong id="selectedColumnCount">${selectedColumnsOrder.length}</strong> kolom dipilih` +
+          (selectedColumnsOrder.length > 0 ? `<br><small>Kolom: ${columnLabels.join(', ')}</small>` : '');
+      }
+    }
+
+    function updatePreview() {
+      const previewContainer = document.getElementById('tablePreview');
+      if (!previewContainer) return;
+
+      if (selectedColumnsOrder.length === 0) {
+        previewContainer.innerHTML = `
+                                      <div class="empty-preview">
+                                        <i class="fa-solid fa-table"></i>
+                                        <p>Belum ada kolom yang dipilih</p>
+                                        <small>Silakan pilih minimal satu kolom untuk melihat preview</small>
+                                      </div>`;
+        return;
+      }
+
+      let tableHtml = '<table class="preview-table"><thead><tr><th>No</th>';
+      selectedColumnsOrder.forEach(col => {
+        tableHtml += `<th>${availableColumnsData[col] || col}</th>`;
+      });
+      tableHtml += '<th>Aksi</th></tr></thead><tbody>';
+
+      for (let i = 1; i <= 4; i++) {
+        tableHtml += `<tr><td>${i}</td>`;
+        selectedColumnsOrder.forEach(col => {
+          let cellValue = `Contoh Data ${i}`;
+          if (col === 'nomor_agenda') cellValue = `AGD/10${i}/XII/2024`;
+          else if (col === 'nomor_spp') cellValue = `SPP-0010${i}/XII/2024`;
+          else if (col === 'nilai_rupiah') cellValue = `Rp. ${(1000000 * i).toLocaleString('id-ID')}`;
+          else if (col === 'dibayar_kepada') cellValue = `CV. Contoh Vendor ${i}`;
+          else if (col === 'status_pembayaran') cellValue = i % 2 === 0 ? 'Siap Bayar' : 'Belum Siap';
+          tableHtml += `<td>${cellValue}</td>`;
+        });
+        tableHtml += '<td>Edit, Kirim</td></tr>';
+      }
+
+      tableHtml += '</tbody></table>';
+      previewContainer.innerHTML = tableHtml;
+    }
+
+    function selectAllColumns() {
+      selectedColumnsOrder = Object.keys(availableColumnsData);
+      document.querySelectorAll('.column-item').forEach(item => {
+        item.classList.add('selected');
+        item.querySelector('.column-item-checkbox').checked = true;
+      });
+      updateOrderNumbers();
+      updateSelectedCount();
+      updatePreview();
+    }
+
+    function removeAllColumns() {
+      selectedColumnsOrder = [];
+      document.querySelectorAll('.column-item').forEach(item => {
+        item.classList.remove('selected');
+        item.querySelector('.column-item-checkbox').checked = false;
+      });
+      updateOrderNumbers();
+      updateSelectedCount();
+      updatePreview();
+    }
+
+    function applyTemplateAgenda() {
+      const templateCols = [
+        'nomor_agenda',
+        'bulan',
+        'tahun',
+        'nomor_spp',
+        'tanggal_spp',
+        'umur_dokumen_tanggal_masuk',
+        'dibayar_kepada',
+        'uraian_spp',
+        'nilai_rupiah'
+      ];
+
+      // Reset all first
+      selectedColumnsOrder = [];
+      document.querySelectorAll('.column-item').forEach(item => {
+        item.classList.remove('selected');
+        item.querySelector('.column-item-checkbox').checked = false;
+      });
+
+      // Select template columns in order
+      templateCols.forEach(function (colKey) {
+        const item = document.querySelector('.column-item[data-column="' + colKey + '"]');
+        if (item) {
+          item.classList.add('selected');
+          item.querySelector('.column-item-checkbox').checked = true;
+          selectedColumnsOrder.push(colKey);
+        }
+      });
+
+      updateOrderNumbers();
+      updateSelectedCount();
+      updatePreview();
+    }
+
+    function saveColumnCustomization() {
+      if (selectedColumnsOrder.length === 0) {
+        alert('Pilih minimal satu kolom!');
+        return;
+      }
+
+      // Save to localStorage for persistence across refreshes
+      try {
+        localStorage.setItem('pembayaran_columns', JSON.stringify(selectedColumnsOrder));
+      } catch (e) { /* localStorage not available */ }
+
+      const url = new URL(window.location.href);
+      // Clear existing columns params
+      url.searchParams.delete('columns[]');
+      url.searchParams.delete('columns');
+
+      // Add selected columns
+      selectedColumnsOrder.forEach(col => {
+        url.searchParams.append('columns[]', col);
+      });
+
+      window.location.href = url.toString();
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeColumnModal();
+      }
+    });
+
+    // Close modal on backdrop click
+    document.getElementById('columnCustomizationModal')?.addEventListener('click', function (e) {
+      if (e.target === this) {
+        closeColumnModal();
+      }
+    });
+  </script>
+
+  <script>
+    // View Mode Toggle
+    function setViewMode(mode) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('mode', mode);
+      window.location.href = url.toString();
+    }
+
+    function changePerPage(value) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('per_page', value);
+      url.searchParams.delete('page'); // Reset to page 1
+      window.location.href = url.toString();
+    }
+
+    // Vendor Group Toggle
+    function toggleVendorGroup(header) {
+      const body = header.nextElementSibling;
+      const isExpanded = header.classList.contains('expanded');
+
+      if (isExpanded) {
+        header.classList.remove('expanded');
+        body.classList.remove('show');
+      } else {
+        header.classList.add('expanded');
+        body.classList.add('show');
+      }
+    }
+
+    // Number Counter Animation
+    document.addEventListener('DOMContentLoaded', function () {
+      const counters = document.querySelectorAll('.stat-value');
+
+      counters.forEach(counter => {
+        const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
+        if (isNaN(target) || target === 0) return;
+
+        let current = 0;
+        const increment = target / 30;
+        const duration = 800;
+        const stepTime = duration / 30;
+
+        const updateCounter = () => {
+          current += increment;
+          if (current < target) {
+            counter.textContent = Math.floor(current).toLocaleString('id-ID');
+            setTimeout(updateCounter, stepTime);
+          } else {
+            counter.textContent = target.toLocaleString('id-ID');
+          }
+        };
+
+        setTimeout(updateCounter, 300);
+      });
+    });
+
+    // Add subtle hover feedback
+    document.querySelectorAll('.stat-card, .deadline-card').forEach(card => {
+      card.addEventListener('mouseenter', function () {
+        this.style.transform = 'translateY(-4px)';
+      });
+      card.addEventListener('mouseleave', function () {
+        this.style.transform = 'translateY(0)';
+      });
+    });
+
+    // Advanced Filter Panel Toggle
+    document.getElementById('advancedFilterToggle')?.addEventListener('click', function () {
+      const panel = document.getElementById('advancedFilterPanel');
+      const toggle = this;
+
+      panel.classList.toggle('show');
+      toggle.classList.toggle('active');
+    });
+
+    // Reset Advanced Filters
+    function resetAdvancedFilters() {
+      document.getElementById('filterVendor').value = '';
+      document.getElementById('filterKategori').value = '';
+      document.getElementById('filterJenisDokumen').value = '';
+      document.getElementById('filterJenisSubPekerjaan').value = '';
+      document.getElementById('filterKebun').value = '';
+      document.getElementById('filterJenisPembayaran').value = '';
+    }
+
+    // Export Document Function
+    let pendingExportFormat = 'excel';
+    let selectedVendorExportMode = 'multi_sheet';
+
+    // Get unique vendor count from the page data
+    const rekapanByVendorData = @json($rekapanByVendor ?? []);
+    const currentMode = '{{ $mode ?? "normal" }}';
+    const currentVendorFilter = '{{ request("filter_vendor") ?? "" }}';
+
+    function getUniqueVendorCount() {
+      if (rekapanByVendorData && typeof rekapanByVendorData === 'object') {
+        return Object.keys(rekapanByVendorData).length;
+      }
+      return 0;
+    }
+
+    function exportDocument(format) {
+      pendingExportFormat = format;
+
+      // Check if we're in rekapan_table (Group Vendor) mode and NOT filtering by single vendor
+      const vendorCount = getUniqueVendorCount();
+      const isGroupVendorMode = currentMode === 'rekapan_table';
+      const hasVendorFilter = currentVendorFilter !== '';
+
+      // If in group vendor mode with multiple vendors and no specific vendor filter, show modal
+      if (isGroupVendorMode && vendorCount > 1 && !hasVendorFilter && format === 'excel') {
+        document.getElementById('vendorCountLabel').textContent = vendorCount + ' vendor';
+        openExportVendorModal();
+        return;
+      }
+
+      // Otherwise, export directly
+      doExport(format, hasVendorFilter ? 'single_vendor' : '');
+    }
+
+    function openExportVendorModal() {
+      document.getElementById('exportVendorModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeExportVendorModal() {
+      document.getElementById('exportVendorModal').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    function selectExportMode(mode) {
+      selectedVendorExportMode = mode;
+      // Update radio button visual selection
+      document.querySelectorAll('input[name="export_mode_option"]').forEach(radio => {
+        radio.checked = (radio.value === mode);
+      });
+    }
+
+    function confirmVendorExport() {
+      closeExportVendorModal();
+      doExport(pendingExportFormat, selectedVendorExportMode);
+    }
+
+    function doExport(format, vendorMode) {
+      const form = document.getElementById('exportForm');
+      const formatInput = document.getElementById('exportFormat');
+      const columnsContainer = document.getElementById('exportColumnsContainer');
+      const vendorExportModeInput = document.getElementById('vendorExportMode');
+
+      // Set format and vendor export mode
+      formatInput.value = format;
+      vendorExportModeInput.value = vendorMode || '';
+
+      // === Sync current filter values from the filter form into the export form ===
+      const filterForm = document.getElementById('filterForm');
+      if (filterForm) {
+        // Basic filters
+        const searchVal = filterForm.querySelector('input[name="search"]');
+        const statusVal = filterForm.querySelector('select[name="status_pembayaran"]');
+        const yearVal = filterForm.querySelector('select[name="year"]');
+        const monthVal = filterForm.querySelector('select[name="month"]');
+
+        form.querySelector('input[name="search"]').value = searchVal ? searchVal.value : '';
+        form.querySelector('input[name="status_pembayaran"]').value = statusVal ? statusVal.value : '';
+        form.querySelector('input[name="year"]').value = yearVal ? yearVal.value : '';
+        form.querySelector('input[name="month"]').value = monthVal ? monthVal.value : '';
+
+        // Advanced filters
+        const advancedFilters = ['filter_vendor', 'filter_kategori', 'filter_jenis_dokumen', 'filter_jenis_sub_pekerjaan', 'filter_kebun', 'filter_jenis_pembayaran'];
+        advancedFilters.forEach(function (filterName) {
+          const sourceEl = filterForm.querySelector('[name="' + filterName + '"]');
+          const targetEl = form.querySelector('input[name="' + filterName + '"]');
+          if (targetEl) {
+            targetEl.value = sourceEl ? sourceEl.value : '';
+          }
+        });
+      }
+
+      // Sync the current view mode
+      form.querySelector('input[name="mode"]').value = currentMode || 'normal';
+
+      // Clear previous columns
+      columnsContainer.innerHTML = '';
+
+      // Use selectedColumnsOrder (from column customization) for exact column match with table
+      const columnsToExport = (typeof selectedColumnsOrder !== 'undefined' && selectedColumnsOrder.length > 0)
+        ? selectedColumnsOrder
+        : null;
+
+      if (columnsToExport) {
+        columnsToExport.forEach(function (col) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'columns[]';
+          input.value = col;
+          columnsContainer.appendChild(input);
+        });
+      }
+      // If no columns selected, let backend use defaults
+
+      // Submit form
+      form.submit();
+    }
+  </script>
+
+  {{-- ===== AJAX FILTER SYSTEM ===== --}}
+  <script>
+    (function () {
+      'use strict';
+
+      const AJAX_CONFIG = {
+        url: '{{ route("dashboard.pembayaran") }}',
+        debounceMs: 300,
+      };
+
+      let searchDebounceTimer = null;
+      let currentPage = {{ $dokumens->currentPage() }};
+
+      // ==========================================
+      // INIT: Hook into forms and filters
+      // ==========================================
+      document.addEventListener('DOMContentLoaded', function () {
+        const filterForm = document.getElementById('filterForm');
+        if (!filterForm) return;
+
+        // Intercept form submission
+        filterForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          currentPage = 1;
+          fetchFilteredData();
+        });
+
+        // Auto-apply dropdown filters on change
+        filterForm.querySelectorAll('select').forEach(function (sel) {
+          sel.addEventListener('change', function () {
+            currentPage = 1;
+            fetchFilteredData();
+          });
+        });
+
+        // Debounced search on typing
+        const searchInput = filterForm.querySelector('input[name="search"]');
+        if (searchInput) {
+          searchInput.addEventListener('input', function () {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(function () {
+              currentPage = 1;
+              fetchFilteredData();
+            }, AJAX_CONFIG.debounceMs);
+          });
+        }
+      });
+
+      // ==========================================
+      // CORE: Fetch filtered data via AJAX
+      // ==========================================
+      function fetchFilteredData() {
+        const filterForm = document.getElementById('filterForm');
+        if (!filterForm) return;
+
+        showLoading(true);
+
+        // Build query string from form
+        const formData = new FormData(filterForm);
+        const params = new URLSearchParams();
+
+        for (const [key, value] of formData.entries()) {
+          if (value) params.append(key, value);
+        }
+        params.set('page', currentPage);
+
+        // Carry over columns[] from URL or localStorage
+        const currentUrl = new URL(window.location.href);
+        let existingColumns = currentUrl.searchParams.getAll('columns[]');
+        if (existingColumns.length === 0) {
+          try {
+            const saved = localStorage.getItem('pembayaran_columns');
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (Array.isArray(parsed) && parsed.length > 0) existingColumns = parsed;
+            }
+          } catch (e) { /* ignore */ }
+        }
+        if (existingColumns.length > 0) {
+          existingColumns.forEach(function (col) {
+            params.append('columns[]', col);
+          });
+        }
+        const existingMode = currentUrl.searchParams.get('mode');
+        if (existingMode) {
+          params.set('mode', existingMode);
+        }
+
+        fetch(AJAX_CONFIG.url + '?' + params.toString(), {
+          method: 'GET',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+          },
+        })
+          .then(function (response) {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+          })
+          .then(function (data) {
+            updateStatisticsCards(data.statistics);
+            updateDeadlineCards(data);
+            updateTable(data);
+            updatePagination(data.pagination);
+            updateUrlState(params);
+            showLoading(false);
+          })
+          .catch(function (error) {
+            console.error('AJAX filter error:', error);
+            showLoading(false);
+            // Fallback: submit form normally
+            filterForm.submit();
+          });
+      }
+
+      // ==========================================
+      // UPDATE: Statistics Cards
+      // ==========================================
+      function updateStatisticsCards(stats) {
+        if (!stats) return;
+
+        // Update stat card values
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach(function (card) {
+          const valueEl = card.querySelector('.stat-value');
+          const subvalueEl = card.querySelector('.stat-subvalue');
+          if (!valueEl) return;
+
+          if (card.classList.contains('stat-card--total')) {
+            valueEl.textContent = formatNumber(stats.total_documents);
+            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai);
+          } else if (card.classList.contains('stat-card--pending')) {
+            valueEl.textContent = formatNumber(stats.by_status.belum_dibayar);
+            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.belum_dibayar);
+          } else if (card.classList.contains('stat-card--ready')) {
+            valueEl.textContent = formatNumber(stats.by_status.siap_dibayar);
+            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.siap_dibayar);
+          } else if (card.classList.contains('stat-card--paid')) {
+            valueEl.textContent = formatNumber(stats.by_status.sudah_dibayar);
+            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.sudah_dibayar);
+          }
+        });
+      }
+
+      // ==========================================
+      // UPDATE: Deadline Cards
+      // ==========================================
+      function updateDeadlineCards(data) {
+        const deadlineCards = document.querySelectorAll('.deadline-card');
+        deadlineCards.forEach(function (card) {
+          const valueEl = card.querySelector('.deadline-value');
+          if (!valueEl) return;
+
+          if (card.classList.contains('deadline-card--aman')) {
+            valueEl.textContent = formatNumber(data.totalAman);
+          } else if (card.classList.contains('deadline-card--peringatan')) {
+            valueEl.textContent = formatNumber(data.totalPeringatan);
+          } else if (card.classList.contains('deadline-card--terlambat')) {
+            valueEl.textContent = formatNumber(data.totalTerlambat);
+          }
+        });
+      }
+
+      // ==========================================
+      // UPDATE: Table Body
+      // ==========================================
+      function updateTable(data) {
+        const tableCount = document.getElementById('tableCount');
+        const tableSection = document.getElementById('tableSection');
+        const wrapper = document.getElementById('dataTableWrapper');
+
+        if (tableCount) {
+          tableCount.textContent = data.pagination.total;
+        }
+
+        // If in rekapan_table mode, we can't easily update the grouped view via AJAX
+        // So we skip table body update for that mode
+        if (data.mode === 'rekapan_table') {
+          return;
+        }
+
+        const dokumens = data.dokumens || [];
+        const columns = data.selectedColumns || [];
+
+        if (dokumens.length === 0) {
+          // Hide the table wrapper (don't destroy it!)
+          if (wrapper) {
+            wrapper.style.display = 'none';
+          }
+          // Show empty state div if not already visible
+          let emptyState = tableSection.querySelector('.empty-state');
+          if (!emptyState) {
+            emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.innerHTML = `
+                            <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                            <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
+                            <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
+                            <a href="${AJAX_CONFIG.url}" class="btn-empty">
+                              <i class="fas fa-redo"></i> Reset Filter
+                            </a>
+                          `;
+            tableSection.querySelector('.table-header').insertAdjacentElement('afterend', emptyState);
+          }
+          return;
+        }
+
+        // Remove empty state if it exists and show the table wrapper
+        const existingEmpty = tableSection.querySelector('.empty-state');
+        if (existingEmpty) existingEmpty.remove();
+        if (wrapper) {
+          wrapper.style.display = '';
+        }
+
+        // Re-acquire tableBody (it's preserved since we no longer destroy wrapper)
+        const tableBody = document.getElementById('tableBody');
+        if (!tableBody) return;
+
+        // Rebuild table rows
+        let html = '';
+        dokumens.forEach(function (dok) {
+          html += '<tr>';
+          columns.forEach(function (colKey) {
+            if (colKey === 'nomor_agenda') {
+              html += '<td class="cell-primary cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
+            } else if (colKey === 'nomor_spp') {
+              html += '<td class="cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
+            } else if (colKey === 'dibayar_kepada') {
+              html += '<td class="cell-vendor">' + escapeHtml(dok[colKey] || '-') + '</td>';
+            } else if (colKey === 'uraian_spp') {
+              html += '<td class="cell-uraian">' + escapeHtml(dok[colKey] || '-') + '</td>';
+            } else if (colKey === 'nilai_rupiah') {
+              html += '<td class="cell-rupiah text-end">' + escapeHtml(dok[colKey] || '0') + '</td>';
+            } else if (colKey === 'status_pembayaran') {
+              html += '<td>' + renderStatusPill(dok.computed_status) + '</td>';
+            } else if (colKey === 'tgl_jatuhtempo') {
+              html += '<td>' + escapeHtml(dok[colKey] || '-') + '</td>';
+            } else if (['dokumen_po', 'dokumen_pr', 'dokumen_gr'].indexOf(colKey) !== -1) {
+              html += '<td class="cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
+            } else {
+              html += '<td>' + escapeHtml(dok[colKey] || '-') + '</td>';
+            }
+          });
+          html += '</tr>';
+        });
+
+        tableBody.innerHTML = html;
+      }
+
+      // ==========================================
+      // UPDATE: Pagination
+      // ==========================================
+      function updatePagination(pagination) {
+        const wrapper = document.getElementById('paginationWrapper');
+        const info = document.getElementById('paginationInfo');
+        const links = document.getElementById('paginationLinks');
+
+        if (!wrapper) return;
+
+        if (pagination.last_page <= 1) {
+          wrapper.style.display = 'none';
+          return;
+        }
+
+        wrapper.style.display = '';
+
+        // Update info text
+        if (info) {
+          info.textContent = 'Menampilkan ' + pagination.first_item + ' - ' + pagination.last_item + ' dari ' + pagination.total;
+        }
+
+        // Build pagination links
+        if (links) {
+          let paginationHtml = '<nav><ul class="pagination">';
+
+          // Previous
+          if (pagination.current_page > 1) {
+            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + (pagination.current_page - 1) + '">&lsaquo;</a></li>';
+          } else {
+            paginationHtml += '<li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>';
+          }
+
+          // Page numbers
+          let startPage = Math.max(1, pagination.current_page - 2);
+          let endPage = Math.min(pagination.last_page, pagination.current_page + 2);
+
+          if (startPage > 1) {
+            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>';
+            if (startPage > 2) {
+              paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+          }
+
+          for (let i = startPage; i <= endPage; i++) {
+            if (i === pagination.current_page) {
+              paginationHtml += '<li class="page-item active"><span class="page-link">' + i + '</span></li>';
+            } else {
+              paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>';
+            }
+          }
+
+          if (endPage < pagination.last_page) {
+            if (endPage < pagination.last_page - 1) {
+              paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + pagination.last_page + '">' + pagination.last_page + '</a></li>';
+          }
+
+          // Next
+          if (pagination.current_page < pagination.last_page) {
+            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + (pagination.current_page + 1) + '">&rsaquo;</a></li>';
+          } else {
+            paginationHtml += '<li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>';
+          }
+
+          paginationHtml += '</ul></nav>';
+          links.innerHTML = paginationHtml;
+
+          // Bind click handlers to pagination links
+          links.querySelectorAll('a.page-link[data-page]').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+              e.preventDefault();
+              currentPage = parseInt(this.getAttribute('data-page'));
+              fetchFilteredData();
+              // Scroll to table
+              var tableSection = document.getElementById('tableSection');
+              if (tableSection) tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+          });
+        }
+      }
+
+      // ==========================================
+      // HELPERS
+      // ==========================================
+      function showLoading(show) {
+        const overlay = document.getElementById('ajaxLoadingOverlay');
+        if (overlay) {
+          overlay.style.display = show ? 'flex' : 'none';
+        }
+      }
+
+      function updateUrlState(params) {
+        const newUrl = AJAX_CONFIG.url + '?' + params.toString();
+        window.history.replaceState({}, '', newUrl);
+      }
+
+      function formatNumber(num) {
+        if (num === null || num === undefined) return '0';
+        return Number(num).toLocaleString('id-ID');
+      }
+
+      function escapeHtml(str) {
+        if (str === null || str === undefined) return '-';
+        const div = document.createElement('div');
+        div.textContent = String(str);
+        return div.innerHTML;
+      }
+
+      function renderStatusPill(status) {
+        if (status === 'siap_dibayar') {
+          return '<span class="status-pill status-pill--ready"><i class="fas fa-circle"></i> Siap Dibayar</span>';
+        } else if (status === 'sudah_dibayar') {
+          return '<span class="status-pill status-pill--paid"><i class="fas fa-circle"></i> Sudah Dibayar</span>';
+        } else {
+          return '<span class="status-pill status-pill--pending"><i class="fas fa-circle"></i> Belum Siap</span>';
+        }
+      }
+    })();
+  </script>
 @endsection

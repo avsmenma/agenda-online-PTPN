@@ -22,20 +22,23 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .search-input-wrapper {
-    flex: 1;
-    min-width: 250px;
+    flex: 1 1 300px;
+    min-width: 200px;
+    max-width: 500px;
   }
 
   .filter-wrapper {
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    min-width: fit-content;
   }
 
   .customize-button-wrapper {
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    min-width: fit-content;
   }
 
   .search-box .input-group {
@@ -333,6 +336,8 @@
     color: white;
     font-weight: 600;
     font-size: 12px;
+    text-align: center;
+    vertical-align: middle;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     padding: 16px 12px;
@@ -393,6 +398,41 @@
     padding: 14px 12px;
     border-bottom: 1px solid rgba(8, 62, 64, 0.08);
     vertical-align: middle;
+  }
+
+  .table-enhanced .col-uraian {
+    width: 700px;
+    min-width: 500px;
+    max-width: 1000px;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    vertical-align: top;
+    padding: 12px;
+  }
+  
+  .table-enhanced .col-uraian span {
+    display: block;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    width: 100%;
+  }
+
+  .table-enhanced .col-dibayar_kepada,
+  .table-enhanced td.col-dibayar_kepada {
+    width: 250px;
+    min-width: 200px;
+    max-width: 300px;
+    word-wrap: break-word;
+    white-space: normal !important;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    vertical-align: middle;
+    text-align: center;
+    padding: 12px;
   }
 
   .table-enhanced tbody tr:last-child td {
@@ -505,7 +545,335 @@
     text-align: center;
   }
 
-  .modal-content {
+  /* Deadline Card Styles - Matching Team Verifikasi Design */
+  .deadline-card {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    padding: 10px 12px;
+    border: 2px solid transparent;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    margin: 0 auto;
+    max-width: 160px;
+    min-width: 130px;
+  }
+
+  .deadline-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    transition: height 0.3s ease;
+  }
+
+  .deadline-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    border-color: var(--deadline-color);
+  }
+
+  .deadline-time {
+    font-size: 11px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .deadline-time i {
+    font-size: 10px;
+    color: var(--deadline-color);
+  }
+
+  .deadline-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .deadline-remaining {
+    font-size: 9px;
+    color: #6b7280;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .deadline-remaining i {
+    font-size: 9px;
+  }
+
+  /* Safe State - Green */
+  .deadline-card.deadline-safe {
+    --deadline-color: #10b981;
+    --deadline-color-light: #34d399;
+    --deadline-bg: #ecfdf5;
+    --deadline-text: #065f46;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(16, 185, 129, 0.2) !important;
+  }
+
+  .deadline-card.deadline-safe .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-safe {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+  }
+
+  /* Warning State - Orange */
+  .deadline-card.deadline-warning {
+    --deadline-color: #f59e0b;
+    --deadline-color-light: #fbbf24;
+    --deadline-bg: #fffbeb;
+    --deadline-text: #92400e;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(245, 158, 11, 0.2) !important;
+  }
+
+  .deadline-card.deadline-warning .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-warning {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+  }
+
+  /* Danger State - Red */
+  .deadline-card.deadline-danger {
+    --deadline-color: #ef4444;
+    --deadline-color-light: #f87171;
+    --deadline-bg: #fef2f2;
+    --deadline-text: #991b1b;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+  }
+
+  .deadline-card.deadline-danger .deadline-time {
+    color: var(--deadline-text) !important;
+    font-weight: 800;
+  }
+
+  .deadline-indicator.deadline-danger {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
+    animation: danger-pulse 2s infinite;
+  }
+
+  /* Completed State - Grey (timer stopped, document paid) */
+  .deadline-card.deadline-completed {
+    --deadline-color: #6b7280;
+    --deadline-color-light: #9ca3af;
+    --deadline-bg: #f3f4f6;
+    --deadline-text: #4b5563;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(107, 114, 128, 0.3) !important;
+    opacity: 0.85;
+  }
+
+  .deadline-card.deadline-completed .deadline-time {
+    color: var(--deadline-text) !important;
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+
+  .deadline-indicator.deadline-completed {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(107, 114, 128, 0.3);
+  }
+
+  .deadline-card.deadline-completed .deadline-age {
+    color: #9ca3af !important;
+  }
+
+  .deadline-card.deadline-completed .deadline-label {
+    color: #6b7280 !important;
+  }
+
+  /* Age-based deadline colors (count up from received_at) */
+  /* Green - Aman (< 24 hours) */
+  .deadline-card.deadline-green {
+    --deadline-color: #10b981;
+    --deadline-color-light: #34d399;
+    --deadline-bg: #ecfdf5;
+    --deadline-text: #065f46;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(16, 185, 129, 0.2) !important;
+  }
+
+  .deadline-card.deadline-green .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-green {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+  }
+
+  /* Yellow - Perlu Perhatian (>= 24 hours < 72 hours) */
+  .deadline-card.deadline-yellow {
+    --deadline-color: #f59e0b;
+    --deadline-color-light: #fbbf24;
+    --deadline-bg: #fffbeb;
+    --deadline-text: #92400e;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(245, 158, 11, 0.2) !important;
+  }
+
+  .deadline-card.deadline-yellow .deadline-time {
+    color: var(--deadline-text) !important;
+  }
+
+  .deadline-indicator.deadline-yellow {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+  }
+
+  /* Red - Terlambat (>= 72 hours) */
+  .deadline-card.deadline-red {
+    --deadline-color: #ef4444;
+    --deadline-color-light: #f87171;
+    --deadline-bg: #fef2f2;
+    --deadline-text: #991b1b;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+  }
+
+  .deadline-card.deadline-red .deadline-time {
+    color: var(--deadline-text) !important;
+    font-weight: 800;
+  }
+
+  .deadline-indicator.deadline-red {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
+    animation: danger-pulse 2s infinite;
+  }
+
+  /* Gray - Selesai/Sudah Dibayar (timer stopped) */
+  .deadline-card.deadline-gray {
+    --deadline-color: #6b7280;
+    --deadline-color-light: #9ca3af;
+    --deadline-bg: #f3f4f6;
+    --deadline-text: #4b5563;
+    background: var(--deadline-bg) !important;
+    border-color: rgba(107, 114, 128, 0.3) !important;
+    opacity: 0.85;
+  }
+
+  .deadline-card.deadline-gray .deadline-time {
+    color: var(--deadline-text) !important;
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+
+  .deadline-indicator.deadline-gray {
+    background: linear-gradient(135deg, var(--deadline-color) 0%, var(--deadline-color-light) 100%);
+    color: white;
+    box-shadow: 0 3px 10px rgba(107, 114, 128, 0.3);
+  }
+
+  .deadline-card.deadline-gray .deadline-age {
+    color: #9ca3af !important;
+  }
+
+  /* No deadline state */
+  .no-deadline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #9ca3af;
+    font-size: 11px;
+    font-style: italic;
+    padding: 8px 12px;
+    border-radius: 20px;
+    background: #f9fafb;
+    border: 1px dashed #d1d5db;
+    transition: all 0.3s ease;
+  }
+
+  .no-deadline:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+  }
+
+  @keyframes danger-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+  }
+
+  #viewDocumentModal.modal {
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  #viewDocumentModal .modal-dialog.modal-xl {
+    max-width: 90% !important;
+    width: 90% !important;
+    margin: 1rem auto !important;
+    padding: 0 !important;
+  }
+
+  #viewDocumentModal.show .modal-dialog {
+    transform: none !important;
+  }
+
+  #viewDocumentModal .modal-content {
+    border-radius: 0 !important;
+  }
+
+  @media (max-width: 992px) {
+    #viewDocumentModal .modal-dialog.modal-xl {
+      max-width: 95% !important;
+      width: 95% !important;
+      margin: 0.5rem auto !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    #viewDocumentModal .modal-dialog.modal-xl {
+      max-width: 98% !important;
+      width: 98% !important;
+      margin: 0.25rem auto !important;
+    }
+  }
+
+  .modal-content:not(#viewDocumentModal .modal-content) {
     background: white;
     border-radius: 16px;
     box-shadow: 0 20px 60px rgba(8, 62, 64, 0.3);
@@ -640,6 +1008,22 @@
     color: white;
   }
 
+  /* Deadline Badge Colors */
+  .status-badge.deadline-aman {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+  }
+
+  .status-badge.deadline-peringatan {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #333;
+  }
+
+  .status-badge.deadline-terlambat {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+  }
+
   @media (max-width: 768px) {
     .search-box {
       padding: 15px;
@@ -658,7 +1042,7 @@
       align-items: stretch;
     }
 
-    .modal-content {
+    .modal-content:not(#viewDocumentModal .modal-content) {
       width: 95%;
     }
   }
@@ -704,6 +1088,230 @@
       flex-wrap: wrap;
     }
   }
+
+  /* ============================================ */
+  /* ADVANCED FILTER PANEL STYLES */
+  /* ============================================ */
+  .advanced-filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #f8faf8 0%, #ffffff 100%);
+    border: 2px solid rgba(136, 151, 23, 0.3);
+    color: #889717;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 12px;
+  }
+
+  .advanced-filter-toggle:hover {
+    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(136, 151, 23, 0.2);
+  }
+
+  .advanced-filter-toggle.active {
+    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+    color: white;
+  }
+
+  .advanced-filter-toggle i {
+    transition: transform 0.3s ease;
+  }
+
+  .advanced-filter-toggle.active i.fa-chevron-down {
+    transform: rotate(180deg);
+  }
+
+  .advanced-filter-panel {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.4s ease;
+    margin-top: 0;
+  }
+
+  .advanced-filter-panel.show {
+    max-height: 600px;
+    opacity: 1;
+    margin-top: 16px;
+  }
+
+  .advanced-filter-content {
+    background: linear-gradient(135deg, #f8faf8 0%, #ffffff 100%);
+    border: 2px solid rgba(8, 62, 64, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(8, 62, 64, 0.08);
+  }
+
+  .advanced-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .filter-group label {
+    font-weight: 600;
+    color: #083E40;
+    font-size: 12px;
+    margin: 0;
+  }
+
+  .filter-group select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid rgba(8, 62, 64, 0.15);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #083E40;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23083E40'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 18px;
+    padding-right: 35px;
+  }
+
+  .filter-group select:hover {
+    border-color: #889717;
+  }
+
+  .filter-group select:focus {
+    outline: none;
+    border-color: #889717;
+    box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .btn-apply-filter {
+    padding: 10px 24px;
+    background: linear-gradient(135deg, #889717 0%, #9ab01f 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-apply-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(136, 151, 23, 0.3);
+  }
+
+  .btn-reset-filter {
+    padding: 10px 24px;
+    background: white;
+    color: #dc3545;
+    font-weight: 600;
+    font-size: 13px;
+    border: 2px solid rgba(220, 53, 69, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-reset-filter:hover {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+  }
+
+  .active-filters-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    background: #dc3545;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 50%;
+    margin-left: 6px;
+  }
+
+  @media (max-width: 768px) {
+    .advanced-filter-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .filter-actions {
+      flex-direction: column;
+    }
+    
+    .btn-apply-filter, .btn-reset-filter {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  /* Refresh Button */
+  .btn-refresh {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(23, 162, 184, 0.3);
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-refresh:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+    background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+  }
+  .btn-refresh:active { transform: translateY(0); }
+  .btn-refresh.loading { opacity: 0.8; cursor: wait; }
+  .btn-refresh.loading i { animation: refreshSpin 1s linear infinite; }
+  @keyframes refreshSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .refresh-toast {
+    position: fixed; top: 20px; right: 20px; padding: 12px 20px;
+    border-radius: 10px; color: white; font-size: 14px; font-weight: 500;
+    z-index: 99999; display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.5s forwards;
+  }
+  .refresh-toast.success { background: linear-gradient(135deg, #28a745, #218838); }
+  .refresh-toast.error { background: linear-gradient(135deg, #dc3545, #c82333); }
+  @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 </style>
 
 <h2>{{ $title }}</h2>
@@ -754,6 +1362,9 @@
       </div>
     </div>
     <div class="customize-button-wrapper">
+      <button type="button" class="btn-refresh" id="btnRefreshTable" onclick="refreshDocumentTable()">
+        <i class="fa-solid fa-arrows-rotate"></i> Refresh
+      </button>
       <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
         <i class="fa-solid fa-table-columns me-2"></i>Kustomisasi Kolom Tabel
       </button>
@@ -762,19 +1373,29 @@
 </div>
 
 <!-- Tabel Dokumen -->
-<div class="table-dokumen">
+<div class="table-dokumen" id="documentTableContainer">
   <div class="table-responsive">
     <table class="table table-enhanced mb-0">
       <thead>
         <tr>
-          <th class="col-no sticky-column">No</th>
+          <th class="col-no">No</th>
           @foreach($selectedColumns as $col)
             @if($col !== 'status')
-              <th class="col-{{ $col }} sticky-column">{{ $availableColumns[$col] ?? $col }}</th>
+              @if($col === 'nomor_agenda')
+                <th class="col-{{ $col }}" onclick="toggleSort('{{ $col }}')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                  {{ $availableColumns[$col] ?? $col }}
+                  <span style="display:inline-flex; flex-direction:column; line-height:0.5; margin-left:4px; font-size:10px; vertical-align:middle;">
+                    <i class="fas fa-caret-up" style="opacity:{{ (isset($sortColumn) && $sortColumn==$col && isset($sortOrder) && $sortOrder=='asc') ? '1' : '0.3' }}"></i>
+                    <i class="fas fa-caret-down" style="opacity:{{ (isset($sortColumn) && $sortColumn==$col && isset($sortOrder) && $sortOrder=='desc') ? '1' : '0.3' }}"></i>
+                  </span>
+                </th>
+              @else
+                <th class="col-{{ $col }}">{{ $availableColumns[$col] ?? $col }}</th>
+              @endif
             @endif
           @endforeach
-          <th class="col-status sticky-column">Status</th>
-          <th class="col-action sticky-column">Aksi</th>
+          <th class="col-status">Status</th>
+          <th class="col-action">Aksi</th>
         </tr>
       </thead>
       <tbody>
@@ -793,32 +1414,49 @@
               $paymentStatus = 'belum_siap_bayar';
             }
           }
+          // Inline edit: Pembayaran bisa edit saat dokumen sudah berada di tangan mereka
+          $canInlineEdit = in_array($dokumen->current_handler ?? '', ['pembayaran'])
+            || in_array($dokumen->status ?? '', ['sent_to_pembayaran', 'processed_by_pembayaran', 'processed_by_akutansi']);
         @endphp
         <tr 
-          {{-- Removed row onclick for siap_bayar status because openDocumentDetailModal is not defined
-               and was causing JavaScript errors that prevented Edit button from working.
-               For siap_bayar: users should only click Edit button, not the row itself --}}
           @if($paymentStatus === 'belum_siap_bayar')
             {{-- Belum siap bayar: row is not clickable, only eye icon for tracking --}}
             style="cursor: default;"
             class="no-click-row"
             title="Dokumen belum siap bayar. Klik icon mata untuk melihat tracking."
-          @elseif($paymentStatus === 'siap_bayar')
-            {{-- Siap bayar: row is not clickable, only Edit button is clickable --}}
-            style="cursor: default;"
-            class="no-click-row"
-            title="Klik tombol Edit untuk input data pembayaran."
-          @elseif($paymentStatus === 'sudah_dibayar')
-            {{-- Sudah dibayar: row is not clickable anymore --}}
-            style="cursor: default;"
-            class="no-click-row"
-            title="Dokumen sudah dibayar."
+          @elseif($paymentStatus === 'siap_bayar' || $paymentStatus === 'sudah_dibayar')
+            {{-- Siap bayar atau sudah dibayar: row is clickable untuk melihat detail --}}
+            onclick="if(typeof window.openDocumentDetailModal === 'function') { window.openDocumentDetailModal({{ $dokumen->id }}, event); }"
+            class="clickable-row"
+            title="Klik untuk melihat detail lengkap dokumen"
           @endif
           data-dokumen-id="{{ $dokumen->id }}"
         >
           <td class="col-no">{{ $dokumens->firstItem() + $index }}</td>
           @foreach($selectedColumns as $col)
             @if($col !== 'status')
+            @if(in_array($col, ['nomor_spp', 'uraian_spp', 'nilai_rupiah', 'tanggal_spp']) && $canInlineEdit)
+              {{-- Editable cell: attr set directly on td, no wrapper needed --}}
+              <td class="col-{{ $col }} ie-cell"
+                  data-id="{{ $dokumen->id }}"
+                  data-field="{{ $col }}"
+                  @if($col === 'nilai_rupiah') data-raw="{{ $dokumen->nilai_rupiah ?? '' }}"
+                  @elseif($col === 'tanggal_spp') data-raw="{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('Y-m-d') : '' }}"
+                  @else data-raw="{{ $dokumen->$col ?? '' }}"
+                  @endif
+                  onclick="event.stopPropagation()"
+                  title="Klik dua kali untuk mengedit">
+                @if($col === 'uraian_spp')
+                  <span class="ie-display" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.6; width: 100%;">{{ $dokumen->uraian_spp ?? '-' }}</span>
+                @elseif($col === 'nilai_rupiah')
+                  <span class="ie-display"><strong>{{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong></span>
+                @elseif($col === 'tanggal_spp')
+                  <span class="ie-display">{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}</span>
+                @else
+                  <span class="ie-display">{{ $dokumen->$col ?? '-' }}</span>
+                @endif
+              </td>
+            @else
             <td class="col-{{ $col }}">
               @if($col == 'nomor_agenda')
                 <strong>{{ $dokumen->nomor_agenda }}</strong>
@@ -829,11 +1467,134 @@
               @elseif($col == 'nomor_spp')
                 {{ $dokumen->nomor_spp }}
               @elseif($col == 'uraian_spp')
-                {{ Str::limit($dokumen->uraian_spp ?? '-', 60) }}
+                <span title="{{ $dokumen->uraian_spp ?? '-' }}" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.6; width: 100%;">{{ $dokumen->uraian_spp ?? '-' }}</span>
               @elseif($col == 'nilai_rupiah')
-                <strong>{{ number_format($dokumen->nilai_rupiah, 0, ',', '.') }}</strong>
+                <strong>{{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
               @elseif($col == 'tanggal_spp')
                 {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
+              @elseif($col == 'jenis_sub_pekerjaan')
+                {{ $dokumen->jenis_sub_pekerjaan ?? '-' }}
+              @elseif($col == 'deadline')
+                @php
+                  // Get received_at from roleData to calculate document age (count up)
+                  // Similar to Team Verifikasi implementation
+                  $roleData = $dokumen->getDataForRole('pembayaran');
+                  $receivedAt = $roleData?->received_at;
+
+                  // Check if document is completed (sudah dibayar)
+                  $isCompleted = $paymentStatus === 'sudah_dibayar';
+
+                  // Calculate document age from received_at (count up)
+                  $ageText = '-';
+                  $ageLabel = '-';
+                  $ageColor = 'gray';
+                  $ageIcon = 'fa-clock';
+                  $ageDays = 0;
+
+                  if ($receivedAt) {
+                    $receivedAt = \Carbon\Carbon::parse($receivedAt);
+                    
+                    // For completed documents, freeze the timer
+                    // Use processed_at if available, otherwise fallback to dokumen->updated_at
+                    $processedAt = $roleData?->processed_at;
+                    $timeFrozen = false;
+                    
+                    if ($isCompleted) {
+                      // Document is completed - freeze the timer
+                      if ($processedAt) {
+                        $endTime = \Carbon\Carbon::parse($processedAt);
+                      } else {
+                        // Fallback to dokumen updated_at for completed documents without processed_at
+                        $endTime = \Carbon\Carbon::parse($dokumen->updated_at);
+                      }
+                      $diff = $receivedAt->diff($endTime);
+                      $timeFrozen = true;
+                    } else {
+                      // Document still active - count up from received_at to now
+                      $now = \Carbon\Carbon::now();
+                      $diff = $receivedAt->diff($now);
+                    }
+                    
+                    $ageDays = $diff->days;
+
+                    // Format elapsed time as "X hari Y jam Z menit"
+                    $elapsedParts = [];
+                    if ($diff->days > 0) {
+                      $elapsedParts[] = $diff->days . ' hari';
+                    }
+                    if ($diff->h > 0) {
+                      $elapsedParts[] = $diff->h . ' jam';
+                    }
+                    if ($diff->i > 0 || empty($elapsedParts)) {
+                      $elapsedParts[] = $diff->i . ' menit';
+                    }
+                    $ageText = implode(' ', $elapsedParts);
+                    
+                    // Add frozen indicator for completed documents
+                    if ($timeFrozen) {
+                      $ageText .= ' ⏸️';
+                    }
+
+                    // Determine label and color based on elapsed time (in hours)
+                    // Green: < 1 week (168h), Yellow: 1-3 weeks (168-504h), Red: >= 3 weeks (504h)
+                    $totalHours = ($diff->days * 24) + $diff->h;
+
+                    // Calculate label based on actual processing time (always)
+                    if ($totalHours >= 504) { // >= 3 minggu
+                      $ageLabel = 'TERLAMBAT';
+                      $ageIcon = 'fa-times-circle';
+                    } elseif ($totalHours >= 168) { // >= 1 minggu dan < 3 minggu
+                      $ageLabel = 'PERINGATAN';
+                      $ageIcon = 'fa-exclamation-triangle';
+                    } else { // < 1 minggu
+                      $ageLabel = 'AMAN';
+                      $ageIcon = 'fa-check-circle';
+                    }
+                    
+                    // For completed/paid documents, use grey color
+                    // For active documents, use color based on time
+                    if ($isCompleted) {
+                      $ageColor = 'gray';
+                    } elseif ($totalHours >= 504) {
+                      $ageColor = 'red';
+                    } elseif ($totalHours >= 168) {
+                      $ageColor = 'yellow';
+                    } else {
+                      $ageColor = 'green';
+                    }
+                  }
+
+                  // Determine deadline type: 'active' (masih diproses), 'completed' (selesai)
+                  $deadlineType = $isCompleted ? 'completed' : 'active';
+                @endphp
+                @if($receivedAt)
+                  <div class="deadline-card deadline-{{ $deadlineType }} deadline-{{ $ageColor }}"
+                    data-received-at="{{ $receivedAt->format('Y-m-d H:i:s') }}" data-age-days="{{ $ageDays }}"
+                    data-completed="{{ $isCompleted ? 'true' : 'false' }}">
+                    <div class="deadline-time">
+                      <i class="fa-solid fa-calendar"></i>
+                      <span>{{ $receivedAt->format('d M Y, H:i') }}</span>
+                    </div>
+                    <div class="deadline-indicator deadline-{{ $ageColor }}">
+                      <i class="fa-solid {{ $ageIcon }}"></i>
+                      <span class="status-text">{{ $ageLabel }}</span>
+                    </div>
+                    <div class="deadline-age" style="font-size: 10px; color: #6b7280; margin-top: 4px;">
+                      <i class="fa-solid fa-hourglass-half"></i>
+                      <span>{{ $ageText }}</span>
+                    </div>
+                    @if($isCompleted)
+                      <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
+                        <i class="fa-solid fa-stop-circle"></i> Timer Berhenti - Selesai
+                      </div>
+                    @endif
+                  </div>
+                @else
+                  <span class="no-deadline">
+                    <i class="fa-solid fa-clock"></i>
+                    Belum diterima
+                  </span>
+                @endif
               @elseif($col == 'status_pembayaran')
                 @switch($paymentStatus)
                   @case('siap_bayar')
@@ -846,11 +1607,37 @@
                     <span class="status-badge belum-diproses">Belum Siap Bayar</span>
                     @break
                 @endswitch
+              @elseif($col == 'tanggal_paraf')
+                {{ $dokumen->tanggal_paraf ? $dokumen->tanggal_paraf->format('d/m/Y H:i') : '-' }}
+              @elseif($col == 'pemaraf')
+                @if($dokumen->pemaraf)
+                  <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);color:white;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;">
+                    <i class="fa-solid fa-check-circle"></i>
+                    {{ $dokumen->pemaraf }}
+                  </span>
+                @else
+                  -
+                @endif
+              @elseif($col == 'tanggal_selesai_diproses')
+                {{ $dokumen->tanggal_selesai_diproses ? $dokumen->tanggal_selesai_diproses->format('d/m/Y H:i') : '-' }}
+              @elseif($col == 'kepala_sub_bagian')
+                {{ $dokumen->kepala_sub_bagian ?? '-' }}
+              @elseif($col == 'status_dokumen_custom')
+                @if($dokumen->status_dokumen_csv)
+                  <span class="badge-status {{ $dokumen->status_dokumen_csv == 'Selesai Dibayar' ? 'badge-selesai' : ($dokumen->status_dokumen_csv == 'Dikembalikan' ? 'badge-dikembalikan' : 'badge-proses') }}" style="font-size: 10px; padding: 4px 8px;">
+                    {{ $dokumen->status_dokumen_csv }}
+                  </span>
+                @else
+                  -
+                @endif
+              @elseif($col == 'tanggal_dibayar')
+                {{ $dokumen->tanggal_dibayar ? \Carbon\Carbon::parse($dokumen->tanggal_dibayar)->format('d/m/Y') : '-' }}
               @else
                 {{ $dokumen->$col ?? '-' }}
               @endif
             </td>
-            @endif
+            @endif {{-- end @if(in_array...) / @else non-editable --}}
+            @endif {{-- end @if($col !== 'status') --}}
           @endforeach
           <td class="col-status">
             @if(!in_array('status_pembayaran', $selectedColumns))
@@ -867,7 +1654,7 @@
               @endswitch
             @endif
           </td>
-          <td class="col-action" onclick="event.stopPropagation();">
+          <td class="col-action" onclick="if(event) { event.stopPropagation(); }">
             <div class="action-buttons">
               @if($paymentStatus === 'belum_siap_bayar')
                 {{-- Kondisi A: Status = "Belum Siap Bayar" - Tampilkan icon mata untuk tracking --}}
@@ -936,6 +1723,7 @@
           <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25</option>
           <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
           <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
+          <option value="all" {{ $perPage >= 999999 ? 'selected' : '' }}>Semua</option>
         </select>
       </div>
     </div>
@@ -1067,22 +1855,35 @@
 </div>
 
 <!-- Modal: Column Customization -->
-<div class="customization-modal" id="columnCustomizationModal">
+<div class="customization-modal" id="columnCustomizationModal" onclick="handleModalBackdropClick(event)">
   <div class="modal-content-custom">
     <div class="modal-header-custom">
       <h3>
         <i class="fa-solid fa-table-columns"></i>
         Kustomisasi Kolom Tabel
       </h3>
+      <button type="button" class="modal-close-btn" onclick="closeColumnCustomizationModal()" title="Tutup">
+        <i class="fa-solid fa-times"></i>
+      </button>
     </div>
 
     <div class="modal-body-custom">
       <div class="customization-grid">
         <!-- Selection Panel -->
         <div class="selection-panel">
-          <div class="panel-title">
-            <i class="fa-solid fa-check-square"></i>
-            Pilih Kolom
+          <div class="panel-header">
+            <div class="panel-title">
+              <i class="fa-solid fa-check-square"></i>
+              Pilih Kolom
+            </div>
+            <div class="panel-actions">
+              <button type="button" class="btn-select-action btn-select-all" onclick="selectAllColumns()">
+                <i class="fa-solid fa-check-double"></i> Pilih Semua
+              </button>
+              <button type="button" class="btn-select-action btn-remove-all" onclick="removeAllColumns()">
+                <i class="fa-solid fa-times"></i> Hapus Semua
+              </button>
+            </div>
           </div>
           <div class="panel-description">
             Centang kolom yang ingin ditampilkan pada tabel. Urutan akan mengikuti urutan pemilihan Anda.
@@ -1146,7 +1947,7 @@
                               {{ date('d-m-Y', strtotime("+$i days")) }} 08:{{ str_pad($i * 10, 2, '0', STR_PAD_LEFT) }}
                             @elseif($col == 'nilai_rupiah')
                               Rp. {{ number_format(1000000 * $i, 0, ',', '.') }}
-                            @elseif($col == 'nomor_mirror')
+                            @elseif($col == 'nomor_miro')
                               MIR-{{ 1000 + $i }}
                             @elseif($col == 'uraian_spp')
                               Contoh uraian SPP ke {{ $i }}
@@ -1209,17 +2010,46 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.5);
   z-index: 9999;
   animation: fadeIn 0.3s ease;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .customization-modal.show {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #6c757d;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #212529;
 }
 
 .modal-content-custom {
@@ -1309,6 +2139,50 @@
   color: #6c757d;
   margin-bottom: 16px;
   line-height: 1.6;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-select-action {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-select-action:hover {
+  border-color: #083E40;
+  color: #083E40;
+}
+
+.btn-select-action.btn-select-all:hover {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.btn-select-action.btn-remove-all:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
 }
 
 .column-selection-list {
@@ -1580,6 +2454,21 @@
 </style>
 
 <script>
+function toggleSort(column) {
+    const url = new URL(window.location.href);
+    const currentSort = url.searchParams.get('sort');
+    const currentOrder = url.searchParams.get('order') || 'desc';
+    if (currentSort === column) {
+        url.searchParams.set('order', currentOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+        url.searchParams.set('sort', column);
+        url.searchParams.set('order', 'asc');
+    }
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+}
+</script>
+<script>
 // Global variables for column customization
 let selectedColumnsOrder = [];
 let availableColumnsData = {};
@@ -1609,6 +2498,13 @@ function closeColumnCustomizationModal() {
   document.body.style.overflow = '';
 }
 
+// Close modal when clicking on backdrop (outside modal-content-custom)
+function handleModalBackdropClick(event) {
+  if (event.target === document.getElementById('columnCustomizationModal')) {
+    closeColumnCustomizationModal();
+  }
+}
+
 function toggleColumn(columnElement) {
   const columnKey = columnElement.dataset.column;
   const checkbox = columnElement.querySelector('.column-item-checkbox');
@@ -1628,6 +2524,33 @@ function toggleColumn(columnElement) {
     columnElement.setAttribute('draggable', 'false');
   }
 
+  updateColumnOrderBadges();
+  updatePreviewTable();
+  updateSelectedCount();
+  updateDraggableState();
+}
+
+function selectAllColumns() {
+  const allKeys = Object.keys(@json($availableColumns));
+  selectedColumnsOrder = allKeys;
+  document.querySelectorAll('.column-item').forEach(item => {
+    item.classList.add('selected');
+    item.setAttribute('draggable', 'true');
+    item.querySelector('.column-item-checkbox').checked = true;
+  });
+  updateColumnOrderBadges();
+  updatePreviewTable();
+  updateSelectedCount();
+  updateDraggableState();
+}
+
+function removeAllColumns() {
+  selectedColumnsOrder = [];
+  document.querySelectorAll('.column-item').forEach(item => {
+    item.classList.remove('selected');
+    item.setAttribute('draggable', 'false');
+    item.querySelector('.column-item-checkbox').checked = false;
+  });
   updateColumnOrderBadges();
   updatePreviewTable();
   updateSelectedCount();
@@ -2339,7 +3262,7 @@ window.openDocumentDetailModal = function(dokumenId, event) {
     if (contentEl) contentEl.style.display = 'none';
     
     // Fetch document detail
-    fetch(`/dokumensPembayaran/${dokumenId}/detail`, {
+    fetch(`/documents/pembayaran/${dokumenId}/detail`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
@@ -2418,12 +3341,28 @@ function populateDocumentDetail(data) {
     document.getElementById('view-nomor-agenda').textContent = data.nomor_agenda || '-';
     document.getElementById('view-nomor-spp').textContent = data.nomor_spp || '-';
     document.getElementById('view-tanggal-spp').textContent = formatDate(data.tanggal_spp);
-    document.getElementById('view-bulan').textContent = data.bulan || '-';
+    // Helper function to convert month number to Indonesian month name
+    const monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const formatBulan = (bulan) => {
+      if (!bulan) return '-';
+      const num = parseInt(bulan);
+      return (num >= 1 && num <= 12) ? monthNames[num] : bulan;
+    };
+    document.getElementById('view-bulan').textContent = formatBulan(data.bulan);
     document.getElementById('view-tahun').textContent = data.tahun || '-';
     document.getElementById('view-tanggal-masuk').textContent = formatDateTime(data.tanggal_masuk);
+    
+    // Status - gunakan status_display jika tersedia, jika tidak gunakan status
+    const statusElement = document.getElementById('view-status');
+    if (statusElement) {
+        statusElement.textContent = data.status_display || data.status || '-';
+    }
+    
     document.getElementById('view-kategori').textContent = data.kategori || '-';
     document.getElementById('view-jenis-dokumen').textContent = data.jenis_dokumen || '-';
     document.getElementById('view-jenis-sub-pekerjaan').textContent = data.jenis_sub_pekerjaan || '-';
+    document.getElementById('view-jenis-pembayaran').textContent = data.jenis_pembayaran || '-';
     
     // Detail Keuangan & Vendor
     document.getElementById('view-uraian-spp').textContent = data.uraian_spp || '-';
@@ -2443,7 +3382,7 @@ function populateDocumentDetail(data) {
     document.getElementById('view-no-spk').textContent = data.no_spk || '-';
     document.getElementById('view-tanggal-spk').textContent = formatDate(data.tanggal_spk);
     document.getElementById('view-tanggal-berakhir-spk').textContent = formatDate(data.tanggal_berakhir_spk);
-    document.getElementById('view-nomor-mirror').textContent = data.nomor_mirror || '-';
+    document.getElementById('view-nomor-miro').textContent = data.nomor_miro || '-';
     document.getElementById('view-no-berita-acara').textContent = data.no_berita_acara || '-';
     document.getElementById('view-tanggal-berita-acara').textContent = formatDate(data.tanggal_berita_acara);
     
@@ -2452,10 +3391,9 @@ function populateDocumentDetail(data) {
     document.getElementById('view-nomor-pr').textContent = data.no_pr || '-';
     
     // Informasi Perpajakan
-    document.getElementById('view-npwp').textContent = data.npwp || '-';
-    document.getElementById('view-status-perpajakan').textContent = data.status_perpajakan || '-';
     document.getElementById('view-no-faktur').textContent = data.no_faktur || '-';
     document.getElementById('view-tanggal-faktur').textContent = formatDate(data.tanggal_faktur);
+    document.getElementById('view-tanggal-selesai-verifikasi-pajak').textContent = formatDate(data.tanggal_selesai_verifikasi_pajak);
     document.getElementById('view-jenis-pph').textContent = data.jenis_pph || '-';
     
     // Format DPP PPH - gunakan raw value jika ada, atau yang sudah diformat
@@ -2468,23 +3406,14 @@ function populateDocumentDetail(data) {
         document.getElementById('view-dpp-pph').textContent = '-';
     }
     
-    // Format PPN Terhutang - gunakan raw value jika ada, atau yang sudah diformat
-    if (data.ppn_terhutang_raw && data.ppn_terhutang_raw > 0) {
-        document.getElementById('view-ppn-terhutang').textContent = 'Rp. ' + formatNumber(data.ppn_terhutang_raw);
-    } else if (data.ppn_terhutang && data.ppn_terhutang !== '-') {
+    // Format PPh Terhutang - gunakan raw value jika ada, atau yang sudah diformat
+    if (data.pph_terhutang_raw && data.pph_terhutang_raw > 0) {
+        document.getElementById('view-pph-terhutang').textContent = 'Rp. ' + formatNumber(data.pph_terhutang_raw);
+    } else if (data.pph_terhutang && data.pph_terhutang !== '-') {
         // Jika sudah diformat dari controller, langsung gunakan
-        document.getElementById('view-ppn-terhutang').textContent = 'Rp. ' + data.ppn_terhutang;
+        document.getElementById('view-pph-terhutang').textContent = 'Rp. ' + data.pph_terhutang;
     } else {
-        document.getElementById('view-ppn-terhutang').textContent = '-';
-    }
-    
-    // Link Dokumen Pajak
-    const linkDokumenPajak = data.link_dokumen_pajak || '-';
-    if (linkDokumenPajak !== '-' && linkDokumenPajak) {
-        const linkEl = document.getElementById('view-link-dokumen-pajak');
-        linkEl.innerHTML = `<a href="${linkDokumenPajak}" target="_blank" style="color: #0d6efd; text-decoration: underline;">${linkDokumenPajak}</a>`;
-    } else {
-        document.getElementById('view-link-dokumen-pajak').textContent = '-';
+        document.getElementById('view-pph-terhutang').textContent = '-';
     }
     
     // Set document ID for edit button
@@ -2593,7 +3522,7 @@ function terbilangSatuan(number, angka) {
 
 <!-- Modal View Document Detail -->
 <div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl" style="max-width: 98%; width: 98%; margin: 0.5rem auto;">
+  <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
     <div class="modal-content" style="height: 95vh; display: flex; flex-direction: column;">
       <!-- Sticky Header -->
       <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
@@ -2624,6 +3553,24 @@ function terbilangSatuan(number, angka) {
         
         <!-- Content -->
         <div id="view-content" style="display: none;">
+          <!-- Section 0: Informasi Umum -->
+          <div class="form-section mb-4" style="background: linear-gradient(135deg, #e7f3ff 0%, #cfe2ff 100%); border-radius: 12px; padding: 20px; border: 2px solid #0d6efd;">
+            <div class="section-header mb-3">
+              <h6 class="section-title" style="color: #0d6efd; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-info-circle"></i>
+                INFORMASI UMUM
+              </h6>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-12">
+                <div class="detail-item">
+                  <label class="detail-label">STATUS</label>
+                  <div class="detail-value" id="view-status" style="font-weight: 700; color: #0d6efd;">-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Section 1: Identitas Dokumen -->
           <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
             <div class="section-header mb-3">
@@ -2685,6 +3632,12 @@ function terbilangSatuan(number, angka) {
                 <div class="detail-item">
                   <label class="detail-label">Item Sub Kriteria</label>
                   <div class="detail-value" id="view-jenis-sub-pekerjaan">-</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-item">
+                  <label class="detail-label">Jenis Pembayaran</label>
+                  <div class="detail-value" id="view-jenis-pembayaran">-</div>
                 </div>
               </div>
             </div>
@@ -2761,8 +3714,8 @@ function terbilangSatuan(number, angka) {
               </div>
               <div class="col-md-3">
                 <div class="detail-item">
-                  <label class="detail-label">No. Mirror</label>
-                  <div class="detail-value" id="view-nomor-mirror">-</div>
+                  <label class="detail-label">Nomor Miro</label>
+                  <div class="detail-value" id="view-nomor-miro">-</div>
                 </div>
               </div>
               <div class="col-md-6">
@@ -2816,18 +3769,6 @@ function terbilangSatuan(number, angka) {
             <div class="row g-3">
               <div class="col-md-6">
                 <div class="detail-item">
-                  <label class="detail-label">NPWP</label>
-                  <div class="detail-value" id="view-npwp">-</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="detail-item">
-                  <label class="detail-label">Status Perpajakan</label>
-                  <div class="detail-value" id="view-status-perpajakan">-</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="detail-item">
                   <label class="detail-label">No. Faktur</label>
                   <div class="detail-value" id="view-no-faktur">-</div>
                 </div>
@@ -2840,26 +3781,26 @@ function terbilangSatuan(number, angka) {
               </div>
               <div class="col-md-6">
                 <div class="detail-item">
-                  <label class="detail-label">Jenis PPH</label>
+                  <label class="detail-label">Tgl. Selesai Verifikasi Pajak</label>
+                  <div class="detail-value" id="view-tanggal-selesai-verifikasi-pajak">-</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="detail-label">Jenis PPh</label>
                   <div class="detail-value" id="view-jenis-pph">-</div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="detail-item">
-                  <label class="detail-label">DPP PPH</label>
+                  <label class="detail-label">DPP PPh</label>
                   <div class="detail-value" id="view-dpp-pph" style="font-weight: 600; color: #92400e;">-</div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="detail-item">
-                  <label class="detail-label">PPN Terhutang</label>
-                  <div class="detail-value" id="view-ppn-terhutang" style="font-weight: 600; color: #92400e;">-</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="detail-item">
-                  <label class="detail-label">Link Dokumen Pajak</label>
-                  <div class="detail-value" id="view-link-dokumen-pajak">-</div>
+                  <label class="detail-label">PPh Terhutang</label>
+                  <div class="detail-value" id="view-pph-terhutang" style="font-weight: 600; color: #92400e;">-</div>
                 </div>
               </div>
             </div>
@@ -2925,6 +3866,69 @@ function editDocumentFromModal() {
 }
 </style>
 
+<!-- Modal: Column Customization -->
+<div class="modal fade" id="columnCustomizationModal" tabindex="-1" aria-labelledby="columnCustomizationLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 60px rgba(8, 62, 64, 0.3); overflow: hidden;">
+      <!-- Modal Header -->
+      <div class="modal-header" style="background: linear-gradient(135deg, #083E40 0%, #889717 100%); border: none; padding: 20px 24px;">
+        <h5 class="modal-title" id="columnCustomizationLabel" style="color: white; font-weight: 700; font-size: 18px;">
+          <i class="fa-solid fa-table-columns me-2"></i>Kustomisasi Kolom Tabel
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <!-- Modal Body -->
+      <div class="modal-body" style="padding: 24px;">
+        <p style="color: #6b7280; font-size: 14px; margin-bottom: 16px;">
+          <i class="fa-solid fa-info-circle me-2"></i>Pilih kolom yang ingin ditampilkan di tabel. Kolom "Status" dan "Aksi" selalu ditampilkan.
+        </p>
+        
+        <div class="column-selection-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+          @foreach($availableColumns ?? [] as $key => $label)
+            @if($key !== 'status' && $key !== 'aksi')
+            <label class="column-checkbox-item" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #f8faf8; border: 2px solid rgba(8, 62, 64, 0.1); border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
+              <input type="checkbox" name="columns[]" value="{{ $key }}" 
+                {{ in_array($key, $selectedColumns ?? []) ? 'checked' : '' }}
+                style="width: 18px; height: 18px; accent-color: #889717;">
+              <span style="font-size: 13px; font-weight: 500; color: #083E40;">{{ $label }}</span>
+            </label>
+            @endif
+          @endforeach
+        </div>
+      </div>
+      
+      <!-- Modal Footer -->
+      <div class="modal-footer" style="background: #f8f9fa; border-top: 1px solid #dee2e6; padding: 16px 24px;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">
+          <i class="fa-solid fa-times me-2"></i>Batal
+        </button>
+        <button type="button" class="btn" onclick="resetColumnSelection()" style="background: white; border: 2px solid rgba(220, 53, 69, 0.3); color: #dc3545; border-radius: 8px;">
+          <i class="fa-solid fa-rotate-left me-2"></i>Reset Default
+        </button>
+        <button type="button" class="btn btn-primary" onclick="saveColumnSelection()" style="background: linear-gradient(135deg, #889717 0%, #9ab01f 100%); border: none; border-radius: 8px;">
+          <i class="fa-solid fa-check me-2"></i>Simpan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.column-checkbox-item:hover {
+  border-color: #889717;
+  background: white;
+}
+
+.column-checkbox-item:has(input:checked) {
+  border-color: #889717;
+  background: linear-gradient(135deg, rgba(136, 151, 23, 0.1) 0%, rgba(154, 176, 31, 0.1) 100%);
+}
+</style>
+
+
+
+
 <!-- Modal: Success Notification (Modern & Professional) -->
 <div class="modal fade" id="successNotificationModal" tabindex="-1" aria-labelledby="successNotificationLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -2966,6 +3970,231 @@ function closeSuccessModal() {
   if (modal) modal.hide();
   location.reload();
 }
+
+// ============================================
+// ADVANCED FILTER PANEL FUNCTIONS
+// ============================================
+
+// Toggle advanced filter panel
+document.getElementById('advancedFilterToggle')?.addEventListener('click', function() {
+  const panel = document.getElementById('advancedFilterPanel');
+  const toggle = this;
+  
+  panel.classList.toggle('show');
+  toggle.classList.toggle('active');
+  
+  // Save state to localStorage
+  localStorage.setItem('pembayaranAdvancedFilterOpen', panel.classList.contains('show'));
+});
+
+// Apply advanced filters
+function applyAdvancedFilters() {
+  const params = new URLSearchParams(window.location.search);
+  
+  // Get all filter values
+  const filterYear = document.getElementById('filterYear')?.value || '';
+  const filterBagian = document.getElementById('filterBagian')?.value || '';
+  const filterVendor = document.getElementById('filterVendor')?.value || '';
+  const filterKriteriaCf = document.getElementById('filterKriteriaCf')?.value || '';
+  const filterSubKriteria = document.getElementById('filterSubKriteria')?.value || '';
+  const filterItemSubKriteria = document.getElementById('filterItemSubKriteria')?.value || '';
+  const filterKebun = document.getElementById('filterKebun')?.value || '';
+  const filterStatusPembayaran = document.getElementById('filterStatusPembayaran')?.value || '';
+  
+  // Clear existing filter params
+  params.delete('year');
+  params.delete('filter_bagian');
+  params.delete('filter_vendor');
+  params.delete('filter_kriteria_cf');
+  params.delete('filter_sub_kriteria');
+  params.delete('filter_item_sub_kriteria');
+  params.delete('filter_kebun');
+  params.delete('filter_status_pembayaran');
+  params.delete('page'); // Reset to first page when applying filters
+  
+  // Add new filter params
+  if (filterYear) params.set('year', filterYear);
+  if (filterBagian) params.set('filter_bagian', filterBagian);
+  if (filterVendor) params.set('filter_vendor', filterVendor);
+  if (filterKriteriaCf) params.set('filter_kriteria_cf', filterKriteriaCf);
+  if (filterSubKriteria) params.set('filter_sub_kriteria', filterSubKriteria);
+  if (filterItemSubKriteria) params.set('filter_item_sub_kriteria', filterItemSubKriteria);
+  if (filterKebun) params.set('filter_kebun', filterKebun);
+  if (filterStatusPembayaran) params.set('filter_status_pembayaran', filterStatusPembayaran);
+  
+  // Navigate with new params
+  const newUrl = window.location.pathname + '?' + params.toString();
+  window.location.href = newUrl;
+}
+
+// Reset advanced filters
+function resetAdvancedFilters() {
+  const params = new URLSearchParams(window.location.search);
+  
+  // Remove all advanced filter params
+  params.delete('year');
+  params.delete('filter_bagian');
+  params.delete('filter_vendor');
+  params.delete('filter_kriteria_cf');
+  params.delete('filter_sub_kriteria');
+  params.delete('filter_item_sub_kriteria');
+  params.delete('filter_kebun');
+  params.delete('filter_status_pembayaran');
+  params.delete('page');
+  
+  // Navigate without filter params
+  const remainingParams = params.toString();
+  const newUrl = window.location.pathname + (remainingParams ? '?' + remainingParams : '');
+  window.location.href = newUrl;
+}
+
+// Status filter dropdown functionality
+document.querySelectorAll('#statusFilterMenu .dropdown-item-modern').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    e.preventDefault();
+    const filter = this.dataset.filter;
+    const params = new URLSearchParams(window.location.search);
+    
+    if (filter) {
+      params.set('status_filter', filter);
+    } else {
+      params.delete('status_filter');
+    }
+    params.delete('page'); // Reset to first page
+    
+    window.location.href = window.location.pathname + '?' + params.toString();
+  });
+});
+
+// Status filter dropdown toggle
+document.getElementById('statusFilterDropdown')?.addEventListener('click', function() {
+  const menu = document.getElementById('statusFilterMenu');
+  this.classList.toggle('show');
+  menu.classList.toggle('show');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  const dropdown = document.querySelector('.dropdown-filter-modern');
+  const toggle = document.getElementById('statusFilterDropdown');
+  const menu = document.getElementById('statusFilterMenu');
+  
+  if (dropdown && !dropdown.contains(e.target)) {
+    toggle?.classList.remove('show');
+    menu?.classList.remove('show');
+  }
+});
+
+// Search functionality
+function performSearch() {
+  const searchInput = document.getElementById('pembayaranSearchInput');
+  const searchValue = searchInput?.value.trim() || '';
+  const params = new URLSearchParams(window.location.search);
+  
+  if (searchValue) {
+    params.set('search', searchValue);
+  } else {
+    params.delete('search');
+  }
+  params.delete('page'); // Reset to first page
+  
+  window.location.href = window.location.pathname + '?' + params.toString();
+}
+
+function clearSearch() {
+  const params = new URLSearchParams(window.location.search);
+  params.delete('search');
+  params.delete('page');
+  window.location.href = window.location.pathname + '?' + params.toString();
+}
+
+// Search on Enter key
+document.getElementById('pembayaranSearchInput')?.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    performSearch();
+  }
+});
+
+// Update filter text based on current selection
+document.addEventListener('DOMContentLoaded', function() {
+  const activeFilter = document.querySelector('#statusFilterMenu .dropdown-item-modern.active span');
+  const filterText = document.getElementById('filterText');
+  if (activeFilter && filterText) {
+    filterText.textContent = activeFilter.textContent;
+  }
+});
 </script>
 
+<script>
+  // AJAX Refresh Document Table
+  function refreshDocumentTable() {
+    const btn = document.getElementById('btnRefreshTable');
+    const container = document.getElementById('documentTableContainer');
+    if (!btn || !container) return;
+    btn.classList.add('loading');
+    btn.disabled = true;
+    fetch(window.location.href, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.text();
+    })
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const newTable = doc.getElementById('documentTableContainer');
+      if (newTable) {
+        container.innerHTML = newTable.innerHTML;
+        showRefreshToast('success', 'Data berhasil diperbarui!');
+      } else {
+        showRefreshToast('error', 'Gagal memperbarui data.');
+      }
+    })
+    .catch(error => {
+      console.error('Refresh error:', error);
+      showRefreshToast('error', 'Gagal memperbarui data. Coba lagi.');
+    })
+    .finally(() => {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    });
+  }
+  function showRefreshToast(type, message) {
+    document.querySelectorAll('.refresh-toast').forEach(t => t.remove());
+    const toast = document.createElement('div');
+    toast.className = `refresh-toast ${type}`;
+    toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3000);
+  }
+</script>
+
+{{-- Inline Edit Engine (Pembayaran) --}}
+@php
+  $ieKategoriList = [];
+  $ieSubKriteriaList = [];
+  $ieItemSubKriteriaList = [];
+  $ieJenisPembayaranList = [];
+  try {
+    $ieKategoriList = \App\Models\KategoriKriteria::where('tipe', 'Keluar')->get(['id_kategori_kriteria as id', 'nama_kriteria'])->toArray();
+    $ieSubKriteriaList = \App\Models\SubKriteria::all(['id_sub_kriteria as id', 'nama_sub_kriteria', 'id_kategori_kriteria'])->toArray();
+    $ieItemSubKriteriaList = \App\Models\ItemSubKriteria::all(['id_item_sub_kriteria as id', 'nama_item_sub_kriteria', 'id_sub_kriteria'])->toArray();
+    $ieJenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get(['id_jenis_pembayaran', 'nama_jenis_pembayaran'])->toArray();
+  } catch (\Exception $e) {}
+@endphp
+@include('partials._inlineEditEngine', [
+  'ieKategoriList'      => $ieKategoriList,
+  'ieSubKriteriaList'   => $ieSubKriteriaList,
+  'ieItemSubKriteriaList' => $ieItemSubKriteriaList,
+  'ieJenisPembayaranList' => $ieJenisPembayaranList,
+])
+
+{{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
+@include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
+
 @endsection
+
+
+
+

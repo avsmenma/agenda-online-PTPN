@@ -1,0 +1,3922 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\View\View;
+use App\Http\Requests\SetDeadlineRequest;
+use App\Models\Dokumen;
+use App\Models\DocumentTracking;
+use App\Models\DokumenStatus;
+use App\Models\DokumenPO;
+use App\Models\DokumenPR;
+use App\Models\Bidang;
+use App\Models\Bagian;
+use App\Models\DibayarKepada;
+use App\Models\KategoriKriteria;
+use App\Models\SubKriteria;
+use App\Models\ItemSubKriteria;
+use App\Events\DocumentReturned;
+use App\Helpers\SearchHelper;
+use Illuminate\Support\Facades\Schema;
+use App\Helpers\ActivityLogHelper;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\QueryException;
+use Illuminate\Validation\ValidationException;
+use Exception;
+
+class TeamVerifikasiController extends Controller
+{
+    public function dokumens(Request $request)
+    {
+        // Team Verifikasi sees ALL documents (cross-role visibility)
+        // Action buttons are disabled for documents not yet at this role (controlled in blade view)
+        // Exclude documents that are returned to bidang (they should appear in pengembalian ke bidang page)
+        // Base query - akan dimodifikasi oleh filter status jika ada
+        $query = Dokumen::with('activityLogs')
+            ->where('status', '!=', 'returned_to_bidang');
+
+        // Exclude CSV imported documents - they are exclusive to Pembayaran module
+        $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
+
+        // Always exclude CSV imported documents regardless of status filter
+        $query->when($hasImportedFromCsvColumn, function ($query) {
+            $query->where(function ($q) {
+                $q->where('imported_from_csv', false)
+                    ->orWhereNull('imported_from_csv');
+            });
+        });
+
+        $query->leftJoin('dokumen_role_data as team_verifikasi_data', function ($join) {
+            $join->on('dokumens.id', '=', 'team_verifikasi_data.dokumen_id')
+                ->where('team_verifikasi_data.role_code', '=', 'team_verifikasi');
+        })
+            ->select([
+                'dokumens.id',
+                'dokumens.nomor_agenda',
+                'dokumens.nomor_spp',
+                'dokumens.uraian_spp',
+                'dokumens.nilai_rupiah',
+                'dokumens.status',
+                'dokumens.created_at',
+                'dokumens.tanggal_masuk',
+                'dokumens.tanggal_spp',
+                'dokumens.keterangan',
+                // Deadline fields are now in dokumen_role_data table - use aliases for easier access
+                'team_verifikasi_data.deadline_at as deadline_at',
+                'team_verifikasi_data.deadline_days as deadline_days',
+                'team_verifikasi_data.deadline_note as deadline_note',
+                'dokumens.current_handler',
+                'dokumens.bulan',
+                'dokumens.tahun',
+                'dokumens.kategori',
+                'dokumens.kebun',
+                'dokumens.jenis_dokumen',
+                'dokumens.jenis_sub_pekerjaan',
+                'dokumens.updated_at',
+                'dokumens.tanggal_spk',
+                'dokumens.tanggal_berakhir_spk',
+                'dokumens.no_spk',
+                'dokumens.nomor_miro',
+                'dokumens.nama_pengirim',
+                'dokumens.jenis_pembayaran',
+                'dokumens.dibayar_kepada',
+                'dokumens.no_berita_acara',
+                'dokumens.tanggal_berita_acara',
+                'dokumens.bagian', // Added: bagian field for return to bidang modal
+                'dokumens.return_source', // Added: for returned_to_verifikasi status badge
+                'dokumens.return_reason', // Added: for returned_to_verifikasi reason
+                'dokumens.returned_at', // Added: for returned_to_verifikasi timestamp
+                // Paraf & processing columns
+                'dokumens.tanggal_paraf',
+                'dokumens.pemaraf',
+                'dokumens.tanggal_selesai_diproses',
+                // Perpajakan columns
+                'dokumens.no_faktur',
+                'dokumens.tanggal_faktur',
+                'dokumens.tanggal_selesai_verifikasi_pajak',
+                'dokumens.jenis_pph',
+                'dokumens.dpp_pph',
+                'dokumens.ppn_terhutang',
+                'dokumens.tanggal_dibayar',
+                // 'dokumens.inbox_approval_responded_at', // REMOVED - now in dokumen_statuses
+                // 'dokumens.inbox_approval_reason', // REMOVED
+                // 'dokumens.inbox_approval_for', // REMOVED
+                // 'dokumens.inbox_approval_status', // REMOVED
+                'dokumens.created_by'
+            ]);
+
+        // Handle sort preferences with persistence (similar to column preferences)
+        $user = Auth::user();
+
+        // Check if sort parameters are in the request (URL)
+        if ($request->has('sort') || $request->has('order')) {
+            // User is actively changing sort - save preferences
+            $sortColumn = $request->get('sort', 'nomor_agenda');
+            $sortOrder = $request->get('order', 'asc');
+
+            // Validate sort order to prevent SQL injection
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+
+
+            // Save to database (permanent)
+            if ($user && \Schema::hasColumn('users', 'sort_preferences')) {
+                // Decode JSON if it's a string, otherwise use as array
+                $sortPreferences = is_string($user->sort_preferences)
+                    ? json_decode($user->sort_preferences, true) ?? []
+                    : ($user->sort_preferences ?? []);
+
+                $sortPreferences['team_verifikasi'] = [
+                    'column' => $sortColumn,
+                    'order' => $sortOrder
+                ];
+                $user->sort_preferences = json_encode($sortPreferences);
+                $user->save();
+            }
+
+            // Also save to session for backward compatibility
+            session([
+                'team_verifikasi_sort_column' => $sortColumn,
+                'team_verifikasi_sort_order' => $sortOrder
+            ]);
+        } else {
+            // No URL params - load from saved preferences
+            $sortColumn = 'nomor_agenda'; // default
+            $sortOrder = 'asc'; // default
+
+            // Try database first (permanent), then session, then default
+            if ($user) {
+                // Decode JSON if it's a string
+                $sortPrefs = is_string($user->sort_preferences)
+                    ? json_decode($user->sort_preferences, true) ?? []
+                    : ($user->sort_preferences ?? []);
+
+                if (isset($sortPrefs['team_verifikasi'])) {
+                    $saved = $sortPrefs['team_verifikasi'];
+                    $sortColumn = $saved['column'] ?? 'nomor_agenda';
+                    $sortOrder = $saved['order'] ?? 'asc';
+                } else {
+                    // Fallback to session
+                    $sortColumn = session('team_verifikasi_sort_column', 'nomor_agenda');
+                    $sortOrder = session('team_verifikasi_sort_order', 'asc');
+                }
+            } else {
+                // Fallback to session
+                $sortColumn = session('team_verifikasi_sort_column', 'nomor_agenda');
+                $sortOrder = session('team_verifikasi_sort_order', 'asc');
+            }
+
+            // Validate loaded preferences
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+        }
+
+        // Apply sorting based on column
+        if ($sortColumn === 'nomor_agenda') {
+            // Natural number sorting for nomor_agenda (extract numeric part before underscore)
+            $query->orderByRaw("CAST(
+                CASE 
+                    WHEN dokumens.nomor_agenda REGEXP '^[0-9]+_[0-9]+$' THEN SUBSTRING_INDEX(dokumens.nomor_agenda, '_', 1)
+                    WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN dokumens.nomor_agenda
+                    ELSE '0'
+                END AS UNSIGNED
+            ) {$sortOrder}");
+        } else {
+            // Fallback to default descending order
+            $query->orderByRaw("CAST(
+                CASE 
+                    WHEN dokumens.nomor_agenda REGEXP '^[0-9]+_[0-9]+$' THEN SUBSTRING_INDEX(dokumens.nomor_agenda, '_', 1)
+                    WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN dokumens.nomor_agenda
+                    ELSE '0'
+                END AS UNSIGNED
+            ) DESC");
+        }
+
+        // Secondary sorting by received_at and id (always DESC for consistency)
+        $query->orderByRaw("
+                COALESCE(team_verifikasi_data.received_at, dokumens.created_at) DESC,
+                dokumens.id DESC
+            ");
+
+        // Enhanced search functionality - search across all relevant fields
+        if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {
+            $search = trim((string) $request->search);
+            $query->where(function ($q) use ($search) {
+                // Text fields
+                $q->where('nomor_agenda', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                    ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                    ->orWhere('nama_pengirim', 'like', '%' . $search . '%')
+                    ->orWhere('bagian', 'like', '%' . $search . '%')
+                    ->orWhere('kategori', 'like', '%' . $search . '%')
+                    ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
+                    ->orWhere('jenis_sub_pekerjaan', 'like', '%' . $search . '%')
+                    ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
+                    ->orWhere('no_spk', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_miro', 'like', '%' . $search . '%')
+                    ->orWhere('keterangan', 'like', '%' . $search . '%')
+                    ->orWhere('dibayar_kepada', 'like', '%' . $search . '%');
+
+                // Search in nilai_rupiah - handle various formats
+                $numericSearch = preg_replace('/[^0-9]/', '', $search);
+                if (is_numeric($numericSearch) && $numericSearch > 0) {
+                    $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ['%' . $numericSearch . '%']);
+                }
+            })
+                ->orWhereHas('dibayarKepadas', function ($q) use ($search) {
+                    $q->where('nama_penerima', 'like', '%' . $search . '%');
+                });
+        }
+
+        // Filter by year with sub-filter type support
+        if ($request->has('year') && $request->year) {
+            $year = $request->year;
+            $filterType = $request->get('year_filter_type', 'tanggal_spp');
+
+            switch ($filterType) {
+                case 'tanggal_spp':
+                    $query->whereYear('tanggal_spp', $year);
+                    break;
+                case 'tanggal_masuk':
+                    $query->whereYear('tanggal_masuk', $year);
+                    break;
+                case 'nomor_spp':
+                    // Extract year from format like "192/M/SPP/14/03/2024"
+                    // The year is typically at the end of the nomor_spp string
+                    $query->where('nomor_spp', 'REGEXP', '/' . $year . '$');
+                    break;
+                default:
+                    $query->whereYear('tanggal_spp', $year);
+            }
+        }
+
+        // Filter by status - Apply strict filtering (override base filter)
+        if ($request->has('status') && $request->status) {
+            $statusFilter = $request->status;
+            switch ($statusFilter) {
+                case 'menunggu_approve':
+                    // Dokumen yang sudah dikirim dari Team Verifikasi dan menunggu approval di role lain
+                    // Filter: pending di Perpajakan, Akutansi, atau Pembayaran (BUKAN di Team Verifikasi/inbox)
+                    $query->where(function ($q) {
+                        // Status dokumen menunjukkan sudah dikirim atau pending approval di role lain
+                        $q->whereIn('status', [
+                            'sent_to_perpajakan',
+                            'sent_to_akutansi',
+                            'sent_to_pembayaran',
+                            'pending_approval_perpajakan',
+                            'pending_approval_akutansi',
+                            'pending_approval_pembayaran',
+                            'waiting_approval_perpajakan',
+                            'waiting_approval_akuntansi',
+                            'waiting_approval_pembayaran',
+                            'menunggu_di_approve'
+                        ])
+                            // DAN ada pending status di role selanjutnya
+                            ->whereHas('roleStatuses', function ($rq) {
+                                $rq->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran'])
+                                    ->where('status', DokumenStatus::STATUS_PENDING);
+                            });
+                    });
+                    break;
+                case 'sedang_proses':
+                    // Dokumen yang sedang diproses oleh Team Verifikasi (Team Verifikasi atau verifikasi)
+                    $query->where(function ($q) {
+                        $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
+                            // Exclude dokumen yang sudah terkirim ke role lain
+                            ->whereNotIn('status', [
+                                'sent_to_perpajakan',
+                                'sent_to_akutansi',
+                                'sent_to_pembayaran',
+                                'returned_to_department',
+                                'returned_to_verifikasi',
+                                'returned_to_bidang',
+                                'selesai',
+                                'completed'
+                            ])
+                            // Exclude dokumen yang pending approval
+                            ->whereDoesntHave('roleStatuses', function ($rq) {
+                                $rq->where('status', DokumenStatus::STATUS_PENDING);
+                            })
+                            // Exclude dokumen yang ditolak
+                            ->whereDoesntHave('roleStatuses', function ($rq) {
+                                $rq->where('role_code', 'team_verifikasi')->where('status', 'rejected');
+                            });
+                    });
+                    break;
+                case 'terkirim_perpajakan':
+                    // Dokumen yang terkirim ke perpajakan - hanya status ini saja
+                    $query->where('status', 'sent_to_perpajakan');
+                    break;
+                case 'terkirim_akutansi':
+                    // Dokumen yang terkirim ke akutansi - hanya status ini saja
+                    $query->where('status', 'sent_to_akutansi');
+                    break;
+                case 'terkirim_pembayaran':
+                    // Dokumen yang terkirim ke pembayaran atau sudah completed setelah pembayaran, exclude CSV imports
+                    $query->where(function ($statusQ) {
+                        $statusQ->where('status', 'sent_to_pembayaran')
+                            ->orWhere(function ($completedQ) {
+                                // Include completed documents that have status_pembayaran (indicating they went through pembayaran)
+                                $completedQ->whereIn('status', ['completed', 'selesai'])
+                                    ->whereNotNull('status_pembayaran');
+                            });
+                    });
+                    // Only exclude CSV imports if column exists
+                    if ($hasImportedFromCsvColumn) {
+                        $query->where(function ($csvQ) {
+                            $csvQ->where('imported_from_csv', false)
+                                ->orWhereNull('imported_from_csv');
+                        });
+                    }
+                    break;
+                case 'terkirim':
+                    // Semua dokumen yang sudah terkirim ke tahap selanjutnya (gabungan semua terkirim)
+                    $query->where(function ($statusQ) {
+                        $statusQ->whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'completed', 'selesai']);
+                    })
+                        ->where('current_handler', '!=', 'team_verifikasi');
+                    // Only exclude CSV imports if column exists
+                    if ($hasImportedFromCsvColumn) {
+                        $query->where(function ($csvQ) {
+                            $csvQ->where('imported_from_csv', false)
+                                ->orWhereNull('imported_from_csv');
+                        });
+                    }
+                    break;
+                case 'ditolak':
+                    // Dokumen yang ditolak - termasuk yang ditolak oleh perpajakan/akutansi
+                    $query->where(function ($q) {
+                        // Dokumen yang ditolak oleh Team Verifikasi sendiri
+                        $q->whereHas('roleStatuses', function ($rq) {
+                            $rq->where('role_code', 'team_verifikasi')->where('status', 'rejected');
+                        })
+                            // ATAU dokumen yang ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi
+                            ->orWhere(function ($rejectQ) {
+                                $rejectQ->where('current_handler', 'team_verifikasi')
+                                    ->whereHas('roleStatuses', function ($rq) {
+                                        $rq->whereIn('role_code', ['perpajakan', 'akutansi'])
+                                            ->where('status', 'rejected');
+                                    });
+                            })
+                            // ATAU dokumen dengan status returned_to_department dari perpajakan/akutansi
+                            ->orWhere(function ($returnQ) {
+                                $returnQ->where('status', 'returned_to_department')
+                                    ->where('current_handler', 'team_verifikasi')
+                                    ->whereIn('return_source', ['perpajakan', 'akutansi']);
+                            })
+                            // ATAU dokumen dengan status returned_to_verifikasi (new: current_handler tetap di department)
+                            ->orWhere(function ($returnNewQ) {
+                                $returnNewQ->where('status', 'returned_to_verifikasi')
+                                    ->whereIn('return_source', ['perpajakan', 'akutansi']);
+                            });
+                    });
+                    break;
+            }
+        }
+
+        // Filter by keterlambatan (deadline card click filter)
+        if ($request->has('keterlambatan') && in_array($request->keterlambatan, ['aman', 'peringatan', 'terlambat'])) {
+            $keterlambatanFilter = $request->keterlambatan;
+            $now = Carbon::now();
+
+            // Get all relevant dokumen IDs with their roleData received_at
+            $allDokumenWithRoleData = Dokumen::where('status', '!=', 'returned_to_bidang')
+                ->when($hasImportedFromCsvColumn, function ($q) {
+                    $q->where(function ($sq) {
+                        $sq->where('imported_from_csv', false)->orWhereNull('imported_from_csv');
+                    });
+                })
+                ->with(['roleData' => function ($q) {
+                    $q->where('role_code', 'team_verifikasi');
+                }])
+                ->get(['id', 'status']);
+
+            $filteredIds = [];
+            foreach ($allDokumenWithRoleData as $doc) {
+                $roleData = $doc->roleData->first();
+                if ($roleData && $roleData->received_at) {
+                    $receivedAt = Carbon::parse($roleData->received_at);
+                    $isSent = in_array($doc->status, [
+                        'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran',
+                        'waiting_approval_perpajakan', 'waiting_approval_akuntansi',
+                        'waiting_approval_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi'
+                    ]);
+                    $hoursDiff = ($isSent && $roleData->processed_at)
+                        ? $receivedAt->diffInHours(Carbon::parse($roleData->processed_at))
+                        : $receivedAt->diffInHours($now);
+
+                    $isAman = $hoursDiff < 24;
+                    $isPeringatan = $hoursDiff >= 24 && $hoursDiff < 72;
+                    $isTerlambat = $hoursDiff >= 72;
+                } else {
+                    // No received_at → treat as terlambat
+                    $isAman = false;
+                    $isPeringatan = false;
+                    $isTerlambat = true;
+                }
+
+                if ($keterlambatanFilter === 'aman' && $isAman) {
+                    $filteredIds[] = $doc->id;
+                } elseif ($keterlambatanFilter === 'peringatan' && $isPeringatan) {
+                    $filteredIds[] = $doc->id;
+                } elseif ($keterlambatanFilter === 'terlambat' && $isTerlambat) {
+                    $filteredIds[] = $doc->id;
+                }
+            }
+
+            $query->whereIn('dokumens.id', empty($filteredIds) ? [0] : $filteredIds);
+        }
+
+
+        // Use eager loading for relations to prevent N+1 queries
+        $dokumens = $query->with([
+            'dibayarKepadas',
+            'roleData' => function ($query) {
+                $query->where('role_code', 'team_verifikasi');
+            },
+            'roleStatuses' => function ($query) {
+                // Load all role statuses to check for pending approvals
+                $query->whereIn('role_code', ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran']);
+            }
+        ])
+            ->withCount([
+                'dokumenPos',
+                'dokumenPrs'
+            ]);
+        $perPage = $request->get('per_page', session('verifikasi_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['verifikasi_per_page' => $perPage]);
+        $dokumens = $query->paginate($perPage)->appends($request->query());
+
+        // Cast deadline_at from alias to Carbon if it's a string
+        // Also set is_at_my_role flag for cross-role document visibility
+        $dokumens->getCollection()->transform(function ($dokumen) {
+            if ($dokumen->deadline_at && is_string($dokumen->deadline_at)) {
+                try {
+                    $dokumen->deadline_at = \Carbon\Carbon::parse($dokumen->deadline_at);
+                } catch (\Exception $e) {
+                    $dokumen->deadline_at = null;
+                }
+            }
+
+            // Cross-role visibility: determine if document is at Team Verifikasi's role
+            // Documents are "at my role" if:
+            // - current_handler is team_verifikasi
+            // - status indicates it was sent/processed by team_verifikasi (sent_to_perpajakan, etc.)
+            // - status indicates it was returned to verifikasi
+            // - status is completed/selesai with status_pembayaran set
+            $dokumen->is_at_my_role = in_array($dokumen->current_handler, ['team_verifikasi'])
+                || in_array($dokumen->status, [
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                    'menunggu_di_approve',
+                    'waiting_approval_perpajakan',
+                    'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran',
+                    'returned_to_verifikasi',
+                    'sedang diproses',
+                    'sedang_diproses',
+                ])
+                || (in_array($dokumen->status, ['completed', 'selesai']) && !empty($dokumen->status_pembayaran))
+                || ($dokumen->status === 'returned_to_department' && in_array($dokumen->return_source, ['perpajakan', 'akutansi']) && $dokumen->current_handler === 'team_verifikasi');
+
+            return $dokumen;
+        });
+
+        // Cache statistics for better performance (4 dashboard-style stats)
+        $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
+
+        // 1. Total Dokumen Agenda - semua dokumen dalam sistem (exclude CSV imports)
+        $totalDokumenAgenda = Dokumen::when($hasImportedFromCsvColumn, function ($query) {
+            $query->where(function ($q) {
+                $q->where('imported_from_csv', false)
+                    ->orWhereNull('imported_from_csv');
+            });
+        })->count();
+
+        // 2. Total Dokumen Verifikasi - dokumen yang terlihat di Team Verifikasi
+        $totalDokumenVerifikasi = Dokumen::where(function ($q) {
+            $q->whereIn('current_handler', ['team_verifikasi'])
+                ->orWhereIn('status', [
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'waiting_approval_perpajakan',
+                    'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                    'menunggu_di_approve'
+                ]);
+        })
+            ->where('status', '!=', 'returned_to_bidang')
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
+            ->count();
+
+        // 3. Dokumen Diproses - dokumen yang sedang diproses oleh Team Verifikasi
+        $totalDokumenDiproses = Dokumen::whereIn('current_handler', ['team_verifikasi'])
+            ->whereIn('status', ['sent_to_team_verifikasi', 'sedang diproses', 'sedang_diproses'])
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
+            ->count();
+
+        // 4. Total Terkirim - dokumen yang sudah dikirim ke tahap selanjutnya
+        $totalTerkirim = Dokumen::whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'completed', 'selesai'])
+            ->where('current_handler', '!=', 'team_verifikasi')
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
+            ->count();
+
+        // Keterlambatan: hitung berdasarkan waktu dokumen diterima dari roleData
+        $now = Carbon::now();
+        $teamDokumensForDelay = Dokumen::where(function ($q) {
+            $q->whereIn('current_handler', ['team_verifikasi'])
+                ->orWhereIn('status', [
+                    'sent_to_perpajakan',
+                    'sent_to_akutansi',
+                    'sent_to_pembayaran',
+                    'waiting_approval_perpajakan',
+                    'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran',
+                    'pending_approval_perpajakan',
+                    'pending_approval_akutansi',
+                    'pending_approval_pembayaran',
+                    'menunggu_di_approve'
+                ]);
+        })
+            ->where('status', '!=', 'returned_to_bidang')
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
+            ->with(['roleData' => function ($q) {
+                $q->where('role_code', 'team_verifikasi');
+            }])
+            ->get();
+
+        $dokumenLessThan24h = 0;
+        $dokumen24to72h = 0;
+        $dokumenMoreThan72h = 0;
+
+        foreach ($teamDokumensForDelay as $doc) {
+            $roleData = $doc->roleData->first();
+            if ($roleData && $roleData->received_at) {
+                $receivedAt = Carbon::parse($roleData->received_at);
+                $isSent = in_array($doc->status, [
+                    'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran',
+                    'waiting_approval_perpajakan', 'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi'
+                ]);
+                if ($isSent && $roleData->processed_at) {
+                    $hoursDiff = $receivedAt->diffInHours(Carbon::parse($roleData->processed_at));
+                } else {
+                    $hoursDiff = $receivedAt->diffInHours($now);
+                }
+                if ($hoursDiff < 24) {
+                    $dokumenLessThan24h++;
+                } elseif ($hoursDiff < 72) {
+                    $dokumen24to72h++;
+                } else {
+                    $dokumenMoreThan72h++;
+                }
+            } else {
+                $dokumenMoreThan72h++;
+            }
+        }
+
+        // Total nilai rupiah dokumen verifikasi
+        $totalNilaiRupiah = Dokumen::where(function ($q) {
+            $q->whereIn('current_handler', ['team_verifikasi'])
+                ->orWhereIn('status', [
+                    'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran',
+                    'waiting_approval_perpajakan', 'waiting_approval_akuntansi',
+                    'waiting_approval_pembayaran', 'pending_approval_perpajakan',
+                    'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve'
+                ]);
+        })
+            ->where('status', '!=', 'returned_to_bidang')
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)->orWhereNull('imported_from_csv');
+                });
+            })
+            ->sum('nilai_rupiah');
+
+        $suggestions = [];
+        if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '' && $dokumens->total() == 0) {
+            $searchTerm = trim((string) $request->search);
+            $suggestions = $this->getSearchSuggestions($searchTerm, $request->year, 'team_verifikasi');
+        }
+
+        // Available columns for customization (exclude 'status' as it's always shown as a special column)
+        $availableColumns = [
+            'nomor_agenda' => 'Nomor Agenda',
+            'bulan' => 'Bulan',
+            'tahun' => 'Tahun',
+            'kategori' => 'Kriteria CF',
+            'jenis_dokumen' => 'Sub Kriteria',
+            'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
+            'jenis_pembayaran' => 'Jenis Pembayaran',
+            'nomor_spp' => 'Nomor SPP',
+            'tanggal_spp' => 'Tanggal SPP',
+            'tanggal_masuk' => 'Tanggal Masuk',
+            'dibayar_kepada' => 'Dibayar Kepada',
+            'uraian_spp' => 'Uraian SPP',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            // Backend later columns
+            'tanggal_paraf' => 'Tanggal Paraf',
+            'pemaraf' => 'Pemaraf',
+            'tanggal_selesai_diproses' => 'Tgl Selesai Diproses',
+            'tanggal_kembali_ke_bagian' => 'Tgl Kembali ke Bagian',
+            'tanggal_hasil_koreksi_bagian' => 'Tgl Hasil Koreksi Bagian',
+            'kepala_sub_bagian' => 'Kepala Sub Bagian',
+            'keterangan' => 'Keterangan',
+            'status_dokumen_custom' => 'Status Dokumen',
+            'tanggal_dibayar' => 'Tanggal Bayar',
+            'bagian' => 'Bagian',
+            'nama_pengirim' => 'Nama Pengirim',
+            'no_spk' => 'No SPK',
+            'tanggal_spk' => 'Tanggal SPK',
+            'tanggal_berakhir_spk' => 'Tanggal Akhir SPK',
+            'no_berita_acara' => 'No Berita Acara (BA)',
+            'tanggal_berita_acara' => 'Tanggal Berita Acara (BA)',
+            'nomor_po' => 'No PO',
+            'nomor_miro' => 'No Miro',
+            'no_faktur' => 'No Faktur',
+            'tanggal_faktur' => 'Tanggal Faktur',
+            'tanggal_selesai_verifikasi_pajak' => 'Tgl Selesai Verifikasi Pajak',
+            'jenis_pph' => 'Jenis PPh',
+            'dpp_pph' => 'DPP PPh',
+            'ppn_terhutang' => 'PPH Terhutang',
+            // Role-specific columns
+            'kebun' => 'Kebun',
+            // Perpajakan data (read-only view)
+            'npwp' => 'NPWP',
+            'link_dokumen_pajak' => 'Link Dokumen Pajak',
+        ];
+
+        // Get selected columns from request or session
+        $selectedColumns = $request->get('columns', []);
+
+        // Filter out 'status' and 'keterangan' from selectedColumns if present
+        $selectedColumns = array_filter($selectedColumns, function ($col) {
+            return $col !== 'status';
+        });
+        $selectedColumns = array_values($selectedColumns); // Re-index array
+
+        // If columns are provided in request, save to database and session
+        if ($request->has('columns') && !empty($selectedColumns)) {
+            // Save to database (permanent)
+            $user = Auth::user();
+            if ($user) {
+                $preferences = $user->table_columns_preferences ?? [];
+                $preferences['team_verifikasi'] = $selectedColumns;
+                $user->table_columns_preferences = $preferences;
+                $user->save();
+            }
+            // Also save to session for backward compatibility
+            session(['team_verifikasi_dokumens_table_columns' => $selectedColumns]);
+        } else {
+            // Load from database first (permanent), then fallback to session, then default
+            $user = Auth::user();
+            $defaultColumns = [
+                'nomor_agenda',
+                'nomor_spp',
+                'tanggal_masuk',
+                'nilai_rupiah',
+                'nomor_miro'
+            ];
+
+            if ($user && isset($user->table_columns_preferences['team_verifikasi'])) {
+                $selectedColumns = $user->table_columns_preferences['team_verifikasi'];
+            } else {
+                // Fallback to session if available
+                $selectedColumns = session('team_verifikasi_dokumens_table_columns', $defaultColumns);
+            }
+
+            // Filter out 'status' and 'keterangan' if they exist
+            $selectedColumns = array_filter($selectedColumns, function ($col) {
+                return $col !== 'status';
+            });
+            $selectedColumns = array_values($selectedColumns);
+
+            // If empty after filtering, use default
+            if (empty($selectedColumns)) {
+                $selectedColumns = $defaultColumns;
+            }
+
+            // Update session to keep it in sync
+            session(['team_verifikasi_dokumens_table_columns' => $selectedColumns]);
+        }
+
+        // Load IE dropdown data
+        $ieKategoriList = $ieSubKriteriaList = $ieItemSubKriteriaList = $ieJenisPembayaranList = [];
+        try {
+            $ieKategoriList = \App\Models\KategoriKriteria::where('tipe', 'Keluar')->get(['id_kategori_kriteria as id', 'nama_kriteria'])->toArray();
+            $ieSubKriteriaList = \App\Models\SubKriteria::all(['id_sub_kriteria as id', 'nama_sub_kriteria', 'id_kategori_kriteria'])->toArray();
+            $ieItemSubKriteriaList = \App\Models\ItemSubKriteria::all(['id_item_sub_kriteria as id', 'nama_item_sub_kriteria', 'id_sub_kriteria'])->toArray();
+            $ieJenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get(['id_jenis_pembayaran', 'nama_jenis_pembayaran'])->toArray();
+        } catch (\Exception $e) {
+            \Log::error('IE dropdown load error (verifikasi): ' . $e->getMessage());
+        }
+        if (empty($ieKategoriList)) {
+            $ieKategoriList = \App\Models\Dokumen::whereNotNull('kategori')->where('kategori','!=','')->distinct()->orderBy('kategori')->pluck('kategori')->map(fn($v)=>['id'=>$v,'nama_kriteria'=>$v])->toArray();
+        }
+        if (empty($ieSubKriteriaList)) {
+            $ieSubKriteriaList = \App\Models\Dokumen::whereNotNull('jenis_dokumen')->where('jenis_dokumen','!=','')->distinct()->orderBy('jenis_dokumen')->get(['jenis_dokumen','kategori'])->unique('jenis_dokumen')->map(fn($d)=>['id'=>$d->jenis_dokumen,'nama_sub_kriteria'=>$d->jenis_dokumen,'id_kategori_kriteria'=>$d->kategori])->values()->toArray();
+        }
+        if (empty($ieItemSubKriteriaList)) {
+            $ieItemSubKriteriaList = \App\Models\Dokumen::whereNotNull('jenis_sub_pekerjaan')->where('jenis_sub_pekerjaan','!=','')->distinct()->orderBy('jenis_sub_pekerjaan')->get(['jenis_sub_pekerjaan','jenis_dokumen'])->unique('jenis_sub_pekerjaan')->map(fn($d)=>['id'=>$d->jenis_sub_pekerjaan,'nama_item_sub_kriteria'=>$d->jenis_sub_pekerjaan,'id_sub_kriteria'=>$d->jenis_dokumen])->values()->toArray();
+        }
+        if (empty($ieJenisPembayaranList)) {
+            $ieJenisPembayaranList = \App\Models\Dokumen::whereNotNull('jenis_pembayaran')->where('jenis_pembayaran','!=','')->distinct()->orderBy('jenis_pembayaran')->pluck('jenis_pembayaran')->map(fn($v)=>['id_jenis_pembayaran'=>$v,'nama_jenis_pembayaran'=>$v])->toArray();
+        }
+
+        $data = array(
+            "title" => "Daftar Dokumen Team Verifikasi",
+            "module" => "team_verifikasi",
+            "menuDashboard" => "",
+            'menuDokumen' => 'Active',
+            'menuDaftarDokumen' => 'Active',
+            'dokumens' => $dokumens,
+            'totalDokumenAgenda' => $totalDokumenAgenda,
+            'totalDokumenVerifikasi' => $totalDokumenVerifikasi,
+            'totalDokumenDiproses' => $totalDokumenDiproses,
+            'totalTerkirim' => $totalTerkirim,
+            'dokumenLessThan24h' => $dokumenLessThan24h,
+            'dokumen24to72h' => $dokumen24to72h,
+            'dokumenMoreThan72h' => $dokumenMoreThan72h,
+            'totalNilaiRupiah' => $totalNilaiRupiah,
+            'suggestions' => $suggestions,
+            'availableColumns' => $availableColumns,
+            'selectedColumns' => $selectedColumns,
+            'ieKategoriList' => $ieKategoriList,
+            'ieSubKriteriaList' => $ieSubKriteriaList,
+            'ieItemSubKriteriaList' => $ieItemSubKriteriaList,
+            'ieJenisPembayaranList' => $ieJenisPembayaranList,
+        );
+        return view('team_verifikasi.dokumens.daftarDokumen', $data);
+    }
+
+    public function createDokumen()
+    {
+        $data = array(
+            "title" => "Tambah Dokumen Team Verifikasi",
+            "module" => "team_verifikasi",
+            "menuDashboard" => "",
+            'menuDokumen' => 'Active',
+            'menuTambahDokumen' => 'Active',
+        );
+        return view('team_verifikasi.dokumens.tambahDokumen', $data);
+    }
+
+    public function storeDokumen(Request $request)
+    {
+        // Implementation for storing document
+        return redirect()->route('documents.verifikasi.index')->with('success', 'Dokumen berhasil ditambahkan');
+    }
+
+    public function editDokumen(Dokumen $dokumen)
+    {
+        // Refresh dokumen dari database dengan semua relasi untuk memastikan data terbaru
+        $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])->findOrFail($dokumen->id);
+
+        // Only allow editing if current_handler is Team Verifikasi or document is returned_to_verifikasi
+        if (
+            !in_array($dokumen->current_handler, ['team_verifikasi', 'verifikasi'])
+            && $dokumen->status !== 'returned_to_verifikasi'
+        ) {
+            return redirect()->route('documents.verifikasi.index')
+                ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
+        }
+
+        // Ambil data dari database cash_bank_new untuk dropdown baru
+        // Tambahkan try-catch untuk menangani error koneksi database
+        $isDropdownAvailable = false;
+        try {
+            $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
+            $subKriteria = SubKriteria::all();
+            $itemSubKriteria = ItemSubKriteria::all();
+            $isDropdownAvailable = $kategoriKriteria->count() > 0;
+        } catch (\Exception $e) {
+            \Log::error('Error fetching cash_bank data: ' . $e->getMessage());
+            // Fallback: gunakan collection kosong jika error
+            $kategoriKriteria = collect([]);
+            $subKriteria = collect([]);
+            $itemSubKriteria = collect([]);
+            $isDropdownAvailable = false;
+        }
+
+        // Ambil data jenis pembayaran dari database cash_bank_new
+        $jenisPembayaranList = collect([]);
+        $isJenisPembayaranAvailable = false;
+        try {
+            $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get();
+            $isJenisPembayaranAvailable = $jenisPembayaranList->count() > 0;
+            \Log::info('Jenis Pembayaran fetched (Team Verifikasi): ' . $jenisPembayaranList->count() . ' records');
+        } catch (\Exception $e) {
+            \Log::error('Error fetching jenis pembayaran data (Team Verifikasi): ' . $e->getMessage());
+            \Log::error('Error trace: ' . $e->getTraceAsString());
+            // Fallback: gunakan collection kosong jika error
+            $jenisPembayaranList = collect([]);
+            $isJenisPembayaranAvailable = false;
+        }
+
+        // Cari ID dari nama yang tersimpan di database (untuk backward compatibility)
+        $selectedKriteriaCfId = null;
+        $selectedSubKriteriaId = null;
+        $selectedItemSubKriteriaId = null;
+
+        try {
+            if ($dokumen->kategori) {
+                $foundKategori = KategoriKriteria::where('nama_kriteria', $dokumen->kategori)->first();
+                if ($foundKategori) {
+                    $selectedKriteriaCfId = $foundKategori->id_kategori_kriteria;
+                }
+            }
+
+            if ($dokumen->jenis_dokumen) {
+                $foundSub = SubKriteria::where('nama_sub_kriteria', $dokumen->jenis_dokumen)->first();
+                if ($foundSub) {
+                    $selectedSubKriteriaId = $foundSub->id_sub_kriteria;
+                }
+            }
+
+            if ($dokumen->jenis_sub_pekerjaan) {
+                $foundItem = ItemSubKriteria::where('nama_item_sub_kriteria', $dokumen->jenis_sub_pekerjaan)->first();
+                if ($foundItem) {
+                    $selectedItemSubKriteriaId = $foundItem->id_item_sub_kriteria;
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error finding IDs from names: ' . $e->getMessage());
+            // Continue dengan null values jika error
+        }
+
+        $data = array(
+            "title" => "Edit Dokumen",
+            "module" => "team_verifikasi",
+            "menuDashboard" => "",
+            'menuDokumen' => 'Active',
+            'menuDaftarDokumen' => 'Active',
+            'dokumen' => $dokumen,
+            'kategoriKriteria' => $kategoriKriteria ?? collect([]),
+            'subKriteria' => $subKriteria ?? collect([]),
+            'itemSubKriteria' => $itemSubKriteria ?? collect([]),
+            'selectedKriteriaCfId' => $selectedKriteriaCfId ?? null,
+            'selectedSubKriteriaId' => $selectedSubKriteriaId ?? null,
+            'selectedItemSubKriteriaId' => $selectedItemSubKriteriaId ?? null,
+            'isDropdownAvailable' => $isDropdownAvailable,
+            'jenisPembayaranList' => $jenisPembayaranList,
+            'isJenisPembayaranAvailable' => $isJenisPembayaranAvailable,
+            'bagianList' => Bagian::active()->ordered()->get(),
+        );
+        return view('team_verifikasi.dokumens.editDokumen', $data);
+    }
+
+    public function updateDokumen(Request $request, Dokumen $dokumen)
+    {
+        // Only allow updating if current_handler is Team Verifikasi or document is returned_to_verifikasi
+        if (
+            !in_array($dokumen->current_handler, ['team_verifikasi', 'verifikasi'])
+            && $dokumen->status !== 'returned_to_verifikasi'
+        ) {
+            return redirect()->route('documents.verifikasi.index')
+                ->with('error', 'Anda tidak memiliki izin untuk mengupdate dokumen ini.');
+        }
+
+        // Check if using dropdown mode (cash_bank available) or manual mode
+        $isDropdownMode = $request->filled('kriteria_cf') && $request->filled('sub_kriteria') && $request->filled('item_sub_kriteria');
+        $isManualMode = $request->filled('kategori') && $request->filled('jenis_dokumen') && $request->filled('jenis_sub_pekerjaan');
+
+        $rules = [
+            'nomor_agenda' => 'nullable|string|unique:dokumens,nomor_agenda,' . $dokumen->id,
+            'bulan' => 'nullable|string',
+            'tahun' => 'nullable|integer|min:2020|max:2030',
+            'tanggal_masuk' => 'nullable|date',
+            'nomor_spp' => 'nullable|string',
+            'tanggal_spp' => 'nullable|date',
+            'uraian_spp' => 'nullable|string',
+            'nilai_rupiah' => 'nullable|string',
+            'jenis_pembayaran' => 'nullable|string',
+            'dibayar_kepada' => 'nullable|string',
+            'no_berita_acara' => 'nullable|string',
+            'tanggal_berita_acara' => 'nullable|date',
+            'no_spk' => 'nullable|string',
+            'tanggal_spk' => 'nullable|date',
+            'tanggal_berakhir_spk' => 'nullable|date',
+            'keterangan' => 'nullable|string',
+            'nomor_po' => 'array',
+            'nomor_po.*' => 'nullable|string',
+            'nomor_pr' => 'array',
+            'nomor_pr.*' => 'nullable|string',
+        ];
+
+        // Semua field optional (tidak wajib)
+        $rules['kriteria_cf'] = 'nullable|integer';
+        $rules['sub_kriteria'] = 'nullable|integer';
+        $rules['item_sub_kriteria'] = 'nullable|integer';
+        $rules['kategori'] = 'nullable|string|max:255';
+        $rules['jenis_dokumen'] = 'nullable|string|max:255';
+        $rules['jenis_sub_pekerjaan'] = 'nullable|string|max:255';
+
+        $validator = \Validator::make($request->all(), $rules, [
+            'nomor_agenda.unique' => 'Nomor agenda sudah digunakan. Silakan gunakan nomor lain.',
+            'tahun.integer' => 'Tahun harus berupa angka.',
+            'tahun.min' => 'Tahun minimal 2020.',
+            'tahun.max' => 'Tahun maksimal 2030.',
+            'kriteria_cf.required' => 'Kriteria CF wajib dipilih.',
+            'sub_kriteria.required' => 'Sub Kriteria wajib dipilih.',
+            'item_sub_kriteria.required' => 'Item Sub Kriteria wajib dipilih.',
+            'kategori.required' => 'Kategori wajib diisi.',
+            'jenis_dokumen.required' => 'Jenis Dokumen wajib diisi.',
+            'jenis_sub_pekerjaan.required' => 'Jenis Sub Pekerjaan wajib diisi.',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan pada input data. Silakan periksa kembali.');
+        }
+
+        try {
+            \DB::beginTransaction();
+
+            // Format nilai rupiah - remove dots, commas, spaces, and "Rp" text
+            $nilaiRupiah = preg_replace('/[^0-9]/', '', $request->nilai_rupiah);
+            if (empty($nilaiRupiah) || $nilaiRupiah <= 0) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Nilai rupiah harus lebih dari 0.');
+            }
+            $nilaiRupiah = (float) $nilaiRupiah;
+
+            // Determine new status based on document state
+            $newStatus = $dokumen->status;
+            $resetInboxRejection = false;
+
+            // If document was rejected from inbox or returned, reset to "sedang diproses"
+            $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+            $isRejectedByTeamVerifikasi = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'rejected';
+
+            if (
+                $isRejectedByTeamVerifikasi ||
+                $dokumen->status === 'returned_to_department' ||
+                $dokumen->status === 'returned_to_verifikasi'
+            ) {
+                $newStatus = 'sedang diproses';
+                $resetInboxRejection = true;
+            }
+
+            // Get nama from ID untuk field baru (kriteria_cf, sub_kriteria, item_sub_kriteria)
+            $kategoriKriteria = null;
+            $subKriteria = null;
+            $itemSubKriteria = null;
+
+            try {
+                if ($request->has('kriteria_cf') && $request->kriteria_cf) {
+                    $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
+                }
+
+                if ($request->has('sub_kriteria') && $request->sub_kriteria) {
+                    $subKriteria = SubKriteria::find($request->sub_kriteria);
+                }
+
+                if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
+                    $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error fetching cash_bank data for update (DashboardB): ' . $e->getMessage());
+                // Continue dengan null values, akan menggunakan fallback ke request->kategori/jenis_dokumen/jenis_sub_pekerjaan
+            }
+
+            // Update dokumen
+            $updateData = [
+                'nomor_agenda' => $request->nomor_agenda,
+                'bulan' => $request->bulan,
+                'tahun' => $request->tahun,
+                'tanggal_masuk' => $request->tanggal_masuk,
+                'nomor_spp' => $request->nomor_spp,
+                'tanggal_spp' => $request->tanggal_spp,
+                'uraian_spp' => $request->uraian_spp,
+                'nilai_rupiah' => $nilaiRupiah,
+                // Simpan nama dari ID untuk backward compatibility
+                'kategori' => $kategoriKriteria ? $kategoriKriteria->nama_kriteria : ($request->kategori ?? $dokumen->kategori),
+                'jenis_dokumen' => $subKriteria ? $subKriteria->nama_sub_kriteria : ($request->jenis_dokumen ?? $dokumen->jenis_dokumen),
+                'jenis_sub_pekerjaan' => $itemSubKriteria ? $itemSubKriteria->nama_item_sub_kriteria : ($request->jenis_sub_pekerjaan ?? $dokumen->jenis_sub_pekerjaan),
+                'jenis_pembayaran' => $request->jenis_pembayaran,
+                'kebun' => $request->kebun,
+                'bagian' => $request->bagian,
+                'nama_pengirim' => $request->nama_pengirim,
+                'dibayar_kepada' => $request->dibayar_kepada,
+                'no_berita_acara' => $request->no_berita_acara,
+                'tanggal_berita_acara' => $request->tanggal_berita_acara,
+                'no_spk' => $request->no_spk,
+                'tanggal_spk' => $request->tanggal_spk,
+                'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
+                'nomor_miro' => $request->nomor_miro,
+                'status' => $newStatus, // Reset status to "sedang diproses" if was rejected/returned
+                'keterangan' => $request->keterangan,
+            ];
+
+            // Reset inbox rejection status if needed
+            if ($resetInboxRejection) {
+                // Clear DokumenStatus rejection for Team Verifikasi if resetting
+                $dokumenStatus = \App\Models\DokumenStatus::updateOrCreate(
+                    ['dokumen_id' => $dokumen->id, 'role_code' => 'team_verifikasi'],
+                    ['status' => 'pending'] // Atau status awal lain, e.g. 'pending' atau NULL jika perlu dihapus
+                );
+
+                // Reset current_handler to team_verifikasi so document stays in the list
+                $updateData['current_handler'] = 'team_verifikasi';
+
+                // Clear department return fields since document has been fixed
+                $updateData['returned_at'] = null;
+                $updateData['return_source'] = null;
+
+                // Reset role status fields - now handled by dokumen_statuses table
+            }
+
+            $dokumen->update($updateData);
+
+            // Update PO numbers - delete existing and create new
+            $dokumen->dokumenPos()->delete();
+            if ($request->has('nomor_po')) {
+                foreach ($request->nomor_po as $nomorPO) {
+                    if (!empty($nomorPO)) {
+                        DokumenPO::create([
+                            'dokumen_id' => $dokumen->id,
+                            'nomor_po' => $nomorPO,
+                        ]);
+                    }
+                }
+            }
+
+            // Update PR numbers - delete existing and create new
+            $dokumen->dokumenPrs()->delete();
+            if ($request->has('nomor_pr')) {
+                foreach ($request->nomor_pr as $nomorPR) {
+                    if (!empty($nomorPR)) {
+                        DokumenPR::create([
+                            'dokumen_id' => $dokumen->id,
+                            'nomor_pr' => $nomorPR,
+                        ]);
+                    }
+                }
+            }
+
+            \DB::commit();
+
+            // Clear any existing flash messages before setting new one
+            session()->forget(['success', 'error']);
+
+            // Check if document is returned document and redirect accordingly
+            $isReturnedDocument = ($dokumen->status === 'returned_to_department' ||
+                ($dokumen->returned_at && in_array($dokumen->status, ['returned_to_department', 'returned_to_bidang'])));
+
+            // Also check referer to be more accurate
+            $referer = request()->header('referer');
+            $fromPengembalian = $referer && str_contains($referer, 'pengembalian-dokumensB');
+
+            if ($isReturnedDocument || $fromPengembalian) {
+                return redirect()->route('pengembalianB.index')
+                    ->with('success', 'Dokumen berhasil diperbarui.');
+            } else {
+                return redirect()->route('documents.verifikasi.index')
+                    ->with('success', 'Dokumen berhasil diperbarui.');
+            }
+
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Error updating document in Team Verifikasi: ' . $e->getMessage());
+            \Log::error('Error stack trace: ' . $e->getTraceAsString());
+
+            // Clear any existing flash messages before setting error
+            session()->forget(['success', 'error']);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat memperbarui dokumen. Silakan coba lagi.');
+        }
+    }
+
+    /**
+     * Get document detail for AJAX request
+     */
+    public function getDocumentDetail(Dokumen $dokumen)
+    {
+        try {
+            Log::info('Accessing document detail', [
+                'document_id' => $dokumen->id,
+                'current_handler' => $dokumen->current_handler ?? 'null',
+                'status' => $dokumen->status ?? 'null',
+                'user_agent' => request()->userAgent(),
+                'wants_json' => request()->wantsJson(),
+                'is_ajax' => request()->ajax(),
+            ]);
+
+            $allowedHandlers = ['team_verifikasi', 'team_verifikasi', 'perpajakan', 'akutansi', 'operator', 'pembayaran'];
+            $allowedStatuses = ['sent_to_team_verifikasi', 'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'approved_Team Verifikasi', 'returned_to_department', 'returned_to_verifikasi', 'returned_to_bidang', 'returned_to_operator'];
+
+            // Allow if rejected by Team Verifikasi
+            $isInboxRejected = false;
+            $teamVerifikasiStatus = $dokumen->getStatusForRole('team_verifikasi');
+            if ($teamVerifikasiStatus && $teamVerifikasiStatus->status === 'rejected') {
+                $isInboxRejected = true;
+            }
+
+            if (!in_array($dokumen->current_handler ?? '', $allowedHandlers) && !in_array($dokumen->status ?? '', $allowedStatuses) && !$isInboxRejected) {
+                Log::warning('Access denied for document detail', [
+                    'document_id' => $dokumen->id,
+                    'current_handler' => $dokumen->current_handler ?? 'null',
+                    'status' => $dokumen->status ?? 'null',
+                ]);
+
+                if (request()->wantsJson() || request()->ajax()) {
+                    return response()->json(['success' => false, 'message' => 'Access denied'], 403);
+                }
+                return response('<div class="text-center p-4 text-danger">Access denied</div>', 403);
+            }
+
+            // Refresh dokumen dari database dengan semua relasi untuk memastikan data terbaru
+            $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])->findOrFail($dokumen->id);
+
+            // If request wants JSON (for modal view)
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'dokumen' => [
+                        'id' => $dokumen->id,
+                        'nomor_agenda' => $dokumen->nomor_agenda,
+                        'nomor_spp' => $dokumen->nomor_spp,
+                        'tanggal_spp' => $dokumen->tanggal_spp,
+                        'bulan' => $dokumen->bulan,
+                        'tahun' => $dokumen->tahun,
+                        'tanggal_masuk' => $dokumen->tanggal_masuk,
+                        'jenis_dokumen' => $dokumen->jenis_dokumen,
+                        'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan,
+                        'kategori' => $dokumen->kategori,
+                        'uraian_spp' => $dokumen->uraian_spp,
+                        'nilai_rupiah' => $dokumen->nilai_rupiah,
+                        'jenis_pembayaran' => $dokumen->jenis_pembayaran,
+                        'dibayar_kepada' => ($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0)
+                            ? $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ')
+                            : ($dokumen->dibayar_kepada ?? null),
+                        'kebun' => $dokumen->kebun,
+                        'bagian' => $dokumen->bagian,
+                        'nama_pengirim' => $dokumen->nama_pengirim,
+                        'no_spk' => $dokumen->no_spk,
+                        'tanggal_spk' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-',
+                        'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
+                        'nomor_miro' => $dokumen->nomor_miro_display ?? '-',
+                        'tanggal_miro' => $dokumen->tanggal_miro ? $dokumen->tanggal_miro->format('d/m/Y') : '-',
+                        'no_berita_acara' => $dokumen->no_berita_acara ?? '-',
+                        'tanggal_berita_acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-',
+                        'dokumen_pos' => $dokumen->dokumenPos ? $dokumen->dokumenPos->map(function ($po) {
+                            return ['nomor_po' => $po->nomor_po ?? ''];
+                        })->values() : [],
+                        'dokumen_prs' => $dokumen->dokumenPrs ? $dokumen->dokumenPrs->map(function ($pr) {
+                            return ['nomor_pr' => $pr->nomor_pr ?? ''];
+                        })->values() : [],
+                        // Fallback fields for imported CSV data
+                        'NO_PO' => $dokumen->NO_PO ?? null,
+                        'NO_MIRO_SES' => $dokumen->NO_MIRO_SES ?? null,
+                    ]
+                ]);
+            }
+
+            // Generate HTML with error handling
+            try {
+                $html = $this->generateDocumentDetailHtml($dokumen);
+            } catch (\Exception $e) {
+                Log::error('Failed to generate document detail HTML', [
+                    'document_id' => $dokumen->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                return response('<div class="text-center p-4 text-danger">Error generating document view</div>', 500);
+            }
+
+            Log::info('Document detail generated successfully', [
+                'document_id' => $dokumen->id,
+                'html_length' => strlen($html),
+            ]);
+
+            return response($html);
+
+        } catch (\Exception $e) {
+            Log::error('Unexpected error in getDocumentDetail', [
+                'document_id' => $dokumen->id ?? 'unknown',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unexpected error occurred: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return response('<div class="text-center p-4 text-danger">Unexpected error occurred</div>', 500);
+        }
+    }
+
+    /**
+     * Generate HTML for document detail
+     */
+    private function generateDocumentDetailHtml($dokumen): string
+    {
+        $html = '<div class="detail-grid">';
+
+        $detailItems = [
+            'Nomor Agenda' => $dokumen->nomor_agenda ?? '-',
+            'Bulan' => $dokumen->bulan,
+            'Tahun' => $dokumen->tahun,
+            'Kriteria CF' => $dokumen->kategori ?? '-',
+            'Sub Kriteria' => $dokumen->jenis_dokumen ?? '-',
+            'Item Sub Kriteria' => $dokumen->jenis_sub_pekerjaan ?? '-',
+            'Jenis Pembayaran' => $dokumen->jenis_pembayaran ?? '-',
+            'No SPP' => $dokumen->nomor_spp,
+            'Tanggal SPP' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-',
+            'Tanggal Masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d/m/Y H:i:s') : '-',
+            'Dibayar Kepada' => $dokumen->dibayarKepadas->count() > 0
+                ? $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ')
+                : ($dokumen->dibayar_kepada ?? '-'),
+            'Uraian SPP' => $dokumen->uraian_spp,
+            'Nilai Rp' => $dokumen->formatted_nilai_rupiah,
+            'Bagian' => $dokumen->bagian ?? '-',
+            'No SPK' => $dokumen->no_spk ?? '-',
+            'Tanggal SPK' => $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d/m/Y') : '-',
+            'Tanggal Akhir SPK' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
+            'No Berita Acara' => $dokumen->no_berita_acara ?? '-',
+            'Tanggal Berita Acara' => $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d/m/Y') : '-',
+        ];
+
+        foreach ($detailItems as $label => $value) {
+            $html .= sprintf('
+                <div class="detail-item">
+                    <span class="detail-label">%s</span>
+                    <span class="detail-value">%s</span>
+                </div>',
+                htmlspecialchars($label, ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($this->escapeHtml($value), ENT_QUOTES, 'UTF-8')
+            );
+        }
+
+        // Nomor PO
+        $poHtml = $dokumen->dokumenPos->count() > 0
+            ? $this->escapeHtml($dokumen->dokumenPos->pluck('nomor_po')->join(', '))
+            : ($dokumen->NO_PO ?? '-');
+        $html .= sprintf('
+            <div class="detail-item">
+                <span class="detail-label">Nomor PO</span>
+                <span class="detail-value">%s</span>
+            </div>', htmlspecialchars($poHtml, ENT_QUOTES, 'UTF-8'));
+
+        // No PR
+        $prHtml = $dokumen->dokumenPrs->count() > 0
+            ? $this->escapeHtml($dokumen->dokumenPrs->pluck('nomor_pr')->join(', '))
+            : '-';
+        $html .= sprintf('
+            <div class="detail-item">
+                <span class="detail-label">No PR</span>
+                <span class="detail-value">%s</span>
+            </div>', htmlspecialchars($prHtml, ENT_QUOTES, 'UTF-8'));
+
+        // Status badge
+        $statusBadge = '';
+        if ($dokumen->status == 'selesai' || $dokumen->status == 'approved_Team Verifikasi') {
+            $statusBadge = '<span class="badge badge-status badge-selesai">' . ($dokumen->status == 'approved_Team Verifikasi' ? 'Approved' : 'Selesai') . '</span>';
+        } elseif ($dokumen->status == 'rejected_Team Verifikasi') {
+            $statusBadge = '<span class="badge badge-status badge-dikembalikan">Rejected</span>';
+        } elseif ($dokumen->status == 'sent_to_team_verifikasi') {
+            $statusBadge = '<span class="badge badge-status badge-proses">Menunggu Review</span>';
+        } else {
+            $statusBadge = '<span class="badge badge-status badge-proses">' . ucfirst($dokumen->status) . '</span>';
+        }
+
+        $html .= sprintf('
+            <div class="detail-item">
+                <span class="detail-label">Status</span>
+                <span class="detail-value">%s</span>
+            </div>', $statusBadge);
+
+        // Inbox rejection information - check dokumen_statuses
+        $rejectedStatus = $dokumen->roleStatuses()
+            ->where('status', 'rejected')
+            ->whereIn('role_code', ['perpajakan', 'akutansi'])
+            ->first();
+        if ($rejectedStatus && $rejectedStatus->notes) {
+            $html .= sprintf('
+                <div class="detail-item" style="grid-column: 1 / -1; background: #fff5f5; border: 2px solid #f56565;">
+                    <span class="detail-label" style="color: #c53030;">
+                        <i class="fa-solid fa-times-circle me-1"></i>Ditolak dari Inbox
+                    </span>
+                    <span class="detail-value" style="color: #742a2a; font-weight: 600;">
+                        %s
+                    </span>
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #fed7d7;">
+                        <small style="color: #718096;">
+                            <strong>Tanggal Penolakan:</strong> %s<br>
+                            <strong>Ditolak oleh:</strong> %s
+                        </small>
+                    </div>
+                </div>',
+                htmlspecialchars($this->escapeHtml($rejectedStatus->notes ?? '-'), ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($rejectedStatus->status_changed_at ? $rejectedStatus->status_changed_at->format('d/m/Y H:i') : '-', ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($this->getRejectedByDisplayName($dokumen), ENT_QUOTES, 'UTF-8')
+            );
+        }
+
+        // Dates
+        $dates = [
+            'Tanggal Dikirim ke Team Verifikasi' => $dokumen->getDataForRole('team_verifikasi')?->received_at ? $dokumen->getDataForRole('team_verifikasi')->received_at->format('d-m-Y H:i') : null,
+            'Tanggal Diproses' => $dokumen->getDataForRole('team_verifikasi')?->processed_at ? $dokumen->getDataForRole('team_verifikasi')->processed_at->format('d-m-Y H:i') : null,
+            'Tanggal Dikembalikan' => $dokumen->returned_at ? $dokumen->returned_at->format('d-m-Y H:i') : null,
+        ];
+
+        foreach ($dates as $label => $value) {
+            if ($value) {
+                $html .= sprintf('
+                    <div class="detail-item">
+                        <span class="detail-label">%s</span>
+                        <span class="detail-value">%s</span>
+                    </div>',
+                    htmlspecialchars($label, ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($this->escapeHtml($value), ENT_QUOTES, 'UTF-8')
+                );
+            }
+        }
+
+        // Deadline
+        if ($dokumen->deadline_at) {
+            $html .= sprintf('
+                <div class="detail-item">
+                    <span class="detail-label">Deadline</span>
+                    <span class="detail-value">
+                        <strong>%s</strong>
+                        <br>
+                        <small style="color: #666;">(%s hari dari pengiriman)</small>
+                    </span>
+                </div>',
+                htmlspecialchars($dokumen->deadline_at->format('d M Y, H:i'), ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($this->escapeHtml($dokumen->deadline_days), ENT_QUOTES, 'UTF-8')
+            );
+        }
+
+        if ($dokumen->deadline_note) {
+            $html .= sprintf('
+                <div class="detail-item">
+                    <span class="detail-label">Catatan Deadline</span>
+                    <span class="detail-value" style="font-style: italic; color: #666;">%s</span>
+                </div>',
+                htmlspecialchars($this->escapeHtml($dokumen->deadline_note), ENT_QUOTES, 'UTF-8')
+            );
+        }
+
+        $html .= '</div>';
+        return $html;
+    }
+
+    public function destroyDokumen($id)
+    {
+        // Implementation for deleting document
+        return redirect()->route('documents.verifikasi.index')->with('success', 'Dokumen berhasil dihapus');
+    }
+
+    public function pengembalian(Request $request)
+    {
+        // Team Verifikasi sees documents that were returned to department (unified return page)
+        // Juga menampilkan dokumen yang di-reject dari inbox (Perpajakan atau Akutansi)
+        $query = \App\Models\Dokumen::with(['dokumenPos', 'dokumenPrs', 'activityLogs', 'dibayarKepadas', 'roleStatuses'])
+            ->where(function ($q) {
+                // Dokumen yang dikembalikan dari department/bagian (legacy: current_handler = team_verifikasi)
+                $q->where(function ($subQ) {
+                    $subQ->where('current_handler', 'team_verifikasi')
+                        ->where('status', 'returned_to_department');
+                })
+                    // Dokumen dengan status returned_to_verifikasi (new: current_handler tetap di department asal)
+                    ->orWhere(function ($newReturnQ) {
+                    $newReturnQ->where('status', 'returned_to_verifikasi');
+                })
+                    // Dokumen yang di-reject dari inbox (Perpajakan atau Akutansi) dan dikembalikan ke Team Verifikasi
+                    // Check dokumen_statuses table for rejected status
+                    ->orWhere(function ($inboxRejectQ) {
+                    $inboxRejectQ->where('current_handler', 'team_verifikasi')
+                        ->whereHas('roleStatuses', function ($statusQuery) {
+                            $statusQuery->whereIn('role_code', ['perpajakan', 'akutansi'])
+                                ->where('status', 'rejected');
+                        });
+                });
+            })
+            ->orderByDesc('returned_at');
+
+        // Filter by department (hanya untuk dokumen yang dikembalikan dari department, bukan dari inbox)
+        if ($request->has('department') && $request->department) {
+            $query->where(function ($q) use ($request) {
+                $q->where('return_source', $request->department)
+                    ->orWhereHas('roleStatuses', function ($statusQuery) {
+                        // Dokumen yang di-reject dari inbox tidak memiliki return_source
+                        $statusQuery->whereIn('role_code', ['perpajakan', 'akutansi'])
+                            ->where('status', 'rejected');
+                    });
+            });
+        }
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_agenda', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                    ->orWhere('uraian_spp', 'like', '%' . $search . '%');
+            });
+        }
+
+        $perPage = $request->get('per_page', session('verifikasi_returned_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['verifikasi_returned_per_page' => $perPage]);
+        $dokumens = $query->paginate($perPage)->appends($request->query());
+
+        // Get statistics
+        $totalReturnedToDept = \App\Models\Dokumen::where(function ($q) {
+            // Dokumen yang dikembalikan dari department/bagian (legacy)
+            $q->where(function ($subQ) {
+                $subQ->where('current_handler', 'team_verifikasi')
+                    ->where('status', 'returned_to_department');
+            })
+                // Dokumen dengan status returned_to_verifikasi (new)
+                ->orWhere(function ($newReturnQ) {
+                    $newReturnQ->where('status', 'returned_to_verifikasi');
+                })
+                // Dokumen yang di-reject dari inbox dan dikembalikan ke Team Verifikasi
+                ->orWhere(function ($inboxRejectQ) {
+                    $inboxRejectQ->where('current_handler', 'team_verifikasi')
+                        ->whereHas('roleStatuses', function ($statusQuery) {
+                            $statusQuery->whereIn('role_code', ['perpajakan', 'akutansi'])
+                                ->where('status', 'rejected');
+                        });
+                });
+        })
+            ->count();
+
+        $totalByDept = [
+            'perpajakan' => \App\Models\Dokumen::where(function ($q) {
+                $q->where(function ($subQ) {
+                    $subQ->where('current_handler', 'team_verifikasi')
+                        ->where('status', 'returned_to_department')
+                        ->where('return_source', 'perpajakan');
+                })
+                    ->orWhere(function ($newQ) {
+                        $newQ->where('status', 'returned_to_verifikasi')
+                            ->where('return_source', 'perpajakan');
+                    })
+                    ->orWhere(function ($rejectQ) {
+                        $rejectQ->where('current_handler', 'team_verifikasi')
+                            ->whereHas('roleStatuses', function ($statusQuery) {
+                                $statusQuery->where('role_code', 'perpajakan')
+                                    ->where('status', 'rejected');
+                            });
+                    });
+            })
+                ->count(),
+            'akutansi' => \App\Models\Dokumen::where(function ($q) {
+                $q->where(function ($subQ) {
+                    $subQ->where('current_handler', 'team_verifikasi')
+                        ->where('status', 'returned_to_department')
+                        ->where('return_source', 'akutansi');
+                })
+                    ->orWhere(function ($newQ) {
+                        $newQ->where('status', 'returned_to_verifikasi')
+                            ->where('return_source', 'akutansi');
+                    })
+                    ->orWhere(function ($rejectQ) {
+                        $rejectQ->where('current_handler', 'team_verifikasi')
+                            ->whereHas('roleStatuses', function ($statusQuery) {
+                                $statusQuery->where('role_code', 'akutansi')
+                                    ->where('status', 'rejected');
+                            });
+                    });
+            })
+                ->count(),
+            'pembayaran' => \App\Models\Dokumen::where(function ($q) {
+                $q->where(function ($subQ) {
+                    $subQ->where('current_handler', 'team_verifikasi')
+                        ->where('status', 'returned_to_department')
+                        ->where('return_source', 'pembayaran');
+                })
+                    ->orWhere(function ($newQ) {
+                        $newQ->where('status', 'returned_to_verifikasi')
+                            ->where('return_source', 'pembayaran');
+                    });
+            })
+                ->count(),
+        ];
+
+        $departments = ['perpajakan', 'akutansi', 'pembayaran'];
+        $selectedDepartment = $request->department;
+
+        $data = array(
+            "title" => "Daftar Pengembalian Dokumen",
+            "module" => "team_verifikasi",
+            "menuDashboard" => "",
+            'menuDokumen' => 'Active',
+            'menuDaftarDokumenDikembalikan' => 'Active',
+            'dokumens' => $dokumens,
+            'totalReturnedToDept' => $totalReturnedToDept,
+            'totalByDept' => $totalByDept,
+            'departments' => $departments,
+            'selectedDepartment' => $selectedDepartment,
+        );
+        return view('team_verifikasi.dokumens.pengembalianKeBagian', $data);
+    }
+
+
+    /**
+     * Send document back to perpajakan after repair
+     */
+    public function sendBackToPerpajakan(Dokumen $dokumen, Request $request)
+    {
+        try {
+            // Validate current handler
+            // Returned documents now always have current_handler = 'team_verifikasi'
+            if ($dokumen->current_handler !== 'team_verifikasi') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'
+                ], 403);
+            }
+
+            // Validate that this is a returned document from perpajakan
+            $perpajakanStatus = $dokumen->getStatusForRole('perpajakan');
+            if (!$perpajakanStatus || $perpajakanStatus->status !== 'rejected') {
+                // Also check if status is returned_to_department or returned_to_verifikasi with return_source = perpajakan
+                if ($dokumen->status === 'returned_to_verifikasi' && $dokumen->return_source === 'perpajakan') {
+                    // Valid - returned to verifikasi from perpajakan
+                } elseif ($dokumen->status === 'returned_to_department' && $dokumen->return_source === 'perpajakan') {
+                    // Valid - legacy return status
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Dokumen ini bukan dokumen yang dikembalikan dari perpajakan.'
+                    ], 403);
+                }
+            }
+
+            \DB::beginTransaction();
+
+            // Update document data with current values from Team Verifikasi
+            $dokumen->update([
+                'current_handler' => 'perpajakan',
+                'status' => 'sent_to_perpajakan', // Langsung kirim ke perpajakan
+                // Note: processed_at, sent_to_perpajakan_at, deadline_perpajakan_* columns removed - now in dokumen_role_data
+                'perpajakan_return_data' => [
+                    'nomor_agenda' => $dokumen->nomor_agenda,
+                    'nomor_spp' => $dokumen->nomor_spp,
+                    'uraian_spp' => $dokumen->uraian_spp,
+                    'nilai_rupiah' => $dokumen->nilai_rupiah,
+                    'bulan' => $dokumen->bulan,
+                    'tahun' => $dokumen->tahun,
+                    'kategori' => $dokumen->kategori,
+                    'jenis_dokumen' => $dokumen->jenis_dokumen,
+                    'dibayar_kepada' => $dokumen->dibayar_kepada,
+                    'no_berita_acara' => $dokumen->no_berita_acara,
+                    'tanggal_berita_acara' => $dokumen->tanggal_berita_acara,
+                    'no_spk' => $dokumen->no_spk,
+                    'tanggal_spk' => $dokumen->tanggal_spk,
+                    'tanggal_berakhir_spk' => $dokumen->tanggal_berakhir_spk,
+                    'keterangan' => $dokumen->keterangan,
+                ],
+                'updated_at' => now()
+            ]);
+
+            // Update role data for perpajakan - Reset deadline so it can be set again
+            // NOTE: received_at is NOT set here - it will be set when document is approved from inbox
+            $dokumen->setDataForRole('perpajakan', [
+                'deadline_at' => null, // Reset deadline so document must set deadline again
+                'deadline_days' => null,
+                'deadline_note' => null,
+                'processed_at' => null, // Reset processed_at so document is locked until deadline is set
+            ]);
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dokumen berhasil dikirim kembali ke Team Perpajakan.'
+            ]);
+
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Error sending document back to perpajakan: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengirim dokumen ke perpajakan.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Send document to next handler (Perpajakan or Akutansi) via inbox
+     */
+    public function sendToNextHandler(Dokumen $dokumen, Request $request)
+    {
+        try {
+            // Validate current handler - allow team_verifikasi AND departments with returned_to_verifikasi status
+            if (
+                !in_array($dokumen->current_handler, ['team_verifikasi']) &&
+                !($dokumen->status === 'returned_to_verifikasi' && in_array($dokumen->current_handler, ['perpajakan', 'akutansi']))
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'
+                ], 403);
+            }
+
+            // Validate next handler
+            $request->validate([
+                'next_handler' => 'required|in:perpajakan,akutansi,pembayaran'
+            ]);
+
+            \DB::beginTransaction();
+
+            // Map handler to inbox role format
+            $inboxRoleMap = [
+                'perpajakan' => 'Perpajakan',
+                'akutansi' => 'Akutansi',
+                'pembayaran' => 'Pembayaran',
+            ];
+
+            $inboxRole = $inboxRoleMap[$request->next_handler] ?? $request->next_handler;
+
+            // Jika dokumen adalah dokumen yang dikembalikan (returned_to_department),
+            // bersihkan status pengembalian sebelum dikirim
+            $isReturnedDocument = in_array($dokumen->status, ['returned_to_department', 'returned_to_verifikasi']);
+
+            if ($isReturnedDocument) {
+                // Clear return-related fields before sending
+                $dokumen->update([
+                    'return_source' => null,
+                    'returned_at' => null,
+                    'return_reason' => null,
+                    'returned_from_perpajakan_at' => null,
+                    'returned_from_akutansi_at' => null,
+                    'pengembalian_awaiting_fix' => false,
+                    'returned_from_perpajakan_fixed_at' => now(), // Mark as fixed
+                ]);
+
+                \Log::info('Cleared return status before sending document', [
+                    'document_id' => $dokumen->id,
+                    'nomor_agenda' => $dokumen->nomor_agenda,
+                    'next_handler' => $request->next_handler
+                ]);
+            }
+
+            // Simpan status original sebelum dikirim ke inbox
+            $originalStatus = $dokumen->status;
+
+            // Kirim ke inbox menggunakan sistem inbox yang sudah ada
+            $dokumen->sendToInbox($inboxRole);
+
+            // Reset deadline for the target handler AFTER sending to inbox
+            // This is important for returned documents that need to set deadline again
+            if ($request->next_handler === 'perpajakan') {
+                $perpajakanRoleData = $dokumen->getDataForRole('perpajakan');
+                if ($perpajakanRoleData) {
+                    // Reset deadline for returned documents so they must set deadline again
+                    $perpajakanRoleData->deadline_at = null;
+                    $perpajakanRoleData->deadline_days = null;
+                    $perpajakanRoleData->deadline_note = null;
+                    $perpajakanRoleData->processed_at = null; // Reset processed_at to lock document until deadline is set
+                    $perpajakanRoleData->save();
+
+                    \Log::info('Reset deadline for returned document sent to perpajakan', [
+                        'document_id' => $dokumen->id,
+                        'nomor_agenda' => $dokumen->nomor_agenda
+                    ]);
+                } else {
+                    // Create role data if it doesn't exist, ensuring deadline is null
+                    // NOTE: received_at is NOT set here - it will be set when document is approved from inbox
+                    $dokumen->setDataForRole('perpajakan', [
+                        'deadline_at' => null,
+                        'deadline_days' => null,
+                        'deadline_note' => null,
+                        'processed_at' => null,
+                    ]);
+                }
+            }
+
+            // Refresh dokumen untuk mendapatkan status terbaru
+            $dokumen->refresh();
+
+            // Set processed_at untuk tracking di dokumen_role_data (Team Verifikasi)
+            $roleData = $dokumen->getDataForRole('team_verifikasi');
+            if ($roleData) {
+                $roleData->processed_at = now();
+                $roleData->save();
+            } else {
+                // Create role data if it doesn't exist
+                $dokumen->setDataForRole('team_verifikasi', [
+                    'processed_at' => now(),
+                    'received_at' => $dokumen->getDataForRole('team_verifikasi')?->received_at ?? now(),
+                ]);
+            }
+
+            // Set tanggal_selesai_diproses - auto-fill when document is sent to next role
+            $dokumen->update([
+                'tanggal_selesai_diproses' => now(),
+            ]);
+
+            \DB::commit();
+
+            // Log timeline tracking
+            try {
+                $actionKey = 'sent_to_' . $request->next_handler;
+                DocumentTracking::logAction(
+                    $dokumen->id,
+                    $actionKey,
+                    'team_verifikasi',
+                    ['nomor_agenda' => $dokumen->nomor_agenda, 'next_handler' => $request->next_handler]
+                );
+            } catch (\Exception $trackEx) {
+                \Log::error('DocumentTracking logAction failed (sendToNextHandler): ' . $trackEx->getMessage());
+            }
+
+            // Map handler name for success message
+            $nextHandlerNameMap = [
+                'perpajakan' => 'Team Perpajakan',
+                'akutansi' => 'Team Akutansi',
+                'pembayaran' => 'Team Pembayaran',
+            ];
+            $nextHandlerName = $nextHandlerNameMap[$request->next_handler] ?? $request->next_handler;
+
+            \Log::info("Document #{$dokumen->id} sent to inbox {$inboxRole} by Team Verifikasi");
+
+            return response()->json([
+                'success' => true,
+                'message' => "Dokumen berhasil dikirim ke inbox {$nextHandlerName} dan menunggu persetujuan."
+            ]);
+
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Error sending document to next handler: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengirim dokumen.'
+            ], 500);
+        }
+    }
+
+    /**
+     * OLD METHOD - DEPRECATED: Send document to next handler (Perpajakan or Akutansi) - DIRECT SEND
+     * This method is kept for backward compatibility but should not be used
+     * Use sendToNextHandler instead which uses inbox system
+     */
+    public function sendToNextHandlerDirect(Dokumen $dokumen, Request $request)
+    {
+        try {
+            // Validate current handler
+            if ($dokumen->current_handler !== 'team_verifikasi') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengirim dokumen ini.'
+                ], 403);
+            }
+
+            // Validate next handler
+            $request->validate([
+                'next_handler' => 'required|in:perpajakan,akutansi'
+            ]);
+
+            \DB::beginTransaction();
+
+            $updateData = [
+                'current_handler' => $request->next_handler,
+                'status' => 'sent_to_' . $request->next_handler,
+            ];
+
+            // Set specific timestamp based on destination
+            // Note: Deadline will be set by the destination department (perpajakan/akutansi) themselves
+            // NOTE: received_at is NOT set here - it will be set when document is approved from inbox
+            if ($request->next_handler === 'perpajakan') {
+                $dokumen->setDataForRole('perpajakan', [
+                    'deadline_at' => null, // Reset deadline so document will be locked until perpajakan sets deadline
+                    'deadline_days' => null,
+                    'deadline_note' => null,
+                ]);
+            } elseif ($request->next_handler === 'akutansi') {
+                $dokumen->setDataForRole('akutansi', [
+                    'deadline_at' => null, // Reset deadline so document will be locked until akutansi sets deadline
+                    'deadline_days' => null,
+                    'deadline_note' => null,
+                ]);
+            }
+
+            $dokumen->update($updateData);
+
+            \DB::commit();
+
+            // Log activity: dokumen dikirim ke perpajakan/akutansi oleh Ibu Yuni
+            try {
+                \App\Helpers\ActivityLogHelper::logSent(
+                    $dokumen->fresh(),
+                    $request->next_handler,
+                    'team_verifikasi'
+                );
+
+                // Log activity: dokumen masuk/diterima di stage penerima
+                \App\Helpers\ActivityLogHelper::logReceived(
+                    $dokumen->fresh(),
+                    $request->next_handler
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log document sent: ' . $logException->getMessage());
+            }
+
+            $nextHandlerName = $request->next_handler === 'perpajakan' ? 'Team Perpajakan' : 'Team Akutansi';
+
+            \Log::info("Document #{$dokumen->id} sent to {$nextHandlerName} by Team Verifikasi");
+
+            return response()->json([
+                'success' => true,
+                'message' => "Dokumen berhasil dikirim ke {$nextHandlerName}. Dokumen akan terkunci hingga {$nextHandlerName} menetapkan deadline.",
+                'next_handler' => $nextHandlerName
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error in sendToNextHandler: ' . json_encode($e->validator->errors()->all()));
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first()
+            ], 422);
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Error sending to next handler: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengirim dokumen: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Set deadline for document verification
+     */
+    public function setDeadline(Dokumen $dokumen, SetDeadlineRequest $request): JsonResponse
+    {
+        $validatedData = $request->validated();
+
+        try {
+            // Enhanced logging with user context
+            // Check deadline from dokumen_role_data
+            $roleData = $dokumen->getDataForRole('team_verifikasi');
+            Log::info('=== SET DEADLINE REQUEST START ===', [
+                'document_id' => $dokumen->id,
+                'current_handler' => $dokumen->current_handler,
+                'current_status' => $dokumen->status,
+                'deadline_exists' => $roleData && $roleData->deadline_at ? true : false,
+                'user_id' => Auth::id(),
+                'user_role' => Auth::user()?->role,
+                'request_data' => $validatedData
+            ]);
+
+            // Validasi status dokumen
+            if ($dokumen->current_handler !== 'team_verifikasi') {
+                Log::warning('Deadline set failed - Invalid current handler', [
+                    'document_id' => $dokumen->id,
+                    'expected_handler' => 'team_verifikasi',
+                    'actual_handler' => $dokumen->current_handler,
+                    'user_role' => Auth::user()?->role
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen tidak valid untuk menetapkan deadline. Dokumen harus berada di team_verifikasi.',
+                    'debug_info' => [
+                        'current_handler' => $dokumen->current_handler,
+                        'expected_handler' => 'team_verifikasi'
+                    ]
+                ], 403);
+            }
+
+            // Check deadline from dokumen_role_data instead of direct column
+            $roleData = $dokumen->getDataForRole('team_verifikasi');
+            if ($roleData && $roleData->deadline_at) {
+                Log::warning('Deadline set failed - Deadline already exists', [
+                    'document_id' => $dokumen->id,
+                    'existing_deadline' => $roleData->deadline_at,
+                    'user_role' => Auth::user()?->role
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen sudah memiliki deadline. Deadline tidak dapat diubah.',
+                    'debug_info' => [
+                        'existing_deadline' => $roleData->deadline_at
+                    ]
+                ], 403);
+            }
+
+            // Valid statuses untuk set deadline: dokumen yang baru di-approve dari inbox atau sedang diproses
+            $validStatuses = ['sent_to_team_verifikasi', 'sedang diproses', 'approved_data_sudah_terkirim', 'menunggu_approved_pengiriman'];
+            if (!in_array($dokumen->status, $validStatuses)) {
+                Log::warning('Deadline set failed - Invalid document status', [
+                    'document_id' => $dokumen->id,
+                    'current_status' => $dokumen->status,
+                    'valid_statuses' => $validStatuses,
+                    'user_role' => Auth::user()?->role
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Status dokumen tidak valid. Status saat ini: {$dokumen->status}.",
+                    'debug_info' => [
+                        'current_status' => $dokumen->status,
+                        'valid_statuses' => $validStatuses
+                    ]
+                ], 403);
+            }
+
+            // Prepare update data
+            $deadlineDays = (int) $validatedData['deadline_days'];
+            $deadlineNote = $validatedData['deadline_note'] ?? null;
+            $deadlineAt = now()->addDays($deadlineDays);
+
+            // Update using transaction
+            DB::transaction(function () use ($dokumen, $deadlineDays, $deadlineNote, $deadlineAt) {
+                // Update dokumen_role_data with deadline
+                $dokumen->setDataForRole('team_verifikasi', [
+                    'deadline_at' => $deadlineAt,
+                    'deadline_days' => $deadlineDays,
+                    'deadline_note' => $deadlineNote,
+                    'received_at' => $dokumen->getDataForRole('team_verifikasi')?->received_at ?? now(),
+                ]);
+
+                // Update dokumen status
+                $dokumen->update([
+                    'status' => 'sedang diproses',
+                ]);
+            });
+
+            // Refresh dokumen to get updated data
+            $dokumen->refresh();
+            $updatedRoleData = $dokumen->getDataForRole('team_verifikasi');
+
+            // Log activity: deadline diatur oleh Ibu Yuni
+            try {
+                \App\Helpers\ActivityLogHelper::logDeadlineSet(
+                    $dokumen->fresh(),
+                    'team_verifikasi',
+                    [
+                        'deadline_days' => $deadlineDays,
+                        'deadline_at' => $updatedRoleData?->deadline_at?->format('Y-m-d H:i:s'),
+                        'deadline_note' => $deadlineNote,
+                    ]
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log deadline set: ' . $logException->getMessage());
+            }
+
+            Log::info('Deadline successfully set', [
+                'document_id' => $dokumen->id,
+                'deadline_days' => $deadlineDays,
+                'deadline_at' => $updatedRoleData?->deadline_at,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Deadline berhasil ditetapkan ({$deadlineDays} hari). Dokumen sekarang terbuka untuk diproses.",
+                'deadline' => $updatedRoleData?->deadline_at?->format('d-m-Y H:i'),
+            ]);
+
+        } catch (QueryException $e) {
+            Log::error('Database error setting deadline', [
+                'document_id' => $dokumen->id,
+                'error' => $e->getMessage(),
+                'sql' => $e->getSql(),
+                'bindings' => $e->getBindings(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan database saat menetapkan deadline.'
+            ], 500);
+
+        } catch (\Exception $e) {
+            Log::error('Unexpected error setting deadline', [
+                'document_id' => $dokumen->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menetapkan deadline: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Return document to specific department (NEW FUNCTION)
+     */
+    public function returnToDepartment(Dokumen $dokumen, Request $request)
+    {
+        try {
+            // Only allow if current_handler is Team Verifikasi
+            if ($dokumen->current_handler !== 'team_verifikasi') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengembalikan dokumen ini ke bagian.'
+                ], 403);
+            }
+
+            // Validate input
+            $request->validate([
+                'return_source' => 'required|in:perpajakan,akutansi,pembayaran',
+                'department_return_reason' => 'required|string|min:5|max:1000'
+            ], [
+                'return_source.required' => 'Bagian tujuan wajib dipilih.',
+                'return_source.in' => 'Bagian tujuan tidak valid.',
+                'department_return_reason.required' => 'Alasan pengembalian ke bagian wajib diisi.',
+                'department_return_reason.min' => 'Alasan pengembalian minimal 5 karakter.',
+                'department_return_reason.max' => 'Alasan pengembalian maksimal 1000 karakter.'
+            ]);
+
+            \DB::beginTransaction();
+
+            // Update document with department return information
+            $dokumen->update([
+                'status' => 'returned_to_department',
+                'current_handler' => 'team_verifikasi', // Tetap di verifikasi untuk tracking
+                'return_source' => $request->return_source,
+                // Unified return fields
+                'return_reason' => $request->department_return_reason,
+                'returned_at' => now(),
+            ]);
+
+            \DB::commit();
+
+            // Log timeline tracking
+            try {
+                DocumentTracking::logAction(
+                    $dokumen->id,
+                    'returned_to_' . $request->return_source,
+                    'team_verifikasi',
+                    ['reason' => $request->department_return_reason, 'return_source' => $request->return_source]
+                );
+            } catch (\Exception $trackEx) {
+                \Log::error('DocumentTracking logAction failed (returnToDepartment): ' . $trackEx->getMessage());
+            }
+
+            \Log::info('Document returned to department', [
+                'document_id' => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'return_source' => $request->return_source,
+                'reason' => $request->department_return_reason
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Dokumen berhasil dikembalikan ke bagian " . ucfirst($request->return_source) . ".",
+                'return_source' => $request->return_source,
+                'reason' => $request->department_return_reason
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first()
+            ], 422);
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Error returning document to department: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengembalikan dokumen ke bagian.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Send document to target department
+     */
+    public function sendToTargetDepartment(Dokumen $dokumen, Request $request)
+    {
+        try {
+            // Only allow if document is in returned_to_department status
+            if ($dokumen->status !== 'returned_to_department' || $dokumen->current_handler !== 'team_verifikasi') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen tidak valid untuk dikirim ke bagian.'
+                ], 400);
+            }
+
+            $request->validate([
+                'deadline_days' => 'nullable|integer|min:1|max:30',
+                'deadline_note' => 'nullable|string|max:500'
+            ]);
+
+            \DB::beginTransaction();
+
+            $targetDepartment = $dokumen->return_source;
+
+            $updateData = [
+                'current_handler' => $targetDepartment,
+                'status' => 'sent_to_' . $targetDepartment,
+            ];
+
+            // Set processed_at in dokumen_role_data for Team Verifikasi
+            $roleData = $dokumen->getDataForRole('team_verifikasi');
+            if ($roleData) {
+                $roleData->processed_at = now();
+                $roleData->save();
+            } else {
+                $dokumen->setDataForRole('team_verifikasi', [
+                    'processed_at' => now(),
+                    'received_at' => now(),
+                ]);
+            }
+
+            // Set received_at for target department
+            $dokumen->setDataForRole($targetDepartment, [
+                'received_at' => now(),
+            ]);
+
+            // Add deadline if provided (in dokumen_role_data for target department)
+            if ($request->deadline_days) {
+                $dokumen->setDataForRole($targetDepartment, [
+                    'received_at' => now(),
+                    'deadline_at' => now()->addDays((int) $request->deadline_days),
+                    'deadline_days' => (int) $request->deadline_days,
+                    'deadline_note' => $request->deadline_note,
+                ]);
+            }
+
+            $dokumen->update($updateData);
+
+            \DB::commit();
+
+            $departmentName = ucfirst($targetDepartment);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Dokumen berhasil dikirim ke bagian {$departmentName}.",
+                'return_source' => $departmentName
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first()
+            ], 422);
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Error sending to target department: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengirim dokumen ke bagian.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get statistics for pengembalian ke bagian
+     */
+    public function getPengembalianKeBagianStats()
+    {
+        try {
+            $totalReturnedToDept = \App\Models\Dokumen::where('current_handler', 'team_verifikasi')
+                ->where('status', 'returned_to_department')
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'total' => $totalReturnedToDept
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil statistik.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Daftar Pengembalian Dokumen ke Bidang
+     */
+    public function pengembalianKeBidang(Request $request)
+    {
+        // Get documents with status = 'returned_to_bidang' and current_handler = 'team_verifikasi'
+        $query = Dokumen::where('current_handler', 'team_verifikasi')
+            ->where('status', 'returned_to_bidang')
+            ->latest('returned_at');
+
+        // Filter by specific bidang if provided
+        if ($request->has('bidang') && $request->bidang) {
+            $query->where('return_source', $request->bidang);
+        }
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_agenda', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                    ->orWhere('uraian_spp', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Get paginated results
+        $dokumens = $query->select([
+            'id',
+            'nomor_agenda',
+            'nomor_spp',
+            'uraian_spp',
+            'nilai_rupiah',
+            'return_source',
+            'returned_at',
+            'return_reason',
+            'status',
+            'created_at',
+            'updated_at',
+            'bulan',
+            'tahun'
+        ]);
+        $perPage = $request->get('per_page', session('verifikasi_bidang_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['verifikasi_bidang_per_page' => $perPage]);
+        $dokumens = $query->paginate($perPage)->appends($request->query());
+
+        // Get statistics
+        $totalReturned = Dokumen::where('current_handler', 'team_verifikasi')
+            ->where('status', 'returned_to_bidang')
+            ->count();
+
+        // Map bidang codes to names (hardcoded)
+        $bidangList = [
+            'AKN' => 'Akuntansi',
+            'DPM' => 'Divisi Produksi dan Manufaktur',
+            'KPL' => 'Keuangan dan Pelaporan',
+            'PMO' => 'Project Management Office',
+            'PTI' => 'Pengadaan dan Teknologi Informasi',
+            'SDM' => 'Sumber Daya Manusia',
+            'SKH' => 'Sub Kontrak Hutan',
+            'TAN' => 'Tanaman dan Perkebunan',
+            'TEP' => 'Teknik dan Perencanaan',
+        ];
+
+        $bidangStats = [];
+        foreach ($bidangList as $kode => $nama) {
+            $count = Dokumen::where('current_handler', 'team_verifikasi')
+                ->where('status', 'returned_to_bidang')
+                ->where('return_source', $kode)
+                ->count();
+
+            $bidangStats[] = [
+                'kode_bidang' => $kode,
+                'nama_bidang' => $nama,
+                'count' => $count
+            ];
+        }
+
+        $data = array(
+            "title" => "Daftar Pengembalian Dokumen ke Bidang",
+            "module" => "team_verifikasi",
+            "menuDashboard" => "",
+            'menuDokumen' => 'Active',
+            'menuPengembalianKeBidang' => "Active",
+            'dokumens' => $dokumens,
+            'totalReturned' => $totalReturned,
+            'bidangStats' => $bidangStats,
+            'selectedBidang' => $request->bidang
+        );
+
+        return view('team_verifikasi.dokumens.pengembalianKeBidang', $data);
+    }
+
+    /**
+     * Return document to bidang (auto-detect from bagian field)
+     */
+    public function returnToBidang(Dokumen $dokumen, Request $request)
+    {
+        try {
+            // Only allow if current_handler is Team Verifikasi and status is appropriate
+            if ($dokumen->current_handler !== 'team_verifikasi') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengembalikan dokumen ini ke bidang.'
+                ], 403);
+            }
+
+            // Auto-detect bidang from document's bagian field
+            $bagian = $dokumen->bagian;
+
+            // Map bagian names to bidang codes (handle various naming conventions)
+            $bagianToBidangMap = [
+                // AKN
+                'AKN' => 'AKN',
+                'Akuntansi' => 'AKN',
+                // DPM
+                'DPM' => 'DPM',
+                'Divisi Produksi dan Manufaktur' => 'DPM',
+                'Produksi' => 'DPM',
+                // KPL
+                'KPL' => 'KPL',
+                'Keuangan dan Pelaporan' => 'KPL',
+                'Keuangan' => 'KPL',
+                // PMO
+                'PMO' => 'PMO',
+                'Project Management Office' => 'PMO',
+                // PTI
+                'PTI' => 'PTI',
+                'Pengadaan dan Teknologi Informasi' => 'PTI',
+                'Pengadaan' => 'PTI',
+                'Teknologi Informasi' => 'PTI',
+                'IT' => 'PTI',
+                // SDM
+                'SDM' => 'SDM',
+                'Sumber Daya Manusia' => 'SDM',
+                'HR' => 'SDM',
+                // SKH
+                'SKH' => 'SKH',
+                'Sub Kontrak Hutan' => 'SKH',
+                // TAN
+                'TAN' => 'TAN',
+                'Tanaman dan Perkebunan' => 'TAN',
+                'Tanaman' => 'TAN',
+                // TEP
+                'TEP' => 'TEP',
+                'Teknik dan Perencanaan' => 'TEP',
+                'Teknik' => 'TEP',
+            ];
+
+            // Try to find matching bidang code
+            $targetBidang = null;
+            if ($bagian) {
+                // Direct match
+                if (isset($bagianToBidangMap[$bagian])) {
+                    $targetBidang = $bagianToBidangMap[$bagian];
+                } else {
+                    // Case-insensitive partial match
+                    foreach ($bagianToBidangMap as $name => $code) {
+                        if (stripos($bagian, $name) !== false || stripos($name, $bagian) !== false) {
+                            $targetBidang = $code;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // If still no match, check if bagian itself is a valid code
+            $validCodes = ['AKN', 'DPM', 'KPL', 'PMO', 'PTI', 'SDM', 'SKH', 'TAN', 'TEP'];
+            if (!$targetBidang && $bagian && in_array(strtoupper($bagian), $validCodes)) {
+                $targetBidang = strtoupper($bagian);
+            }
+
+            // If no bidang detected, return error
+            if (!$targetBidang) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak dapat mendeteksi bidang asal dokumen. Field bagian kosong atau tidak valid.',
+                    'bagian_value' => $bagian
+                ], 422);
+            }
+
+            // Validate optional reason (only if provided)
+            $request->validate([
+                'bidang_return_reason' => 'required|string|min:10|max:1000'
+            ], [
+                'bidang_return_reason.required' => 'Alasan pengembalian ke bidang wajib diisi.',
+                'bidang_return_reason.min' => 'Alasan pengembalian minimal 10 karakter.',
+                'bidang_return_reason.max' => 'Alasan pengembalian maksimal 1000 karakter.'
+            ]);
+
+            \DB::beginTransaction();
+
+            // Update document with bidang return information
+            $dokumen->update([
+                'status' => 'returned_to_bidang',
+                'current_handler' => 'team_verifikasi', // Tetap di verifikasi untuk tracking
+                'return_source' => $targetBidang,
+                // Unified return fields
+                'return_reason' => $request->bidang_return_reason,
+                'returned_at' => now(),
+            ]);
+
+            \DB::commit();
+
+            // Log activity: dokumen dikembalikan ke bidang oleh Team Verifikasi
+            try {
+                \App\Helpers\ActivityLogHelper::logReturned(
+                    $dokumen,
+                    $targetBidang,
+                    $request->bidang_return_reason,
+                    'team_verifikasi'
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for returnToBidang: ' . $logException->getMessage());
+            }
+
+            \Log::info('Document returned to bidang', [
+                'document_id' => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'original_bagian' => $bagian,
+                'return_source' => $targetBidang,
+                'reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal'
+            ]);
+
+            // Map bidang codes to names
+            $bidangNames = [
+                'AKN' => 'Akuntansi',
+                'DPM' => 'Divisi Produksi dan Manufaktur',
+                'KPL' => 'Keuangan dan Pelaporan',
+                'PMO' => 'Project Management Office',
+                'PTI' => 'Pengadaan dan Teknologi Informasi',
+                'SDM' => 'Sumber Daya Manusia',
+                'SKH' => 'Sub Kontrak Hutan',
+                'TAN' => 'Tanaman dan Perkebunan',
+                'TEP' => 'Teknik dan Perencanaan',
+            ];
+
+            $bidangName = $bidangNames[$targetBidang] ?? $targetBidang;
+
+            // R6: Kirim notifikasi ke user Bagian setelah dokumen dikembalikan
+            try {
+                // Cari user dengan bagian_code yang sesuai
+                $bagianUsers = \App\Models\User::where('bagian_code', $targetBidang)
+                    ->whereNotNull('phone_number')
+                    ->where('phone_number', '!=', '')
+                    ->get();
+
+                if ($bagianUsers->isNotEmpty()) {
+                    $docUrl  = url(route('inbox.show', $dokumen->id, false));
+                    $reason  = $request->bidang_return_reason;
+                    $agenda  = $dokumen->nomor_agenda ?? 'N/A';
+                    $message = "🔔 *NOTIFIKASI SISTEM AGENDA ONLINE*\n\n"
+                        . "Dokumen dengan nomor agenda *{$agenda}* telah *dikembalikan* ke Bidang {$bidangName}.\n\n"
+                        . "📋 *Alasan Pengembalian:*\n{$reason}\n\n"
+                        . "Silakan lakukan perbaikan dan kirim ulang dokumen.\n\n"
+                        . "🔗 Lihat dokumen: {$docUrl}";
+
+                    $whatsAppService = app(\App\Services\FonnteWhatsAppService::class);
+
+                    foreach ($bagianUsers as $bagianUser) {
+                        $whatsAppService->sendMessage($bagianUser->phone_number, $message);
+                    }
+
+                    \Log::info('[R6] WhatsApp notification sent for returnToBidang', [
+                        'dokumen_id'   => $dokumen->id,
+                        'target_bidang' => $targetBidang,
+                        'notified_count' => $bagianUsers->count(),
+                    ]);
+                } else {
+                    // Fallback: Database notification (in-app) jika tidak ada nomor HP
+                    $bagianUsersAll = \App\Models\User::where('bagian_code', $targetBidang)->get();
+                    foreach ($bagianUsersAll as $bagianUser) {
+                        $bagianUser->notify(new \App\Notifications\DokumenDikembalikanNotification(
+                            $dokumen,
+                            $request->bidang_return_reason,
+                            $bidangName
+                        ));
+                    }
+
+                    \Log::info('[R6] In-app notification sent (no phone) for returnToBidang', [
+                        'dokumen_id'    => $dokumen->id,
+                        'target_bidang' => $targetBidang,
+                    ]);
+                }
+            } catch (\Exception $notifException) {
+                // Notifikasi gagal tidak boleh menghentikan alur utama
+                \Log::error('[R6] Failed to send return notification: ' . $notifException->getMessage(), [
+                    'dokumen_id' => $dokumen->id,
+                ]);
+            }
+
+            return response()->json([
+                'success'      => true,
+                'message'      => "Dokumen berhasil dikembalikan ke bidang {$bidangName}.",
+                'return_source' => $targetBidang,
+                'bidang_name'  => $bidangName,
+                'reason'       => $request->bidang_return_reason
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first()
+            ], 422);
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Error returning document to bidang: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengembalikan dokumen ke bidang.'
+            ], 500);
+        }
+    }
+
+
+    /**
+     * Send document back to main list from bidang returns
+     */
+    public function sendBackToMainList(Dokumen $dokumen, Request $request)
+    {
+        try {
+            // Only allow if document is in returned_to_bidang status
+            if ($dokumen->status !== 'returned_to_bidang') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen ini tidak dapat dikirim kembali ke daftar utama.'
+                ], 403);
+            }
+
+            \DB::beginTransaction();
+
+            // Update document to return to main list
+            $dokumen->update([
+                'status' => 'sent_to_team_verifikasi',
+                'return_source' => null,
+                'return_reason' => null,
+                'returned_at' => null,
+            ]);
+
+            \DB::commit();
+
+            // R7: Log aktivitas pemulihan dokumen dari status dikembalikan
+            try {
+                \App\Helpers\ActivityLogHelper::log(
+                    $dokumen,
+                    'restored_from_bidang',
+                    'Dokumen dipulihkan dari status dikembalikan ke daftar utama oleh Team Verifikasi',
+                    'team_verifikasi',
+                    'team_verifikasi',
+                    [
+                        'previous_return_source' => $dokumen->return_source,
+                        'previous_return_reason' => $dokumen->return_reason,
+                        'restored_at' => now()->toDateTimeString(),
+                    ]
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log restored_from_bidang activity: ' . $logException->getMessage());
+            }
+
+            \Log::info('Document sent back to main list from bidang return', [
+                'document_id' => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dokumen berhasil dikirim kembali ke daftar utama.'
+            ]);
+
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Error sending document back to main list: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengirim dokumen kembali ke daftar utama.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Return document to Operator
+     */
+    public function returnToOperator(Dokumen $dokumen, Request $request)
+    {
+        try {
+            // Only allow if current_handler is Team Verifikasi
+            if ($dokumen->current_handler !== 'team_verifikasi') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengembalikan dokumen ini ke Ibu Tarapul.'
+                ], 403);
+            }
+
+            // Validate input
+            $request->validate([
+                'alasan_pengembalian' => 'required|string|min:5|max:1000'
+            ], [
+                'alasan_pengembalian.required' => 'Alasan pengembalian wajib diisi.',
+                'alasan_pengembalian.min' => 'Alasan pengembalian minimal 5 karakter.',
+                'alasan_pengembalian.max' => 'Alasan pengembalian maksimal 1000 karakter.'
+            ]);
+
+            \DB::beginTransaction();
+
+            // Update document with return to Operator information
+            $dokumen->update([
+                'status' => 'returned_to_operator',
+                'current_handler' => 'operator',
+                // Unified return fields
+                'return_source' => 'team_verifikasi',
+                'return_reason' => $request->alasan_pengembalian,
+                'returned_at' => now(),
+            ]);
+
+            \DB::commit();
+
+            // Log activity: dokumen dikembalikan ke Operator oleh Team Verifikasi
+            try {
+                \App\Helpers\ActivityLogHelper::logReturned(
+                    $dokumen,
+                    'operator',
+                    $request->alasan_pengembalian,
+                    'team_verifikasi'
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for returnToOperator: ' . $logException->getMessage());
+            }
+
+            \Log::info('Document returned to Operator', [
+                'document_id' => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'reason' => $request->alasan_pengembalian
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dokumen berhasil dikembalikan ke Ibu Tarapul.'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first()
+            ], 422);
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Error returning document to Operator: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengembalikan dokumen ke Ibu Tarapul.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Change document status (approve/reject)
+     */
+    public function changeDocumentStatus(Dokumen $dokumen, Request $request)
+    {
+        try {
+            // FIX: Validasi document ID untuk mencegah cross-interference
+            if ($request->has('document_id') && $dokumen->id != $request->input('document_id')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Document ID mismatch detected! Cross-document interference prevented.'
+                ], 403);
+            }
+
+            // Only allow if current_handler is Team Verifikasi
+            if ($dokumen->current_handler !== 'team_verifikasi') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengubah status dokumen ini.'
+                ], 403);
+            }
+
+            // Validate status
+            $request->validate([
+                'status' => 'required|in:approved,rejected',
+                'document_id' => 'sometimes|integer|exists:dokumens,id'
+            ], [
+                'status.required' => 'Status wajib dipilih.',
+                'status.in' => 'Status tidak valid. Pilih approved atau rejected.',
+                'document_id.exists' => 'Document ID tidak valid.'
+            ]);
+
+            $newStatus = $request->status === 'approved' ? 'approved_Team Verifikasi' : 'rejected_Team Verifikasi';
+
+            \DB::beginTransaction();
+
+            // Prepare milestone data for approved documents
+            $updateData = [
+                'status' => $newStatus,
+                'updated_at' => now()
+            ];
+
+            // Set processed_at in dokumen_role_data for Team Verifikasi
+            $roleData = $dokumen->getDataForRole('team_verifikasi');
+            if ($roleData) {
+                $roleData->processed_at = now();
+                $roleData->save();
+            } else {
+                $dokumen->setDataForRole('team_verifikasi', [
+                    'processed_at' => now(),
+                    'received_at' => now(),
+                ]);
+            }
+
+            // Set milestone if approved
+            if ($newStatus === 'approved_Team Verifikasi') {
+                $updateData['approved_by_team_verifikasi_at'] = now();
+                $updateData['approved_by_team_verifikasi_by'] = 'team_verifikasi';
+            }
+
+            // FIX: Atomic update spesifik per document ID untuk mencegah cross-interference
+            $affectedRows = \DB::table('dokumens')
+                ->where('id', $dokumen->id)
+                ->where('current_handler', 'team_verifikasi') // Double check
+                ->update($updateData);
+
+            // Jika tidak ada row yang terupdate, ada kemungkinan race condition
+            if ($affectedRows === 0) {
+                \DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen tidak dapat diperbarui. Kemungkinan telah diubah oleh user lain.'
+                ], 409);
+            }
+
+            \DB::commit();
+
+            // Log activity: status dokumen diubah oleh Team Verifikasi
+            try {
+                \App\Helpers\ActivityLogHelper::logStatusChanged(
+                    $dokumen,
+                    $dokumen->getOriginal('status'),
+                    $newStatus,
+                    'team_verifikasi'
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for changeDocumentStatus: ' . $logException->getMessage());
+            }
+
+            \Log::info('Document status changed', [
+                'document_id' => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'old_status' => $dokumen->getOriginal('status'),
+                'new_status' => $newStatus,
+                'changed_by' => 'team_verifikasi'
+            ]);
+
+            $statusText = $newStatus === 'approved_Team Verifikasi' ? 'disetujui (approved)' : 'ditolak (rejected)';
+
+            return response()->json([
+                'success' => true,
+                'message' => "Dokumen berhasil {$statusText}.",
+                'new_status' => $newStatus,
+                'status_text' => $newStatus === 'approved_Team Verifikasi' ? 'Approved' : 'Rejected'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first()
+            ], 422);
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Error changing document status: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengubah status dokumen.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Terima dokumen yang pending approval
+     */
+    public function acceptDocument(Request $request, Dokumen $dokumen)
+    {
+        try {
+            // Validasi: harus pending approval untuk role ini
+            if ($dokumen->status !== 'pending_approval_team_verifikasi') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen tidak dalam status pending approval.'
+                ], 400);
+            }
+
+            if ($dokumen->pending_approval_for !== 'team_verifikasi') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen ini bukan untuk team_verifikasi.'
+                ], 403);
+            }
+
+            DB::beginTransaction();
+
+            // Update dokumen: pindah ke status accepted
+            $dokumen->update([
+                'status' => 'sent_to_team_verifikasi',
+                'current_handler' => 'team_verifikasi',           // BARU PINDAH ke penerima
+                'pending_approval_for' => null,
+                'approval_responded_at' => now(),
+                'approval_responded_by' => auth()->user()->username ?? 'team_verifikasi',
+                'approval_rejection_reason' => null,
+            ]);
+
+            $dokumen->refresh();
+            DB::commit();
+
+            // Broadcast event (opsional)
+            try {
+                broadcast(new \App\Events\DocumentApprovedInbox($dokumen, 'team_verifikasi'));
+            } catch (\Exception $e) {
+                \Log::error('Failed to broadcast acceptance: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dokumen berhasil diterima dan masuk ke sistem team_verifikasi.'
+            ]);
+
+        } catch (Exception $e) {
+            DB::rollback();
+            \Log::error('Error accepting document: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menerima dokumen.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Tolak dokumen yang pending approval
+     */
+    public function rejectDocument(Request $request, Dokumen $dokumen)
+    {
+        try {
+            // Validasi input
+            $request->validate([
+                'rejection_reason' => 'required|string|min:10',
+            ], [
+                'rejection_reason.required' => 'Alasan penolakan harus diisi.',
+                'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter.',
+            ]);
+
+            // Validasi: harus pending approval untuk role ini
+            if ($dokumen->status !== 'pending_approval_team_verifikasi') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen tidak dalam status pending approval.'
+                ], 400);
+            }
+
+            if ($dokumen->pending_approval_for !== 'team_verifikasi') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen ini bukan untuk team_verifikasi.'
+                ], 403);
+            }
+
+            DB::beginTransaction();
+
+            // Update dokumen: kembalikan ke pengirim
+            $dokumen->update([
+                'status' => 'draft',                   // Kembali ke draft
+                'current_handler' => 'operator',           // Kembali ke pengirim
+                'pending_approval_for' => null,
+                'approval_responded_at' => now(),
+                'approval_responded_by' => auth()->user()->username ?? 'team_verifikasi',
+                'approval_rejection_reason' => $request->rejection_reason,
+            ]);
+
+            $dokumen->refresh();
+            DB::commit();
+
+            // Broadcast event (opsional)
+            try {
+                broadcast(new \App\Events\DocumentRejectedInbox($dokumen, $request->rejection_reason, 'team_verifikasi'));
+            } catch (\Exception $e) {
+                \Log::error('Failed to broadcast rejection: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dokumen berhasil ditolak dan dikembalikan ke Ibu Tarapul.'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first()
+            ], 422);
+        } catch (Exception $e) {
+            DB::rollback();
+            \Log::error('Error rejecting document: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menolak dokumen.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Menampilkan halaman pending approval
+     */
+    public function pendingApproval(Request $request)
+    {
+        // Get dokumen yang pending approval untuk Team Verifikasi
+        $dokumensPending = Dokumen::where('status', 'pending_approval_team_verifikasi')
+            ->where('pending_approval_for', 'team_verifikasi')
+            ->latest('pending_approval_at')
+            ->get();
+
+        $data = [
+            'title' => 'Dokumen Menunggu Persetujuan',
+            'module' => 'team_verifikasi',
+            'menuDokumen' => 'active',
+            'menuPendingApproval' => 'active',
+            'dokumensPending' => $dokumensPending,
+        ];
+
+        return view('team_verifikasi.dokumens.pendingApproval', $data);
+    }
+
+    /**
+     * Daftar bagian yang tersedia
+     */
+    private const BAGIAN_LIST = [
+        'DPM' => 'DPM',
+        'SKH' => 'SKH',
+        'SDM' => 'SDM',
+        'TEP' => 'TEP',
+        'KPL' => 'KPL',
+        'AKN' => 'AKN',
+        'TAN' => 'TAN',
+        'PMO' => 'PMO'
+    ];
+
+    /**
+     * Display the rekapan page for Team Verifikasi (same as Operator but for viewing only)
+     */
+    public function rekapan(Request $request)
+    {
+        // Get selected year, bagian, and filter type from request
+        $selectedYear = $request->get('year', date('Y'));
+        $selectedBagian = $request->get('bagian', '');
+        $selectedMonth = $request->get('month', null);
+        $yearFilterType = $request->get('year_filter_type', 'tanggal_spp'); // Default to tanggal_spp
+
+        // Validate year
+        if (!is_numeric($selectedYear) || $selectedYear < 2000 || $selectedYear > 2100) {
+            $selectedYear = date('Y');
+        }
+
+        // Validate filter type
+        $validFilterTypes = ['tanggal_spp', 'tanggal_masuk', 'nomor_spp'];
+        if (!in_array($yearFilterType, $validFilterTypes)) {
+            $yearFilterType = 'tanggal_spp';
+        }
+
+        // Check if imported_from_csv column exists
+        $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
+
+        // Base query for documents handled by Team Verifikasi (matching daftar dokumen logic)
+        $baseQuery = Dokumen::where(function ($q) {
+            $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
+                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
+        })
+            ->where('status', '!=', 'returned_to_bidang')
+            ->when($hasImportedFromCsvColumn, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            });
+
+        // Apply year filter based on filter type
+        switch ($yearFilterType) {
+            case 'tanggal_spp':
+                $baseQuery->whereYear('tanggal_spp', $selectedYear);
+                $dateColumn = 'tanggal_spp';
+                break;
+            case 'tanggal_masuk':
+                $baseQuery->whereYear('tanggal_masuk', $selectedYear);
+                $dateColumn = 'tanggal_masuk';
+                break;
+            case 'nomor_spp':
+                // Extract year from nomor_spp format like: 192/M/SPP/14/03/2024
+                $baseQuery->where('nomor_spp', 'LIKE', '%/' . $selectedYear);
+                $dateColumn = 'tanggal_spp'; // Fallback for monthly stats
+                break;
+            default:
+                $baseQuery->whereYear('tanggal_spp', $selectedYear);
+                $dateColumn = 'tanggal_spp';
+        }
+
+        // Filter by bagian if selected
+        if ($selectedBagian && in_array($selectedBagian, array_keys(self::BAGIAN_LIST))) {
+            $baseQuery->where('bagian', $selectedBagian);
+        }
+
+        // Get yearly summary
+        $yearlySummary = [
+            'total_dokumen' => (clone $baseQuery)->count(),
+            'total_nominal' => (clone $baseQuery)->sum('nilai_rupiah') ?? 0,
+        ];
+
+        // Get monthly statistics
+        $monthlyStats = [];
+        $monthNames = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
+        ];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $monthQuery = (clone $baseQuery)->whereMonth($dateColumn, $month);
+            $monthStats = [
+                'name' => $monthNames[$month],
+                'count' => $monthQuery->count(),
+                'total_nominal' => $monthQuery->sum('nilai_rupiah') ?? 0,
+            ];
+            $monthlyStats[$month] = $monthStats;
+        }
+
+        // Get documents for table (filter by month if selected)
+        $tableQuery = (clone $baseQuery);
+        if ($selectedMonth && $selectedMonth >= 1 && $selectedMonth <= 12) {
+            $tableQuery->whereMonth($dateColumn, $selectedMonth);
+        }
+
+        // Pagination
+        $perPage = $request->get('per_page', session('verifikasi_analytics_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['verifikasi_analytics_per_page' => $perPage]);
+        $tableDokumens = $tableQuery->latest($dateColumn)->paginate($perPage)->appends($request->query());
+
+        // Get available years (based on filter type)
+        if ($yearFilterType === 'nomor_spp') {
+            // Extract years from nomor_spp patterns for documents handled by Team Verifikasi
+            $availableYears = Dokumen::where(function ($q) {
+                $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
+            })
+                ->where('status', '!=', 'returned_to_bidang')
+                ->when($hasImportedFromCsvColumn, function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('imported_from_csv', false)
+                            ->orWhereNull('imported_from_csv');
+                    });
+                })
+                ->whereNotNull('nomor_spp')
+                ->pluck('nomor_spp')
+                ->map(function ($spp) {
+                    if (preg_match('/\/(\d{4})$/', $spp, $matches)) {
+                        return (int) $matches[1];
+                    }
+                    return null;
+                })
+                ->filter()
+                ->unique()
+                ->sortDesc()
+                ->values()
+                ->toArray();
+        } else {
+            $availableYears = Dokumen::where(function ($q) {
+                $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
+            })
+                ->where('status', '!=', 'returned_to_bidang')
+                ->when($hasImportedFromCsvColumn, function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('imported_from_csv', false)
+                            ->orWhereNull('imported_from_csv');
+                    });
+                })
+                ->whereNotNull($dateColumn)
+                ->selectRaw("DISTINCT YEAR($dateColumn) as year")
+                ->orderBy('year', 'desc')
+                ->pluck('year')
+                ->filter()
+                ->toArray();
+        }
+
+        if (empty($availableYears)) {
+            $availableYears = [(int) date('Y')];
+        }
+
+        // Get document count per bagian for the selected year (using same filter logic)
+        $bagianCounts = [];
+        foreach (self::BAGIAN_LIST as $bagianCode => $bagianName) {
+            $countQuery = Dokumen::where(function ($q) {
+                $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'pending_approval_perpajakan', 'pending_approval_akutansi']);
+            })
+                ->where('status', '!=', 'returned_to_bidang')
+                ->when($hasImportedFromCsvColumn, function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('imported_from_csv', false)
+                            ->orWhereNull('imported_from_csv');
+                    });
+                })
+                ->where('bagian', $bagianCode);
+
+            if ($yearFilterType === 'nomor_spp') {
+                $countQuery->where('nomor_spp', 'LIKE', '%/' . $selectedYear);
+            } else {
+                $countQuery->whereYear($dateColumn, $selectedYear);
+            }
+
+            $bagianCounts[$bagianCode] = $countQuery->count();
+        }
+
+        $data = [
+            'title' => 'Analitik Dokumen',
+            'module' => 'team_verifikasi',
+            'menuDokumen' => 'active',
+            'menuRekapan' => 'active',
+            'selectedYear' => (int) $selectedYear,
+            'selectedBagian' => $selectedBagian,
+            'selectedMonth' => $selectedMonth ? (int) $selectedMonth : null,
+            'yearFilterType' => $yearFilterType,
+            'yearlySummary' => $yearlySummary,
+            'monthlyStats' => $monthlyStats,
+            'dokumens' => $tableDokumens,
+            'availableYears' => $availableYears,
+            'bagianList' => self::BAGIAN_LIST,
+            'bagianCounts' => $bagianCounts,
+        ];
+
+        return view('team_verifikasi.dokumens.analytics', $data);
+    }
+
+    /**
+     * Get statistics for rekapan documents (same as Operator)
+     */
+    private function getRekapanStatistics(string $filterBagian = ''): array
+    {
+        $query = Dokumen::where('created_by', 'operator');
+
+        if ($filterBagian && in_array($filterBagian, array_keys(self::BAGIAN_LIST))) {
+            $query->where('bagian', $filterBagian);
+        }
+
+        $total = $query->count();
+
+        $bagianStats = [];
+        foreach (self::BAGIAN_LIST as $bagianCode => $bagianName) {
+            $bagianQuery = Dokumen::where('created_by', 'operator')->where('bagian', $bagianCode);
+            $bagianStats[$bagianCode] = [
+                'name' => $bagianName,
+                'total' => $bagianQuery->count()
+            ];
+        }
+
+        return [
+            'total_documents' => $total,
+            'by_bagian' => $bagianStats,
+            'by_status' => [
+                'draft' => $query->where('status', 'draft')->count(),
+                'sent_to_team_verifikasi' => $query->where('status', 'sent_to_team_verifikasi')->count(),
+                'sedang diproses' => $query->where('status', 'sedang diproses')->count(),
+                'selesai' => $query->where('status', 'selesai')->count(),
+                'returned_to_operator' => $query->where('status', 'returned_to_operator')->count(),
+            ]
+        ];
+    }
+
+    /**
+     * Display analytics page for Team Verifikasi (similar to Ibu Tarapul)
+     */
+    public function rekapanAnalytics(Request $request): View
+    {
+        // Get selected year and bagian from request
+        $selectedYear = $request->get('year', date('Y'));
+        $selectedBagian = $request->get('bagian', '');
+        $selectedMonth = $request->get('month', null);
+
+        // Validate year
+        if (!is_numeric($selectedYear) || $selectedYear < 2000 || $selectedYear > 2100) {
+            $selectedYear = date('Y');
+        }
+
+        // Base query for documents created by Ibu Tarapul (Ibu Yuni can see all documents from Ibu Tarapul)
+        $baseQuery = Dokumen::where('created_by', 'operator')
+            ->whereYear('tanggal_masuk', $selectedYear);
+
+        // Filter by bagian if selected
+        if ($selectedBagian && in_array($selectedBagian, array_keys(self::BAGIAN_LIST))) {
+            $baseQuery->where('bagian', $selectedBagian);
+        }
+
+        // Get yearly summary
+        $yearlySummary = [
+            'total_dokumen' => (clone $baseQuery)->count(),
+            'total_nominal' => (clone $baseQuery)->sum('nilai_rupiah') ?? 0,
+        ];
+
+        // Get monthly statistics
+        $monthlyStats = [];
+        $monthNames = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
+        ];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $monthQuery = (clone $baseQuery)->whereMonth('tanggal_masuk', $month);
+            $monthStats = [
+                'name' => $monthNames[$month],
+                'count' => $monthQuery->count(),
+                'total_nominal' => $monthQuery->sum('nilai_rupiah') ?? 0,
+            ];
+            $monthlyStats[$month] = $monthStats;
+        }
+
+        // Get documents for table (filter by month if selected)
+        $tableQuery = (clone $baseQuery);
+        if ($selectedMonth && $selectedMonth >= 1 && $selectedMonth <= 12) {
+            $tableQuery->whereMonth('tanggal_masuk', $selectedMonth);
+        }
+
+        // Pagination
+        $perPage = $request->get('per_page', session('verifikasi_operator_analytics_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['verifikasi_operator_analytics_per_page' => $perPage]);
+        $tableDokumens = $tableQuery->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
+
+        // Get available years
+        $availableYears = Dokumen::where('created_by', 'operator')
+            ->whereNotNull('tanggal_masuk')
+            ->selectRaw('DISTINCT YEAR(tanggal_masuk) as year')
+            ->orderBy('year', 'desc')
+            ->pluck('year')
+            ->filter()
+            ->toArray();
+
+        if (empty($availableYears)) {
+            $availableYears = [(int) date('Y')];
+        }
+
+        $data = [
+            'title' => 'Analitik Dokumen',
+            'module' => 'team_verifikasi',
+            'menuDokumen' => 'active',
+            'menuRekapan' => 'active',
+            'selectedYear' => (int) $selectedYear,
+            'selectedBagian' => $selectedBagian,
+            'selectedMonth' => $selectedMonth ? (int) $selectedMonth : null,
+            'yearlySummary' => $yearlySummary,
+            'monthlyStats' => $monthlyStats,
+            'dokumens' => $tableDokumens,
+            'availableYears' => $availableYears,
+            'bagianList' => self::BAGIAN_LIST,
+        ];
+
+        return view('team_verifikasi.dokumens.analytics', $data);
+    }
+
+    /**
+     * Helper method to safely escape HTML content with type casting
+     */
+    /**
+     * Get rejected by display name from activity log
+     */
+    private function getRejectedByDisplayName($dokumen): string
+    {
+        // Check dokumen_statuses for rejected status
+        $rejectedStatus = $dokumen->roleStatuses()
+            ->where('status', 'rejected')
+            ->whereIn('role_code', ['perpajakan', 'akutansi'])
+            ->first();
+
+        if ($rejectedStatus) {
+            // Cari dari activity log
+            $rejectLog = $dokumen->activityLogs()
+                ->where('action', 'inbox_rejected')
+                ->latest('action_at')
+                ->first();
+
+            if ($rejectLog) {
+                $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? null;
+
+                if ($rejectedBy) {
+                    $nameMap = [
+                        'team_verifikasi' => 'team_verifikasi',
+                        'team_verifikasi' => 'team_verifikasi',
+                        'Perpajakan' => 'Team Perpajakan',
+                        'perpajakan' => 'Team Perpajakan',
+                        'Akutansi' => 'Team Akutansi',
+                        'akutansi' => 'Team Akutansi',
+                    ];
+                    return $nameMap[$rejectedBy] ?? $rejectedBy;
+                }
+            }
+
+            // Fallback ke role_code dari dokumen_statuses
+            $nameMap = [
+                'perpajakan' => 'Team Perpajakan',
+                'akutansi' => 'Team Akutansi',
+            ];
+            return $nameMap[$rejectedStatus->role_code] ?? ucfirst($rejectedStatus->role_code);
+        }
+
+        return '-';
+    }
+
+    private function escapeHtml(mixed $value): string
+    {
+        // Handle different data types safely
+        if (is_null($value)) {
+            return '-';
+        }
+
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            // Format numbers nicely
+            if (is_int($value)) {
+                return (string) $value;
+            }
+
+            // Handle floating point numbers with proper formatting
+            return number_format((float) $value, 2, '.', ',');
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'Yes' : 'No';
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('d/m/Y H:i:s');
+        }
+
+        // Handle arrays and objects by converting to string representation
+        if (is_array($value) || is_object($value)) {
+            return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+
+        // Fallback: cast to string
+        return (string) $value;
+    }
+
+    /**
+     * Get search suggestions when no results found
+     */
+    private function getSearchSuggestions($searchTerm, $year = null, $handler = 'team_verifikasi'): array
+    {
+        $suggestions = [];
+
+        // Get all unique values from relevant fields
+        $baseQuery = Dokumen::where(function ($q) use ($handler) {
+            $q->where('current_handler', $handler)
+                ->orWhere(function ($subQ) {
+                    $subQ->where('status', 'sedang_diproses')
+                        ->where('current_handler', 'team_verifikasi');
+                })
+                ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
+        })
+            ->where('status', '!=', 'returned_to_bidang');
+
+        if ($year) {
+            $baseQuery->where('tahun', $year);
+        }
+
+        // Collect all searchable values
+        $allValues = collect();
+
+        // Get from main fields
+        $fields = [
+            'nomor_agenda',
+            'nomor_spp',
+            'uraian_spp',
+            'nama_pengirim',
+            'bagian',
+            'kategori',
+            'jenis_dokumen',
+            'no_berita_acara',
+            'no_spk',
+            'nomor_miro',
+            'keterangan',
+            'dibayar_kepada'
+        ];
+
+        foreach ($fields as $field) {
+            $values = $baseQuery->whereNotNull($field)
+                ->distinct()
+                ->pluck($field)
+                ->filter()
+                ->toArray();
+            $allValues = $allValues->merge($values);
+        }
+
+        // Get from dibayarKepadas relation
+        $dibayarKepadaQuery = DibayarKepada::whereHas('dokumen', function ($q) use ($handler, $year) {
+            $q->where(function ($subQ) use ($handler) {
+                $subQ->where('current_handler', $handler)
+                    ->orWhere(function ($subSubQ) {
+                        $subSubQ->where('status', 'sedang_diproses')
+                            ->where('current_handler', 'team_verifikasi');
+                    })
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
+            })
+                ->where('status', '!=', 'returned_to_bidang');
+            if ($year) {
+                $q->where('tahun', $year);
+            }
+        });
+
+        $dibayarKepadaValues = $dibayarKepadaQuery
+            ->distinct()
+            ->pluck('nama_penerima')
+            ->filter()
+            ->toArray();
+
+        $allValues = $allValues->merge($dibayarKepadaValues);
+
+        // Remove duplicates and find suggestions
+        $uniqueValues = $allValues->unique()->values()->toArray();
+        $foundSuggestions = SearchHelper::findSuggestions($searchTerm, $uniqueValues, 60.0, 5);
+
+        // Format suggestions
+        foreach ($foundSuggestions as $suggestion) {
+            $suggestions[] = $suggestion['value'];
+        }
+
+        return $suggestions;
+    }
+
+    /**
+     * API endpoint untuk check dokumen yang di-reject dari inbox untuk Team Verifikasi
+     */
+    public function checkRejectedDocuments(Request $request)
+    {
+        try {
+            $user = auth()->user();
+
+            // Hanya allow Team Verifikasi
+            if (!$user || !in_array(strtolower($user->role), ['team_verifikasi', 'ibu b', 'ibu yuni'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access'
+                ], 403);
+            }
+
+            // Get last check time from request (dari localStorage client)
+            $lastCheckTime = $request->input('last_check_time');
+
+            // Cari dokumen yang di-reject dalam 24 jam terakhir (untuk memastikan notifikasi selalu muncul)
+            // Jika ada lastCheckTime, gunakan yang lebih lama antara lastCheckTime atau 24 jam yang lalu
+            $checkFrom24Hours = now()->subHours(24);
+
+            // Initialize $checkFrom dengan default value
+            $checkFrom = $checkFrom24Hours;
+
+            try {
+                if ($lastCheckTime) {
+                    $parsedTime = \Carbon\Carbon::parse($lastCheckTime);
+                    // Gunakan waktu yang lebih lama untuk memastikan tidak ada yang terlewat
+                    $checkFrom = $parsedTime->gt($checkFrom24Hours) ? $checkFrom24Hours : $parsedTime;
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Invalid last_check_time format for Team Verifikasi, using 24 hours ago', [
+                    'last_check_time' => $lastCheckTime,
+                    'error' => $e->getMessage()
+                ]);
+                // $checkFrom already set to $checkFrom24Hours as default
+            }
+
+            \Log::info('Team Verifikasi checkRejectedDocuments called', [
+                'user_id' => $user->id,
+                'user_role' => $user->role,
+                'last_check_time' => $lastCheckTime,
+                'check_from' => $checkFrom->toIso8601String(),
+            ]);
+
+            // Cari dokumen yang di-reject dari inbox Perpajakan atau Akutansi dalam 24 jam terakhir
+            // Menggunakan dokumen_statuses table yang baru
+            $rejectedDocuments = Dokumen::where('current_handler', 'team_verifikasi')
+                ->whereHas('roleStatuses', function ($query) use ($checkFrom) {
+                    $query->whereIn('role_code', ['perpajakan', 'akutansi'])
+                        ->where('status', 'rejected')
+                        ->where('status_changed_at', '>=', $checkFrom);
+                })
+                ->with([
+                    'roleStatuses' => function ($query) {
+                        $query->whereIn('role_code', ['perpajakan', 'akutansi'])
+                            ->where('status', 'rejected')
+                            ->latest('status_changed_at');
+                    },
+                    'activityLogs'
+                ])
+                ->get()
+                ->filter(function ($doc) {
+                    // Filter to only include documents with rejection status
+                    return $doc->roleStatuses->where('status', 'rejected')->isNotEmpty();
+                })
+                ->sortByDesc(function ($doc) {
+                    $rejectedStatus = $doc->roleStatuses->where('status', 'rejected')->first();
+                    return $rejectedStatus?->status_changed_at ?? now();
+                })
+                ->take(50)
+                ->values();
+
+            // Hitung total rejected
+            $totalRejected = Dokumen::where('current_handler', 'team_verifikasi')
+                ->whereHas('roleStatuses', function ($query) {
+                    $query->whereIn('role_code', ['perpajakan', 'akutansi'])
+                        ->where('status', 'rejected');
+                })
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'rejected_documents_count' => $rejectedDocuments->count(),
+                'total_rejected' => $totalRejected,
+                'rejected_documents' => $rejectedDocuments->map(function ($doc) {
+                    // Get rejected status from dokumen_statuses
+                    $rejectedStatus = $doc->roleStatuses
+                        ->where('status', 'rejected')
+                        ->whereIn('role_code', ['perpajakan', 'akutansi'])
+                        ->sortByDesc('status_changed_at')
+                        ->first();
+
+                    // Get rejected by name from activity log
+                    $rejectLog = $doc->activityLogs()
+                        ->where('action', 'rejected')
+                        ->whereIn('stage', ['perpajakan', 'akutansi'])
+                        ->latest('action_at')
+                        ->first();
+
+                    $rejectedBy = 'Unknown';
+                    $rejectionReason = '-';
+
+                    if ($rejectedStatus) {
+                        $rejectedBy = $rejectedStatus->changed_by ?? 'Unknown';
+                        $rejectionReason = $rejectedStatus->notes ?? '-';
+
+                        // Map role to display name
+                        $nameMap = [
+                            'Perpajakan' => 'Team Perpajakan',
+                            'perpajakan' => 'Team Perpajakan',
+                            'Akutansi' => 'Team Akutansi',
+                            'akutansi' => 'Team Akutansi',
+                        ];
+                        $roleCode = $rejectedStatus->role_code;
+                        if (isset($nameMap[$roleCode])) {
+                            $rejectedBy = $nameMap[$roleCode];
+                        }
+                    }
+
+                    if ($rejectLog) {
+                        $rejectedBy = $rejectLog->performed_by ?? $rejectedBy;
+                        if (isset($rejectLog->details['rejection_reason'])) {
+                            $rejectionReason = $rejectLog->details['rejection_reason'];
+                        }
+                    }
+
+                    return [
+                        'id' => $doc->id,
+                        'nomor_agenda' => $doc->nomor_agenda,
+                        'nomor_spp' => $doc->nomor_spp,
+                        'uraian_spp' => \Illuminate\Support\Str::limit($doc->uraian_spp ?? '-', 50),
+                        'nilai_rupiah' => $doc->formatted_nilai_rupiah ?? 'Rp 0',
+                        'rejected_at' => $rejectedStatus?->status_changed_at?->format('d/m/Y H:i') ?? '-',
+                        'rejected_by' => $rejectedBy,
+                        'rejection_reason' => \Illuminate\Support\Str::limit($rejectionReason, 100),
+                        'url' => route('team_verifikasi.rejected.show', $doc->id),
+                    ];
+                }),
+                'current_time' => now()->toIso8601String(),
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error checking rejected documents for Team Verifikasi: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'user_id' => auth()->id(),
+                'last_check_time' => $request->input('last_check_time')
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memeriksa dokumen yang ditolak: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Menampilkan detail dokumen yang di-reject dari inbox Perpajakan/Akutansi untuk Team Verifikasi
+     */
+    public function showRejectedDocument(Dokumen $dokumen)
+    {
+        try {
+            $user = auth()->user();
+
+            // Hanya allow Team Verifikasi
+            if (!$user || !in_array(strtolower($user->role), ['team_verifikasi', 'ibu b', 'ibu yuni'])) {
+                abort(403, 'Unauthorized access');
+            }
+
+            // Validasi: dokumen harus di-reject dari inbox Perpajakan/Akutansi dan dikembalikan ke Team Verifikasi
+            $rejectedStatus = $dokumen->roleStatuses()
+                ->where('status', 'rejected')
+                ->whereIn('role_code', ['perpajakan', 'akutansi'])
+                ->first();
+
+            if (
+                !$rejectedStatus ||
+                strtolower($dokumen->current_handler) !== 'team_verifikasi'
+            ) {
+                abort(404, 'Dokumen tidak ditemukan atau tidak valid');
+            }
+
+            // Get rejected by name from activity log
+            $rejectLog = $dokumen->activityLogs()
+                ->where('action', 'inbox_rejected')
+                ->latest('action_at')
+                ->first();
+
+            $rejectedBy = 'Unknown';
+            if ($rejectLog) {
+                $rejectedBy = $rejectLog->performed_by ?? $rejectLog->details['rejected_by'] ?? 'Unknown';
+                // Map role to display name
+                $nameMap = [
+                    'Perpajakan' => 'Team Perpajakan',
+                    'perpajakan' => 'Team Perpajakan',
+                    'Akutansi' => 'Team Akutansi',
+                    'akutansi' => 'Team Akutansi',
+                ];
+                $rejectedBy = $nameMap[$rejectedBy] ?? $rejectedBy;
+            } else if ($rejectedStatus) {
+                $nameMap = [
+                    'perpajakan' => 'Team Perpajakan',
+                    'akutansi' => 'Team Akutansi',
+                ];
+                $rejectedBy = $nameMap[$rejectedStatus->role_code] ?? ucfirst($rejectedStatus->role_code);
+            }
+
+            $data = [
+                "title" => "Detail Dokumen Ditolak",
+                "module" => "team_verifikasi",
+                "menuDokumen" => "",
+                "menuDaftarDokumen" => "",
+                "menuDashboard" => "",
+                "dokumen" => $dokumen,
+                "rejectedBy" => $rejectedBy,
+                "rejectionReason" => $rejectedStatus->notes ?? '-',
+                "rejectedAt" => $rejectedStatus->status_changed_at ?? null,
+            ];
+
+            return view('team_verifikasi.rejected-detail', $data);
+
+        } catch (\Exception $e) {
+            \Log::error('Error showing rejected document for Team Verifikasi: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memuat detail dokumen yang ditolak');
+        }
+    }
+
+    /**
+     * Paraf (sign off) a document.
+     * Saves the current datetime as tanggal_paraf and the selected pemaraf.
+     */
+    public function parafDokumen(Dokumen $dokumen, Request $request): JsonResponse
+    {
+        try {
+            // Validate that document belongs to team_verifikasi
+            if (!in_array($dokumen->current_handler, ['team_verifikasi'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen ini tidak berada di Team Verifikasi.'
+                ], 403);
+            }
+
+            // Validate that document hasn't been parafed yet
+            if ($dokumen->tanggal_paraf) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dokumen ini sudah diparaf sebelumnya.'
+                ], 422);
+            }
+
+            // Validate pemaraf selection
+            $request->validate([
+                'pemaraf' => 'required|in:Ibu Yuni,Sekar'
+            ]);
+
+            $dokumen->update([
+                'tanggal_paraf' => now(),
+                'pemaraf' => $request->pemaraf,
+            ]);
+
+            \Log::info("Document #{$dokumen->id} parafed by {$request->pemaraf}", [
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'pemaraf' => $request->pemaraf,
+                'tanggal_paraf' => $dokumen->tanggal_paraf,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Dokumen berhasil diparaf oleh {$request->pemaraf}.",
+                'tanggal_paraf' => $dokumen->tanggal_paraf->format('d-m-Y H:i:s'),
+                'pemaraf' => $dokumen->pemaraf,
+            ]);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pilih pemaraf terlebih dahulu.'
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error parafing document: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memparaf dokumen.'
+            ], 500);
+        }
+    }
+
+
+    /**
+     * Check for document updates (real-time polling endpoint).
+     * Moved from routes/web.php closure for proper Separation of Concerns.
+     */
+    public function checkVerifikasiUpdates(Request $request): JsonResponse
+    {
+        // SECURITY: Validate and sanitize input
+        $lastChecked = $request->input('last_checked', 0);
+        $lastChecked = is_numeric($lastChecked) ? (int) $lastChecked : 0;
+        $lastChecked = max(0, min($lastChecked, time())); // Prevent future timestamps
+        $lastCheckedDate = $lastChecked > 0
+            ? Carbon::createFromTimestamp($lastChecked)
+            : Carbon::now()->subDays(1);
+
+        try {
+            // Check documents that changed status after lastChecked
+            // Differentiate between new docs from Operator vs docs approved by Perpajakan/Akutansi/Pembayaran
+            // Exclude documents imported from CSV to prevent notification spam
+            $newDocuments = Dokumen::where(function ($query) use ($lastCheckedDate) {
+                $query->where(function ($q) use ($lastCheckedDate) {
+                    $q->where('current_handler', 'team_verifikasi')
+                        ->where('updated_at', '>', $lastCheckedDate)
+                        ->whereIn('status', ['sent_to_team_verifikasi', 'sedang diproses', 'menunggu_di_approve']);
+                })
+                    ->orWhere(function ($q) use ($lastCheckedDate) {
+                        $q->whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])
+                            ->where('updated_at', '>', $lastCheckedDate);
+                    });
+            })
+                ->when(Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('imported_from_csv', false)
+                            ->orWhereNull('imported_from_csv');
+                    });
+                })
+                ->with([
+                    'roleData' => function ($query) {
+                        $query->whereIn('role_code', ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran']);
+                    },
+                    'roleStatuses' => function ($query) {
+                        $query->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran']);
+                    }
+                ])
+                ->latest('updated_at')
+                ->take(10)
+                ->get();
+
+            $totalDocuments = Dokumen::where(function ($query) {
+                $query->where('current_handler', 'team_verifikasi')
+                    ->orWhereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi']);
+            })->count();
+
+            return response()->json([
+                'has_updates' => $newDocuments->count() > 0,
+                'new_count' => $newDocuments->count(),
+                'total_documents' => $totalDocuments,
+                'new_documents' => $newDocuments->map(function ($doc) {
+                    $roleData = $doc->roleData->firstWhere('role_code', 'team_verifikasi');
+
+                    $isNewFromOperator = $doc->current_handler === 'team_verifikasi' &&
+                        in_array($doc->status, ['sent_to_team_verifikasi', 'sedang diproses', 'menunggu_di_approve']);
+
+                    $approvedBy = null;
+                    $approvedAt = null;
+                    if (!$isNewFromOperator && in_array($doc->status, ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran'])) {
+                        $statusRoleMap = [
+                            'sent_to_perpajakan' => 'perpajakan',
+                            'sent_to_akutansi' => 'akutansi',
+                            'sent_to_pembayaran' => 'pembayaran',
+                        ];
+                        $roleCode = $statusRoleMap[$doc->status] ?? null;
+                        if ($roleCode) {
+                            $roleStatus = $doc->roleStatuses->firstWhere('role_code', $roleCode);
+                            if ($roleStatus && $roleStatus->status === 'approved') {
+                                $approvedBy = ucfirst($roleCode);
+                                $approvedAt = $roleStatus->status_changed_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i');
+                            }
+                        }
+                    }
+
+                    return [
+                        'id' => $doc->id,
+                        'nomor_agenda' => $doc->nomor_agenda,
+                        'nomor_spp' => $doc->nomor_spp,
+                        'uraian_spp' => $doc->uraian_spp,
+                        'nilai_rupiah' => $doc->nilai_rupiah,
+                        'status' => $doc->status,
+                        'sent_at' => $roleData?->received_at?->format('d/m/Y H:i') ?? $doc->updated_at->format('d/m/Y H:i'),
+                        'is_new_from_Operator' => $isNewFromOperator,
+                        'approved_by' => $approvedBy,
+                        'approved_at' => $approvedAt,
+                    ];
+                }),
+                'last_checked' => time()
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error in checkVerifikasiUpdates: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => true,
+                'message' => 'Failed to check updates: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+

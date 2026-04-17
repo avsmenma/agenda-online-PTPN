@@ -22,3 +22,8 @@ class DokumenPR extends Model
         return $this->belongsTo(Dokumen::class);
     }
 }
+
+
+
+
+

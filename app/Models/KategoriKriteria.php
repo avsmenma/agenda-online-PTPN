@@ -24,3 +24,9 @@ class KategoriKriteria extends Model
     }
 }
 
+
+
+
+
+
+

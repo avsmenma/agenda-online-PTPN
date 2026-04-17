@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -8,28 +10,26 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * DEPRECATED: This middleware is no longer registered in bootstrap/app.php.
+ * Kept for reference only. Use Laravel's built-in 'auth' middleware instead.
+ *
+ * Original purpose: Prevent unauthenticated URL access.
+ * Why deprecated: Duplicates Laravel's 'auth' middleware functionality.
+ */
 class PreventUrlManipulation
 {
     /**
      * Handle an incoming request.
-     * 
-     * This middleware prevents unauthorized access by:
-     * 1. Ensuring user is authenticated
-     * 2. Validating user has proper role for the route
-     * 3. Logging suspicious access attempts
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if user is authenticated
         if (!Auth::check()) {
             Log::warning('Unauthenticated access attempt blocked', [
                 'path' => $request->path(),
-                'method' => $request->method(),
                 'ip' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'referer' => $request->header('referer'),
             ]);
 
             if ($request->expectsJson()) {
@@ -43,18 +43,9 @@ class PreventUrlManipulation
                 ->with('error', 'Silakan login terlebih dahulu.');
         }
 
-        // Log access for security monitoring
-        $user = Auth::user();
-        Log::info('Authenticated access', [
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'role' => $user->role,
-            'path' => $request->path(),
-            'method' => $request->method(),
-            'ip' => $request->ip(),
-        ]);
+        // REMOVED: Log::info('Authenticated access') — was logging every single request,
+        // causing log bloating and potential information leakage (user_id, username, IP, path).
 
         return $next($request);
     }
 }
-

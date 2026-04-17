@@ -132,3 +132,9 @@ class AutocompleteController extends Controller
         return response()->json($suggestions);
     }
 }
+
+
+
+
+
+

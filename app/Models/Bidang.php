@@ -22,7 +22,7 @@ class Bidang extends Model
     // Relationships
     public function dokumens()
     {
-        return $this->hasMany(Dokumen::class, 'target_bidang', 'kode_bidang');
+        return $this->hasMany(Dokumen::class, 'return_source', 'kode_bidang');
     }
 
     // Scopes
@@ -37,3 +37,9 @@ class Bidang extends Model
         return "{$this->kode_bidang} - {$this->nama_bidang}";
     }
 }
+
+
+
+
+
+

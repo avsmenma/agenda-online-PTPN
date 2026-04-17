@@ -25,16 +25,16 @@ class ActivityLogHelper
     }
 
     /**
-     * Log ketika dokumen dibuat
+     * Log ketika dokumen dOperatort
      */
     public static function logCreated(Dokumen $dokumen): void
     {
         self::log(
             $dokumen,
             'created',
-            'Dokumen dibuat',
+            'Dokumen dOperatort',
             'sender',
-            'ibuA',
+            'Operator',
             ['nomor_agenda' => $dokumen->nomor_agenda]
         );
     }
@@ -47,9 +47,9 @@ class ActivityLogHelper
     {
         $from = $from ?? $dokumen->current_handler;
         $stage = self::getStageFromHandler($from); // Stage pengirim, bukan penerima
-        
+
         $descriptions = [
-            'ibuB' => 'Dokumen dikirim ke Ibu Yuni',
+            'Team Verifikasi' => 'Dokumen dikirim ke Team Verifikasi',
             'perpajakan' => 'Dokumen dikirim ke Team Perpajakan',
             'akutansi' => 'Dokumen dikirim ke Team Akutansi',
             'pembayaran' => 'Dokumen dikirim ke Team Pembayaran',
@@ -72,7 +72,7 @@ class ActivityLogHelper
     public static function logReceived(Dokumen $dokumen, string $by): void
     {
         $stage = self::getStageFromHandler($by);
-        
+
         // Format: "Dokumen masuk pada tanggal" - tanggal dan jam akan ditambahkan di view
         $description = 'Dokumen masuk pada tanggal';
 
@@ -93,10 +93,10 @@ class ActivityLogHelper
     {
         $by = $by ?? $dokumen->current_handler;
         $stage = self::getStageFromHandler($by);
-        
+
         // Format: "Deadline diatur pada tanggal" - tanggal dan jam akan ditambahkan di view
         $description = 'Deadline diatur pada tanggal';
-        
+
         self::log(
             $dokumen,
             'deadline_set',
@@ -114,7 +114,7 @@ class ActivityLogHelper
     {
         $by = $by ?? $dokumen->current_handler;
         $stage = self::getStageFromHandler($by);
-        
+
         $fieldNames = [
             'no_faktur' => 'No Faktur',
             'tanggal_faktur' => 'Tanggal Faktur',
@@ -137,9 +137,9 @@ class ActivityLogHelper
             'tanggal_spp' => 'Tanggal SPP',
             'uraian_spp' => 'Uraian SPP',
             'nilai_rupiah' => 'Nilai Rupiah',
-            'kategori' => 'Kategori',
-            'jenis_dokumen' => 'Jenis Dokumen',
-            'jenis_sub_pekerjaan' => 'Jenis Sub Pekerjaan',
+            'kategori' => 'Kriteria FC',
+            'jenis_dokumen' => 'Sub Kriteria',
+            'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
             'jenis_pembayaran' => 'Jenis Pembayaran',
             'kebun' => 'Kebun',
             'bagian' => 'Bagian',
@@ -152,7 +152,7 @@ class ActivityLogHelper
         ];
 
         $fieldName = $fieldNames[$field] ?? $field;
-        
+
         // Format description dengan old dan new value
         $oldValueStr = $oldValue ?? 'kosong';
         $newValueStr = $newValue ?? 'kosong';
@@ -180,7 +180,7 @@ class ActivityLogHelper
     {
         $by = $by ?? $dokumen->current_handler;
         $stage = self::getStageFromHandler($by);
-        
+
         self::log(
             $dokumen,
             'form_filled',
@@ -198,7 +198,7 @@ class ActivityLogHelper
     {
         $by = $by ?? $dokumen->current_handler;
         $stage = self::getStageFromHandler($by);
-        
+
         self::log(
             $dokumen,
             'returned',
@@ -216,7 +216,7 @@ class ActivityLogHelper
     {
         $by = $by ?? $dokumen->current_handler;
         $stage = self::getStageFromHandler($by);
-        
+
         self::log(
             $dokumen,
             'status_changed',
@@ -233,8 +233,8 @@ class ActivityLogHelper
     private static function getStageFromHandler(?string $handler): ?string
     {
         $stageMap = [
-            'ibuA' => 'sender',
-            'ibuB' => 'reviewer',
+            'Operator' => 'sender',
+            'Team Verifikasi' => 'reviewer',
             'perpajakan' => 'tax',
             'akutansi' => 'accounting',
             'pembayaran' => 'payment',
@@ -243,4 +243,9 @@ class ActivityLogHelper
         return $stageMap[$handler] ?? null;
     }
 }
+
+
+
+
+
 

@@ -9,10 +9,21 @@
 
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts for Owner Dashboard -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
   <!-- FontAwesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <!-- Flatpickr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <!-- Flatpickr JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- Flatpickr Indonesian Locale -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
+
+  <!-- Mobile Responsive CSS -->
+  <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
 
   <style>
     body {
@@ -400,6 +411,17 @@
       height: 20px;
     }
 
+    /* Sidebar logo image */
+    .sidebar h4 .sidebar-logo-img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      flex-shrink: 0;
+      background: transparent;
+      border-radius: 0;
+      display: inline-flex;
+    }
+
     /* Hide title text when collapsed */
     .sidebar:not(:hover) h4 {
       justify-content: center;
@@ -411,6 +433,11 @@
     .sidebar:not(:hover) h4 i {
       font-size: 18px;
       line-height: 1;
+    }
+
+    .sidebar:not(:hover) h4 .sidebar-logo-img {
+      width: 36px;
+      height: 36px;
     }
 
     /* Show full title when expanded */
@@ -425,6 +452,12 @@
     .sidebar:hover h4 i {
       margin-right: 8px;
       font-size: 18px;
+    }
+
+    .sidebar:hover h4 .sidebar-logo-img {
+      margin-right: 10px;
+      width: 36px;
+      height: 36px;
     }
 
     /* Hide hr completely when collapsed */
@@ -713,6 +746,84 @@
       /* slate-300 */
     }
 
+    /* Profile Dropdown Styles */
+    .profile-dropdown-container {
+      position: relative;
+    }
+
+    .profile-icon {
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .profile-icon:hover {
+      background-color: #f1f5f9;
+    }
+
+    .dark .profile-icon:hover {
+      background-color: #334155;
+    }
+
+    .profile-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: white;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      min-width: 200px;
+      z-index: 1050;
+      overflow: hidden;
+      padding: 4px 0;
+    }
+
+    .dark .profile-dropdown-menu {
+      background: #1e293b;
+      border-color: #334155;
+    }
+
+    .profile-dropdown-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      color: #374151;
+      text-decoration: none;
+      font-size: 14px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .dark .profile-dropdown-item {
+      color: #cbd5e1;
+    }
+
+    .profile-dropdown-item:hover {
+      background-color: #E8F5E9;
+      color: #01545A;
+      font-weight: 500;
+    }
+
+    .dark .profile-dropdown-item:hover {
+      background-color: rgba(1, 84, 90, 0.2);
+      color: #4ade80;
+    }
+
+    .profile-dropdown-item i {
+      width: 18px;
+      text-align: center;
+    }
+
+    .profile-dropdown-divider {
+      height: 1px;
+      background-color: #E2E8F0;
+      margin: 4px 0;
+    }
+
+    .dark .profile-dropdown-divider {
+      background-color: #334155;
+    }
+
     .topbar {
       background-color: white;
       padding: 25px 40px;
@@ -887,6 +998,449 @@
       padding: 10px;
       color: #888;
       margin-top: 30px;
+    }
+
+    .dark footer {
+      color: #94a3b8;
+    }
+
+    /* ========================================
+       COMPREHENSIVE DARK MODE STYLES
+       ======================================== */
+
+    /* Cards */
+    .dark .card {
+      background-color: #1e293b;
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+
+    .dark .card-header {
+      background-color: #0f172a;
+      border-bottom-color: #334155;
+      color: #f1f5f9;
+    }
+
+    .dark .card-body {
+      background-color: #1e293b;
+      color: #e2e8f0;
+    }
+
+    .dark .card-footer {
+      background-color: #0f172a;
+      border-top-color: #334155;
+    }
+
+    /* Search Box & Filter Cards */
+    .dark .search-box,
+    .dark .filter-card {
+      background-color: #1e293b;
+      border-color: #334155;
+    }
+
+    /* Tables */
+    .dark .table {
+      color: #e2e8f0;
+      --bs-table-bg: #1e293b;
+      --bs-table-border-color: #334155;
+    }
+
+    .dark .table thead {
+      background-color: #0f172a;
+      color: #f1f5f9;
+    }
+
+    .dark .table thead th {
+      background-color: #0f172a;
+      border-color: #475569;
+      color: #f1f5f9;
+    }
+
+    .dark .table tbody tr {
+      background-color: #1e293b;
+      border-color: #334155;
+    }
+
+    .dark .table tbody tr:hover {
+      background-color: #334155;
+    }
+
+    .dark .table tbody td {
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+
+    .dark .table-container {
+      background-color: #1e293b;
+      border-color: #334155;
+    }
+
+    .dark .table-responsive {
+      background-color: #1e293b;
+      border-radius: 12px;
+    }
+
+    /* Form Controls */
+    .dark .form-control,
+    .dark .form-select {
+      background-color: #1e293b;
+      border-color: #475569;
+      color: #f1f5f9;
+    }
+
+    .dark .form-control:focus,
+    .dark .form-select:focus {
+      background-color: #334155;
+      border-color: #60a5fa;
+      color: #f1f5f9;
+      box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.25);
+    }
+
+    .dark .form-control::placeholder {
+      color: #94a3b8;
+    }
+
+    .dark .form-label {
+      color: #cbd5e1;
+    }
+
+    .dark .form-text {
+      color: #94a3b8;
+    }
+
+    .dark .input-group-text {
+      background-color: #334155;
+      border-color: #475569;
+      color: #cbd5e1;
+    }
+
+    /* Buttons */
+    .dark .btn-outline-secondary {
+      color: #cbd5e1;
+      border-color: #475569;
+    }
+
+    .dark .btn-outline-secondary:hover {
+      background-color: #334155;
+      border-color: #64748b;
+      color: #f1f5f9;
+    }
+
+    .dark .btn-outline-primary {
+      color: #60a5fa;
+      border-color: #3b82f6;
+    }
+
+    .dark .btn-outline-primary:hover {
+      background-color: #3b82f6;
+      color: #ffffff;
+    }
+
+    .dark .btn-outline-success {
+      color: #4ade80;
+      border-color: #22c55e;
+    }
+
+    .dark .btn-outline-warning {
+      color: #fbbf24;
+      border-color: #f59e0b;
+    }
+
+    .dark .btn-outline-danger {
+      color: #f87171;
+      border-color: #ef4444;
+    }
+
+    .dark .btn-outline-info {
+      color: #38bdf8;
+      border-color: #0ea5e9;
+    }
+
+    .dark .btn-light {
+      background-color: #334155;
+      border-color: #475569;
+      color: #f1f5f9;
+    }
+
+    .dark .btn-light:hover {
+      background-color: #475569;
+      border-color: #64748b;
+      color: #f1f5f9;
+    }
+
+    /* Dropdowns */
+    .dark .dropdown-menu {
+      background-color: #1e293b;
+      border-color: #334155;
+    }
+
+    .dark .dropdown-item {
+      color: #e2e8f0;
+    }
+
+    .dark .dropdown-item:hover,
+    .dark .dropdown-item:focus {
+      background-color: #334155;
+      color: #f1f5f9;
+    }
+
+    .dark .dropdown-divider {
+      border-color: #334155;
+    }
+
+    /* Modals */
+    .dark .modal-content {
+      background-color: #1e293b;
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+
+    .dark .modal-header {
+      border-bottom-color: #334155;
+    }
+
+    .dark .modal-header .modal-title {
+      color: #f1f5f9;
+    }
+
+    .dark .modal-header .btn-close {
+      filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    .dark .modal-footer {
+      border-top-color: #334155;
+    }
+
+    /* Badges - improved visibility */
+    .dark .badge {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .dark .badge-success,
+    .dark .bg-success {
+      background-color: #059669 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .badge-warning,
+    .dark .bg-warning {
+      background-color: #d97706 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .badge-danger,
+    .dark .bg-danger {
+      background-color: #dc2626 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .badge-info,
+    .dark .bg-info {
+      background-color: #0891b2 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .badge-primary,
+    .dark .bg-primary {
+      background-color: #2563eb !important;
+      color: #ffffff !important;
+    }
+
+    .dark .badge-secondary,
+    .dark .bg-secondary {
+      background-color: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+
+    /* Text colors */
+    .dark .text-muted {
+      color: #94a3b8 !important;
+    }
+
+    .dark .text-dark {
+      color: #e2e8f0 !important;
+    }
+
+    .dark h1,
+    .dark h2,
+    .dark h3,
+    .dark h4,
+    .dark h5,
+    .dark h6 {
+      color: #f1f5f9;
+    }
+
+    .dark p,
+    .dark span:not(.badge) {
+      color: #e2e8f0;
+    }
+
+    .dark strong,
+    .dark b {
+      color: #f8fafc;
+    }
+
+    .dark small {
+      color: #94a3b8;
+    }
+
+    .dark a:not(.btn):not(.nav-link):not(.sidebar a) {
+      color: #60a5fa;
+    }
+
+    .dark a:not(.btn):not(.nav-link):not(.sidebar a):hover {
+      color: #93c5fd;
+    }
+
+    /* Borders */
+    .dark .border {
+      border-color: #334155 !important;
+    }
+
+    .dark .border-bottom {
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .border-top {
+      border-top-color: #334155 !important;
+    }
+
+    /* List groups */
+    .dark .list-group-item {
+      background-color: #1e293b;
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+
+    .dark .list-group-item:hover {
+      background-color: #334155;
+    }
+
+    /* Alerts */
+    .dark .alert-info {
+      background-color: rgba(14, 165, 233, 0.15);
+      border-color: #0ea5e9;
+      color: #7dd3fc;
+    }
+
+    .dark .alert-success {
+      background-color: rgba(34, 197, 94, 0.15);
+      border-color: #22c55e;
+      color: #86efac;
+    }
+
+    .dark .alert-warning {
+      background-color: rgba(245, 158, 11, 0.15);
+      border-color: #f59e0b;
+      color: #fcd34d;
+    }
+
+    .dark .alert-danger {
+      background-color: rgba(239, 68, 68, 0.15);
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+
+    /* Pagination */
+    .dark .pagination .page-link {
+      background-color: #1e293b;
+      border-color: #334155;
+      color: #cbd5e1;
+    }
+
+    .dark .pagination .page-link:hover {
+      background-color: #334155;
+      border-color: #475569;
+      color: #f1f5f9;
+    }
+
+    .dark .pagination .page-item.active .page-link {
+      background-color: #2563eb;
+      border-color: #2563eb;
+      color: #fff;
+    }
+
+    .dark .pagination .page-item.disabled .page-link {
+      background-color: #0f172a;
+      border-color: #334155;
+      color: #64748b;
+    }
+
+    /* Tooltips */
+    .dark .tooltip-inner {
+      background-color: #334155;
+      color: #f1f5f9;
+    }
+
+    /* Progress Bars */
+    .dark .progress {
+      background-color: #334155;
+    }
+
+    /* Nav Tabs */
+    .dark .nav-tabs {
+      border-bottom-color: #334155;
+    }
+
+    .dark .nav-tabs .nav-link {
+      color: #94a3b8;
+    }
+
+    .dark .nav-tabs .nav-link:hover {
+      border-color: #475569;
+      color: #e2e8f0;
+    }
+
+    .dark .nav-tabs .nav-link.active {
+      background-color: #1e293b;
+      border-color: #334155 #334155 #1e293b;
+      color: #f1f5f9;
+    }
+
+    /* Shadow adjustments */
+    .dark .shadow,
+    .dark .shadow-sm,
+    .dark .shadow-lg {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    /* Custom status badges for dark mode */
+    .dark .badge-status {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .dark .table-position-badge {
+      background: linear-gradient(135deg, #334155 0%, #475569 100%);
+      border-color: #475569;
+      color: #e2e8f0;
+    }
+
+    .dark .table-action-btn {
+      background: linear-gradient(135deg, #334155 0%, #475569 100%);
+      border: 1px solid #475569;
+    }
+
+    .dark .table-action-btn:hover {
+      background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+    }
+
+    /* Scrollbar for dark mode */
+    .dark ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .dark ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+
+    .dark ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+
+    .dark ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
     }
 
     /* Notification System Styles */
@@ -1235,7 +1789,2076 @@
       -ms-user-select: text;
       cursor: text;
     }
+
+    /* ========================================
+       DARK MODE FIX - HIGH CONTRAST ELEMENTS
+       For Daftar Dokumen tables and badges
+       ======================================== */
+
+    /* Currency/Value Display - HIGH CONTRAST */
+    .dark .table tbody td strong,
+    .dark .data-table td strong,
+    .dark .detail-value,
+    .dark .detail-value.highlight,
+    .dark .doc-value,
+    .dark .stat-value,
+    .dark .doc-card-value {
+      color: #ffffff !important;
+    }
+
+    /* Money/Rupiah values - make them pop */
+    .dark .formatted-rupiah,
+    .dark .nilai-rupiah {
+      color: #4ade80 !important;
+      font-weight: 600;
+    }
+
+    /* Payment Status Badges - Dark Mode */
+    .dark .payment-status-badge.belum-dibayar {
+      background: linear-gradient(135deg, #92400e 0%, #78350f 100%);
+      color: #fef3c7;
+      border-color: #f59e0b;
+    }
+
+    .dark .payment-status-badge.siap-dibayar {
+      background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+      color: #dbeafe;
+      border-color: #60a5fa;
+    }
+
+    .dark .payment-status-badge.sudah-dibayar {
+      background: linear-gradient(135deg, #166534 0%, #14532d 100%);
+      color: #dcfce7;
+      border-color: #4ade80;
+    }
+
+    .dark .payment-status-badge small {
+      color: #cbd5e1 !important;
+    }
+
+    /* Document Age Badges - Dark Mode */
+    .dark .document-age-badge.active {
+      background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+      border-left-color: #4ade80;
+    }
+
+    .dark .document-age-badge.active .age-date,
+    .dark .document-age-badge.active .age-duration {
+      color: #bbf7d0 !important;
+    }
+
+    .dark .document-age-badge.active .age-dot {
+      background: #4ade80;
+      box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+    }
+
+    .dark .document-age-badge.completed {
+      background: linear-gradient(135deg, #334155 0%, #475569 100%);
+      border-left-color: #94a3b8;
+    }
+
+    .dark .document-age-badge.completed .age-date,
+    .dark .document-age-badge.completed .age-duration {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .document-age-badge.completed .age-dot {
+      background: #94a3b8;
+    }
+
+    /* Table Data Cells - Ensure Readability */
+    .dark .data-table td {
+      color: #e2e8f0;
+      border-color: #334155;
+    }
+
+    .dark .data-table td .text-muted,
+    .dark .data-table small.text-muted,
+    .dark .table td .text-muted,
+    .dark .table td small.text-muted {
+      color: #94a3b8 !important;
+    }
+
+    /* Detail Items in Modals */
+    .dark .detail-item {
+      background: #334155;
+      border-left-color: #4ade80;
+    }
+
+    .dark .detail-label {
+      color: #94a3b8 !important;
+    }
+
+    .dark .detail-value {
+      color: #f8fafc !important;
+    }
+
+    /* Search Box & Filters */
+    .dark .search-box {
+      background: #1e293b;
+      border-color: #334155;
+    }
+
+    .dark .search-box .input-group-text {
+      background: #334155;
+      border-color: #475569;
+      color: #94a3b8;
+    }
+
+    .dark .search-box .form-control {
+      background: #1e293b;
+      border-color: #475569;
+      color: #f1f5f9;
+    }
+
+    .dark .search-box .form-control::placeholder {
+      color: #64748b;
+    }
+
+    .dark .btn-year-select,
+    .dark .btn-status-select {
+      background: #334155;
+      color: #e2e8f0;
+      border-color: #475569;
+    }
+
+    .dark .btn-year-select:hover,
+    .dark .btn-status-select:hover {
+      background: #475569;
+      border-color: #64748b;
+    }
+
+    /* Table Container */
+    .dark .table-container,
+    .dark .table-wrapper {
+      background: #1e293b;
+      border-color: #334155;
+    }
+
+    /* Empty State */
+    .dark .empty-state {
+      background: #1e293b;
+    }
+
+    .dark .empty-state i {
+      color: #475569;
+    }
+
+    .dark .empty-state h4 {
+      color: #e2e8f0;
+    }
+
+    .dark .empty-state p {
+      color: #94a3b8;
+    }
+
+    /* Modal Custom Styles */
+    .dark .modal-content-custom {
+      background: #1e293b;
+    }
+
+    .dark .modal-body-custom {
+      background: #1e293b;
+    }
+
+    .dark .modal-footer-custom {
+      background: #1e293b;
+      border-top-color: #334155;
+    }
+
+    /* Column Customization Modal */
+    .dark .customization-modal .modal-content-custom {
+      background: #1e293b;
+    }
+
+    .dark .column-selection-list {
+      background: #0f172a;
+    }
+
+    .dark .column-item {
+      background: #1e293b;
+      border-color: #475569;
+    }
+
+    .dark .column-item:hover {
+      border-color: #60a5fa;
+      background: #334155;
+    }
+
+    .dark .column-item.selected {
+      border-color: #4ade80;
+      background: rgba(74, 222, 128, 0.1);
+    }
+
+    .dark .column-item-label {
+      color: #e2e8f0;
+    }
+
+    /* Per Page Select */
+    .dark .per-page-select label {
+      color: #cbd5e1;
+    }
+
+    .dark .per-page-select select {
+      background: #334155;
+      border-color: #475569;
+      color: #f1f5f9;
+    }
+
+    /* Stat Cards Additional */
+    .dark .stat-card {
+      background: #1e293b;
+      border-color: #334155;
+    }
+
+    .dark .stat-title,
+    .dark .stat-label {
+      color: #94a3b8;
+    }
+
+    .dark .stat-description {
+      color: #64748b;
+    }
+
+    /* Form Containers */
+    .dark .form-container {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      border-color: #475569;
+    }
+
+    .dark .section-title {
+      color: #e2e8f0;
+      background: linear-gradient(90deg, rgba(74, 222, 128, 0.1) 0%, transparent 100%);
+      border-left-color: #4ade80;
+    }
+
+    .dark .info-box {
+      background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(74, 222, 128, 0.05) 100%);
+      border-color: rgba(74, 222, 128, 0.3);
+      color: #e2e8f0;
+    }
+
+    /* Status Badges Additional */
+    .dark .status-badge.proses {
+      background: #92400e !important;
+      color: #fef3c7 !important;
+    }
+
+    .dark .status-badge.selesai {
+      background: #166534 !important;
+      color: #dcfce7 !important;
+    }
+
+    /* Badge Status Text Colors */
+    .dark .badge-status {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Gradient Text Fix for Dark Mode */
+    .dark h2 {
+      background: linear-gradient(135deg, #4ade80 0%, #34d399 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Pagination Container Dark Mode */
+    .dark .pagination-container {
+      background: #1e293b;
+      border-top-color: #334155;
+    }
+
+    /* Action Buttons visibility */
+    .dark .btn-action {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Detail Grid Dark Mode */
+    .dark .detail-grid .detail-item {
+      background: #334155;
+      border-left-color: #4ade80;
+    }
+
+    /* Form group labels */
+    .dark .form-group label {
+      color: #e2e8f0;
+    }
+
+    /* Optional labels */
+    .dark .optional-label {
+      color: #4ade80;
+    }
+
+    /* ========================================
+       ADDITIONAL DARK MODE FIXES
+       For sidebar, buttons, and action icons
+       ======================================== */
+
+    /* Secondary Sidebar Menu Items - White Text */
+    .dark .secondary-sidebar .nav-link,
+    .dark .secondary-sidebar a,
+    .dark .secondary-sidebar .menu-item,
+    .dark .secondary-sidebar .sidebar-menu a,
+    .dark .secondary-sidebar .submenu-item {
+      color: #ffffff !important;
+    }
+
+    .dark .secondary-sidebar .nav-link:hover,
+    .dark .secondary-sidebar a:hover {
+      color: #4ade80 !important;
+    }
+
+    .dark .secondary-sidebar .nav-link i,
+    .dark .secondary-sidebar a i,
+    .dark .secondary-sidebar .menu-icon {
+      color: #ffffff !important;
+    }
+
+    /* Buat Dokumen Button - White Text */
+    .dark .btn-create,
+    .dark .btn-add-document,
+    .dark a.btn-create,
+    .dark a[href*="tambahDokumen"],
+    .dark .btn-primary-action {
+      color: #ffffff !important;
+    }
+
+    .dark .btn-create i,
+    .dark .btn-add-document i,
+    .dark a.btn-create i {
+      color: #ffffff !important;
+    }
+
+    /* Action Icons/Buttons - White Icons */
+    .dark .action-buttons .btn-action i,
+    .dark .btn-action i,
+    .dark .btn-edit i,
+    .dark .btn-send i,
+    .dark .btn-tracking i,
+    .dark .btn-delete i,
+    .dark .btn-view i,
+    .dark td .btn i,
+    .dark .action-buttons a i,
+    .dark .action-buttons button i {
+      color: #ffffff !important;
+    }
+
+    /* Ensure action button backgrounds stay visible */
+    .dark .btn-edit,
+    .dark .btn-send,
+    .dark .btn-tracking {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%) !important;
+      color: #ffffff !important;
+    }
+
+    .dark .btn-delete {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+      color: #ffffff !important;
+    }
+
+    /* Secondary sidebar active state */
+    .dark .secondary-sidebar .nav-link.active,
+    .dark .secondary-sidebar a.active {
+      background: rgba(74, 222, 128, 0.15) !important;
+      color: #4ade80 !important;
+    }
+
+    .dark .secondary-sidebar .nav-link.active i,
+    .dark .secondary-sidebar a.active i {
+      color: #4ade80 !important;
+    }
+
+    /* Primary Sidebar Menu Items - White Text */
+    .dark .sidebar .nav-link,
+    .dark .sidebar a,
+    .dark .sidebar .menu-item,
+    .dark .sidebar .sidebar-menu a,
+    .dark .sidebar span,
+    .dark .sidebar-text,
+    .dark .menu-text {
+      color: #ffffff !important;
+    }
+
+    .dark .sidebar .nav-link i,
+    .dark .sidebar a i,
+    .dark .sidebar .menu-icon,
+    .dark .sidebar-icon {
+      color: #ffffff !important;
+    }
+
+    .dark .sidebar .nav-link:hover,
+    .dark .sidebar a:hover {
+      color: #4ade80 !important;
+    }
+
+    .dark .sidebar .nav-link:hover i,
+    .dark .sidebar a:hover i {
+      color: #4ade80 !important;
+    }
+
+    .dark .sidebar .nav-link.active,
+    .dark .sidebar a.active {
+      background: rgba(74, 222, 128, 0.15) !important;
+      color: #4ade80 !important;
+    }
+
+    .dark .sidebar .nav-link.active i,
+    .dark .sidebar a.active i {
+      color: #4ade80 !important;
+    }
+
+    /* App Logo/Title in Sidebar */
+    .dark .sidebar .logo-text,
+    .dark .sidebar-brand,
+    .dark .sidebar h6,
+    .dark .sidebar .app-name {
+      color: #ffffff !important;
+    }
+
+    /* Logout link */
+    .dark .sidebar .logout-link,
+    .dark .sidebar a[href*="logout"] {
+      color: #ffffff !important;
+    }
+
+    .dark .sidebar a[href*="logout"]:hover {
+      color: #f87171 !important;
+    }
+
+    /* ========================================
+       COLUMN CUSTOMIZATION MODAL DARK MODE
+       ======================================== */
+
+    /* Modal Background */
+    .dark .customization-modal,
+    .dark .modal-overlay {
+      background: rgba(0, 0, 0, 0.8) !important;
+    }
+
+    /* Modal Content Container */
+    .dark .customization-modal .modal-content-custom,
+    .dark .modal-content-custom {
+      background: #1e293b !important;
+      border: 1px solid #334155 !important;
+    }
+
+    /* Modal Header */
+    .dark .customization-modal .modal-header-custom,
+    .dark .modal-header-custom {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .customization-modal .modal-header-custom h3,
+    .dark .modal-header-custom h3,
+    .dark .modal-header-custom h4 {
+      color: #f1f5f9 !important;
+    }
+
+    .dark .customization-modal .modal-header-custom .modal-close,
+    .dark .modal-header-custom .modal-close {
+      color: #94a3b8 !important;
+    }
+
+    .dark .customization-modal .modal-header-custom .modal-close:hover,
+    .dark .modal-header-custom .modal-close:hover {
+      color: #f87171 !important;
+    }
+
+    /* Modal Body */
+    .dark .customization-modal .modal-body-custom,
+    .dark .modal-body-custom {
+      background: #1e293b !important;
+    }
+
+    /* Selection Panel */
+    .dark .customization-modal .selection-panel {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .customization-modal .panel-title {
+      color: #f1f5f9 !important;
+    }
+
+    .dark .customization-modal .panel-description {
+      color: #94a3b8 !important;
+    }
+
+    /* Column Selection List */
+    .dark .customization-modal .column-selection-list,
+    .dark #columnSelectionList {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+    }
+
+    /* Column Items */
+    .dark .customization-modal .column-item,
+    .dark .column-item {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .dark .customization-modal .column-item.selected,
+    .dark .column-item.selected {
+      background: rgba(74, 222, 128, 0.15) !important;
+      border-color: #4ade80 !important;
+    }
+
+    .dark .customization-modal .column-item-label,
+    .dark .column-item-label {
+      color: #f1f5f9 !important;
+    }
+
+    .dark .customization-modal .column-item-checkbox {
+      accent-color: #4ade80;
+    }
+
+    /* Preview Panel */
+    .dark .customization-modal .preview-panel {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .customization-modal .preview-container {
+      background: #1e293b !important;
+    }
+
+    /* Preview Table */
+    .dark .customization-modal .preview-table,
+    .dark .preview-table {
+      background: #1e293b !important;
+    }
+
+    .dark .customization-modal .preview-table thead th,
+    .dark .preview-table thead th {
+      background: #334155 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .dark .customization-modal .preview-table tbody td,
+    .dark .preview-table tbody td {
+      background: #1e293b !important;
+      color: #e2e8f0 !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .customization-modal .preview-table tbody tr,
+    .dark .preview-table tbody tr {
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .customization-modal .preview-table tbody tr:hover,
+    .dark .preview-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* Empty Preview */
+    .dark .customization-modal .empty-preview {
+      color: #94a3b8 !important;
+    }
+
+    /* Modal Footer */
+    .dark .customization-modal .modal-footer-custom,
+    .dark .modal-footer-custom {
+      background: #0f172a !important;
+      border-top-color: #334155 !important;
+    }
+
+    .dark .customization-modal .selected-count,
+    .dark .selected-count {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .customization-modal .selected-count small,
+    .dark .selected-count small {
+      color: #94a3b8 !important;
+    }
+
+    /* Modal Action Buttons */
+    .dark .btn-modal.btn-cancel {
+      background: #334155 !important;
+      color: #f1f5f9 !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .btn-modal.btn-cancel:hover {
+      background: #475569 !important;
+    }
+
+    .dark .btn-modal.btn-save {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%) !important;
+      color: #ffffff !important;
+    }
+
+    /* Document Detail Modal Specific */
+    .dark .modal-tabs {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .tab-btn {
+      color: #94a3b8 !important;
+    }
+
+    .dark .tab-btn.active {
+      color: #4ade80 !important;
+      border-bottom-color: #4ade80 !important;
+    }
+
+    .dark .tab-btn:hover {
+      color: #f1f5f9 !important;
+    }
+
+    /* ========================================
+       FORM PAGE DARK MODE (Tambah Dokumen)
+       ======================================== */
+
+    /* Form Container */
+    .dark .form-container {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+      border-color: #334155 !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Form Title */
+    .dark .form-title {
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+    }
+
+    /* Section Title */
+    .dark .section-title {
+      color: #f1f5f9 !important;
+      background: linear-gradient(90deg, rgba(74, 222, 128, 0.1) 0%, transparent 100%) !important;
+      border-left-color: #4ade80 !important;
+    }
+
+    /* Form Group Labels */
+    .dark .form-group label {
+      color: #e2e8f0 !important;
+    }
+
+    /* Form Inputs, Textareas, Selects */
+    .dark .form-group input,
+    .dark .form-group textarea,
+    .dark .form-group select,
+    .dark .form-control,
+    .dark input.form-control,
+    .dark textarea.form-control,
+    .dark select.form-control {
+      background-color: #334155 !important;
+      border-color: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .dark .form-group input::placeholder,
+    .dark .form-group textarea::placeholder,
+    .dark .form-control::placeholder {
+      color: #94a3b8 !important;
+    }
+
+    .dark .form-group input:focus,
+    .dark .form-group textarea:focus,
+    .dark .form-group select:focus,
+    .dark .form-control:focus {
+      background-color: #3b4d63 !important;
+      border-color: #4ade80 !important;
+      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.15) !important;
+    }
+
+    .dark .form-group input:hover,
+    .dark .form-group textarea:hover,
+    .dark .form-group select:hover {
+      border-color: #64748b !important;
+    }
+
+    /* Vendor/Recipient Field Container */
+    .dark .vendor-field-container,
+    .dark .dynamic-field {
+      background: #1e293b !important;
+    }
+
+    /* Add/Remove Field Buttons */
+    .dark .add-field-btn {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+      border-color: #4ade80 !important;
+      color: #4ade80 !important;
+    }
+
+    .dark .add-field-btn:hover {
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%) !important;
+      color: #ffffff !important;
+    }
+
+    .dark .remove-field-btn {
+      background: linear-gradient(135deg, #1e293b 0%, #3d2222 100%) !important;
+      border-color: #f87171 !important;
+      color: #f87171 !important;
+    }
+
+    .dark .remove-field-btn:hover {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+      color: #ffffff !important;
+    }
+
+    /* Info Boxes */
+    .dark .info-box,
+    .dark .alert-info {
+      background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(74, 222, 128, 0.05) 100%) !important;
+      border-color: rgba(74, 222, 128, 0.3) !important;
+      color: #e2e8f0 !important;
+    }
+
+    /* Submit Button */
+    .dark .btn-submit,
+    .dark .btn-primary {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%) !important;
+      color: #ffffff !important;
+      border: none !important;
+    }
+
+    .dark .btn-submit:hover,
+    .dark .btn-primary:hover {
+      background: linear-gradient(135deg, #0a5f52 0%, #083E40 100%) !important;
+    }
+
+    /* Cancel Button */
+    .dark .btn-cancel,
+    .dark .btn-secondary {
+      background: #334155 !important;
+      color: #f1f5f9 !important;
+      border-color: #475569 !important;
+    }
+
+    /* Required Field Asterisk */
+    .dark .form-group label .required,
+    .dark .form-group label span.text-danger {
+      color: #f87171 !important;
+    }
+
+    /* Optional Label */
+    .dark .optional-label,
+    .dark .text-muted {
+      color: #94a3b8 !important;
+    }
+
+    /* Card Headers in Forms */
+    .dark .card-header {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+      color: #f1f5f9 !important;
+    }
+
+    /* Card Body */
+    .dark .card-body {
+      background: #1e293b !important;
+    }
+
+    /* Card Footer */
+    .dark .card-footer {
+      background: #0f172a !important;
+      border-top-color: #334155 !important;
+    }
+
+    /* Autocomplete Dropdown */
+    .dark .autocomplete-dropdown,
+    .dark .ui-autocomplete,
+    .dark .dropdown-menu {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .autocomplete-dropdown li,
+    .dark .ui-autocomplete li,
+    .dark .dropdown-item {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .autocomplete-dropdown li:hover,
+    .dark .ui-autocomplete li:hover,
+    .dark .dropdown-item:hover {
+      background: #334155 !important;
+      color: #4ade80 !important;
+    }
+
+    /* Flatpickr Calendar Dark Mode */
+    .dark .flatpickr-calendar {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .flatpickr-day {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .flatpickr-day:hover {
+      background: #334155 !important;
+    }
+
+    .dark .flatpickr-day.selected {
+      background: #4ade80 !important;
+      color: #0f172a !important;
+    }
+
+    .dark .flatpickr-months {
+      background: #0f172a !important;
+    }
+
+    .dark .flatpickr-month,
+    .dark .flatpickr-current-month {
+      color: #f1f5f9 !important;
+    }
+
+    .dark .flatpickr-weekday {
+      color: #94a3b8 !important;
+    }
+
+    /* ========================================
+       TRACKING PAGE DARK MODE
+       ======================================== */
+
+    /* Filter Card */
+    .dark .filter-card {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .dark .filter-card .form-label {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .filter-card .form-control {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .dark .filter-card .form-control::placeholder {
+      color: #94a3b8 !important;
+    }
+
+    /* View Toggle Buttons */
+    .dark .view-toggle .btn-active {
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%) !important;
+      color: #ffffff !important;
+    }
+
+    .dark .view-toggle .btn-inactive {
+      background: #334155 !important;
+      color: #94a3b8 !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .view-toggle .btn-inactive:hover {
+      background: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+
+    /* Document Cards */
+    .dark .doc-card {
+      background: #1e293b !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .dark .doc-card:hover {
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .dark .doc-card-header {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    /* All text in doc-card should be white/light */
+    .dark .doc-card,
+    .dark .doc-card * {
+      color: #ffffff !important;
+    }
+
+    .dark .doc-agenda {
+      color: #ffffff !important;
+    }
+
+    .dark .doc-spp {
+      color: #cbd5e1 !important;
+    }
+
+    .dark .doc-nilai {
+      color: #ffffff !important;
+    }
+
+    .dark .doc-card-body {
+      background: #1e293b !important;
+    }
+
+    .dark .doc-position {
+      color: #ffffff !important;
+    }
+
+    .dark .doc-position i {
+      color: #4ade80 !important;
+    }
+
+    .dark .doc-position span,
+    .dark .doc-position strong {
+      color: #ffffff !important;
+    }
+
+
+    /* Paid Card Styling */
+    .dark .doc-card.paid {
+      border-color: #4ade80 !important;
+      background: linear-gradient(135deg, rgba(74, 222, 128, 0.08), rgba(34, 197, 94, 0.08)) !important;
+    }
+
+    .dark .doc-card.paid .doc-card-header {
+      background: rgba(74, 222, 128, 0.15) !important;
+    }
+
+    .dark .paid-stamp {
+      background: #0f172a !important;
+      border-color: #4ade80 !important;
+    }
+
+    .dark .paid-stamp::before {
+      border-color: #4ade80 !important;
+    }
+
+    .dark .paid-stamp i,
+    .dark .paid-stamp-text {
+      color: #4ade80 !important;
+    }
+
+    /* Progress Section */
+    .dark .progress-section {
+      background: transparent !important;
+    }
+
+    .dark .progress-title {
+      color: #e2e8f0 !important;
+    }
+
+    .dark .progress-title i {
+      color: #4ade80 !important;
+    }
+
+    /* Step Circles */
+    .dark .step-circle.pending {
+      background: #475569 !important;
+      color: #94a3b8 !important;
+    }
+
+    .dark .step-circle.completed {
+      background: linear-gradient(135deg, #4ade80, #22c55e) !important;
+      color: #0f172a !important;
+    }
+
+    .dark .step-circle.current {
+      background: linear-gradient(135deg, #083E40, #0a5f52) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.3) !important;
+    }
+
+    /* Step Labels */
+    .dark .step-label {
+      color: #94a3b8 !important;
+    }
+
+    .dark .step-label.current {
+      color: #4ade80 !important;
+    }
+
+    /* Progress Line */
+    .dark .progress-line {
+      background: #475569 !important;
+    }
+
+    .dark .progress-line-fill {
+      background: linear-gradient(90deg, #4ade80, #22c55e) !important;
+    }
+
+    /* Tracking Table */
+    .dark .tracking-table-card {
+      background: #1e293b !important;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .dark .tracking-table tbody tr {
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .tracking-table tbody tr:hover {
+      background: rgba(74, 222, 128, 0.08) !important;
+    }
+
+    .dark .tracking-table tbody td {
+      background: #1e293b !important;
+      color: #e2e8f0 !important;
+      border-right-color: #334155 !important;
+    }
+
+    .dark .doc-agenda-cell {
+      color: #ffffff !important;
+    }
+
+    .dark .doc-agenda-cell a {
+      color: #ffffff !important;
+    }
+
+    .dark .doc-spp-cell {
+      color: #ffffff !important;
+    }
+
+    .dark .doc-nilai-cell {
+      color: #ffffff !important;
+    }
+
+    /* Table Position Badge */
+    .dark .table-position-badge {
+      background: linear-gradient(135deg, #334155 0%, #475569 100%) !important;
+      color: #ffffff !important;
+      border-color: #64748b !important;
+    }
+
+    .dark .table-position-badge i {
+      color: #ffffff !important;
+    }
+
+    /* Table Action Buttons */
+    .dark .tracking-table .btn-outline-primary,
+    .dark .tracking-table .btn-primary {
+      color: #ffffff !important;
+      border-color: #4ade80 !important;
+    }
+
+    .dark .tracking-table .btn-outline-primary i,
+    .dark .tracking-table .btn-primary i,
+    .dark .tracking-table td a i,
+    .dark .tracking-table td button i {
+      color: #ffffff !important;
+    }
+
+
+    /* Outline Buttons in Dark Mode */
+    .dark .btn-outline-secondary {
+      color: #e2e8f0 !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .btn-outline-secondary:hover {
+      background: #334155 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .dark .btn-outline-warning {
+      color: #fbbf24 !important;
+      border-color: #fbbf24 !important;
+    }
+
+    .dark .btn-outline-warning:hover {
+      background: #fbbf24 !important;
+      color: #0f172a !important;
+    }
+
+    .dark .btn-outline-info {
+      color: #38bdf8 !important;
+      border-color: #38bdf8 !important;
+    }
+
+    .dark .btn-outline-info:hover {
+      background: #38bdf8 !important;
+      color: #0f172a !important;
+    }
+
+    .dark .btn-outline-success {
+      color: #4ade80 !important;
+      border-color: #4ade80 !important;
+    }
+
+    .dark .btn-outline-success:hover {
+      background: #4ade80 !important;
+      color: #0f172a !important;
+    }
+
+    /* Empty State Styling */
+    .dark .tracking-container .text-muted {
+      color: #94a3b8 !important;
+    }
+
+    .dark .tracking-container h5.text-muted {
+      color: #e2e8f0 !important;
+    }
+
+    /* ========================================
+       DASHBOARD PAGE DARK MODE
+       ======================================== */
+
+    /* Dashboard Header */
+    .dark .container-fluid h2 {
+      color: #ffffff !important;
+    }
+
+    .dark .container-fluid h2 i {
+      color: #4ade80 !important;
+    }
+
+    .dark .container-fluid .text-muted {
+      color: #94a3b8 !important;
+    }
+
+    /* Stats Cards */
+    .dark .container-fluid .card {
+      background: #1e293b !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .dark .container-fluid .card-body {
+      background: #1e293b !important;
+    }
+
+    .dark .container-fluid .card h3,
+    .dark .container-fluid .card h5 {
+      color: #ffffff !important;
+    }
+
+    .dark .container-fluid .card .text-muted {
+      color: #94a3b8 !important;
+    }
+
+    /* Action Cards Icons - keep green for action cards */
+    .dark .container-fluid .card .card-body.text-center i {
+      color: #4ade80 !important;
+    }
+
+    /* Stats Cards Icons - keep white for icons with colored backgrounds */
+    .dark .container-fluid .card .card-body .d-flex i.text-white {
+      color: #ffffff !important;
+      /* White color for icons with colored bg */
+    }
+
+
+
+    /* Card Header for Recent Documents */
+    .dark .container-fluid .card-header {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .container-fluid .card-header h5 {
+      color: #ffffff !important;
+    }
+
+    /* Table in Dashboard */
+    .dark .container-fluid .table {
+      background: #1e293b !important;
+    }
+
+    .dark .container-fluid .table thead {
+      background: #0f172a !important;
+    }
+
+    .dark .container-fluid .table thead th {
+      background: #0f172a !important;
+      color: #94a3b8 !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .container-fluid .table tbody tr {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .container-fluid .table tbody tr:hover {
+      background: rgba(74, 222, 128, 0.08) !important;
+    }
+
+    .dark .container-fluid .table tbody td {
+      color: #ffffff !important;
+      border-color: #334155 !important;
+    }
+
+    .dark .container-fluid .table tbody td strong {
+      color: #ffffff !important;
+    }
+
+    /* Fix table hover border */
+    .dark .table-hover>tbody>tr:hover>* {
+      background: rgba(74, 222, 128, 0.08) !important;
+    }
+
+    /* ========================================
+       MODAL POPUP DARK MODE
+       ======================================== */
+
+    /* Modal Content */
+    .dark .modal-content {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+      color: #ffffff !important;
+    }
+
+    /* Modal Header */
+    .dark .modal-header {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .modal-header .modal-title,
+    .dark .modal-header h5 {
+      color: #ffffff !important;
+    }
+
+    .dark .modal-header .btn-close {
+      filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    /* Modal Body */
+    .dark .modal-body {
+      background: #1e293b !important;
+      color: #ffffff !important;
+    }
+
+    .dark .modal-body * {
+      color: #ffffff !important;
+    }
+
+    /* Modal Footer */
+    .dark .modal-footer {
+      background: #0f172a !important;
+      border-top-color: #334155 !important;
+    }
+
+    /* Tabs in Modal */
+    .dark .modal .nav-tabs {
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .modal .nav-tabs .nav-link {
+      color: #94a3b8 !important;
+      border-color: transparent !important;
+    }
+
+    .dark .modal .nav-tabs .nav-link:hover {
+      color: #ffffff !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .modal .nav-tabs .nav-link.active {
+      background: #334155 !important;
+      color: #4ade80 !important;
+      border-color: #334155 !important;
+    }
+
+    /* Tab Content */
+    .dark .modal .tab-content {
+      background: #1e293b !important;
+    }
+
+    /* Cards inside Modal */
+    .dark .modal .card {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .modal .card-body {
+      background: #334155 !important;
+    }
+
+    /* Form Controls in Modal */
+    .dark .modal .form-control,
+    .dark .modal .form-select {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .modal .form-control::placeholder {
+      color: #94a3b8 !important;
+    }
+
+    .dark .modal .form-control:disabled,
+    .dark .modal .form-control[readonly] {
+      background: #1e293b !important;
+      color: #94a3b8 !important;
+    }
+
+    /* Labels in Modal */
+    .dark .modal label,
+    .dark .modal .form-label {
+      color: #e2e8f0 !important;
+    }
+
+    /* Info Boxes/Cards in Modal */
+    .dark .modal .info-box,
+    .dark .modal .detail-box,
+    .dark .modal .bg-light {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    /* Badge in Modal */
+    .dark .modal .badge {
+      color: #ffffff !important;
+    }
+
+    .dark .modal .badge.bg-warning {
+      background: #f59e0b !important;
+      color: #0f172a !important;
+    }
+
+    .dark .modal .badge.bg-success {
+      background: #22c55e !important;
+      color: #0f172a !important;
+    }
+
+    .dark .modal .badge.bg-danger {
+      background: #ef4444 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .modal .badge.bg-info {
+      background: #06b6d4 !important;
+      color: #0f172a !important;
+    }
+
+    .dark .modal .badge.bg-primary {
+      background: #3b82f6 !important;
+      color: #ffffff !important;
+    }
+
+    /* Text colors in Modal */
+    .dark .modal .text-muted {
+      color: #94a3b8 !important;
+    }
+
+    .dark .modal .text-dark {
+      color: #ffffff !important;
+    }
+
+    .dark .modal h6,
+    .dark .modal h5,
+    .dark .modal h4 {
+      color: #ffffff !important;
+    }
+
+    /* Borders in Modal */
+    .dark .modal .border,
+    .dark .modal .border-bottom,
+    .dark .modal .border-top {
+      border-color: #475569 !important;
+    }
+
+    /* Icons in Modal */
+    .dark .modal i {
+      color: #4ade80 !important;
+    }
+
+    /* Rounded boxes in Modal */
+    .dark .modal .rounded,
+    .dark .modal .rounded-3 {
+      background: #334155 !important;
+    }
+
+    /* Small text in Modal */
+    .dark .modal small,
+    .dark .modal .small {
+      color: #94a3b8 !important;
+    }
+
+    /* Links in Modal */
+    .dark .modal a {
+      color: #4ade80 !important;
+    }
+
+    .dark .modal a:hover {
+      color: #22c55e !important;
+    }
+
+    /* ========================================
+       CUSTOM MODAL (Document Detail Popup) DARK MODE
+       ======================================== */
+
+    /* Modal Overlay */
+    .dark .modal-overlay {
+      background: rgba(0, 0, 0, 0.8) !important;
+    }
+
+    /* Custom Modal Content */
+    .dark .modal-content-custom {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+      color: #ffffff !important;
+    }
+
+    /* Custom Modal Header */
+    .dark .modal-header-custom {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .modal-header-custom h4,
+    .dark .modal-header-custom .header-text h4 {
+      color: #ffffff !important;
+    }
+
+    .dark .modal-header-custom .header-icon {
+      background: rgba(74, 222, 128, 0.2) !important;
+      color: #4ade80 !important;
+    }
+
+    .dark .modal-header-custom .header-icon i {
+      color: #4ade80 !important;
+    }
+
+    .dark .modal-header-custom .doc-id,
+    .dark .modal-header-custom span {
+      color: #94a3b8 !important;
+    }
+
+    .dark .modal-header-custom .modal-close {
+      background: rgba(255, 255, 255, 0.1) !important;
+      color: #ffffff !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .modal-header-custom .modal-close:hover {
+      background: rgba(239, 68, 68, 0.2) !important;
+      color: #ef4444 !important;
+    }
+
+    /* Status Pill */
+    .dark .status-pill {
+      background: #334155 !important;
+      color: #ffffff !important;
+    }
+
+    /* Modal Tabs */
+    .dark .modal-tabs {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .modal-tabs .tab-btn {
+      background: transparent !important;
+      color: #94a3b8 !important;
+      border-color: transparent !important;
+    }
+
+    .dark .modal-tabs .tab-btn:hover {
+      background: rgba(74, 222, 128, 0.1) !important;
+      color: #ffffff !important;
+    }
+
+    .dark .modal-tabs .tab-btn.active {
+      background: #4ade80 !important;
+      color: #0f172a !important;
+    }
+
+    .dark .modal-tabs .tab-btn i {
+      color: inherit !important;
+    }
+
+    /* Custom Modal Body */
+    .dark .modal-body-custom {
+      background: #1e293b !important;
+      color: #ffffff !important;
+    }
+
+    /* Tab Content */
+    .dark .tab-content {
+      background: #1e293b !important;
+      color: #ffffff !important;
+    }
+
+    /* Stats Row and Stat Cards */
+    .dark .stats-row {
+      background: transparent !important;
+    }
+
+    .dark .stat-card {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .stat-card .stat-icon {
+      background: rgba(74, 222, 128, 0.2) !important;
+    }
+
+    .dark .stat-card .stat-icon i {
+      color: #4ade80 !important;
+    }
+
+    .dark .stat-card .stat-label {
+      color: #94a3b8 !important;
+    }
+
+    .dark .stat-card .stat-value {
+      color: #ffffff !important;
+    }
+
+    .dark .stat-card.primary {
+      border-left-color: #3b82f6 !important;
+    }
+
+    .dark .stat-card.primary .stat-icon {
+      background: rgba(59, 130, 246, 0.2) !important;
+    }
+
+    .dark .stat-card.primary .stat-icon i {
+      color: #3b82f6 !important;
+    }
+
+    .dark .stat-card.success {
+      border-left-color: #22c55e !important;
+    }
+
+    .dark .stat-card.success .stat-icon {
+      background: rgba(34, 197, 94, 0.2) !important;
+    }
+
+    .dark .stat-card.success .stat-icon i {
+      color: #22c55e !important;
+    }
+
+    .dark .stat-card.info {
+      border-left-color: #f59e0b !important;
+    }
+
+    .dark .stat-card.info .stat-icon {
+      background: rgba(245, 158, 11, 0.2) !important;
+    }
+
+    .dark .stat-card.info .stat-icon i {
+      color: #f59e0b !important;
+    }
+
+    /* Detail Sections */
+    .dark .detail-section {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .dark .section-header {
+      background: transparent !important;
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .section-header h5 {
+      color: #ffffff !important;
+    }
+
+    .dark .section-header i {
+      color: #4ade80 !important;
+    }
+
+    /* Section Grid */
+    .dark .section-grid {
+      background: transparent !important;
+    }
+
+    /* Info Cards */
+    .dark .info-card {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      border-radius: 8px;
+    }
+
+    .dark .info-card .info-label {
+      color: #94a3b8 !important;
+    }
+
+    .dark .info-card .info-value {
+      color: #ffffff !important;
+    }
+
+    /* Modal Footer */
+    .dark .modal-footer-custom {
+      background: #0f172a !important;
+      border-top-color: #334155 !important;
+    }
+
+    /* Uraian Box */
+    .dark .uraian-box,
+    .dark .description-box {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #e2e8f0 !important;
+    }
+
+    /* All text in custom modal should be visible */
+    .dark .modal-content-custom *,
+    .dark .modal-body-custom * {
+      color: #ffffff;
+    }
+
+    .dark .modal-content-custom .info-label,
+    .dark .modal-body-custom .info-label,
+    .dark .modal-content-custom .stat-label,
+    .dark .modal-body-custom .stat-label {
+      color: #94a3b8 !important;
+    }
+
+    /* Section Header Icons - Make them white */
+    .dark .section-header i,
+    .dark .detail-section .section-header i,
+    .dark .modal-content-custom .section-header i,
+    .dark .modal-body-custom .section-header i {
+      color: #ffffff !important;
+    }
+
+    /* Vendor Info Card - Fix white background */
+    .dark .vendor-card,
+    .dark .vendor-info-card,
+    .dark .vendor-box,
+    .dark .info-vendor,
+    .dark [class*="vendor"] {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .vendor-card *,
+    .dark .vendor-info-card *,
+    .dark .vendor-box *,
+    .dark .info-vendor *,
+    .dark [class*="vendor"] * {
+      color: #ffffff !important;
+    }
+
+    .dark .vendor-card .vendor-icon,
+    .dark .vendor-info-card .vendor-icon,
+    .dark [class*="vendor"] .vendor-icon {
+      background: rgba(74, 222, 128, 0.2) !important;
+    }
+
+    .dark .vendor-card .vendor-icon i,
+    .dark .vendor-info-card .vendor-icon i,
+    .dark [class*="vendor"] i {
+      color: #4ade80 !important;
+    }
+
+    /* Any remaining white backgrounds in modal */
+    .dark .modal-content-custom .bg-white,
+    .dark .modal-body-custom .bg-white,
+    .dark .modal-content-custom .bg-light,
+    .dark .modal-body-custom .bg-light {
+      background: #334155 !important;
+    }
+
+    /* Kategori & Klasifikasi section */
+    .dark .kategori-card,
+    .dark .klasifikasi-card,
+    .dark [class*="kategori"],
+    .dark [class*="klasifikasi"] {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    /* Data SPK, Berita Acara, PO & MIRO sections */
+    .dark .spk-card,
+    .dark .berita-acara-card,
+    .dark .po-miro-card,
+    .dark [class*="spk-"],
+    .dark [class*="acara"],
+    .dark [class*="miro"] {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    /* All input boxes in modal */
+    .dark .modal-content-custom input,
+    .dark .modal-body-custom input,
+    .dark .modal-content-custom textarea,
+    .dark .modal-body-custom textarea,
+    .dark .modal-content-custom select,
+    .dark .modal-body-custom select {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #ffffff !important;
+    }
+
+    /* Fix any cards that still have white background - catch all */
+    .dark .modal-content-custom .card,
+    .dark .modal-body-custom .card,
+    .dark .modal-content-custom [style*="background: white"],
+    .dark .modal-body-custom [style*="background: white"],
+    .dark .modal-content-custom [style*="background:#fff"],
+    .dark .modal-body-custom [style*="background:#fff"] {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    /* Fix inline styles that might override */
+    .dark .modal-content-custom .rounded,
+    .dark .modal-body-custom .rounded,
+    .dark .modal-content-custom .rounded-lg,
+    .dark .modal-body-custom .rounded-lg,
+    .dark .modal-content-custom .rounded-3,
+    .dark .modal-body-custom .rounded-3 {
+      background: #334155 !important;
+    }
+
+    /* Terbilang/Description text */
+    .dark .terbilang,
+    .dark .nilai-terbilang {
+      color: #94a3b8 !important;
+    }
+
+    /* ========================================
+       VENDOR CARD SPECIFIC DARK MODE
+       ======================================== */
+
+    /* Vendor Card - more specific */
+    .dark .vendor-card {
+      background: #334155 !important;
+      border: 1px solid #475569 !important;
+    }
+
+    .dark .vendor-card .vendor-icon {
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%) !important;
+    }
+
+    .dark .vendor-card .vendor-icon i {
+      color: #0f172a !important;
+    }
+
+    .dark .vendor-card .vendor-info {
+      color: #ffffff !important;
+    }
+
+    .dark .vendor-card .vendor-label {
+      color: #94a3b8 !important;
+    }
+
+    .dark .vendor-card .vendor-name {
+      color: #ffffff !important;
+    }
+
+    /* Section Header Icons - ensure white bg with icon */
+    .dark .section-header i {
+      background: #4ade80 !important;
+      color: #0f172a !important;
+    }
+
+    /* Info Card Highlight */
+    .dark .info-card.highlight {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
+    .dark .info-card.highlight .info-value.tag {
+      background: rgba(74, 222, 128, 0.2) !important;
+      color: #4ade80 !important;
+    }
+
+    /* Uraian Box Dark Mode */
+    .dark .uraian-box {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #e2e8f0 !important;
+    }
+
+    /* Money Display - keep gradient but adjust for dark */
+    .dark .money-display {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+    }
+
+    .dark .money-display .money-amount {
+      color: #ffffff !important;
+    }
+
+    .dark .money-display .money-words {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    /* Mono text in info-value */
+    .dark .info-value.mono {
+      color: #ffffff !important;
+      font-family: monospace;
+    }
+
+    /* ========================================
+       PAGE HEADER DARK MODE
+       ======================================== */
+
+    /* Page Header Title and Icon */
+    .dark .container-fluid h2,
+    .dark .container-fluid h1,
+    .dark .container-fluid h3,
+    .dark .content-header h2,
+    .dark .content-header h1 {
+      color: #ffffff !important;
+    }
+
+    .dark .container-fluid h2 i,
+    .dark .container-fluid h1 i,
+    .dark .container-fluid h3 i,
+    .dark .content-header h2 i,
+    .dark .content-header h1 i {
+      color: #ffffff !important;
+    }
+
+    /* Subtitle/Description under header */
+    .dark .container-fluid h2+p,
+    .dark .container-fluid h2~small,
+    .dark .container-fluid .text-muted,
+    .dark .content-header .text-muted,
+    .dark .content-header p {
+      color: #94a3b8 !important;
+    }
+
+    /* Any page title with icon */
+    .dark h2 i,
+    .dark h1 i,
+    .dark h3 i {
+      color: #ffffff !important;
+    }
+
+    .dark h2,
+    .dark h1,
+    .dark h3 {
+      color: #ffffff !important;
+    }
+
+    /* ========================================
+       SWEETALERT2 DARK MODE
+       ======================================== */
+
+    /* SweetAlert2 popup container */
+    .dark .swal2-popup {
+      background: #1e293b !important;
+      color: #ffffff !important;
+    }
+
+    /* SweetAlert2 title */
+    .dark .swal2-title {
+      color: #ffffff !important;
+    }
+
+    /* SweetAlert2 content/html content */
+    .dark .swal2-html-container,
+    .dark .swal2-content {
+      color: #94a3b8 !important;
+    }
+
+    /* SweetAlert2 close button */
+    .dark .swal2-close {
+      color: #94a3b8 !important;
+    }
+
+    .dark .swal2-close:hover {
+      color: #ffffff !important;
+    }
+
+    /* SweetAlert2 icon colors - keep the original colors but adjust background */
+    .dark .swal2-icon.swal2-info {
+      border-color: #4299e1 !important;
+      color: #4299e1 !important;
+    }
+
+    .dark .swal2-icon.swal2-warning {
+      border-color: #f6ad55 !important;
+      color: #f6ad55 !important;
+    }
+
+    .dark .swal2-icon.swal2-error {
+      border-color: #f56565 !important;
+    }
+
+    .dark .swal2-icon.swal2-success {
+      border-color: #48bb78 !important;
+    }
+
+    .dark .swal2-icon.swal2-success .swal2-success-ring {
+      border-color: rgba(72, 187, 120, 0.3) !important;
+    }
+
+    .dark .swal2-icon.swal2-success [class^='swal2-success-line'] {
+      background-color: #48bb78 !important;
+    }
+
+    /* SweetAlert2 confirm button */
+    .dark .swal2-confirm {
+      background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%) !important;
+      color: #ffffff !important;
+    }
+
+    .dark .swal2-confirm:hover {
+      background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%) !important;
+    }
+
+    /* SweetAlert2 cancel button */
+    .dark .swal2-cancel {
+      background: #475569 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .swal2-cancel:hover {
+      background: #334155 !important;
+    }
+
+    /* SweetAlert2 deny button */
+    .dark .swal2-deny {
+      background: #f56565 !important;
+      color: #ffffff !important;
+    }
+
+    /* SweetAlert2 input fields */
+    .dark .swal2-input,
+    .dark .swal2-textarea,
+    .dark .swal2-select {
+      background: #0f172a !important;
+      border-color: #475569 !important;
+      color: #ffffff !important;
+    }
+
+    .dark .swal2-input:focus,
+    .dark .swal2-textarea:focus,
+    .dark .swal2-select:focus {
+      border-color: #4299e1 !important;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.3) !important;
+    }
+
+    /* SweetAlert2 footer */
+    .dark .swal2-footer {
+      border-top-color: #334155 !important;
+      color: #94a3b8 !important;
+    }
+
+    /* SweetAlert2 timer progress bar */
+    .dark .swal2-timer-progress-bar {
+      background: #4299e1 !important;
+    }
+
+    /* SweetAlert2 backdrop - slightly darker */
+    .dark .swal2-backdrop-show {
+      background: rgba(0, 0, 0, 0.7) !important;
+    }
+
+    /* ========================================
+       OWNER SIDEBAR - Fixed 240px Modern Design
+       ======================================== */
+    .sidebar-owner {
+      width: 240px !important;
+      background: #ffffff;
+      border-right: 1px solid #e8ecf4;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 1000;
+      padding: 0 0 16px;
+      overflow: hidden;
+      font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+
+    .dark .sidebar-owner {
+      background: #1e293b;
+      border-right-color: #334155;
+    }
+
+    /* Owner sidebar logo */
+    .owner-sidebar-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid #e8ecf4;
+    }
+    .dark .owner-sidebar-logo { border-bottom-color: #334155; }
+    .owner-logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #0f766e, #10b981);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .owner-logo-icon svg { width: 20px; height: 20px; color: white; }
+    .owner-logo-text { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 13px; color: #1a2340; line-height: 1.2; }
+    .owner-logo-sub { font-size: 10px; color: #a0aec0; font-weight: 400; }
+    .dark .owner-logo-text { color: #f1f5f9; }
+    .dark .owner-logo-sub { color: #94a3b8; }
+
+    /* Owner sidebar nav section */
+    .owner-sidebar-section { padding: 16px 12px 4px; }
+    .owner-sidebar-label {
+      font-size: 10px; font-weight: 600; color: #a0aec0;
+      letter-spacing: .08em; text-transform: uppercase;
+      padding: 0 8px 8px;
+    }
+    .dark .owner-sidebar-label { color: #94a3b8; }
+
+    .sidebar-owner .owner-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 9px;
+      color: #6b7a99; font-weight: 500; font-size: 13px;
+      cursor: pointer; transition: all .15s; margin-bottom: 2px;
+      text-decoration: none; white-space: nowrap;
+    }
+    .sidebar-owner .owner-nav-item:hover { background: #f4f6fb; color: #1a2340; }
+    .sidebar-owner .owner-nav-item.active { background: #eff4ff; color: #2563eb; font-weight: 600; }
+    .sidebar-owner .owner-nav-item i { width: 16px; font-size: 14px; text-align: center; flex-shrink: 0; }
+    .dark .sidebar-owner .owner-nav-item { color: #cbd5e1; }
+    .dark .sidebar-owner .owner-nav-item:hover { background: #334155; color: #f1f5f9; }
+    .dark .sidebar-owner .owner-nav-item.active { background: rgba(37, 99, 235, 0.15); color: #60a5fa; }
+
+    .sidebar-owner .bagian-dot-nav {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block; flex-shrink: 0;
+    }
+
+    /* Owner sidebar bottom user card */
+    .owner-sidebar-bottom {
+      margin-top: auto; padding: 12px;
+      border-top: 1px solid #e8ecf4;
+    }
+    .dark .owner-sidebar-bottom { border-top-color: #334155; }
+    .owner-user-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px; border-radius: 10px;
+      background: #f4f6fb; cursor: pointer; text-decoration: none;
+    }
+    .dark .owner-user-card { background: #334155; }
+    .owner-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, #0f766e, #10b981);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: white; flex-shrink: 0;
+    }
+    .owner-user-info { flex: 1; min-width: 0; }
+    .owner-user-name { font-weight: 600; font-size: 12.5px; color: #1a2340; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .owner-user-role-text { font-size: 11px; color: #a0aec0; }
+    .dark .owner-user-name { color: #f1f5f9; }
+    .dark .owner-user-role-text { color: #94a3b8; }
+
+    /* Owner content area — wider margin for fixed sidebar */
+    body.owner-layout .content {
+      margin-left: 240px !important;
+    }
+    body.owner-layout .topbar {
+      margin-left: 240px !important;
+    }
   </style>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   <!-- Smart Autocomplete CSS -->
   <link href="{{ asset('css/smart-autocomplete.css') }}" rel="stylesheet">
@@ -1276,7 +3899,7 @@
         }
       }
 
-      // Run immediately if DOM is already loaded
+      // Run immediately if DOM is alrea dy loaded
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initThemeToggle);
       } else {
@@ -1286,12 +3909,26 @@
   </script>
 </head>
 
-<body>
+<body class="{{ isset($module) && strtolower($module ?? '') === 'owner' ? 'owner-layout' : '' }}">
   @php
     // Pre-calculate shouldShowSecondarySidebar for header
+    // Check if user is owner
+    $userRoleLower = auth()->check() ? strtolower(auth()->user()->role ?? '') : '';
+    $isOwner = in_array($userRoleLower, ['owner', 'admin'], true);
+
     $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
     $isSubmenuPageForHeader = false;
-    if (isset($module)) {
+
+    // Check if owner is on rekapan keterlambatan page (includes analytics - merged)
+    // Only show secondary sidebar header offset for per-role sub-pages
+    $isOwnerRekapanKeterlambatan = $isOwner && (
+      request()->routeIs('owner.rekapan-keterlambatan.role') ||
+      (request()->is('*rekapan-keterlambatan/*') && request()->route('roleCode'))
+    );
+
+    if ($isOwnerRekapanKeterlambatan) {
+      $isSubmenuPageForHeader = true;
+    } elseif (isset($module)) {
       if ($module === 'pembayaran') {
         $isSubmenuPageForHeader = request()->routeIs('dokumensPembayaran.*') ||
           request()->routeIs('pembayaran.*') ||
@@ -1312,410 +3949,802 @@
           request()->routeIs('perpajakan.*') ||
           request()->is('*dokumensPerpajakan*') ||
           request()->is('*rekapan-perpajakan*');
-      } elseif ($module === 'ibub') {
-        $isSubmenuPageForHeader = request()->routeIs('dokumensB.*') ||
-          request()->routeIs('ibub.*') ||
-          request()->is('*dokumensB*') ||
-          request()->is('*rekapan-ibuB*');
+      } elseif ($module === 'team_verifikasi') {
+        $isSubmenuPageForHeader = request()->routeIs('documents.verifikasi.*') ||
+          request()->routeIs('reports.verifikasi.*') ||
+          request()->routeIs('returns.verifikasi.*') ||
+          request()->is('*documents/verifikasi*');
       } else {
         $isSubmenuPageForHeader = request()->is('*dokumens*') ||
           request()->is('*rekapan*') ||
           request()->is('*pengembalian*');
       }
     }
-    $shouldShowSecondarySidebarForHeader = $hasSubmenu || $isSubmenuPageForHeader;
+    $shouldShowSecondarySidebarForHeader = $hasSubmenu || $isSubmenuPageForHeader || $isOwnerRekapanKeterlambatan;
+
+    // Define $isBagianUser early so it's available everywhere (not just inside sidebar block)
+    $isBagianUser = false;
+    if (auth()->check()) {
+      $userRoleLower = strtolower(auth()->user()->role ?? '');
+      $isBagianUser = str_starts_with($userRoleLower, 'bagian_');
+    }
+
+    // Spreadsheet mode dinonaktifkan — operator kembali ke tampilan tabel normal dengan sidebar
+    $isOperatorSpreadsheet = false;
   @endphp
-  <header>
-       <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
+
+  {{-- ═══════════════════════════════════════════════════════════════════
+       OPERATOR SPREADSHEET MODE — Full-width topbar, no sidebar
+       ═══════════════════════════════════════════════════════════════════ --}}
+  @if($isOperatorSpreadsheet)
+    <style>
+      /* Operator Spreadsheet Mode — override layout */
+      .op-ss-topbar {
+        background: linear-gradient(135deg, #0d6b5e 0%, #083e40 100%);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 20px;
+        height: 52px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.25);
+        position: sticky; top: 0; z-index: 1050;
+      }
+      .op-ss-topbar .op-logo {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 15px; font-weight: 600; letter-spacing: .3px;
+        white-space: nowrap;
+      }
+      .op-ss-topbar .op-logo img {
+        height: 28px; width: auto; filter: brightness(10);
+      }
+      .op-ss-topbar .op-nav {
+        display: flex; align-items: center; gap: 4px;
+        margin-left: 24px;
+      }
+      .op-ss-topbar .op-nav a,
+      .op-ss-topbar .op-nav button {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 6px 14px; border-radius: 6px; border: none;
+        font: 500 13px 'Inter', 'DM Sans', sans-serif;
+        cursor: pointer; transition: .15s;
+        text-decoration: none;
+        background: rgba(255,255,255,.12); color: #fff;
+      }
+      .op-ss-topbar .op-nav a:hover,
+      .op-ss-topbar .op-nav button:hover {
+        background: rgba(255,255,255,.22);
+      }
+      .op-ss-topbar .op-nav a.active {
+        background: rgba(255,255,255,.25);
+        font-weight: 600;
+      }
+      .op-ss-topbar .op-nav .badge-count {
+        background: #f5a623; color: #fff;
+        font-size: 10px; font-weight: 700;
+        padding: 1px 6px; border-radius: 10px;
+        min-width: 18px; text-align: center;
+      }
+      .op-ss-topbar .op-right {
+        margin-left: auto;
+        display: flex; align-items: center; gap: 10px;
+      }
+      .op-ss-topbar .op-right .theme-toggle-btn {
+        color: #ffffffcc !important;
+      }
+      .op-ss-topbar .op-right .profile-icon {
+        color: #ffffffcc !important;
+        font-size: 18px; cursor: pointer;
+      }
+      /* Hide sidebar & secondary sidebar for operator */
+      body.op-spreadsheet-mode .sidebar,
+      body.op-spreadsheet-mode .secondary-sidebar {
+        display: none !important;
+      }
+      /* Full-width content for operator */
+      body.op-spreadsheet-mode .content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+      body.op-spreadsheet-mode footer {
+        display: none !important;
+      }
+    </style>
+    <script>document.body.classList.add('op-spreadsheet-mode');</script>
+
+    <div class="op-ss-topbar">
+      <div class="op-logo">
+        <img src="{{ asset('images/logo_ptpn.png') }}" alt="Logo PTPN">
+        <span>Agenda Online PTPN</span>
+      </div>
+
+      <div class="op-nav">
+        {{-- Daftar Dokumen (always active on /documents) --}}
+        <a href="{{ url('/documents') }}" class="{{ request()->is('documents*') && !request()->is('documents/import*') ? 'active' : '' }}">
+          <i class="fa-solid fa-table-cells"></i> Spreadsheet
+        </a>
+
+        {{-- Inbox --}}
+        @php
+          try {
+            $opInboxCount = \App\Models\Dokumen::where('inbox_approval_for', 'operator')
+              ->where('inbox_approval_status', 'pending')
+              ->count();
+          } catch (\Exception $e) { $opInboxCount = 0; }
+        @endphp
+        <a href="{{ url('/inbox') }}" class="{{ request()->is('inbox*') ? 'active' : '' }}">
+          <i class="fa-solid fa-inbox"></i> Inbox
+          @if($opInboxCount > 0)
+            <span class="badge-count">{{ $opInboxCount }}</span>
+          @endif
+        </a>
+
+        {{-- Import CSV --}}
+        <a href="{{ url('/documents/import') }}" class="{{ request()->is('documents/import*') ? 'active' : '' }}">
+          <i class="fa-solid fa-file-import"></i> Import CSV
+        </a>
+      </div>
+
+      <div class="op-right">
+        <!-- Dark Mode Toggle -->
+        <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode" style="background:none;border:none;">
+          <i class="fas fa-moon theme-toggle-icon moon"></i>
+          <i class="fas fa-sun theme-toggle-icon sun"></i>
+        </button>
+
+        <!-- Profile Dropdown -->
+        <div class="profile-dropdown-container" style="position: relative;">
+          <i class="fa-solid fa-user profile-icon" id="profileDropdownToggle"
+             style="position: relative;"></i>
+          <div class="profile-dropdown-menu" id="profileDropdownMenu" style="display: none;">
+            <a href="{{ route('profile.account') }}" class="profile-dropdown-item">
+              <i class="fa-solid fa-user-circle me-2"></i> Akun
+            </a>
+            <a href="{{ route('2fa.setup') }}" class="profile-dropdown-item">
+              <i class="fa-solid fa-shield-alt me-2"></i> Keamanan 2FA
+            </a>
+            <div class="profile-dropdown-divider"></div>
+            <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+              @csrf
+              <button type="submit" class="profile-dropdown-item"
+                style="width: 100%; text-align: left; border: none; background: none; padding: 8px 16px; cursor: pointer;">
+                <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  {{-- ═══════ OTHER ROLES — standard header with topbar ═══════ --}}
+  @elseif(($module ?? '') !== 'owner')
+    <header>
+      <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
         <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
-        <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center ms-auto">
           <!-- Dark Mode Toggle Button -->
           <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode">
             <i class="fas fa-moon theme-toggle-icon moon"></i>
             <i class="fas fa-sun theme-toggle-icon sun"></i>
           </button>
-          <i class="fa-solid fa-bell me-3" style="font-size: 20px; color: #666;"></i>
-          <i class="fa-solid fa-user" style="font-size: 18px; color: #666;"></i>
-      </div>
-  </header>
+          <i class="fa-solid fa-bell me-3" style="font-size: 20px; color: #666; cursor: pointer;"></i>
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h4 class="text-center mb-4"><i class="fa-solid fa-calendar-days"></i> Agenda Online</h4>
-    <hr>
-
-        @php
-          // Check if user is owner
-          $isOwner = auth()->check() && (auth()->user()->role === 'owner' || auth()->user()->role === 'Owner' || auth()->user()->role === 'OWNER' || auth()->user()->role === 'Admin' || auth()->user()->role === 'admin');
-
-          // Normalize module to lowercase untuk konsistensi
-          $module = strtolower($module ?? 'ibua');
-
-          $dashboardUrl = match ($module) {
-            'ibua', 'ibua' => '/dashboard',
-            'ibub', 'ibub' => '/dashboardB',
-            'pembayaran' => '/dashboardPembayaran',
-            'akutansi' => '/dashboardAkutansi',
-            'perpajakan' => '/dashboardPerpajakan',
-            default => '/dashboard'
-          };
-          $dokumenUrl = match ($module) {
-            'ibua', 'ibua' => '/dokumens',
-            'ibub', 'ibub' => '/dokumensB',
-            'pembayaran' => '/dokumensPembayaran',
-            'akutansi' => '/dokumensAkutansi',
-            'perpajakan' => '/dokumensPerpajakan',
-            default => '/dokumens'
-          };
-          $pengembalianUrl = match ($module) {
-            'ibub', 'ibub' => '/pengembalian-dokumensB',
-            'pembayaran' => '/rekapan-keterlambatan',
-            'akutansi' => '/pengembalian-dokumensAkutansi',
-            'perpajakan' => '/pengembalian-dokumensPerpajakan',
-            default => '/pengembalian-dokumens'
-          };
-          $tambahDokumenUrl = match ($module) {
-            'ibua', 'ibua' => '/dokumens/create',
-            default => null
-          };
-          $editDokumenUrl = match ($module) {
-            'pembayaran' => '/dokumensPembayaran', // This will be handled by individual edit routes
-            'akutansi' => '/dokumensAkutansi',
-            'perpajakan' => '/dokumensPerpajakan',
-            'ibub', 'ibub' => '/dokumensB',
-            default => null
-          };
-          $diagramUrl = match ($module) {
-            'ibua', 'ibua' => '/diagram',
-            'ibub', 'ibub' => '/diagramB',
-            'pembayaran' => '/diagramPembayaran',
-            'akutansi' => '/diagramAkutansi',
-            'perpajakan' => '/diagramPerpajakan',
-            default => '/diagram'
-          };
-        @endphp
-
-        @if($isOwner)
-          <!-- Owner Menu - Clean and Simple -->
-          <div style="flex: 1; display: flex; flex-direction: column;">
-              <a href="{{ url('/owner/dashboard') }}" class="{{ $menuDashboard ?? '' }}">
-                  <i class="fa-solid fa-satellite-dish"></i> Dashboard Owner
+          <!-- Profile Dropdown -->
+          <div class="profile-dropdown-container" style="position: relative;">
+            <i class="fa-solid fa-user profile-icon" id="profileDropdownToggle"
+              style="font-size: 18px; color: #666; cursor: pointer; position: relative;">
+            </i>
+            <div class="profile-dropdown-menu" id="profileDropdownMenu" style="display: none;">
+              <a href="{{ route('profile.account') }}" class="profile-dropdown-item">
+                <i class="fa-solid fa-user-circle me-2"></i>
+                Akun
               </a>
-              <a href="{{ url('/owner/rekapan') }}" class="{{ $menuRekapan ?? '' }}">
-                  <i class="fa-solid fa-chart-pie"></i> Rekapan Dokumen
+              <a href="{{ route('2fa.setup') }}" class="profile-dropdown-item">
+                <i class="fa-solid fa-shield-alt me-2"></i>
+                Keamanan 2FA
               </a>
-              <a href="{{ url('/owner/rekapan-keterlambatan') }}" class="{{ $menuRekapanKeterlambatan ?? '' }}">
-                  <i class="fa-solid fa-exclamation-triangle"></i> Rekapan Keterlambatan
-              </a>
-          </div>
-          <div style="margin-top: auto; padding-bottom: 20px;">
-              <a href="{{ url('/logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form-owner').submit();" class="logout-link">
-                  <i class="fa-solid fa-sign-out-alt"></i> Keluar
-              </a>
-              <form id="logout-form-owner" action="{{ url('/logout') }}" method="POST" style="display: none;">
-                  @csrf
+              <div class="profile-dropdown-divider"></div>
+              <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+                @csrf
+                <button type="submit" class="profile-dropdown-item"
+                  style="width: 100%; text-align: left; border: none; background: none; padding: 8px 16px; cursor: pointer;">
+                  <i class="fa-solid fa-sign-out-alt me-2"></i>
+                  Logout
+                </button>
               </form>
+            </div>
           </div>
-        @else
-              <!-- Regular Menu for other roles -->
-              <div style="flex: 1; display: flex; flex-direction: column;">
-                  <a href="{{ url($dashboardUrl) }}" class="{{ $menuDashboard ?? '' }}"><i class="fa-solid fa-house"></i> Home</a>
+        </div>
+    </header>
+  @endif
 
-                  <!-- Owner Dashboard - Only for Admin users -->
-                  @if(auth()->check() && (auth()->user()->role === 'Admin' || auth()->user()->role === 'admin'))
-                    <a href="{{ url('/owner/dashboard') }}" class="nav-link">
-                        <i class="fa-solid fa-satellite-dish"></i> Owner Dashboard
-                    </a>
-                  @endif
+  <!-- Sidebar (hidden for operator spreadsheet mode via CSS) -->
+  @if(!($isOperatorSpreadsheet ?? false))
+  <div class="{{ $isOwner ? 'sidebar-owner' : 'sidebar' }}">
+    @if(!$isOwner)
+    <h4 class="text-center mb-4"><img src="{{ asset('images/logo_ptpn.png') }}" alt="Logo PTPN" class="sidebar-logo-img"> Agenda Online</h4>
+    <hr>
+    @endif
 
-                  <!-- Inbox Menu - Untuk IbuB, Perpajakan, Akutansi -->
-          @php
-            $currentUserRole = 'IbuA'; // Default
-            if (auth()->check()) {
-              $user = auth()->user();
-              // Prioritize role field first (most accurate)
-              if (isset($user->role) && !empty($user->role)) {
-                $currentUserRole = $user->role;
-              } elseif (isset($user->name)) {
-                // Fallback to name mapping if role is not set
-                $nameToRole = [
-                  'Ibu A' => 'IbuA',
-                  'IbuA' => 'IbuA',
-                  'Ibu Tarapul' => 'IbuA',
-                  'IbuB' => 'IbuB',
-                  'Ibu B' => 'IbuB',
-                  'Ibu Yuni' => 'IbuB',
-                  'Team Verifikasi' => 'IbuB',
-                  'Perpajakan' => 'Perpajakan',
-                  'Team Perpajakan' => 'Perpajakan',
-                  'Akutansi' => 'Akutansi',
-                  'Team Akutansi' => 'Akutansi',
-                  'Pembayaran' => 'Pembayaran',
-                  'Team Pembayaran' => 'Pembayaran'
-                ];
-                $currentUserRole = $nameToRole[$user->name] ?? 'IbuA';
-              }
-            }
-
-            // Normalize role to check (case-insensitive comparison)
-            $currentUserRoleLower = strtolower($currentUserRole);
-            $inboxRoles = ['ibub', 'perpajakan', 'akutansi', 'pembayaran'];
-            $showInbox = in_array($currentUserRoleLower, $inboxRoles);
-
-            // Map role to inbox query format
-            $inboxRoleForQuery = 'IbuB';
-            if (in_array($currentUserRoleLower, ['perpajakan'])) {
-              $inboxRoleForQuery = 'Perpajakan';
-            } elseif (in_array($currentUserRoleLower, ['akutansi'])) {
-              $inboxRoleForQuery = 'Akutansi';
-            } elseif (in_array($currentUserRoleLower, ['pembayaran'])) {
-              $inboxRoleForQuery = 'Pembayaran';
-            }
-          @endphp
-
-          @if($showInbox)
-            <a href="{{ url('/inbox') }}" class="{{ request()->is('inbox') || request()->routeIs('inbox.*') ? 'active' : '' }}">
-                <i class="fa-solid fa-inbox"></i>
-                Inbox
-                @php
-                  try {
-                    $inboxCount = \App\Models\Dokumen::where('inbox_approval_for', $inboxRoleForQuery)
-                      ->where('inbox_approval_status', 'pending')
-                      ->count();
-                  } catch (\Exception $e) {
-                    $inboxCount = 0;
-                  }
-                @endphp
-                @if($inboxCount > 0)
-                  <span class="badge badge-danger right">{{ $inboxCount }}</span>
-                @endif
-            </a>
-          @endif
-
-          @unless($isOwner)
-            <!-- Menu Dokumen - Direct Link dengan Auto-Open State -->
-            @php
-              // Determine route based on module
-              $menuRoute = match ($module) {
-                'pembayaran' => route('documents.pembayaran.index'),
-                'akutansi' => url($dokumenUrl),
-                'perpajakan' => url($dokumenUrl),
-                'ibub' => url($dokumenUrl),
-                default => url($dokumenUrl)
-              };
-
-              // Check if current route is within this module
-              $isModuleActive = match ($module) {
-                'pembayaran' => request()->routeIs('dokumensPembayaran.*') ||
-                request()->routeIs('pembayaran.*') ||
-                request()->routeIs('rekapanKeterlambatan.*') ||
-                request()->routeIs('csv.import.*') ||
-                request()->is('*dokumensPembayaran*') ||
-                request()->is('*rekapan-pembayaran*') ||
-                request()->is('*rekapan-keterlambatan*') ||
-                request()->is('*csv-import*'),
-                'akutansi' => request()->routeIs('dokumensAkutansi.*') ||
-                request()->routeIs('akutansi.*'),
-                'perpajakan' => request()->routeIs('dokumensPerpajakan.*') ||
-                request()->routeIs('perpajakan.*'),
-                'ibub' => request()->routeIs('dokumensB.*') ||
-                request()->routeIs('ibub.*'),
-                default => false
-              };
-            @endphp
-            <a href="{{ $menuRoute }}" 
-               class="{{ ($menuDokumen ?? '') . ($isModuleActive ? ' active' : '') }} sidebar-menu-trigger" 
-               data-submenu="dokumen"
-               id="btn-pembayaran"
-               aria-expanded="{{ $isModuleActive ? 'true' : 'false' }}">
-              <i class="fa-solid fa-file-lines"></i> 
-              @if($module === 'pembayaran')
-                Pembayaran
-              @elseif($module === 'akutansi')
-                Akutansi
-              @elseif($module === 'perpajakan')
-                Perpajakan
-              @elseif($module === 'ibub')
-                Dokumen
-              @else
-                Dokumen
-              @endif
-            </a>
-
-            <a href="{{ url($diagramUrl) }}" class="{{ $menuDiagram ?? '' }}"><i class="fa-solid fa-chart-simple"></i> Diagram</a>
-          @endunless
-              </div>
-
-              <!-- Logout Button - Pindahkan ke paling bawah -->
-              @unless($isOwner)
-                <div style="margin-top: auto; padding-bottom: 20px;">
-                    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                      @csrf
-                    </form>
-                    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="logout-link">
-                      <i class="fa-solid fa-right-from-bracket"></i> Logout
-                    </a>
-                </div>
-              @endunless
-        @endif
-  </div>
-
-  <!-- Secondary Sidebar (Submenu Panel) - Mekari Style -->
-  @unless($isOwner)
     @php
-      // Check if user is on a submenu page or menu dokumen is active
-      $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
+      // Normalize module to lowercase untuk konsistensi
+      // Note: $isOwner is already defined at the top of the body section
+      $module = strtolower($module ?? 'operator');
 
-      // Enhanced detection for pembayaran module
-      $isSubmenuPage = false;
-      if ($module === 'pembayaran') {
-        $isSubmenuPage = request()->routeIs('dokumensPembayaran.*') ||
-          request()->routeIs('pembayaran.*') ||
-          request()->routeIs('rekapanKeterlambatan.*') ||
-          request()->routeIs('csv.import.*') ||
-          request()->is('*dokumensPembayaran*') ||
-          request()->is('*rekapan-pembayaran*') ||
-          request()->is('*rekapan-keterlambatan*') ||
-          request()->is('*csv-import*') ||
-          request()->is('*pengembalian-dokumensPembayaran*');
-      } elseif ($module === 'akutansi') {
-        $isSubmenuPage = request()->routeIs('dokumensAkutansi.*') ||
-          request()->routeIs('akutansi.*') ||
-          request()->is('*dokumensAkutansi*') ||
-          request()->is('*rekapan-akutansi*');
-      } elseif ($module === 'perpajakan') {
-        $isSubmenuPage = request()->routeIs('dokumensPerpajakan.*') ||
-          request()->routeIs('perpajakan.*') ||
-          request()->is('*dokumensPerpajakan*') ||
-          request()->is('*rekapan-perpajakan*');
-      } elseif ($module === 'ibub') {
-        $isSubmenuPage = request()->routeIs('dokumensB.*') ||
-          request()->routeIs('ibub.*') ||
-          request()->is('*dokumensB*') ||
-          request()->is('*rekapan-ibuB*');
-      } else {
-        $isSubmenuPage = request()->is('*dokumens*') ||
-          request()->is('*rekapan*') ||
-          request()->is('*pengembalian*');
-      }
+      // URL dashboard per role — menggunakan route yang benar sesuai web.php
+      $dashboardUrl = match ($module) {
+        'operator'        => '/dashboard',
+        'team_verifikasi' => '/documents/verifikasi',
+        'pembayaran'      => '/dashboard/pembayaran',
+        'akutansi'        => '/dashboard/akutansi',
+        'perpajakan'      => '/dashboard/perpajakan',
+        default           => '/dashboard'
+      };
+      // URL halaman daftar dokumen per role — route baru (professional URLs)
+      $dokumenUrl = match ($module) {
+        'operator'        => '/documents',
+        'team_verifikasi' => '/documents/verifikasi',
+        'pembayaran'      => '/documents/pembayaran',
+        'akutansi'        => '/documents/akutansi',
+        'perpajakan'      => '/documents/perpajakan',
+        default           => '/documents'
+      };
+      // URL halaman pengembalian/rekapan per role
+      $pengembalianUrl = match ($module) {
+        'team_verifikasi' => '/returns/verifikasi',
+        'pembayaran'      => '/returns/pembayaran',
+        'akutansi'        => '/returns/akutansi',
+        'perpajakan'      => '/returns/perpajakan',
+        default           => '/pengembalian-dokumens'
+      };
+      $tambahDokumenUrl = match ($module) {
+        'operator' => '/documents/create',
+        default    => null
+      };
+      $editDokumenUrl = match ($module) {
+        'pembayaran'      => '/documents/pembayaran',
+        'akutansi'        => '/documents/akutansi',
+        'perpajakan'      => '/documents/perpajakan',
+        'team_verifikasi' => '/documents/verifikasi',
+        default           => null
+      };
+    @endphp
 
-      $shouldShowSecondarySidebar = $hasSubmenu || $isSubmenuPage;
-
-      $submenuTitle = '';
-      if ($module === 'pembayaran') {
-        $submenuTitle = 'MENU PEMBAYARAN';
-      } elseif ($module === 'akutansi') {
-        $submenuTitle = 'MENU AKUTANSI';
-      } elseif ($module === 'perpajakan') {
-        $submenuTitle = 'MENU PERPAJAKAN';
-      } elseif ($module === 'ibub') {
-        $submenuTitle = 'MENU DOKUMEN';
-      } else {
-        $submenuTitle = 'MENU DOKUMEN';
+    @php
+      // Check if user is a bagian user - defined here to be available throughout sidebar
+      $isBagianUser = false;
+      if (auth()->check()) {
+        $userRoleLower = strtolower(auth()->user()->role ?? '');
+        $isBagianUser = str_starts_with($userRoleLower, 'bagian_');
       }
     @endphp
-    <div class="secondary-sidebar {{ $shouldShowSecondarySidebar ? 'active' : '' }}" 
-         id="sidebar-pembayaran"
-         role="complementary"
-         aria-label="Submenu Panel">
-      <div class="secondary-sidebar-header">
-        {{ $submenuTitle }}
+
+    <script>window._userModule = @json($module);</script>
+
+    @if($isOwner)
+      {{-- ═══ NEW OWNER SIDEBAR (matches reference mockup) ═══ --}}
+
+      {{-- Logo / Brand --}}
+      <div class="owner-sidebar-logo">
+        <div class="owner-logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:white">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="owner-logo-text">Agenda Online</div>
+          <div class="owner-logo-sub">PTPN IV Regional V</div>
+        </div>
       </div>
-      <div class="secondary-sidebar-content">
-        @if($module === 'pembayaran')
+
+      {{-- MENU Section --}}
+      <div class="owner-sidebar-section" style="flex:0 0 auto;">
+        <div class="owner-sidebar-label">Menu</div>
+        <a href="{{ url('/owner/home') }}" class="owner-nav-item {{ $menuHome ?? '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
+        </a>
+        <a href="{{ url('/owner/dokumen') }}" class="owner-nav-item {{ $menuDokumen ?? '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+          </svg>
+          Dokumen
+        </a>
+        @php
+          $isRekapanKeterlambatanActive = request()->is('*rekapan-keterlambatan*') ||
+            request()->routeIs('owner.rekapan-keterlambatan*') ||
+            request()->is('*owner/analytics*') ||
+            request()->routeIs('analytics.index');
+        @endphp
+        <a href="{{ url('/owner/rekapan-keterlambatan') }}"
+          class="owner-nav-item {{ $menuRekapanKeterlambatan ?? '' }} {{ $isRekapanKeterlambatanActive ? 'active' : '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          Rekapan &amp; Analisis Kerja
+        </a>
+
+
+        @php
+          $isAuditTrailActive = request()->is('*owner/programmer-logs*') ||
+            request()->routeIs('owner.programmer-logs') ||
+            ($menuAuditTrail ?? '') === 'active';
+        @endphp
+        <a href="{{ url('/owner/programmer-logs') }}" class="owner-nav-item {{ $isAuditTrailActive ? 'active' : '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Audit Trail
+        </a>
+
+        @php
+          $isCashBankActive = request()->is('*owner/cashbank*') || request()->routeIs('owner.cashbank.*');
+        @endphp
+        <a href="{{ route('owner.cashbank.index') }}"
+           class="owner-nav-item {{ $isCashBankActive ? 'active' : '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <path d="M8 21h8M12 17v4"/>
+          </svg>
+          Laporan Cash Bank
+        </a>
+      </div>
+
+
+      {{-- User Card Bottom --}}
+      <div class="owner-sidebar-bottom">
+        <a class="owner-user-card" href="{{ url('/logout') }}"
+          onclick="event.preventDefault(); document.getElementById('logout-form-owner').submit();"
+          title="Keluar">
           @php
-            // Determine active state for each submenu item (combine controller class + route detection)
-            $isDaftarActive = ($menuDaftarDokumen ?? '') === 'Active' ||
-              request()->routeIs('documents.pembayaran.*') ||
-              request()->routeIs('documents.pembayaran.index') ||
-              request()->is('*documents/pembayaran*');
-            $isRekapanActive = ($menuRekapanDokumen ?? '') === 'Active' ||
-              request()->routeIs('pembayaran.rekapan') ||
-              request()->is('*rekapan-pembayaran*');
-            $isKeterlambatanActive = ($menuRekapKeterlambatan ?? '') === 'Active' ||
-              request()->routeIs('rekapanKeterlambatan.*') ||
-              request()->is('*rekapan-keterlambatan*');
+            $authUser = auth()->user();
+            $initials = $authUser ? strtoupper(substr($authUser->name ?? 'U', 0, 1) . (strpos($authUser->name ?? '', ' ') !== false ? substr($authUser->name, strpos($authUser->name, ' ') + 1, 1) : '')) : 'U';
           @endphp
-          <a href="{{ url($dokumenUrl) }}" 
-             class="{{ $isDaftarActive ? 'active' : '' }}">
-            <i class="fa-solid fa-list me-2"></i> Daftar Pembayaran
-          </a>
-          <a href="{{ route('csv.import.index') }}" 
-             class="{{ request()->routeIs('csv.import.*') || request()->is('*csv-import*') ? 'active' : '' }}">
-            <i class="fa-solid fa-file-import me-2"></i> Import Data
-          </a>
-          <a href="{{ route('reports.pembayaran.index') }}" 
-             class="{{ $isRekapanActive ? 'active' : '' }}">
-            <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Dokumen
-          </a>
-          <a href="{{ url($pengembalianUrl) }}" 
-             class="{{ $isKeterlambatanActive ? 'active' : '' }}">
-            <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
-          </a>
-        @elseif($module === 'akutansi')
-          <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
-            <i class="fa-solid fa-list me-2"></i> Daftar Akutansi
-            <span class="menu-notification-badge" id="akutansi-notification-badge" style="display: none; margin-left: auto;">0</span>
-          </a>
-          <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
-            <i class="fa-solid fa-rotate-left me-2"></i> Daftar Pengembalian Akutansi
-          </a>
-          <a href="{{ route('reports.akutansi.index') }}" class="{{ $menuRekapan ?? '' }}">
-            <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Akutansi
-          </a>
-        @elseif($module === 'perpajakan')
-          <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
-            <i class="fa-solid fa-list me-2"></i> Daftar Perpajakan
-            <span class="menu-notification-badge" id="perpajakan-notification-badge" style="display: none; margin-left: auto;">0</span>
-          </a>
-          <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
-            <i class="fa-solid fa-rotate-left me-2"></i> Daftar Pengembalian Perpajakan
-          </a>
-          <a href="{{ route('reports.perpajakan.index') }}" class="{{ $menuRekapan ?? '' }}">
-            <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
-          </a>
-          <a href="{{ route('reports.perpajakan.export') }}" class="{{ request()->routeIs('reports.perpajakan.export*') ? 'active' : '' }}">
-            <i class="fa-solid fa-file-export me-2"></i> Export Data
-          </a>
-        @elseif($module === 'ibub')
-          <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
-            <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
-            <span class="menu-notification-badge" id="notification-badge" style="display: none; margin-left: auto;">0</span>
-          </a>
-          <a href="{{ route('returns.verifikasi.bidang') }}" class="{{ $menuPengembalianKeBidang ?? '' }}">
-            <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian ke Bidang
-            <span class="menu-notification-badge" id="pengembalian-ke-bidang-badge" style="display: none; margin-left: auto;">0</span>
-          </a>
-          <a href="{{ route('returns.verifikasi.index') }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
-            <i class="fa-solid fa-arrow-right me-2"></i> Pengembalian dari Bagian
-            <span class="menu-notification-badge" id="pengembalian-ke-bagian-badge" style="display: none; margin-left: auto;">0</span>
-          </a>
-          <a href="{{ route('reports.verifikasi.index') }}" class="{{ $menuRekapan ?? '' }}">
-            <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
+          <div class="owner-avatar">{{ $initials }}</div>
+          <div class="owner-user-info">
+            <div class="owner-user-name">{{ $authUser->name ?? 'Pengguna' }}</div>
+            <div class="owner-user-role-text">{{ ucfirst(str_replace('_', ' ', $authUser->role ?? 'Owner')) }}</div>
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:#a0aec0;flex-shrink:0">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+        </a>
+        <form id="logout-form-owner" action="{{ url('/logout') }}" method="POST" style="display: none;">
+          @csrf
+        </form>
+      </div>
+
+    @else
+    <!-- Regular Menu for other roles -->
+    <div style="flex: 1; display: flex; flex-direction: column;">
+      @if($isBagianUser)
+        {{-- Bagian-specific Home menu --}}
+        @php
+          $isBagianDashboardActive = request()->is('*bagian/dashboard*') || request()->routeIs('bagian.dashboard');
+        @endphp
+        <a href="{{ route('bagian.dashboard') }}" class="{{ $isBagianDashboardActive ? 'active' : '' }}"><i
+            class="fa-solid fa-house"></i> Home</a>
+      @else
+        @if(!in_array($module, ['team_verifikasi', 'perpajakan', 'akutansi']))
+          <a href="{{ url($dashboardUrl) }}" class="{{ $menuDashboard ?? '' }}"><i class="fa-solid fa-house"></i> Home</a>
+        @endif
+      @endif
+
+      <!-- Owner Dashboard - Only for Admin users -->
+      @if(auth()->check() && (auth()->user()->role === 'Admin' || auth()->user()->role === 'admin'))
+        <a href="{{ url('/owner/dashboard') }}" class="nav-link">
+          <i class="fa-solid fa-satellite-dish"></i> Owner Dashboard
+        </a>
+        
+        <!-- Audit Trail Menu - Only for Admin users -->
+        <a href="{{ url('/owner/programmer-logs') }}" class="nav-link">
+          <i class="fa-solid fa-shield-halved"></i> Audit Trail
+        </a>
+      @endif
+
+      <!-- Inbox Menu - Untuk Team Verifikasi, Perpajakan, Akutansi -->
+      @php
+        $currentUserRole = 'operator'; // Default
+        if (auth()->check()) {
+          $user = auth()->user();
+          // Prioritize role field first (most accurate)
+          if (isset($user->role) && !empty($user->role)) {
+            $currentUserRole = $user->role;
+          } elseif (isset($user->name)) {
+            // Fallback to name mapping if role is not set
+            $nameToRole = [
+              'Operator' => 'operator',
+              'operator' => 'operator',
+              'Operator' => 'operator',
+              'team_verifikasi' => 'team_verifikasi',
+              'Ibu B' => 'team_verifikasi',
+              'Ibu Yuni' => 'team_verifikasi',
+              'Team Verifikasi' => 'team_verifikasi',
+              'Perpajakan' => 'Perpajakan',
+              'Team Perpajakan' => 'Perpajakan',
+              'Akutansi' => 'Akutansi',
+              'Team Akutansi' => 'Akutansi',
+              'Pembayaran' => 'Pembayaran',
+              'Team Pembayaran' => 'Pembayaran'
+            ];
+            $currentUserRole = $nameToRole[$user->name] ?? 'operator';
+          }
+        }
+
+        // Normalize role to check (case-insensitive comparison)
+        $currentUserRoleLower = strtolower($currentUserRole);
+        // Include all possible variations of role names after lowercase
+        $OperatorRoles = ['operator', 'Operator', 'Operator', 'operator'];
+        $inboxRoles = array_merge($OperatorRoles, ['team_verifikasi', 'ibu b', 'verifikasi', 'team verifikasi', 'perpajakan', 'team perpajakan', 'akutansi', 'team akutansi', 'pembayaran', 'team pembayaran']);
+        $showInbox = in_array($currentUserRoleLower, $inboxRoles);
+
+        // Map role to inbox query format
+        $inboxRoleForQuery = 'team_verifikasi';
+        if (in_array($currentUserRoleLower, $OperatorRoles)) {
+          $inboxRoleForQuery = 'operator';
+        } elseif (in_array($currentUserRoleLower, ['perpajakan', 'team perpajakan'])) {
+          $inboxRoleForQuery = 'Perpajakan';
+        } elseif (in_array($currentUserRoleLower, ['akutansi', 'team akutansi'])) {
+          $inboxRoleForQuery = 'Akutansi';
+        } elseif (in_array($currentUserRoleLower, ['pembayaran', 'team pembayaran'])) {
+          $inboxRoleForQuery = 'Pembayaran';
+        } elseif (in_array($currentUserRoleLower, ['verifikasi', 'team verifikasi', 'team_verifikasi', 'ibu b'])) {
+          $inboxRoleForQuery = 'team_verifikasi'; // Verifikasi uses Team Verifikasi inbox
+        }
+      @endphp
+
+      @if($showInbox)
+        <a href="{{ url('/inbox') }}"
+          class="{{ request()->is('inbox') || request()->routeIs('inbox.*') ? 'active' : '' }}">
+          <i class="fa-solid fa-inbox"></i>
+          Inbox
+          @php
+            try {
+              $inboxCount = \App\Models\Dokumen::where('inbox_approval_for', $inboxRoleForQuery)
+                ->where('inbox_approval_status', 'pending')
+                ->count();
+            } catch (\Exception $e) {
+              $inboxCount = 0;
+            }
+          @endphp
+          @if($inboxCount > 0)
+            <span class="badge badge-danger right">{{ $inboxCount }}</span>
+          @endif
+        </a>
+      @endif
+
+      @unless($isOwner)
+        @if($isBagianUser)
+          {{-- Bagian-specific menu --}}
+          @php
+            $isBagianDocumentsActive = request()->is('*bagian/documents*') || request()->routeIs('bagian.documents.*');
+          @endphp
+          <a href="{{ route('bagian.documents.index') }}" class="{{ $isBagianDocumentsActive ? 'active' : '' }}">
+            <i class="fa-solid fa-file-lines"></i> Dokumen
           </a>
         @else
-          <!-- IbuA -->
-          <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}">
-            <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
-          </a>
-          @if($tambahDokumenUrl)
-            <a href="{{ url($tambahDokumenUrl) }}" class="{{ $menuTambahDokumen ?? '' }}">
-              <i class="fa-solid fa-plus me-2"></i> Tambah Dokumen
-            </a>
-          @endif
-          <a href="{{ url('/rekapan') }}" class="{{ $menuRekapan ?? '' }}">
-            <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
+          {{-- Regular Dokumen menu for other roles --}}
+          @php
+            // Determine route based on module — gunakan route() helper sesuai web.php
+            $menuRoute = match ($module) {
+              'pembayaran'      => route('documents.pembayaran.index'),
+              'akutansi'        => route('documents.akutansi.index'),
+              'perpajakan'      => route('documents.perpajakan.index'),
+              'team_verifikasi' => route('documents.verifikasi.index'),
+              default           => url($dokumenUrl)
+            };
+
+            // Check if current route is within this module
+            $isModuleActive = match ($module) {
+              'pembayaran' => request()->routeIs('documents.pembayaran.*') ||
+              request()->routeIs('reports.pembayaran.*') ||
+              request()->routeIs('returns.pembayaran.*') ||
+              request()->routeIs('csv.import.*') ||
+              request()->is('*documents/pembayaran*') ||
+              request()->is('*reports/pembayaran*') ||
+              request()->is('*rekapan-keterlambatan*') ||
+              request()->is('*csv-import*'),
+              'akutansi' => request()->routeIs('documents.akutansi.*') ||
+              request()->routeIs('reports.akutansi.*') ||
+              request()->routeIs('returns.akutansi.*') ||
+              request()->is('*documents/akutansi*'),
+              'perpajakan' => request()->routeIs('documents.perpajakan.*') ||
+              request()->routeIs('reports.perpajakan.*') ||
+              request()->routeIs('returns.perpajakan.*') ||
+              request()->is('*documents/perpajakan*'),
+              'team_verifikasi' => request()->routeIs('documents.verifikasi.*') ||
+              request()->routeIs('reports.verifikasi.*') ||
+              request()->routeIs('returns.verifikasi.*') ||
+              request()->is('*documents/verifikasi*'),
+              default => false
+            };
+          @endphp
+          <a href="{{ $menuRoute }}"
+            class="{{ ($menuDokumen ?? '') . ($isModuleActive ? ' active' : '') }} sidebar-menu-trigger"
+            data-submenu="dokumen" id="btn-pembayaran" aria-expanded="{{ $isModuleActive ? 'true' : 'false' }}">
+            <i class="fa-solid fa-file-lines"></i>
+            @if($module === 'pembayaran')
+              Pembayaran
+            @elseif($module === 'akutansi')
+              Akutansi
+            @elseif($module === 'perpajakan')
+              Perpajakan
+            @elseif($module === 'team_verifikasi')
+              Dokumen
+            @else
+              Dokumen
+            @endif
           </a>
         @endif
+
+      @endunless
+
+      <!-- Tracking Dokumen Menu - Untuk semua role -->
+      @unless($isBagianUser)
+      @php
+        $trackingUrl = match ($module) {
+          'operator', 'operator' => '/tracking-dokumen',
+          'team_verifikasi', 'team_verifikasi' => '/tracking-dokumen',
+          'pembayaran' => '/tracking-dokumen',
+          'akutansi' => '/tracking-dokumen',
+          'perpajakan' => '/tracking-dokumen',
+          default => '/tracking-dokumen'
+        };
+        $isTrackingActive = request()->is('*tracking-dokumen*');
+      @endphp
+      <a href="{{ url($trackingUrl) }}" class="{{ $isTrackingActive ? 'active' : '' }}">
+        <i class="fa-solid fa-route"></i> Tracking Dokumen
+      </a>
+      @endif
+    </div>
+
+    <!-- Logout Button - Pindahkan ke paling bawah -->
+    @unless($isOwner)
+      <div style="margin-top: auto; padding-bottom: 20px;">
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+          @csrf
+        </form>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+          class="logout-link">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </a>
+      </div>
+    @endunless
+    @endif
+  </div>
+  @endif {{-- end !isOperatorSpreadsheet --}}
+
+  <!-- Secondary Sidebar (Submenu Panel) - Mekari Style -->
+  @if($isOwner)
+    @php
+      // Secondary sidebar only shows on per-role sub-pages (with roleCode), NOT on main unified page
+      $isRekapanByRolePage = request()->routeIs('owner.rekapan-keterlambatan.role') ||
+        (request()->is('*rekapan-keterlambatan/*') && request()->route('roleCode'));
+      $shouldShowSecondarySidebarOwner = $isRekapanByRolePage;
+    @endphp
+    <div class="secondary-sidebar {{ $shouldShowSecondarySidebarOwner ? 'active' : '' }}"
+      id="sidebar-rekapan-keterlambatan" role="complementary" aria-label="Submenu Panel">
+      <div class="secondary-sidebar-header">
+        REKAPAN &amp; ANALISIS KERJA
+      </div>
+      <div class="secondary-sidebar-content">
+        @php
+          $currentRole = strtolower(request()->route('roleCode') ?? '');
+        @endphp
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'team_verifikasi') }}"
+          class="{{ $currentRole === 'team_verifikasi' ? 'active' : '' }}">
+          <i class="fa-solid fa-users me-2"></i> Team Verifikasi
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'perpajakan') }}"
+          class="{{ $currentRole === 'perpajakan' ? 'active' : '' }}">
+          <i class="fa-solid fa-file-invoice-dollar me-2"></i> Team Perpajakan
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'akutansi') }}"
+          class="{{ $currentRole === 'akutansi' ? 'active' : '' }}">
+          <i class="fa-solid fa-calculator me-2"></i> Team Akutansi
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'pembayaran') }}"
+          class="{{ $currentRole === 'pembayaran' ? 'active' : '' }}">
+          <i class="fa-solid fa-money-bill-wave me-2"></i> Pembayaran
+        </a>
       </div>
     </div>
+  @else
+  @php
+    // Check if user is on a submenu page or menu dokumen is active
+    $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
+
+    // Enhanced detection for pembayaran module
+    $isSubmenuPage = false;
+    if ($module === 'pembayaran') {
+      $isSubmenuPage = request()->routeIs('documents.pembayaran.*') ||
+        request()->routeIs('reports.pembayaran.*') ||
+        request()->routeIs('returns.pembayaran.*') ||
+        request()->routeIs('csv.import.*') ||
+        request()->is('*documents/pembayaran*') ||
+        request()->is('*rekapan-keterlambatan*') ||
+        request()->is('*csv-import*');
+    } elseif ($module === 'akutansi') {
+      $isSubmenuPage = request()->routeIs('documents.akutansi.*') ||
+        request()->routeIs('reports.akutansi.*') ||
+        request()->routeIs('returns.akutansi.*') ||
+        request()->is('*documents/akutansi*');
+    } elseif ($module === 'perpajakan') {
+      $isSubmenuPage = request()->routeIs('documents.perpajakan.*') ||
+        request()->routeIs('reports.perpajakan.*') ||
+        request()->routeIs('returns.perpajakan.*') ||
+        request()->is('*documents/perpajakan*');
+    } elseif ($module === 'team_verifikasi') {
+      $isSubmenuPage = request()->routeIs('documents.verifikasi.*') ||
+        request()->routeIs('reports.verifikasi.*') ||
+        request()->routeIs('returns.verifikasi.*') ||
+        request()->is('*documents/verifikasi*');
+    } elseif ($isBagianUser) {
+      $isSubmenuPage = request()->is('*bagian/documents*') ||
+        request()->is('*bagian/tracking*');
+    } else {
+      $isSubmenuPage = request()->is('*dokumens*') ||
+        request()->is('*rekapan*') ||
+        request()->is('*reports*') ||
+        request()->is('*pengembalian*');
+    }
+
+    $shouldShowSecondarySidebar = $hasSubmenu || $isSubmenuPage;
+
+    $submenuTitle = '';
+    if ($module === 'pembayaran') {
+      $submenuTitle = 'MENU PEMBAYARAN';
+    } elseif ($module === 'akutansi') {
+      $submenuTitle = 'MENU AKUTANSI';
+    } elseif ($module === 'perpajakan') {
+      $submenuTitle = 'MENU PERPAJAKAN';
+    } elseif ($module === 'team_verifikasi') {
+      $submenuTitle = 'MENU DOKUMEN';
+    } elseif ($isBagianUser) {
+      $submenuTitle = 'MENU DOKUMEN';
+    } else {
+      $submenuTitle = 'MENU DOKUMEN';
+    }
+  @endphp
+  @if(!($isOperatorSpreadsheet ?? false))
+  <div class="secondary-sidebar {{ $shouldShowSecondarySidebar ? 'active' : '' }}" id="sidebar-pembayaran"
+    role="complementary" aria-label="Submenu Panel">
+    <div class="secondary-sidebar-header">
+      {{ $submenuTitle }}
+    </div>
+    <div class="secondary-sidebar-content">
+      @if($module === 'pembayaran')
+        @php
+          // Determine active state for each submenu item (combine controller class + route detection)
+          $isDaftarActive = ($menuDaftarDokumen ?? '') === 'Active' ||
+            request()->routeIs('documents.pembayaran.*') ||
+            request()->routeIs('documents.pembayaran.index') ||
+            request()->is('*documents/pembayaran*');
+          $isRekapanActive = ($menuRekapanDokumen ?? '') === 'Active' ||
+            request()->routeIs('pembayaran.rekapan') ||
+            request()->is('*rekapan-pembayaran*');
+          $isKeterlambatanActive = ($menuRekapKeterlambatan ?? '') === 'Active' ||
+            request()->routeIs('rekapanKeterlambatan.*') ||
+            request()->is('*rekapan-keterlambatan*');
+        @endphp
+        <a href="{{ url($dokumenUrl) }}" class="{{ $isDaftarActive ? 'active' : '' }}">
+          <i class="fa-solid fa-list me-2"></i> Daftar Pembayaran
+        </a>
+        <a href="{{ route('csv.import.index') }}"
+          class="{{ request()->routeIs('csv.import.*') || request()->is('*csv-import*') ? 'active' : '' }}">
+          <i class="fa-solid fa-file-import me-2"></i> Import Data
+        </a>
+        <a href="{{ url($pengembalianUrl) }}" class="{{ $isKeterlambatanActive ? 'active' : '' }}">
+          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
+        </a>
+      @elseif($module === 'akutansi')
+        <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
+          <i class="fa-solid fa-list me-2"></i> Daftar Akutansi
+          <span class="menu-notification-badge" id="akutansi-notification-badge"
+            style="display: none; margin-left: auto;">0</span>
+        </a>
+        <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
+          <i class="fa-solid fa-rotate-left me-2"></i> Daftar Pengembalian Akutansi
+        </a>
+        <a href="{{ route('reports.akutansi.index') }}" class="{{ $menuRekapan ?? '' }}">
+          <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Akutansi
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'akutansi') }}"
+          class="{{ request()->is('*rekapan-keterlambatan/akutansi*') ? 'active' : '' }}">
+          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
+        </a>
+      @elseif($module === 'perpajakan')
+        <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
+          <i class="fa-solid fa-list me-2"></i> Daftar Perpajakan
+          <span class="menu-notification-badge" id="perpajakan-notification-badge"
+            style="display: none; margin-left: auto;">0</span>
+        </a>
+        <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
+          <i class="fa-solid fa-rotate-left me-2"></i> Daftar Pengembalian Perpajakan
+        </a>
+        <a href="{{ route('reports.perpajakan.index') }}" class="{{ $menuRekapan ?? '' }}">
+          <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
+        </a>
+        <a href="{{ route('reports.perpajakan.export') }}"
+          class="{{ request()->routeIs('reports.perpajakan.export*') ? 'active' : '' }}">
+          <i class="fa-solid fa-file-export me-2"></i> Export Data
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'perpajakan') }}"
+          class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
+          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
+        </a>
+      @elseif($module === 'team_verifikasi')
+        <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
+          <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
+          <span class="menu-notification-badge" id="notification-badge" style="display: none; margin-left: auto;">0</span>
+        </a>
+        <a href="{{ route('returns.verifikasi.bagian') }}" class="{{ $menuPengembalianKeBidang ?? '' }}">
+          <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian Ke Bagian
+          <span class="menu-notification-badge" id="pengembalian-ke-bidang-badge"
+            style="display: none; margin-left: auto;">0</span>
+        </a>
+        <a href="{{ route('returns.verifikasi.index') }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
+          <i class="fa-solid fa-arrow-right me-2"></i> Pengembalian Dari Bidang
+          <span class="menu-notification-badge" id="pengembalian-ke-bagian-badge"
+            style="display: none; margin-left: auto;">0</span>
+        </a>
+        <a href="{{ route('reports.verifikasi.index') }}" class="{{ $menuRekapan ?? '' }}">
+          <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
+        </a>
+        <a href="{{ route('owner.rekapan-keterlambatan.role', 'team_verifikasi') }}"
+          class="{{ request()->is('*rekapan-keterlambatan/Team Verifikasi*') ? 'active' : '' }}">
+          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
+        </a>
+      @elseif($isBagianUser)
+        {{-- Bagian submenu (same pattern as Operator) --}}
+        @php
+          $isDaftarActive = request()->routeIs('bagian.documents.index') || request()->is('*bagian/documents');
+          $isTambahActive = request()->routeIs('bagian.documents.create') || request()->is('*bagian/documents/create*');
+          $isEditActive = request()->routeIs('bagian.documents.edit') || request()->is('*bagian/documents/*/edit*');
+          $isRekapanActive = request()->routeIs('bagian.rekapan') || request()->is('*bagian/rekapan*');
+        @endphp
+        <a href="{{ route('bagian.documents.index') }}" class="{{ $isDaftarActive ? 'active' : '' }}">
+          <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
+        </a>
+        <a href="{{ route('bagian.documents.create') }}" class="{{ $isTambahActive ? 'active' : '' }}">
+          <i class="fa-solid fa-plus me-2"></i> Tambah Dokumen
+        </a>
+        <a href="{{ route('bagian.tracking') }}" class="{{ request()->routeIs('bagian.tracking') ? 'active' : '' }}">
+          <i class="fa-solid fa-route me-2"></i> Tracking Dokumen
+        </a>
+      @else
+        <!-- Operator -->
+        <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}">
+          <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
+        </a>
+        @if($tambahDokumenUrl)
+          <a href="{{ url($tambahDokumenUrl) }}" class="{{ $menuTambahDokumen ?? '' }}">
+            <i class="fa-solid fa-plus me-2"></i> Tambah Dokumen
+          </a>
+        @endif
+        <a href="{{ url('/documents/import') }}" class="{{ request()->is('*documents/import*') ? 'active' : '' }}">
+          <i class="fa-solid fa-file-import me-2"></i> Import CSV
+        </a>
+        <a href="{{ url('/reports/analytics') }}" class="{{ $menuRekapan ?? '' }}">
+          <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
+        </a>
+      @endif
+    </div>
+  </div>
+  @endif {{-- end !isOperatorSpreadsheet for secondary sidebar --}}
   @endunless
 
   <!-- Content -->
-  <div class="content {{ ($shouldShowSecondarySidebar ?? false) ? 'with-secondary-sidebar' : '' }}">
+  <div class="content {{ ($isOperatorSpreadsheet ?? false) ? '' : (($shouldShowSecondarySidebar ?? false) ? 'with-secondary-sidebar' : '') }}">
     <!-- Notifikasi Success/Error -->
     @if(session('success'))
-      <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);">
+      <div class="alert alert-success alert-dismissible fade show" role="alert"
+        style="margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);">
         <i class="fa-solid fa-circle-check me-2"></i>
         <strong>Berhasil!</strong> {{ session('success') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -1723,7 +4752,8 @@
     @endif
 
     @if(session('error'))
-      <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);">
+      <div class="alert alert-danger alert-dismissible fade show" role="alert"
+        style="margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);">
         <i class="fa-solid fa-circle-exclamation me-2"></i>
         <strong>Error!</strong> {{ session('error') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -1731,7 +4761,8 @@
     @endif
 
     @if($errors->any())
-      <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);">
+      <div class="alert alert-danger alert-dismissible fade show" role="alert"
+        style="margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);">
         <i class="fa-solid fa-circle-exclamation me-2"></i>
         <strong>Terjadi Kesalahan!</strong>
         <ul class="mb-0 mt-2" style="padding-left: 20px;">
@@ -1744,15 +4775,15 @@
     @endif
 
     @yield('content')
-    </div>
+  </div>
 
-    <!-- Notification Container -->
-    <div id="notification-container"></div>
-    <div id="globalNotificationContainer"></div>
+  <!-- Notification Container -->
+  <div id="notification-container"></div>
+  <div id="globalNotificationContainer"></div>
 
-    <footer>
-      &copy; 2025 Agenda Online - All Rights Reserved
-    </footer>
+  <footer>
+    &copy; 2025 Agenda Online - All Rights Reserved
+  </footer>
   </div>
 
   <!-- Bootstrap JS -->
@@ -1765,7 +4796,7 @@
   /**
    * Global Handler untuk mencegah navigasi saat user sedang menyeleksi teks
    * Digunakan pada Card dan Table Row yang bisa diklik
-   * 
+   *
    * @param {Event} event - Click event
    * @param {string} url - URL tujuan navigasi
    */
@@ -1887,28 +4918,28 @@
     });
   </script>
 
-  <!-- Auto-Refresh System for IbuB -->
+  <!-- Auto-Refresh System for Team Verifikasi -->
   <script>
     (function() {
       'use strict';
 
       // Get user role from authenticated user
-      let currentUserRole = 'IbuA'; // Default
+      let currentUserRole = 'operator'; // Default
       @php
-        $tempUserRole = 'IbuA';
+        $tempUserRole = 'operator';
         if (auth()->check()) {
           $user = auth()->user();
           if (isset($user->name)) {
             $nameToRole = [
-              'Ibu A' => 'ibuA',
-              'IbuA' => 'ibuA',
-              'IbuB' => 'ibuB',
-              'Ibu B' => 'ibuB',
+              'Operator' => 'operator',
+              'operator' => 'operator',
+              'team_verifikasi' => 'team_verifikasi',
+              'Ibu B' => 'team_verifikasi',
               'Perpajakan' => 'perpajakan',
               'Akutansi' => 'akutansi',
               'Pembayaran' => 'pembayaran'
             ];
-            $tempUserRole = $nameToRole[$user->name] ?? 'IbuA';
+            $tempUserRole = $nameToRole[$user->name] ?? 'operator';
           } elseif (isset($user->role)) {
             $tempUserRole = $user->role;
           }
@@ -1916,16 +4947,16 @@
       @endphp
       currentUserRole = '{{ $tempUserRole }}';
 
-      const isIbuB = currentUserRole.toLowerCase() === 'ibub';
-      const isIbuA = currentUserRole.toLowerCase() === 'ibua';
+      const isTeam Verifikasi = currentUserRole.toLowerCase() === 'team_verifikasi';
+      const isOperator = currentUserRole.toLowerCase() === 'operator';
       const isPerpajakan = currentUserRole.toLowerCase() === 'perpajakan';
       const isAkutansi = currentUserRole.toLowerCase() === 'akutansi';
       const isPembayaran = currentUserRole.toLowerCase() === 'pembayaran';
 
       console.log('Auto-refresh system setup:', {
         userRole: currentUserRole,
-        isIbuB: isIbuB,
-        isIbuA: isIbuA,
+        isTeam Verifikasi: isTeam Verifikasi,
+        isOperator: isoperator,
         isPerpajakan: isPerpajakan,
         isAkutansi: isAkutansi,
         isPembayaran: isPembayaran,
@@ -1937,13 +4968,13 @@
         console.log('🟢 AKUTANSI MODULE DETECTED - Notifications should work');
       }
 
-      // Enable for IbuB, Perpajakan, Akutansi, Pembayaran (any page) - Excluding IbuA only
-      const shouldEnableAutoRefresh = isIbuB || isPerpajakan || isAkutansi || isPembayaran;
+      // Enable for Team Verifikasi, Perpajakan, Akutansi, Pembayaran (any page) - Excluding Operator only
+      const shouldEnableAutoRefresh = isTeam Verifikasi || isPerpajakan || isAkutansi || isPembayaran;
 
       console.log('Should enable auto-refresh:', shouldEnableAutoRefresh);
 
       if (!shouldEnableAutoRefresh) {
-        console.log('Auto-refresh disabled: User is IbuA or role not recognized');
+        console.log('Auto-refresh disabled: User is Operator or role not recognized');
         return;
       }
 
@@ -1982,9 +5013,9 @@
 
         const isTyping = (Date.now() - userActiveState.lastActivity) < 2000; // Reduced from 3s to 2s
 
-        // For IbuA, we want to be less restrictive to show important notifications
-        const isIbuA = currentUserRole.toLowerCase() === 'ibua';
-        if (isIbuA) {
+        // For operator, we want to be less restrictive to show important notifications
+        const isOperator = currentUserRole.toLowerCase() === 'operator';
+        if (isOperator) {
           // Only skip if user is actively typing in an input field
           return isInputting;
         }
@@ -2011,12 +5042,12 @@
       // Initialize known documents from current page
       function initializeKnownDocuments() {
         // For returned documents, we want to start fresh to ensure we show notifications
-        const isIbuA = currentUserRole.toLowerCase() === 'ibua';
+        const isOperator = currentUserRole.toLowerCase() === 'operator';
         const isPerpajakan = currentUserRole.toLowerCase() === 'perpajakan';
         const isAkutansi = currentUserRole.toLowerCase() === 'akutansi';
         
-        if (isIbuA || isPerpajakan || isAkutansi) {
-          // Don't pre-populate known document IDs for IbuA, Perpajakan, and Akutansi 
+        if (isOperator || isPerpajakan || isAkutansi) {
+          // Don't pre-populate known document IDs for operator, Perpajakan, and Akutansi 
           // to ensure notifications work for new documents
           knownDocumentIds.clear();
           console.log('Known document IDs cleared for', currentUserRole, 'notifications');
@@ -2136,7 +5167,7 @@
                 <div class="notification-body">
                   <strong>No. Agenda:</strong> ${doc.nomor_agenda || '-'}<br>
                   <strong>No. SPP:</strong> ${doc.nomor_spp || '-'}<br>
-                  <strong>Alasan:</strong> <span class="alasan-text">${doc.alasan_pengembalian || 'Tidak ada alasan'}</span><br>
+                  <strong>Alasan:</strong> <span class="alasan-text">${doc.return_reason || 'Tidak ada alasan'}</span><br>
                   <small style="opacity: 0.8;">Dikembalikan dari Team Verifikasi - ${doc.returned_at}</small>
                 </div>
                 <div class="notification-footer">
@@ -2251,7 +5282,7 @@
                   <strong>No. Agenda:</strong> ${doc.nomor_agenda || '-'}<br>
                   <strong>No. SPP:</strong> ${doc.nomor_spp || '-'}<br>
                   <strong>Nilai:</strong> ${formattedRupiah}<br>
-                  <small style="opacity: 0.8;">Dokumen baru dari IbuA - ${doc.sent_at}</small>
+                  <small style="opacity: 0.8;">Dokumen baru dari Operator - ${doc.sent_at}</small>
                 </div>
                 <div class="notification-footer">
                   <button class="btn-refresh" onclick="refreshPage()">
@@ -2335,14 +5366,14 @@
           window.location.href = `/dokumensAkutansi#doc-${docId}`;
         } else if (isPerpajakan) {
           window.location.href = `/dokumensPerpajakan#doc-${docId}`;
-        } else if (isIbuB) {
+        } else if (isTeam Verifikasi) {
           window.location.href = `/dokumensB/${docId}/edit`;
         } else {
           window.location.href = `/dokumens/${docId}/edit`;
         }
       };
 
-      // View returned document for IbuA
+      // View returned document for Operator
       window.viewReturnedDocument = function(docId) {
         // Redirect to pengembalian dokumen page with the specific document
         window.location.href = `/pengembalian-dokumens#doc-${docId}`;
@@ -2358,7 +5389,7 @@
         try {
           // Choose endpoint based on current module
           let endpoint;
-          if (isIbuB) {
+          if (isTeam Verifikasi) {
             endpoint = `/dokumensB/check-updates?last_checked=${Math.floor(lastChecked / 1000)}`;
           } else if (isPerpajakan) {
             endpoint = `/perpajakan/check-updates?last_checked=${Math.floor(lastChecked / 1000)}`;
@@ -2371,7 +5402,7 @@
           }
 
           console.log('Checking updates from:', endpoint);
-          console.log('Current module check:', { isIbuB, isIbuA, isPerpajakan, isAkutansi, isPembayaran });
+          console.log('Current module check:', { isTeam Verifikasi, isoperator, isPerpajakan, isAkutansi, isPembayaran });
 
           if (isAkutansi) {
             console.log('🔍 CHECKING FOR AKUTANSI UPDATES from:', endpoint);
@@ -2395,7 +5426,7 @@
 
           // Process data based on module
           let documents;
-          if (isIbuB) {
+          if (isTeam Verifikasi) {
             documents = data.new_documents;
           } else if (isPerpajakan) {
             documents = data.new_documents;
@@ -2416,13 +5447,13 @@
               console.log('New documents found:', newDocuments);
               console.log('🚨 NOTIFICATION TRIGGERED - Type will be:', isAkutansi ? 'akutansi' : (isPerpajakan ? 'perpajakan' : 'other'));
 
-              // Separate new documents from approved documents for IbuB
+              // Separate new documents from approved documents for Team Verifikasi
               let documentsToNotify = newDocuments;
               let approvedDocuments = [];
               let newDocumentsOnly = [];
               
-              if (isIbuB) {
-                newDocumentsOnly = newDocuments.filter(doc => doc.is_new_from_ibua === true);
+              if (isTeam Verifikasi) {
+                newDocumentsOnly = newDocuments.filter(doc => doc.is_new_from_Operator === true);
                 approvedDocuments = newDocuments.filter(doc => doc.approved_by);
                 
                 // Only show notification for approved documents (not as "new document")
@@ -2430,7 +5461,7 @@
                   showNotification(approvedDocuments, 'approved');
                 }
                 
-                // Show notification for new documents from IbuA
+                // Show notification for new documents from Operator
                 if (newDocumentsOnly.length > 0) {
                   showNotification(newDocumentsOnly, 'new');
                 }
@@ -2442,7 +5473,7 @@
               newDocuments.forEach(doc => knownDocumentIds.add(doc.id));
 
               // Show notifications for other roles
-              if (!isIbuB && documentsToNotify.length > 0) {
+              if (!isTeam Verifikasi && documentsToNotify.length > 0) {
                 let notificationType;
                 if (isPerpajakan) {
                   notificationType = 'perpajakan';
@@ -2458,8 +5489,8 @@
               }
 
               // Update badge counter based on type (only for new documents, not approved)
-              if (isIbuB) {
-                // Only count new documents from IbuA, not approved documents
+              if (isTeam Verifikasi) {
+                // Only count new documents from operator, not approved documents
                 notificationCount += newDocumentsOnly.length;
                 updateNotificationBadge(notificationCount, 'new');
               } else if (isPerpajakan) {
@@ -2497,8 +5528,8 @@
 
       // Universal Approval System - Check for waiting documents
       async function checkUniversalNotifications() {
-        // Only check for non-IbuA users
-        if (currentUserRole.toLowerCase() === 'ibua') {
+        // Only check for non-Operator users
+        if (currentUserRole.toLowerCase() === 'operator') {
           return;
         }
 
@@ -2541,13 +5572,13 @@
         // Set up periodic polling
         pollingTimer = setInterval(() => {
           const shouldSkip = isUserActive();
-          const isIbuA = currentUserRole.toLowerCase() === 'ibua';
+          const isOperator = currentUserRole.toLowerCase() === 'operator';
 
-          // Check universal notifications for all non-IbuA users
+          // Check universal notifications for all non-Operator users
           checkUniversalNotifications();
 
-          // For IbuA and Perpajakan, be less aggressive about skipping - only skip if actively typing
-          if ((isIbuA || isPerpajakan || isAkutansi) && shouldSkip) {
+          // For Operator and Perpajakan, be less aggressive about skipping - only skip if actively typing
+          if ((isOperator || isPerpajakan || isAkutansi) && shouldSkip) {
             const activeElement = document.activeElement;
             const isActuallyTyping = activeElement && (
               activeElement.tagName === 'INPUT' ||
@@ -2555,14 +5586,14 @@
               activeElement.tagName === 'SELECT'
             );
 
-            const moduleName = isPerpajakan ? 'Perpajakan' : (isAkutansi ? 'Akutansi' : 'IbuA');
+            const moduleName = isPerpajakan ? 'Perpajakan' : (isAkutansi ? 'Akutansi' : 'operator');
             if (isActuallyTyping) {
               console.log(`${moduleName}: Skipping update check - user is typing`);
               return;
             }
           }
 
-          if (shouldSkip && !isIbuA && !isPerpajakan && !isAkutansi) {
+          if (shouldSkip && !isOperator && !isPerpajakan && !isAkutansi) {
             console.log('Skipping update check - user is active');
           } else {
             checkForUpdates();
@@ -2574,10 +5605,10 @@
       startPolling();
 
       const moduleNames = [];
-      if (isIbuB) moduleNames.push('IbuB');
+      if (isTeam Verifikasi) moduleNames.push('team_verifikasi');
       if (isPerpajakan) moduleNames.push('Perpajakan');
       if (isAkutansi) moduleNames.push('Akutansi');
-      if (isIbuA) moduleNames.push('IbuA');
+      if (isOperator) moduleNames.push('operator');
       if (isPembayaran) moduleNames.push('Pembayaran');
 
       console.log('✅ Auto-refresh system initialized for: ' + moduleNames.join(', '));
@@ -2751,13 +5782,13 @@
 (function() {
     'use strict';
 
-    // Check if user has inbox access (IbuB, Perpajakan, Akutansi) or is IbuA
+    // Check if user has inbox access (Team Verifikasi, Perpajakan, Akutansi) or is Operator
     const userRole = '{{ auth()->user()->role ?? "" }}';
     const userRoleLower = userRole.toLowerCase();
     
     // Case-insensitive check for inbox roles
-    const inboxRoles = ['ibub', 'perpajakan', 'akutansi'];
-    const isIbuA = ['ibua', 'ibu a', 'ibu tarapul'].includes(userRoleLower);
+    const inboxRoles = ['team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi'];
+    const isOperator = ['operator', 'Operator', 'Operator'].includes(userRoleLower);
     const hasInboxAccess = inboxRoles.includes(userRoleLower);
 
     // Debug logging
@@ -2765,33 +5796,33 @@
         userRole: userRole,
         userRoleLower: userRoleLower,
         hasInboxAccess: hasInboxAccess,
-        isIbuA: isIbuA
+        isOperator: isOperator
     });
 
-    // Check if user is IbuB
-    const isIbuB = ['ibub', 'ibu b', 'ibu yuni', 'team verifikasi'].includes(userRoleLower);
+    // Check if user is Team Verifikasi
+    const isTeamVerifikasi = ['team_verifikasi', 'ibu b', 'ibu yuni', 'team verifikasi'].includes(userRoleLower);
 
     // Debug logging
     console.log('Notification System Init:', {
         userRole: userRole,
         userRoleLower: userRoleLower,
         hasInboxAccess: hasInboxAccess,
-        isIbuA: isIbuA,
-        isIbuB: isIbuB
+        isOperator: isOperator,
+        isTeamVerifikasi: isTeamVerifikasi
     });
 
-    // Initialize IbuA rejected documents notification if applicable
-    if (isIbuA) {
-        console.log('Initializing IbuA rejected notifications');
-        initIbuARejectedNotifications();
-        // IbuA does not have inbox access, so exit here
+    // Initialize Operator rejected documents notification if applicable
+    if (isOperator) {
+        console.log('Initializing Operator rejected notifications');
+        initOperatorRejectedNotifications();
+        // Operator does not have inbox access, so exit here
         return;
     }
 
-    // Initialize IbuB rejected documents notification if applicable
-    if (isIbuB) {
-        console.log('Initializing IbuB rejected notifications');
-        initIbuBRejectedNotifications();
+    // Initialize Team Verifikasi rejected documents notification if applicable
+    if (isTeamVerifikasi) {
+        console.log('Initializing Team Verifikasi rejected notifications');
+        initTeamVerifikasiRejectedNotifications();
     }
 
     // Only continue with inbox notifications if user has inbox access
@@ -2812,16 +5843,16 @@
 
     // Map user role to inbox role format (case-insensitive)
     const roleMap = {
-        'ibub': 'IbuB',
-        'ibu b': 'IbuB',
-        'ibu yuni': 'IbuB',
-        'team verifikasi': 'IbuB',
+        'team_verifikasi': 'team_verifikasi',
+        'ibu b': 'team_verifikasi',
+        'ibu yuni': 'team_verifikasi',
+        'team verifikasi': 'team_verifikasi',
         'perpajakan': 'Perpajakan',
         'akutansi': 'Akutansi'
     };
     const inboxRole = roleMap[userRoleLower] || (userRoleLower === 'perpajakan' ? 'Perpajakan' : 
                                                     userRoleLower === 'akutansi' ? 'Akutansi' : 
-                                                    userRoleLower === 'ibub' ? 'IbuB' : userRole);
+                                                    userRoleLower === 'team_verifikasi' ? 'team_verifikasi' : userRole);
     
     console.log('Mapped inbox role:', inboxRole);
 
@@ -2837,7 +5868,7 @@
 
                     // Only show notification if it's for this user's role
                     if (e.recipientRole && (e.recipientRole.toLowerCase() === inboxRole.toLowerCase() ||
-                        (e.recipientRole.toLowerCase() === 'ibub' && inboxRole.toLowerCase() === 'ibub'))) {
+                        (e.recipientRole.toLowerCase() === 'team_verifikasi' && inboxRole.toLowerCase() === 'team_verifikasi'))) {
 
                         console.log('✅ Notification is for current user role:', inboxRole);
 
@@ -2981,7 +6012,7 @@
     async function checkInboxNotifications() {
         try {
             // Ensure we have inbox access before checking
-            // IbuA does not have inbox access, so skip the check
+            // Operator does not have inbox access, so skip the check
             if (!hasInboxAccess) {
                 console.log('No inbox access, skipping notification check');
                 return;
@@ -3109,35 +6140,35 @@
         });
     }
 
-    // IbuA Rejected Documents Notification System
-    function initIbuARejectedNotifications() {
-        console.log('initIbuARejectedNotifications function called');
+    // Operator Rejected Documents Notification System
+    function initOperatorRejectedNotifications() {
+        console.log('initOperatorRejectedNotifications function called');
         // Rejected documents notification polling
         // Reset last check time jika lebih dari 24 jam yang lalu untuk memastikan semua dokumen terdeteksi
-        let rejectedLastCheckTime = localStorage.getItem('ibua_rejected_last_check_time');
+        let rejectedLastCheckTime = localStorage.getItem('Operator_rejected_last_check_time');
         if (!rejectedLastCheckTime) {
             rejectedLastCheckTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24 jam yang lalu
-            localStorage.setItem('ibua_rejected_last_check_time', rejectedLastCheckTime);
+            localStorage.setItem('Operator_rejected_last_check_time', rejectedLastCheckTime);
         } else {
             // Jika last check time lebih dari 24 jam yang lalu, reset ke 24 jam yang lalu
             const lastCheck = new Date(rejectedLastCheckTime);
             const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
             if (lastCheck < twentyFourHoursAgo) {
                 rejectedLastCheckTime = twentyFourHoursAgo.toISOString();
-                localStorage.setItem('ibua_rejected_last_check_time', rejectedLastCheckTime);
+                localStorage.setItem('Operator_rejected_last_check_time', rejectedLastCheckTime);
                 console.log('🔄 Reset rejected documents last check time to 24 hours ago');
             }
         }
 
         // Track shown rejected notifications to prevent duplicates
-        const shownRejectedIds = new Set(JSON.parse(localStorage.getItem('ibua_shown_rejected_notifications') || '[]'));
+        const shownRejectedIds = new Set(JSON.parse(localStorage.getItem('Operator_shown_rejected_notifications') || '[]'));
 
         // Function to check for rejected documents
         async function checkRejectedDocuments() {
             try {
                 console.log('🔍 Checking for rejected documents...', { lastCheckTime: rejectedLastCheckTime });
                 
-                const response = await fetch(`/ibua/check-rejected?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
+                const response = await fetch(`/Operator/check-rejected?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -3169,7 +6200,7 @@
                     if (data.current_time) {
                         // Update last check time untuk tracking, tapi jangan gunakan untuk filtering dokumen
                         rejectedLastCheckTime = data.current_time;
-                        localStorage.setItem('ibua_rejected_last_check_time', rejectedLastCheckTime);
+                        localStorage.setItem('Operator_rejected_last_check_time', rejectedLastCheckTime);
                         console.log('✅ Updated last check time to:', rejectedLastCheckTime);
                     }
 
@@ -3182,7 +6213,7 @@
                         const userRejectedDocs = data.rejected_documents.filter(doc => {
                             // Hanya dokumen yang created_by milik user yang sedang login
                             const createdBy = (doc.created_by || '').toString().toLowerCase();
-                            return createdBy === 'ibua' || createdBy === 'ibu a' || createdBy === 'ibua' || createdBy === 'ibu tarapul';
+                            return createdBy === 'operator' || createdBy === 'Operator' || createdBy === 'operator' || createdBy === 'Operator';
                         });
 
                         console.log('👤 User rejected documents after filtering:', userRejectedDocs.length);
@@ -3228,7 +6259,7 @@
                         });
 
                         // Save shown notification IDs to localStorage
-                        localStorage.setItem('ibua_shown_rejected_notifications', JSON.stringify(Array.from(shownRejectedIds)));
+                        localStorage.setItem('Operator_shown_rejected_notifications', JSON.stringify(Array.from(shownRejectedIds)));
 
                         // Show notification untuk semua dokumen yang perlu ditampilkan
                         if (newRejectedToShow.length > 0) {
@@ -3285,7 +6316,7 @@
         rejectedDocumentsInterval = setInterval(checkRejectedDocuments, 3000);
         
         // Store interval in window object to ensure it persists
-        window.ibuaRejectedDocumentsInterval = rejectedDocumentsInterval;
+        window.OperatorRejectedDocumentsInterval = rejectedDocumentsInterval;
 
         // Also check when page becomes visible (user switches back to tab)
         document.addEventListener('visibilitychange', function() {
@@ -3315,26 +6346,26 @@
         setTimeout(checkRejectedDocuments, 2000);
     }
 
-    // IbuB Rejected Documents Notification System
-    function initIbuBRejectedNotifications() {
-        console.log('initIbuBRejectedNotifications function called - Initializing IbuB rejected documents notification system');
+    // Team Verifikasi Rejected Documents Notification System
+    function initTeamVerifikasiRejectedNotifications() {
+        console.log('initTeamVerifikasiRejectedNotifications function called - Initializing Team Verifikasi rejected documents notification system');
         
         // Rejected documents notification polling
-        let rejectedLastCheckTime = localStorage.getItem('ibub_rejected_last_check_time');
+        let rejectedLastCheckTime = localStorage.getItem('team_verifikasi_rejected_last_check_time');
         if (!rejectedLastCheckTime) {
             rejectedLastCheckTime = new Date().toISOString();
-            localStorage.setItem('ibub_rejected_last_check_time', rejectedLastCheckTime);
+            localStorage.setItem('team_verifikasi_rejected_last_check_time', rejectedLastCheckTime);
         }
 
         // Track shown rejected notifications to prevent duplicates
-        const shownRejectedIds = new Set(JSON.parse(localStorage.getItem('ibub_shown_rejected_notifications') || '[]'));
+        const shownRejectedIds = new Set(JSON.parse(localStorage.getItem('team_verifikasi_shown_rejected_notifications') || '[]'));
 
         // Function to check for rejected documents
         async function checkRejectedDocuments() {
             try {
-                console.log('Checking rejected documents for IbuB, last check:', rejectedLastCheckTime);
+                console.log('Checking rejected documents for Team Verifikasi, last check:', rejectedLastCheckTime);
                 
-                const response = await fetch(`/ibub/check-rejected?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
+                const response = await fetch(`/Team Verifikasi/check-rejected?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -3344,26 +6375,26 @@
                 });
 
                 if (!response.ok) {
-                    console.warn('IbuB rejected documents check failed:', response.status, response.statusText);
+                    console.warn('Team Verifikasi rejected documents check failed:', response.status, response.statusText);
                     return;
                 }
 
                 const data = await response.json();
 
-                console.log('IbuB rejected documents data:', data);
+                console.log('Team Verifikasi rejected documents data:', data);
 
                 if (data.success) {
                     // Update last check time
                     if (data.current_time) {
                         rejectedLastCheckTime = data.current_time;
-                        localStorage.setItem('ibub_rejected_last_check_time', rejectedLastCheckTime);
+                        localStorage.setItem('team_verifikasi_rejected_last_check_time', rejectedLastCheckTime);
                     }
 
                     // If there are rejected documents
                     if (data.rejected_documents_count > 0 && data.rejected_documents.length > 0) {
                         // Filter out already shown notifications
                         const newRejectedToShow = data.rejected_documents.filter(doc => {
-                            const docKey = `ibub_rejected_doc_${doc.id}_shown`;
+                            const docKey = `team_verifikasi_rejected_doc_${doc.id}_shown`;
                             const shownTime = localStorage.getItem(docKey);
                             const now = Date.now();
                             
@@ -3379,11 +6410,11 @@
                         });
 
                         // Save shown notification IDs to localStorage
-                        localStorage.setItem('ibub_shown_rejected_notifications', JSON.stringify(Array.from(shownRejectedIds)));
+                        localStorage.setItem('team_verifikasi_shown_rejected_notifications', JSON.stringify(Array.from(shownRejectedIds)));
 
                         // Only show notification if we have new rejected documents
                         if (newRejectedToShow.length > 0) {
-                            console.log('Showing rejected document notifications for IbuB:', newRejectedToShow.length);
+                            console.log('Showing rejected document notifications for Team Verifikasi:', newRejectedToShow.length);
                             
                             // Show toast notification for each rejected document
                             newRejectedToShow.forEach((doc, index) => {
@@ -3400,50 +6431,50 @@
                             console.log('All rejected documents have already been shown recently');
                         }
                     } else {
-                        console.log('No new rejected documents for IbuB');
+                        console.log('No new rejected documents for Team Verifikasi');
                     }
                 } else {
-                    console.warn('IbuB rejected documents check returned unsuccessful:', data.message);
+                    console.warn('Team Verifikasi rejected documents check returned unsuccessful:', data.message);
                 }
             } catch (error) {
-                console.error('Error checking rejected documents for IbuB:', error);
+                console.error('Error checking rejected documents for Team Verifikasi:', error);
             }
         }
 
         // Check immediately on page load (with delay to ensure DOM is ready)
         setTimeout(() => {
-            console.log('IbuB: Running initial rejected documents check');
+            console.log('Team Verifikasi: Running initial rejected documents check');
             checkRejectedDocuments();
         }, 1500);
 
         // Poll every 30 seconds
         const pollInterval = setInterval(checkRejectedDocuments, 30000);
-        console.log('IbuB: Rejected documents polling started, interval:', pollInterval);
+        console.log('Team Verifikasi: Rejected documents polling started, interval:', pollInterval);
 
         // Also check when page becomes visible (user switches back to tab)
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
-                console.log('IbuB: Page visible, checking rejected documents');
+                console.log('Team Verifikasi: Page visible, checking rejected documents');
                 setTimeout(checkRejectedDocuments, 500);
             }
         });
 
         // Check when window gains focus
         window.addEventListener('focus', function() {
-            console.log('IbuB: Window focused, checking rejected documents');
+            console.log('Team Verifikasi: Window focused, checking rejected documents');
             setTimeout(checkRejectedDocuments, 500);
         });
 
         // Also check when page is fully loaded
         if (document.readyState === 'complete') {
             setTimeout(() => {
-                console.log('IbuB: Page complete, checking rejected documents');
+                console.log('Team Verifikasi: Page complete, checking rejected documents');
                 checkRejectedDocuments();
             }, 2000);
         } else {
             window.addEventListener('load', function() {
                 setTimeout(() => {
-                    console.log('IbuB: Page loaded, checking rejected documents');
+                    console.log('Team Verifikasi: Page loaded, checking rejected documents');
                     checkRejectedDocuments();
                 }, 2000);
             });
@@ -3592,7 +6623,7 @@ document.addEventListener('DOMContentLoaded', function() {
                       currentPathCheck.includes('/dokumensPerpajakan') ||
                       currentPathCheck.includes('/rekapan-perpajakan') ||
                       currentPathCheck.includes('/dokumensB') ||
-                      currentPathCheck.includes('/rekapan-ibuB') ||
+                      currentPathCheck.includes('/rekapan-Team Verifikasi') ||
                       currentPathCheck.includes('/documents/pembayaran') ||
                       currentPathCheck.includes('/documents/akutansi') ||
                       currentPathCheck.includes('/documents/perpajakan') ||
@@ -3663,6 +6694,33 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   console.log('Secondary sidebar setup complete');
+
+  // Profile Dropdown Toggle
+  const profileDropdownToggle = document.getElementById('profileDropdownToggle');
+  const profileDropdownMenu = document.getElementById('profileDropdownMenu');
+  
+  if (profileDropdownToggle && profileDropdownMenu) {
+    // Toggle dropdown on click
+    profileDropdownToggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      profileDropdownMenu.style.display = profileDropdownMenu.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!profileDropdownToggle.contains(e.target) && !profileDropdownMenu.contains(e.target)) {
+        profileDropdownMenu.style.display = 'none';
+      }
+    });
+
+    // Close dropdown when clicking on a menu item
+    const dropdownItems = profileDropdownMenu.querySelectorAll('.profile-dropdown-item');
+    dropdownItems.forEach(item => {
+      item.addEventListener('click', function() {
+        profileDropdownMenu.style.display = 'none';
+      });
+    });
+  }
 });
 
 // Global Function: Format Rupiah Input (Auto format with dots)
@@ -3738,8 +6796,1119 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   });
+
+  // Initialize Flatpickr for all date and datetime inputs with DD/MM/YYYY format
+  function initializeFlatpickrDatePickers() {
+    // Wait for Flatpickr to be loaded
+    if (typeof flatpickr === 'undefined') {
+      console.warn('Flatpickr is not loaded yet, retrying...');
+      setTimeout(initializeFlatpickrDatePickers, 100);
+      return;
+    }
+
+    // Find all date and datetime-local inputs
+    const dateInputs = document.querySelectorAll("input[type='date']");
+    const datetimeInputs = document.querySelectorAll("input[type='datetime-local']");
+    
+    // Convert all date inputs to text with Flatpickr
+    dateInputs.forEach(input => {
+      // Store original type
+      input.dataset.originalType = 'date';
+      
+      // Convert existing value from YYYY-MM-DD to DD/MM/YYYY if exists
+      let currentValue = input.value;
+      if (currentValue && /^\d{4}-\d{2}-\d{2}$/.test(currentValue)) {
+        const parts = currentValue.split('-');
+        currentValue = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      
+      // Change type to text and add placeholder
+      input.type = 'text';
+      input.placeholder = 'Pilih tanggal (dd/mm/yyyy)';
+      if (currentValue) {
+        input.value = currentValue;
+      }
+      
+      // Initialize Flatpickr for date inputs
+      flatpickr(input, {
+        dateFormat: "d/m/Y",
+        locale: "id",
+        allowInput: true,
+        placeholder: "dd/mm/yyyy",
+        parseDate: function(datestr, format) {
+          // Parse DD/MM/YYYY format
+          const parts = datestr.split('/');
+          if (parts.length === 3) {
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+          }
+          return null;
+        }
+      });
+    });
+
+    // Convert all datetime-local inputs to text with Flatpickr
+    datetimeInputs.forEach(input => {
+      // Store original type
+      input.dataset.originalType = 'datetime-local';
+      
+      // Convert existing value from YYYY-MM-DDTHH:MM to DD/MM/YYYY HH:MM if exists
+      let currentValue = input.value;
+      if (currentValue && /^\d{4}-\d{2}-\d{2}T/.test(currentValue)) {
+        const [datePart, timePart] = currentValue.split('T');
+        const parts = datePart.split('-');
+        const time = timePart ? timePart.substring(0, 5) : '00:00';
+        currentValue = `${parts[2]}/${parts[1]}/${parts[0]} ${time}`;
+      }
+      
+      // Change type to text and add placeholder
+      input.type = 'text';
+      input.placeholder = 'Pilih tanggal & waktu (dd/mm/yyyy hh:mm)';
+      if (currentValue) {
+        input.value = currentValue;
+      }
+      
+      // Initialize Flatpickr for datetime inputs
+      flatpickr(input, {
+        dateFormat: "d/m/Y H:i",
+        locale: "id",
+        enableTime: true,
+        time_24hr: false,
+        allowInput: true,
+        placeholder: "dd/mm/yyyy hh:mm",
+        parseDate: function(datestr, format) {
+          // Parse DD/MM/YYYY HH:MM format
+          const parts = datestr.split(' ');
+          if (parts.length === 2) {
+            const dateParts = parts[0].split('/');
+            const timeParts = parts[1].split(':');
+            if (dateParts.length === 3 && timeParts.length === 2) {
+              return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1]);
+            }
+          }
+          return null;
+        }
+      });
+    });
+
+    // Handle form submission - convert back to YYYY-MM-DD format
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        // Convert date inputs from DD/MM/YYYY back to YYYY-MM-DD for form submission
+        form.querySelectorAll("input[data-original-type='date'], input[name*='tanggal'][type='text']:not([name*='spp']):not([name*='datetime']):not([name*='masuk'])").forEach(input => {
+          if (input.value && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(input.value.trim())) {
+            const parts = input.value.trim().split('/');
+            if (parts.length === 3) {
+              const day = parts[0].padStart(2, '0');
+              const month = parts[1].padStart(2, '0');
+              const year = parts[2];
+              input.value = `${year}-${month}-${day}`;
+            }
+          }
+        });
+
+        // Convert datetime-local inputs from DD/MM/YYYY HH:MM back to YYYY-MM-DDTHH:MM for form submission
+        form.querySelectorAll("input[data-original-type='datetime-local'], input[name*='tanggal_spp'][type='text'], input[name*='tanggal_masuk'][type='text']").forEach(input => {
+          if (input.value && /^\d{1,2}\/\d{1,2}\/\d{4} \d{1,2}:\d{2}/.test(input.value.trim())) {
+            const [datePart, timePart] = input.value.trim().split(' ');
+            const parts = datePart.split('/');
+            if (parts.length === 3) {
+              const day = parts[0].padStart(2, '0');
+              const month = parts[1].padStart(2, '0');
+              const year = parts[2];
+              const time = timePart || '00:00';
+              input.value = `${year}-${month}-${day}T${time}`;
+            }
+          }
+        });
+      });
+    });
+  }
+
+  // Initialize when DOM is ready and Flatpickr is loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFlatpickrDatePickers);
+  } else {
+    // DOM is already ready, but wait a bit for Flatpickr to load
+    setTimeout(initializeFlatpickrDatePickers, 100);
+  }
 });
+</script>
+
+{{-- ===================================================
+     URGENCY NOTIFICATION WIDGET (Global – all roles)
+     Polls /api/documents/urgency/active every 60s.
+     Only shown to non-admin/non-owner roles who have
+     urgency-active documents assigned to them.
+     =================================================== --}}
+@php
+    $currentUserRole = strtolower(auth()->user()->role ?? '');
+    $isRecipientRole = in_array($currentUserRole, ['operator', 'team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran']);
+@endphp
+
+@if($isRecipientRole)
+<style>
+  /* Urgency Banner (recipient role) */
+  #urgencyGlobalBanner {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 99998;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    padding: 0;
+    box-shadow: none;
+    transform: translateY(-100%);
+    visibility: hidden;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), visibility 0s 0.4s;
+  }
+  #urgencyGlobalBanner.visible {
+    transform: translateY(0);
+    visibility: visible;
+    box-shadow: 0 4px 16px rgba(239,68,68,0.35);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), visibility 0s 0s;
+  }
+  #urgencyGlobalBanner .urgency-banner-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px; gap: 12px;
+  }
+  #urgencyGlobalBanner .urgency-banner-left {
+    display: flex; align-items: center; gap: 10px; flex: 1;
+  }
+  #urgencyGlobalBanner .urgency-banner-icon {
+    font-size: 20px; animation: urgencyPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes urgencyPulse {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.2); }
+  }
+  #urgencyGlobalBanner .urgency-banner-text {
+    font-size: 0.88rem; font-weight: 600; line-height: 1.4;
+  }
+  #urgencyGlobalBanner .urgency-banner-text strong { font-size: 1rem; }
+  #urgencyGlobalBanner .urgency-banner-links {
+    display: flex; gap: 8px; flex-shrink: 0;
+  }
+  #urgencyGlobalBanner .urgency-banner-link {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
+    color: #fff; border-radius: 6px; padding: 5px 12px;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    text-decoration: none; transition: all 0.2s;
+  }
+  #urgencyGlobalBanner .urgency-banner-link:hover { background: rgba(255,255,255,0.35); color: #fff; }
+  #urgencyGlobalBanner .urgency-banner-dismiss {
+    background: none; border: none; color: rgba(255,255,255,0.8);
+    font-size: 18px; cursor: pointer; line-height: 1; padding: 0 4px;
+    transition: color 0.2s;
+  }
+  #urgencyGlobalBanner .urgency-banner-dismiss:hover { color: #fff; }
+  /* Push main content down when banner is visible */
+  body.urgency-banner-visible { padding-top: 52px !important; }
+  /* Urgency badge in DataTable rows */
+  .urgency-row-badge {
+    display: inline-block;
+    background: #ef4444; color: #fff;
+    border-radius: 10px; padding: 2px 8px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.5px; margin-left: 4px;
+    vertical-align: middle; animation: urgencyPulse 2s infinite;
+  }
+</style>
+
+<div id="urgencyGlobalBanner">
+  <div class="urgency-banner-inner">
+    <div class="urgency-banner-left">
+      <span class="urgency-banner-icon">⚡</span>
+      <div class="urgency-banner-text">
+        <span id="urgencyBannerMsg">Anda memiliki <strong id="urgencyBannerCount">...</strong> dokumen yang memerlukan penyelesaian segera!</span><br>
+        <small id="urgencyBannerList" style="opacity:0.85;font-weight:400;"></small>
+      </div>
+    </div>
+    <div class="urgency-banner-links">
+      <a href="{{ url('/inbox') }}" class="urgency-banner-link">
+        <i class="fas fa-inbox"></i> Buka Inbox
+      </a>
+    </div>
+    <button class="urgency-banner-dismiss" onclick="dismissUrgencyBanner()" title="Tutup (muncul kembali jika ada urgency baru)">×</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const POLL_INTERVAL_MS = 60000;   // 60 seconds
+  const LS_KEY_DISMISSED_COUNT = 'urgency_dismissed_count';
+  const LS_KEY_DISMISSED_IDS   = 'urgency_dismissed_ids';
+  let urgencyPollTimer = null;
+
+  function getDismissedIds() {
+    try {
+      const raw = localStorage.getItem(LS_KEY_DISMISSED_IDS);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function dismissUrgencyBanner() {
+    // Store current urgency IDs so banner stays hidden until new ones arrive
+    const countEl = document.getElementById('urgencyBannerCount');
+    const currentCount = countEl ? countEl.textContent : '0';
+    localStorage.setItem(LS_KEY_DISMISSED_COUNT, currentCount);
+    // Also store the IDs of dismissed urgencies (set by last poll)
+    if (window._lastUrgencyIds) {
+      localStorage.setItem(LS_KEY_DISMISSED_IDS, JSON.stringify(window._lastUrgencyIds));
+    }
+    hideBanner();
+  }
+  window.dismissUrgencyBanner = dismissUrgencyBanner;
+
+  function shouldShowBanner(currentIds) {
+    const dismissedIds = getDismissedIds();
+    if (dismissedIds.length === 0) return true;
+    // Show banner if there are any NEW urgency IDs not in the dismissed set
+    const dismissedSet = new Set(dismissedIds);
+    for (let i = 0; i < currentIds.length; i++) {
+      if (!dismissedSet.has(currentIds[i])) return true;
+    }
+    return false;
+  }
+
+  function showBanner(count, list) {
+    const currentIds = list ? list.map(function(u) { return u.id; }) : [];
+    window._lastUrgencyIds = currentIds;
+
+    // Don't show if user dismissed these same urgencies
+    if (!shouldShowBanner(currentIds)) return;
+
+    const banner = document.getElementById('urgencyGlobalBanner');
+    const countEl = document.getElementById('urgencyBannerCount');
+    const listEl  = document.getElementById('urgencyBannerList');
+    if (!banner) return;
+    countEl.textContent = count;
+    if (list && list.length > 0) {
+      const preview = list.slice(0, 3).map(function(u) { return u.nomor_agenda; }).join(', ');
+      listEl.textContent = 'Dokumen: ' + preview + (list.length > 3 ? ' +' + (list.length - 3) + ' lainnya' : '');
+    } else {
+      listEl.textContent = '';
+    }
+    banner.classList.add('visible');
+    document.body.classList.add('urgency-banner-visible');
+  }
+
+  function hideBanner() {
+    const banner = document.getElementById('urgencyGlobalBanner');
+    if (banner) banner.classList.remove('visible');
+    document.body.classList.remove('urgency-banner-visible');
+  }
+
+  function pollUrgencies() {
+    fetch('/api/documents/urgency/active', {
+      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (data && data.success && data.count > 0) {
+        showBanner(data.count, data.urgencies);
+      } else {
+        // No urgencies at all — hide banner and clear dismissed state
+        hideBanner();
+        localStorage.removeItem(LS_KEY_DISMISSED_COUNT);
+        localStorage.removeItem(LS_KEY_DISMISSED_IDS);
+      }
+    })
+    .catch(function() {}); // fail silently
+  }
+
+  // Start polling after page is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initial poll after 2 seconds so page can finish loading first
+    setTimeout(pollUrgencies, 2000);
+    // Then poll every 60 seconds
+    urgencyPollTimer = setInterval(pollUrgencies, POLL_INTERVAL_MS);
+  });
+})();
+</script>
+@endif
+
+{{-- ===================================================
+     DRAG-TO-SCROLL: Global horizontal + vertical drag scroll
+     Works on DataTable scroll bodies + .table-responsive
+     =================================================== --}}
+<style>
+  /* Grab cursor on all scroll containers */
+  .dataTables_scrollBody,
+  .table-responsive,
+  .table-wrapper {
+    cursor: grab;
+    scroll-behavior: auto !important;
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  .dataTables_scrollBody.is-dragging,
+  .table-responsive.is-dragging,
+  .table-wrapper.is-dragging {
+    cursor: grabbing !important;
+    user-select: none !important;
+    will-change: scroll-position;
+  }
+  /* Kill ALL transitions inside table during drag — prevents hover lag */
+  .is-dragging * {
+    transition: none !important;
+    pointer-events: none !important;
+  }
+</style>
+
+<script>
+(function () {
+  const DRAG_THRESHOLD = 5;   // px – below this = click, above = drag
+  const SPEED_FACTOR   = 1.4; // scroll multiplier for responsiveness
+
+  const SCROLL_SELECTORS = [
+    '.dataTables_scrollBody',
+    '.table-responsive',
+    '.table-wrapper',
+  ];
+
+  function initDragScroll(el) {
+    if (el._dragScrollInited) return;
+    el._dragScrollInited = true;
+
+    let isDragging = false;
+    let didDrag    = false;
+    let startX     = 0;
+    let startY     = 0;
+    let startScrollLeft = 0;
+    let startScrollTop  = 0;
+
+    // ── Mouse events (rAF-optimised) ───────────────────────────
+    var rafId = 0;
+    var lastMoveX = 0;
+    var lastMoveY = 0;
+
+    el.addEventListener('mousedown', function (e) {
+      if (e.button !== 0) return;
+      if (e.target.closest('a, button, input, select, textarea, label')) return;
+      isDragging = true;
+      didDrag    = false;
+      startX     = e.clientX;
+      startY     = e.clientY;
+      startScrollLeft = el.scrollLeft;
+      startScrollTop  = el.scrollTop;
+      el.style.willChange = 'scroll-position';
+      e.stopPropagation();
+    }, { passive: true });
+
+    el.addEventListener('mousemove', function (e) {
+      if (!isDragging) return;
+      var deltaX = e.clientX - startX;
+      var deltaY = e.clientY - startY;
+      if (!didDrag && Math.abs(deltaX) < DRAG_THRESHOLD && Math.abs(deltaY) < DRAG_THRESHOLD) return;
+      if (!didDrag) {
+        didDrag = true;
+        el.classList.add('is-dragging');
+      }
+      lastMoveX = deltaX;
+      lastMoveY = deltaY;
+      if (!rafId) {
+        rafId = requestAnimationFrame(function () {
+          el.scrollLeft = startScrollLeft - lastMoveX * SPEED_FACTOR;
+          el.scrollTop  = startScrollTop  - lastMoveY * SPEED_FACTOR;
+          rafId = 0;
+        });
+      }
+      e.preventDefault();
+    });
+
+    el.addEventListener('mouseup', function (e) {
+      if (!isDragging) return;
+      isDragging = false;
+      el.classList.remove('is-dragging');
+      el.style.willChange = 'auto';
+      if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+      if (didDrag) {
+        e.stopPropagation();
+        var blocker = function (ev) {
+          ev.stopPropagation();
+          ev.preventDefault();
+          el.removeEventListener('click', blocker, true);
+        };
+        el.addEventListener('click', blocker, true);
+      }
+      didDrag = false;
+    });
+
+    el.addEventListener('mouseleave', function () {
+      if (isDragging) {
+        isDragging = false;
+        didDrag    = false;
+        el.classList.remove('is-dragging');
+        el.style.willChange = 'auto';
+        if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+      }
+    });
+
+    // ── Touch events ──────────────────────────────────────────
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchScrollLeft = 0;
+    let touchScrollTop  = 0;
+
+    el.addEventListener('touchstart', function (e) {
+      touchStartX     = e.touches[0].clientX;
+      touchStartY     = e.touches[0].clientY;
+      touchScrollLeft = el.scrollLeft;
+      touchScrollTop  = el.scrollTop;
+    }, { passive: true });
+
+    el.addEventListener('touchmove', function (e) {
+      const deltaX = e.touches[0].clientX - touchStartX;
+      const deltaY = e.touches[0].clientY - touchStartY;
+      if (Math.abs(deltaX) < DRAG_THRESHOLD && Math.abs(deltaY) < DRAG_THRESHOLD) return;
+      el.scrollLeft = touchScrollLeft - deltaX * SPEED_FACTOR;
+      el.scrollTop  = touchScrollTop  - deltaY * SPEED_FACTOR;
+    }, { passive: true });
+  }
+
+  function activateOnAllContainers() {
+    SCROLL_SELECTORS.forEach(function (selector) {
+      document.querySelectorAll(selector).forEach(function (el) {
+        // Activate if element has scrollable content in any direction
+        const hasHScroll = el.scrollWidth  > el.clientWidth  + 5;
+        const hasVScroll = el.scrollHeight > el.clientHeight + 5;
+        if (hasHScroll || hasVScroll) {
+          initDragScroll(el);
+        }
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    activateOnAllContainers();
+
+    const mo = new MutationObserver(function () {
+      activateOnAllContainers();
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    if (window.jQuery) {
+      jQuery(document).on('draw.dt', function () {
+        activateOnAllContainers();
+      });
+    }
+  });
+})();
+</script>
+
+{{-- ===================================================
+     FULLSCREEN MODE: global fullscreen toggle
+     Auto-injects button next to .btn-customize-columns-inline
+     =================================================== --}}
+<style>
+  /* ── Fullscreen button styles ── */
+  .btn-fullscreen-toggle {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(8, 62, 64, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .btn-fullscreen-toggle:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+    color: white;
+  }
+  .btn-fullscreen-toggle.active {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);
+  }
+
+  /* ── Tambah Dokumen button (fullscreen only) ── */
+  .btn-tambah-dokumen-fs {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(8, 62, 64, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    white-space: nowrap;
+    text-decoration: none;
+    margin-left: 8px;
+  }
+  .btn-tambah-dokumen-fs:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
+    color: white;
+  }
+
+  /* ── Container when fullscreen ── */
+  body.is-fullscreen .fs-content-area {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9990 !important;
+    overflow: auto !important;
+    background: #F8FAFC !important;
+    padding: 10px 14px !important;
+    box-sizing: border-box !important;
+  }
+  html.dark body.is-fullscreen .fs-content-area {
+    background: #0f172a !important;
+  }
+  /* ── Sidebar/secondary nav — smooth hide on fullscreen ── */
+  .sidebar,
+  .secondary-sidebar {
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+  body.is-fullscreen .sidebar,
+  body.is-fullscreen .secondary-sidebar {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+  }
+  .btn-fullscreen-toggle:focus-visible {
+    outline: 2px solid #f59e0b;
+  }
+
+  /* ── Fullscreen transition overlay (smooth fade) ── */
+  body.fullscreen-transitioning .sidebar,
+  body.fullscreen-transitioning .secondary-sidebar {
+    display: block !important; /* keep in DOM for transition to work */
+  }
+</style>
+
+<script>
+(function () {
+  var FS_KEY            = 'agenda_fs_active'; // sessionStorage key
+  let isFullscreen      = false;
+  let fsArea            = null;
+  let hiddenElements    = [];   // [{el, prev}] – page sections above filter
+  let hiddenSidebars    = [];   // [{el, prev}] – sidebars
+  let savedAreaStyles   = {};   // saved inline styles of the content area
+
+  // ── Find content wrapper (.content / main) ─────────────────────
+  function findContentArea(btn) {
+    let el = btn;
+    for (let i = 0; i < 15; i++) {
+      el = el.parentElement;
+      if (!el) break;
+      if (
+        el.classList.contains('content') ||
+        el.classList.contains('main-content') ||
+        el.tagName === 'MAIN'
+      ) return el;
+    }
+    return document.querySelector('.content') || null;
+  }
+
+  // ── Direct child of contentArea that wraps the filter row ─────
+  function findFilterAnchor(fsBtn, contentArea) {
+    let el = fsBtn;
+    while (el && el.parentElement !== contentArea) {
+      el = el.parentElement;
+    }
+    return el;
+  }
+
+  // ── Hide siblings above the filter-row anchor ─────────────────
+  function hideAbove(anchor, contentArea) {
+    hiddenElements = [];
+    let child = contentArea.firstElementChild;
+    while (child && child !== anchor) {
+      hiddenElements.push({ el: child, prev: child.style.display });
+      child.style.display = 'none';
+      child = child.nextElementSibling;
+    }
+  }
+
+  // ── Hide sidebars via JS (covers all class-name variations) ───
+  function hideSidebars() {
+    hiddenSidebars = [];
+    const selectors = [
+      '.sidebar',
+      '.secondary-sidebar',
+      '.side-nav',
+      '[class*="sidebar"]',
+      '[class*="side-bar"]',
+    ];
+    const seen = new WeakSet();
+    selectors.forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (el) {
+        if (seen.has(el)) return;
+        seen.add(el);
+        // Skip if it's inside the content area (don't hide content children)
+        if (fsArea && fsArea.contains(el)) return;
+        hiddenSidebars.push({ el: el, prev: el.style.display });
+        el.style.display = 'none';
+      });
+    });
+  }
+
+  // ── Save & override content area positioning ──────────────────
+  function lockContentArea(area) {
+    savedAreaStyles = {
+      position:   area.style.position,
+      top:        area.style.top,
+      left:       area.style.left,
+      width:      area.style.width,
+      height:     area.style.height,
+      zIndex:     area.style.zIndex,
+      overflow:   area.style.overflow,
+      background: area.style.background,
+      padding:    area.style.padding,
+      margin:     area.style.margin,
+      marginLeft: area.style.marginLeft,
+      boxSizing:  area.style.boxSizing,
+    };
+    const bg = document.documentElement.classList.contains('dark')
+      ? '#0f172a' : '#F8FAFC';
+    Object.assign(area.style, {
+      position:   'fixed',
+      top:        '0',
+      left:       '0',
+      width:      '100vw',
+      height:     '100vh',
+      zIndex:     '9990',
+      overflow:   'auto',
+      background: bg,
+      padding:    '10px 14px',
+      margin:     '0',
+      marginLeft: '0',
+      boxSizing:  'border-box',
+    });
+  }
+
+  // ── Restore content area ──────────────────────────────────────
+  function unlockContentArea(area) {
+    Object.assign(area.style, savedAreaStyles);
+    savedAreaStyles = {};
+  }
+
+  // ── Restore all hidden elements ───────────────────────────────
+  function restoreAll() {
+    hiddenElements.forEach(function (item) {
+      item.el.style.display = item.prev || '';
+    });
+    hiddenSidebars.forEach(function (item) {
+      item.el.style.display = item.prev || '';
+    });
+    hiddenElements = [];
+    hiddenSidebars = [];
+  }
+
+  // ── Enter fullscreen ──────────────────────────────────────────
+  function enterFullscreen(fsBtn) {
+    isFullscreen = true;
+    try { sessionStorage.setItem(FS_KEY, '1'); } catch(e) {}
+
+    document.body.classList.add('fullscreen-transitioning');
+
+    fsArea = findContentArea(fsBtn);
+    if (fsArea) {
+      const anchor = findFilterAnchor(fsBtn, fsArea);
+      if (anchor) hideAbove(anchor, fsArea);
+      lockContentArea(fsArea);          // ← inline fixed positioning
+    }
+
+    hideSidebars();                     // ← hide all sidebars via JS
+
+    document.body.classList.add('is-fullscreen');
+    document.body.style.overflow = 'hidden';
+
+    setTimeout(function () {
+      document.body.classList.remove('fullscreen-transitioning');
+    }, 250);
+
+    fsBtn.classList.add('active');
+    fsBtn.innerHTML = '<i class="fas fa-compress"></i> Keluar Fullscreen';
+    fsBtn.title = 'Keluar dari mode fullscreen (Esc)';
+
+    // ── Inject "Tambah Dokumen" button only for operator role ──
+    var _mod = (window._userModule || '').toLowerCase();
+    var _noTambah = ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
+    if (_noTambah.indexOf(_mod) === -1 && !document.getElementById('btn-tambah-dokumen-fs')) {
+      var tambahBtn = document.createElement('button');
+      tambahBtn.type = 'button';
+      tambahBtn.id = 'btn-tambah-dokumen-fs';
+      tambahBtn.className = 'btn-tambah-dokumen-fs';
+      tambahBtn.innerHTML = '✚ Tambah Dokumen';
+      tambahBtn.title = 'Tambah dokumen baru';
+      tambahBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        try {
+          sessionStorage.setItem('return_to_fullscreen', '1');
+          sessionStorage.setItem('return_url', window.location.pathname + window.location.search);
+        } catch(err) {}
+        window.location.href = '/documents/create';
+      });
+      fsBtn.parentNode.insertBefore(tambahBtn, fsBtn.nextSibling);
+    }
+  }
+
+  // ── Exit fullscreen ───────────────────────────────────────────
+  function exitFullscreen() {
+    if (!isFullscreen) return;
+    isFullscreen = false;
+    try { sessionStorage.removeItem(FS_KEY); } catch(e) {}
+
+    document.body.classList.add('fullscreen-transitioning');
+    document.body.classList.remove('is-fullscreen');
+
+    // Wait for CSS transition then clean up
+    setTimeout(function () {
+      document.body.classList.remove('fullscreen-transitioning');
+      restoreAll();
+
+      if (fsArea) {
+        unlockContentArea(fsArea);
+        fsArea = null;
+      }
+
+      document.body.style.overflow = '';
+    }, 250);
+
+    // ── Remove "Tambah Dokumen" button ──
+    var tambahBtn = document.getElementById('btn-tambah-dokumen-fs');
+    if (tambahBtn) tambahBtn.remove();
+
+    document.querySelectorAll('.btn-fullscreen-toggle').forEach(function (b) {
+      b.classList.remove('active');
+      b.innerHTML = '<i class="fas fa-expand"></i> Fullscreen';
+      b.title = 'Tampilan layar penuh (Ctrl+Shift+F)';
+    });
+  }
+
+  function toggleFullscreen(btn) {
+    isFullscreen ? exitFullscreen() : enterFullscreen(btn);
+  }
+
+  // ── Inject button ─────────────────────────────────────────────
+  function injectFullscreenButton(customizeBtn) {
+    if (customizeBtn._fullscreenInjected) return;
+    customizeBtn._fullscreenInjected = true;
+
+    const fsBtn = document.createElement('button');
+    fsBtn.type      = 'button';
+    fsBtn.className = 'btn-fullscreen-toggle';
+    fsBtn.innerHTML = '<i class="fas fa-expand"></i> Fullscreen';
+    fsBtn.title     = 'Tampilan layar penuh (Ctrl+Shift+F)';
+
+    fsBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      toggleFullscreen(fsBtn);
+    });
+
+    customizeBtn.parentNode.insertBefore(fsBtn, customizeBtn.nextSibling);
+  }
+
+  function scanAndInject() {
+    document.querySelectorAll('.btn-customize-columns-inline').forEach(injectFullscreenButton);
+  }
+
+  // ── Keyboard shortcuts ────────────────────────────────────────
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && isFullscreen) {
+      exitFullscreen();
+      return;
+    }
+    if (e.key === 'F' && e.ctrlKey && e.shiftKey) {
+      e.preventDefault();
+      const fsBtn = document.querySelector('.btn-fullscreen-toggle');
+      if (fsBtn) toggleFullscreen(fsBtn);
+    }
+
+    // Ctrl+F → fokus ke kolom pencarian di semua role
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      // Jangan override jika user sedang mengetik di input/textarea
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      // Cari modal terbuka — jika ada, biarkan browser/modal yg handle
+      const anyModalOpen = document.querySelector('.modal.show');
+      if (anyModalOpen) return;
+
+      // Cari search input — urutan prioritas sesuai ID di berbagai role view
+      const searchInput =
+        document.getElementById('searchInput') ||
+        document.getElementById('search') ||
+        document.querySelector('input[name="search"]') ||
+        document.querySelector('input[type="search"]') ||
+        document.querySelector('.search-input[type="text"]');
+
+      if (!searchInput) return; // tidak ada search input di halaman ini
+
+      e.preventDefault(); // cegah browser search bawaan
+
+      // Scroll smooth ke input
+      searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      setTimeout(function () {
+        searchInput.focus();
+        searchInput.select();
+
+        // Efek highlight singkat (warna utama tema)
+        searchInput.style.transition = 'box-shadow 0.2s ease, border-color 0.2s ease';
+        searchInput.style.boxShadow  = '0 0 0 3px rgba(8, 62, 64, 0.35)';
+        searchInput.style.borderColor = '#083E40';
+        setTimeout(function () {
+          searchInput.style.boxShadow  = '';
+          searchInput.style.borderColor = '';
+        }, 1500);
+      }, 80);
+    }
+
+    // Ctrl+Z → Back ke halaman sebelumnya (Simulasi tombol Back Browser) di semua role
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+      // Periksa apakah user sedang mengetik sesuatu di input/textarea
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') {
+        // Biarkan default browser behavior (Undo text)
+        return;
+      }
+      e.preventDefault(); // Cegah fungsi undo bawaan browser di luar input
+      window.history.back();
+    }
+  });
+
+
+  // ── Restore fullscreen state after filter/reload ─────────────
+  function restoreFullscreenIfNeeded() {
+    // Check ?fullscreen=1 URL param (from redirect after document creation)
+    try {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('fullscreen') === '1') {
+        sessionStorage.setItem(FS_KEY, '1');
+        params.delete('fullscreen');
+        var newUrl = window.location.pathname +
+                     (params.toString() ? '?' + params.toString() : '');
+        window.history.replaceState({}, '', newUrl);
+      }
+    } catch(e) {}
+
+    let saved = false;
+    try { saved = sessionStorage.getItem(FS_KEY) === '1'; } catch(e) {}
+    if (!saved) return;
+
+    // Wait for the fullscreen button to be injected before restoring
+    const fsBtn = document.querySelector('.btn-fullscreen-toggle');
+    if (fsBtn) {
+      enterFullscreen(fsBtn);
+    } else {
+      // Button not yet injected — wait a tick and retry
+      setTimeout(restoreFullscreenIfNeeded, 50);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    scanAndInject();
+    const mo = new MutationObserver(scanAndInject);
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    // Restore fullscreen after page reload (filter/pagination/refresh)
+    restoreFullscreenIfNeeded();
+  });
+})();
+</script>
+
+{{-- ===================================================
+     GLOBAL PERFORMANCE CSS: micro-animations, smooth scroll,
+     GPU hints, skeleton loading, button feedback
+     =================================================== --}}
+<style>
+  /* ── Smooth page scroll (except table containers) ── */
+  html { scroll-behavior: smooth; }
+
+  /* ── Button micro-animations ── */
+  button,
+  .btn,
+  [role="button"] {
+    transition: transform 0.1s ease,
+                opacity 0.1s ease,
+                box-shadow 0.15s ease,
+                background 0.2s ease,
+                color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden;
+  }
+
+  button:active:not(:disabled),
+  .btn:active:not(:disabled),
+  [role="button"]:active:not(:disabled) {
+    transform: scale(0.97);
+    opacity: 0.9;
+  }
+
+  /* Subtle ripple flash on click */
+  button::after,
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.18);
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  button:active::after,
+  .btn:active::after {
+    opacity: 1;
+    transition: none;
+  }
+
+  /* ── GPU hints for dynamic elements ── */
+  .modal,
+  .dropdown-menu,
+  .tooltip,
+  .popover,
+  .notification-toast,
+  .global-notification-toast {
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  /* ── Smooth transitions for status/navigation ── */
+  .badge,
+  .status-indicator,
+  .nav-item,
+  .nav-link,
+  .sidebar a,
+  .sidebar .nav-link,
+  .sidebar .menu-item {
+    transition: background-color 0.15s ease,
+                color 0.15s ease,
+                opacity 0.15s ease;
+  }
+
+  /* ── DataTable row hover — GPU-friendly ── */
+  .dataTables_wrapper tbody tr {
+    transition: background-color 0.12s ease;
+  }
+
+  /* ── DataTable skeleton shimmer ── */
+  @keyframes skeleton-shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position: 600px 0; }
+  }
+
+  .dt-skeleton-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 5;
+    background: rgba(255,255,255,0.85);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .dt-skeleton-overlay.visible { opacity: 1; }
+
+  html.dark .dt-skeleton-overlay {
+    background: rgba(15,23,42,0.85);
+  }
+
+  .dt-skeleton-row {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 600px 100%;
+    animation: skeleton-shimmer 1.5s infinite linear;
+    border-radius: 6px;
+    height: 38px;
+    min-width: 100%;
+  }
+  html.dark .dt-skeleton-row {
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 600px 100%;
+  }
+
+  /* Fade-in after data loads */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .dt-data-loaded tbody tr {
+    animation: fadeInUp 0.2s ease forwards;
+  }
+</style>
+
+{{-- ===================================================
+     DATATABLE SKELETON LOADING: show shimmer during AJAX
+     =================================================== --}}
+<script>
+(function () {
+  if (!window.jQuery) return;
+
+  function createSkeleton(wrapper) {
+    if (wrapper.querySelector('.dt-skeleton-overlay')) return;
+    var body = wrapper.querySelector('.dataTables_scrollBody') ||
+               wrapper.querySelector('tbody');
+    if (!body) return;
+    body.style.position = 'relative';
+
+    var overlay = document.createElement('div');
+    overlay.className = 'dt-skeleton-overlay';
+    for (var i = 0; i < 6; i++) {
+      var row = document.createElement('div');
+      row.className = 'dt-skeleton-row';
+      overlay.appendChild(row);
+    }
+    body.appendChild(overlay);
+    // Trigger reflow then show
+    overlay.offsetHeight;
+    overlay.classList.add('visible');
+  }
+
+  function removeSkeleton(wrapper) {
+    var overlay = wrapper.querySelector('.dt-skeleton-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('visible');
+    setTimeout(function () { overlay.remove(); }, 150);
+    wrapper.classList.add('dt-data-loaded');
+    setTimeout(function () { wrapper.classList.remove('dt-data-loaded'); }, 300);
+  }
+
+  jQuery(document).on('preXhr.dt', function (e, settings) {
+    var wrapper = jQuery(settings.nTableWrapper)[0];
+    if (wrapper) createSkeleton(wrapper);
+  });
+
+  jQuery(document).on('xhr.dt', function (e, settings) {
+    var wrapper = jQuery(settings.nTableWrapper)[0];
+    if (wrapper) {
+      // Small delay so skeleton doesn't flash for very fast requests
+      setTimeout(function () { removeSkeleton(wrapper); }, 100);
+    }
+  });
+})();
 </script>
 
 </body>
 </html>
+
+
+
+
+
+
+

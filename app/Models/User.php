@@ -15,25 +15,64 @@ final class User extends Authenticatable
 
     public const ROLES = [
         'Admin' => 'Admin',
-        'IbuA' => 'Ibu A',
-        'IbuB' => 'Ibu B',
+        'owner' => 'Owner',
+        'programmer' => 'Programmer',  // Special role for developer/programmer operations
+        'operator' => 'Operator',  // Standardized from Operator/Ibu Tarapul
+        'team_verifikasi' => 'Team Verifikasi',  // Standardized from Team Verifikasi/Verifikasi
         'Pembayaran' => 'Pembayaran',
-        'Akutansi' => 'Akutansi',
+        'pembayaran' => 'Pembayaran',
+        'Akutansi' => 'Akuntansi',
+        'akutansi' => 'Akuntansi',
         'Perpajakan' => 'Perpajakan',
-        'Verifikasi' => 'Verifikasi',
+        'perpajakan' => 'Perpajakan',
+        // Legacy role names for backward compatibility
+        'operator' => 'Operator',
+        'operator' => 'Operator',
+        'team_verifikasi' => 'Team Verifikasi',
+        'verifikasi' => 'Team Verifikasi',
+        // Bagian roles
+        'bagian_akn' => 'Bagian AKN',
+        'bagian_dpm' => 'Bagian DPM',
+        'bagian_kpl' => 'Bagian KPL',
+        'bagian_pmo' => 'Bagian PMO',
+        'bagian_sdm' => 'Bagian SDM',
+        'bagian_skh' => 'Bagian SKH',
+        'bagian_tan' => 'Bagian TAN',
+        'bagian_tep' => 'Bagian TEP',
     ];
 
     public const DASHBOARD_ROUTES = [
-        'Admin' => '/owner/dashboard',
-        'owner' => '/owner/dashboard',
-        'Owner' => '/owner/dashboard',
-        'IbuA' => '/dashboard',
-        'IbuB' => '/dashboard/verifikasi',
+        'Admin' => '/owner/home',
+        'owner' => '/owner/home',
+        'Owner' => '/owner/home',
+        'programmer' => '/programmer/dashboard',  // Programmer dashboard
+        // New standardized role names
+        'Operator' => '/documents',
+        'operator' => '/documents',
+        'team_verifikasi' => '/documents/verifikasi',
+        // Legacy role names for backward compatibility
+        'operator' => '/documents',
+        'operator' => '/documents',
+        'team_verifikasi' => '/documents/verifikasi',
+        'verifikasi' => '/documents/verifikasi',
+        // Other roles
         'Pembayaran' => '/dashboard/pembayaran',
+        'pembayaran' => '/dashboard/pembayaran',
         'Akutansi' => '/dashboard/akutansi',
+        'akutansi' => '/dashboard/akutansi',
         'Perpajakan' => '/dashboard/perpajakan',
-        'Verifikasi' => '/dashboard/verifikasi-role',
+        'perpajakan' => '/dashboard/perpajakan',
+        // Bagian dashboard routes
+        'bagian_akn' => '/bagian/dashboard',
+        'bagian_dpm' => '/bagian/dashboard',
+        'bagian_kpl' => '/bagian/dashboard',
+        'bagian_pmo' => '/bagian/dashboard',
+        'bagian_sdm' => '/bagian/dashboard',
+        'bagian_skh' => '/bagian/dashboard',
+        'bagian_tan' => '/bagian/dashboard',
+        'bagian_tep' => '/bagian/dashboard',
     ];
+
 
     /**
      * The attributes that are mass assignable.
@@ -46,8 +85,15 @@ final class User extends Authenticatable
         'email',
         'password',
         'role',
+        'bagian_code',
+        'phone_number',
         'table_columns_preferences',
+        'two_factor_enabled',
+        'two_factor_secret',
+        'two_factor_confirmed_at',
+        'two_factor_recovery_codes',
     ];
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -57,6 +103,8 @@ final class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -70,7 +118,37 @@ final class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'table_columns_preferences' => 'array',
+            'two_factor_enabled' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Check if user has 2FA enabled
+     */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_enabled && $this->two_factor_secret && $this->two_factor_confirmed_at;
+    }
+
+    /**
+     * Get decrypted two factor secret
+     */
+    public function getTwoFactorSecret(): ?string
+    {
+        return $this->two_factor_secret ? decrypt($this->two_factor_secret) : null;
+    }
+
+    /**
+     * Get decrypted recovery codes
+     */
+    public function getRecoveryCodes(): array
+    {
+        if (!$this->two_factor_recovery_codes) {
+            return [];
+        }
+
+        return json_decode(decrypt($this->two_factor_recovery_codes), true) ?? [];
     }
 
     /**
@@ -78,7 +156,7 @@ final class User extends Authenticatable
      */
     public function getDashboardRoute(): string
     {
-        return self::DASHBOARD_ROUTES[$this->role] ?? self::DASHBOARD_ROUTES['IbuA'];
+        return self::DASHBOARD_ROUTES[$this->role] ?? self::DASHBOARD_ROUTES['operator'];
     }
 
     /**
@@ -119,8 +197,14 @@ final class User extends Authenticatable
     public static function getRoleOptions(): array
     {
         return collect(self::ROLES)
-            ->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])
+            ->map(fn(string $label, string $value) => ['value' => $value, 'label' => $label])
             ->values()
             ->all();
     }
 }
+
+
+
+
+
+

@@ -879,9 +879,9 @@
                                                     'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
                                                     'proses_perpajakan' => 'Diproses Team Perpajakan',
                                                     'proses_akutansi' => 'Diproses Team Akutansi',
-                                                    'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
-                                                    'proses_ibub' => 'Diproses Ibu Yuni',
-                                                    'pending_approval_ibub' => 'Menunggu Persetujuan Ibu Yuni',
+                                                    'sent_to_team_verifikasi' => 'Terkirim ke Team Verifikasi',
+                                                    'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
+                                                    'pending_approval_team_verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
                                                     'menunggu_verifikasi' => 'Menunggu Verifikasi',
                                                     'draft' => 'Draft',
                                                 ];
@@ -948,6 +948,7 @@
           <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25</option>
           <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
           <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
+          <option value="all" {{ $perPage >= 999999 ? 'selected' : '' }}>Semua</option>
         </select>
       </div>
     </div>
@@ -1339,3 +1340,7 @@
         }
     </script>
 @endsection
+
+
+
+

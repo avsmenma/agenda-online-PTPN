@@ -30,7 +30,7 @@ class SecurityHeaders
                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " .
                "img-src 'self' data: https:; " .
                "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; " .
-               "connect-src 'self' https://*.pusher.com wss://*.pusher.com; " .
+               "connect-src 'self' https://*.pusher.com wss://*.pusher.com https://cdn.jsdelivr.net; " .
                "frame-src 'self'; " .
                "object-src 'none'; " .
                "base-uri 'self'; " .
@@ -45,4 +45,9 @@ class SecurityHeaders
         return $response;
     }
 }
+
+
+
+
+
 

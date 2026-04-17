@@ -7,6 +7,9 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use App\Models\User;
 
 final class LoginRequest extends FormRequest
@@ -28,7 +31,7 @@ final class LoginRequest extends FormRequest
     {
         return [
             'username' => ['required', 'string', 'max:255'],
-            'password' => ['required', 'string', 'min:6'],
+            'password' => ['required', 'string', 'min:8'],
         ];
     }
 
@@ -45,7 +48,7 @@ final class LoginRequest extends FormRequest
             'username.max' => 'Username maksimal 255 karakter',
             'password.required' => 'Password wajib diisi',
             'password.string' => 'Password harus berupa teks',
-            'password.min' => 'Password minimal 6 karakter',
+            'password.min' => 'Password minimal 8 karakter',
         ];
     }
 
@@ -73,24 +76,62 @@ final class LoginRequest extends FormRequest
     }
 
     /**
+     * Ensure the login request is not rate limited.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function ensureIsNotRateLimited(): void
+    {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+            return;
+        }
+
+        $seconds = RateLimiter::availableIn($this->throttleKey());
+
+        throw ValidationException::withMessages([
+            'username' => "Terlalu banyak percobaan login. Silakan coba lagi dalam {$seconds} detik.",
+        ]);
+    }
+
+    /**
+     * Get the rate limiting throttle key for the request.
+     */
+    public function throttleKey(): string
+    {
+        return Str::transliterate(
+            Str::lower($this->string('username')) . '|' . $this->ip()
+        );
+    }
+
+    /**
      * Attempt to authenticate the request's credentials.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function authenticate(): void
     {
+        $this->ensureIsNotRateLimited();
+
         $credentials = $this->getCredentials();
         
-        // Find user by username instead of email
-        $user = User::where('username', $credentials['username'])->first();
+        // Find user by username OR email
+        $loginField = $credentials['username'];
+        $user = User::where(function($query) use ($loginField) {
+            $query->where('username', $loginField)
+                  ->orWhere('email', $loginField);
+        })->first();
         
         // Check if user exists and password matches
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            RateLimiter::hit($this->throttleKey(), 300); // Block selama 5 menit setelah terlalu banyak percobaan
+
+            throw ValidationException::withMessages([
                 'username' => __('auth.failed'),
             ]);
         }
         
+        RateLimiter::clear($this->throttleKey());
+
         // Log in the user
         Auth::login($user, $this->boolean('remember'));
         

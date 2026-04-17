@@ -19,31 +19,111 @@ class OwnerDashboardController extends Controller
     public function index(Request $request)
     {
         // Get paginated documents with latest status and apply search filter
-        $perPage = $request->get('per_page', 10);
-        $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        $perPage = $request->get('per_page', session('owner_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['owner_per_page' => $perPage]);
 
         $documents = $this->getDocumentsWithTracking($request, $perPage);
+
+        // AJAX request: return JSON for live filtering (no page refresh)
+        if ($request->ajax() || $request->wantsJson()) {
+            $response = [
+                'success' => true,
+                'documents' => array_values($documents->items()),
+                'pagination' => [
+                    'current_page' => $documents->currentPage(),
+                    'last_page' => $documents->lastPage(),
+                    'per_page' => $documents->perPage(),
+                    'total' => $documents->total(),
+                    'from' => $documents->firstItem(),
+                    'to' => $documents->lastItem(),
+                ],
+            ];
+
+            // Include bagian statistics when a bagian filter is active
+            if ($request->has('filter_bagian') && !empty($request->filter_bagian)) {
+                $bagian = $request->filter_bagian;
+                $bagianQuery = Dokumen::where('bagian', $bagian);
+
+                $bagianTotal = (clone $bagianQuery)->count();
+
+                $bagianSudahDibayar = (clone $bagianQuery)->where(function ($q) {
+                    $q->where('status_pembayaran', 'sudah_dibayar')
+                        ->orWhereNotNull('tanggal_dibayar');
+                })->count();
+
+                $bagianSiapDibayar = (clone $bagianQuery)->where('status_pembayaran', 'siap_dibayar')
+                    ->whereNull('tanggal_dibayar')
+                    ->count();
+
+                $bagianBelumSiapBayar = $bagianTotal - $bagianSudahDibayar - $bagianSiapDibayar;
+
+                $response['bagian_stats'] = [
+                    'bagian_name' => $bagian,
+                    'total' => $bagianTotal,
+                    'belum_siap_bayar' => $bagianBelumSiapBayar,
+                    'siap_dibayar' => $bagianSiapDibayar,
+                    'sudah_dibayar' => $bagianSudahDibayar,
+                ];
+            }
+
+            return response()->json($response);
+        }
+
+        // Get filter data for dropdowns
+        $filterData = $this->getFilterData();
 
         // Calculate dashboard statistics
         $totalDokumen = Dokumen::count();
 
-        // Dokumen Selesai: status completed atau status_pembayaran = sudah_dibayar
+        // Dokumen Selesai: status completed, status_pembayaran = sudah_dibayar, OR tanggal_dibayar exists
         $dokumenSelesai = Dokumen::where(function ($q) {
             $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                ->orWhere('status_pembayaran', 'sudah_dibayar');
+                ->orWhere('status_pembayaran', 'sudah_dibayar')
+                ->orWhereNotNull('tanggal_dibayar');
         })->count();
 
-        // Dokumen Proses: dokumen yang belum selesai (tidak termasuk status selesai)
-        $dokumenProses = Dokumen::where(function ($q) {
+        // Dokumen Belum Siap Bayar: belum selesai dan belum dibayar
+        $dokumenBelumSiapBayar = Dokumen::where(function ($q) {
             $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                 ->where(function ($subQ) {
                     $subQ->whereNull('status_pembayaran')
                         ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                });
+                })
+                ->whereNull('tanggal_dibayar');
         })->count();
+
+        // Dokumen Siap Bayar: dokumen dengan status_pembayaran = siap_dibayar, tapi belum punya tanggal_dibayar
+        $dokumenSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')
+            ->whereNull('tanggal_dibayar')
+            ->count();
 
         // Total Nilai (Rp)
         $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
+
+        // Nilai Rupiah per Status
+        $nilaiBelumSiapBayar = Dokumen::where(function ($q) {
+            $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->where(function ($subQ) {
+                    $subQ->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })
+                ->whereNull('tanggal_dibayar');
+        })->sum('nilai_rupiah') ?? 0;
+
+        $nilaiSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')
+            ->whereNull('tanggal_dibayar')
+            ->sum('nilai_rupiah') ?? 0;
+
+        $nilaiSelesai = Dokumen::where(function ($q) {
+            $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->orWhere('status_pembayaran', 'sudah_dibayar')
+                ->orWhereNotNull('tanggal_dibayar');
+        })->sum('nilai_rupiah') ?? 0;
 
         // Calculate trend indicators (compare with last week)
         $oneWeekAgo = Carbon::now()->subWeek();
@@ -55,7 +135,8 @@ class OwnerDashboardController extends Controller
 
         $dokumenSelesaiLastWeek = Dokumen::where(function ($q) {
             $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                ->orWhere('status_pembayaran', 'sudah_dibayar');
+                ->orWhere('status_pembayaran', 'sudah_dibayar')
+                ->orWhereNotNull('tanggal_dibayar');
         })->where('updated_at', '<=', $oneWeekAgo)->count();
         $dokumenSelesaiTrend = $dokumenSelesaiLastWeek > 0
             ? round((($dokumenSelesai - $dokumenSelesaiLastWeek) / $dokumenSelesaiLastWeek) * 100, 1)
@@ -69,42 +150,421 @@ class OwnerDashboardController extends Controller
                 });
         })->where('created_at', '<=', $oneWeekAgo)->count();
         $dokumenProsesTrend = $dokumenProsesLastWeek > 0
-            ? round((($dokumenProses - $dokumenProsesLastWeek) / $dokumenProsesLastWeek) * 100, 1)
-            : ($dokumenProses > 0 ? 100 : 0);
+            ? round((($dokumenBelumSiapBayar - $dokumenProsesLastWeek) / $dokumenProsesLastWeek) * 100, 1)
+            : ($dokumenBelumSiapBayar > 0 ? 100 : 0);
 
         $totalNilaiLastWeek = Dokumen::where('created_at', '<=', $oneWeekAgo)->sum('nilai_rupiah') ?? 0;
         $totalNilaiTrend = $totalNilaiLastWeek > 0
             ? round((($totalNilai - $totalNilaiLastWeek) / $totalNilaiLastWeek) * 100, 1)
             : ($totalNilai > 0 ? 100 : 0);
 
+        // Calculate all document ages (in days) for age filter cards
+        $allDokumenUmur = Dokumen::select('created_at', 'tanggal_masuk', 'tanggal_dibayar', 'status_pembayaran', 'status')
+            ->get()
+            ->map(function ($dok) {
+                $startTime = $dok->created_at ?? $dok->tanggal_masuk;
+                if (!$startTime)
+                    return 0;
+
+                $startTime = Carbon::parse($startTime);
+                $isPaid = !empty($dok->tanggal_dibayar) ||
+                    $dok->status_pembayaran === 'sudah_dibayar' ||
+                    $dok->status === 'completed';
+
+                $endTime = ($isPaid && !empty($dok->tanggal_dibayar))
+                    ? Carbon::parse($dok->tanggal_dibayar)
+                    : Carbon::now();
+
+                return (int) floor($startTime->diffInHours($endTime) / 24);
+            })
+            ->toArray();
+
+        // Total dokumen belum dibayar per umur
+        $belumBayarQuery = function () {
+            return Dokumen::where(function ($q) {
+                $q->whereNull('status_pembayaran')
+                    ->orWhereNotIn('status_pembayaran', ['sudah_dibayar']);
+            })
+                ->whereNull('tanggal_dibayar')
+                ->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed']);
+        };
+
+        $belumBayarUmur3 = $belumBayarQuery()
+            ->where('created_at', '<', now()->subDays(3))
+            ->count();
+
+        $belumBayarUmur7 = $belumBayarQuery()
+            ->where('created_at', '<', now()->subDays(7))
+            ->count();
+
+        $belumBayarUmur30 = $belumBayarQuery()
+            ->where('created_at', '<', now()->subDays(30))
+            ->count();
+
         return view('owner.dashboard', compact(
             'documents',
             'totalDokumen',
-            'dokumenProses',
+            'dokumenBelumSiapBayar',
+            'dokumenSiapBayar',
             'dokumenSelesai',
             'totalNilai',
+            'nilaiBelumSiapBayar',
+            'nilaiSiapBayar',
+            'nilaiSelesai',
             'totalDokumenTrend',
             'dokumenSelesaiTrend',
             'dokumenProsesTrend',
-            'totalNilaiTrend'
+            'totalNilaiTrend',
+            'filterData',
+            'allDokumenUmur',
+            'belumBayarUmur3',
+            'belumBayarUmur7',
+            'belumBayarUmur30'
         ))
-            ->with('title', 'Dashboard Owner - Pusat Komando')
+            ->with('title', 'Dashboard Kabag Keuangan - Dokumen')
             ->with('module', 'owner')
-            ->with('menuDashboard', 'active')
+            ->with('menuHome', '')
+            ->with('menuDokumen', 'active')
             ->with('menuRekapan', '')
             ->with('menuRekapanKeterlambatan', '')
-            ->with('menuDokumen', '')
             ->with('menuDaftarDokumen', '')
             ->with('menuEditDokumen', '')
             ->with('menuRekapKeterlambatan', '')
             ->with('menuDaftarDokumenDikembalikan', '')
             ->with('menuPengembalianKeBidang', '')
             ->with('menuTambahDokumen', '')
-            ->with('dashboardUrl', '/owner/dashboard')
-            ->with('dokumenUrl', '#')
+            ->with('dashboardUrl', '/owner/home')
+            ->with('dokumenUrl', '/owner/dokumen')
             ->with('pengembalianUrl', '#')
             ->with('tambahDokumenUrl', '#')
             ->with('search', $request->get('search', ''));
+    }
+
+    /**
+     * AJAX endpoint: return filtered documents as JSON (no page refresh)
+     */
+    public function filterDocuments(Request $request): JsonResponse
+    {
+        $perPage = $request->get('per_page', session('owner_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['owner_per_page' => $perPage]);
+
+        $documents = $this->getDocumentsWithTracking($request, $perPage);
+
+        return response()->json([
+            'success' => true,
+            'documents' => array_values($documents->items()),
+            'pagination' => [
+                'current_page' => $documents->currentPage(),
+                'last_page' => $documents->lastPage(),
+                'per_page' => $documents->perPage(),
+                'total' => $documents->total(),
+                'from' => $documents->firstItem(),
+                'to' => $documents->lastItem(),
+            ],
+        ]);
+    }
+
+    /**
+     * Display the owner home page with bagian statistics cards
+     */
+    public function home()
+    {
+        // === GREETING DINAMIS ===
+        $hour = now()->hour;
+        $greeting = match(true) {
+            $hour < 12 => 'Selamat Pagi',
+            $hour < 15 => 'Selamat Siang',
+            $hour < 18 => 'Selamat Sore',
+            default    => 'Selamat Malam',
+        };
+
+        // === RINGKASAN HARI INI ===
+        $hariIni = [
+            'masuk'     => Dokumen::whereDate('created_at', today())->count(),
+            'mendekati' => Dokumen::whereBetween('created_at', [now()->subDays(3), now()->subDay()])
+                              ->whereNull('tanggal_dibayar')
+                              ->where(function($q) {
+                                  $q->whereNull('status_pembayaran')
+                                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                              })->count(),
+            'terlambat' => Dokumen::where('created_at', '<', now()->subDays(3))
+                              ->whereNull('tanggal_dibayar')
+                              ->where('current_handler', '!=', 'operator')
+                              ->where(function($q) {
+                                  $q->whereNull('status_pembayaran')
+                                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                              })->count(),
+        ];
+
+        // === STATISTIK UTAMA ===
+        $totalDokumen = Dokumen::count();
+
+        $dokumenSelesai = Dokumen::where(function ($q) {
+            $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->orWhere('status_pembayaran', 'sudah_dibayar')
+                ->orWhereNotNull('tanggal_dibayar');
+        })->count();
+
+        // Dokumen Belum Siap Bayar (sama dengan query di index())
+        $dokumenProses = Dokumen::where(function ($q) {
+            $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->where(function ($subQ) {
+                    $subQ->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })
+                ->whereNull('tanggal_dibayar');
+        })->count();
+
+        $dokumenSiapBayar = Dokumen::where('status_pembayaran', 'siap_dibayar')
+            ->whereNull('tanggal_dibayar')
+            ->count();
+
+        $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
+
+        // === NILAI RUPIAH PER STATUS ===
+        $nilaiBelumDibayar = Dokumen::where(function ($q) {
+            $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->where(function ($subQ) {
+                    $subQ->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })
+                ->whereNull('tanggal_dibayar');
+        })->sum('nilai_rupiah') ?? 0;
+
+        $nilaiSiapDibayar = Dokumen::where('status_pembayaran', 'siap_dibayar')
+            ->whereNull('tanggal_dibayar')
+            ->sum('nilai_rupiah') ?? 0;
+
+        $nilaiSudahDibayar = Dokumen::where(function ($q) {
+            $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                ->orWhere('status_pembayaran', 'sudah_dibayar')
+                ->orWhereNotNull('tanggal_dibayar');
+        })->sum('nilai_rupiah') ?? 0;
+
+        // === PERSENTASE PERUBAHAN VS BULAN LALU ===
+        $bulanIni = now()->month;
+        $tahunIni = now()->year;
+        $bulanLaluDate = now()->subMonth();
+
+        $totalBulanIni  = Dokumen::whereMonth('created_at', $bulanIni)->whereYear('created_at', $tahunIni)->count();
+        $totalBulanLalu = Dokumen::whereMonth('created_at', $bulanLaluDate->month)->whereYear('created_at', $bulanLaluDate->year)->count();
+        $totalDokumenTrend = $totalBulanLalu > 0 ? round((($totalBulanIni - $totalBulanLalu) / $totalBulanLalu) * 100) : 0;
+
+        $prosesBulanIni  = Dokumen::whereMonth('created_at', $bulanIni)->whereYear('created_at', $tahunIni)
+            ->where(function($q) { $q->whereNull('status_pembayaran')->orWhere('status_pembayaran', '!=', 'sudah_dibayar'); })
+            ->whereNull('tanggal_dibayar')->count();
+        $prosesBulanLalu = Dokumen::whereMonth('created_at', $bulanLaluDate->month)->whereYear('created_at', $bulanLaluDate->year)
+            ->where(function($q) { $q->whereNull('status_pembayaran')->orWhere('status_pembayaran', '!=', 'sudah_dibayar'); })
+            ->whereNull('tanggal_dibayar')->count();
+        $prosesTrend = $prosesBulanLalu > 0 ? round((($prosesBulanIni - $prosesBulanLalu) / $prosesBulanLalu) * 100) : 0;
+
+        $siapBulanIni  = Dokumen::whereMonth('created_at', $bulanIni)->whereYear('created_at', $tahunIni)->where('status_pembayaran', 'siap_dibayar')->whereNull('tanggal_dibayar')->count();
+        $siapBulanLalu = Dokumen::whereMonth('created_at', $bulanLaluDate->month)->whereYear('created_at', $bulanLaluDate->year)->where('status_pembayaran', 'siap_dibayar')->whereNull('tanggal_dibayar')->count();
+        $siapTrend = $siapBulanLalu > 0 ? round((($siapBulanIni - $siapBulanLalu) / $siapBulanLalu) * 100) : 0;
+
+        $selesaiBulanIni  = Dokumen::whereMonth('updated_at', $bulanIni)->whereYear('updated_at', $tahunIni)
+            ->where(function($q) { $q->where('status_pembayaran', 'sudah_dibayar')->orWhereNotNull('tanggal_dibayar'); })->count();
+        $selesaiBulanLalu = Dokumen::whereMonth('updated_at', $bulanLaluDate->month)->whereYear('updated_at', $bulanLaluDate->year)
+            ->where(function($q) { $q->where('status_pembayaran', 'sudah_dibayar')->orWhereNotNull('tanggal_dibayar'); })->count();
+        $selesaiTrend = $selesaiBulanLalu > 0 ? round((($selesaiBulanIni - $selesaiBulanLalu) / $selesaiBulanLalu) * 100) : 0;
+
+        $nilaiBulanIni  = Dokumen::whereMonth('created_at', $bulanIni)->whereYear('created_at', $tahunIni)->sum('nilai_rupiah') ?? 0;
+        $nilaiBulanLalu = Dokumen::whereMonth('created_at', $bulanLaluDate->month)->whereYear('created_at', $bulanLaluDate->year)->sum('nilai_rupiah') ?? 0;
+        $nilaiTrend = $nilaiBulanLalu > 0 ? round((($nilaiBulanIni - $nilaiBulanLalu) / $nilaiBulanLalu) * 100) : 0;
+
+        // === TREN 30 HARI (Area Chart) ===
+        $trend = Dokumen::selectRaw('DATE(created_at) as tgl, COUNT(*) as total')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->groupBy('tgl')->orderBy('tgl')->get();
+        $chartLabels = $trend->pluck('tgl')->map(fn($d) => Carbon::parse($d)->format('d M'))->toArray();
+        $chartData   = $trend->pluck('total')->toArray();
+
+        // === BAGIAN STATS (Bar Chart + Progress) ===
+        $bagianStats = $this->getBagianStatistics();
+        $maxBagian = collect($bagianStats)->max('count') ?: 1;
+
+        // === RECENT DOCUMENTS (5 terbaru) ===
+        $recentDocuments = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'current_handler', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($doc) {
+                [$statusLabel, $statusClass] = $this->resolveDocStatus($doc->status_pembayaran, $doc->tanggal_dibayar, $doc->current_handler);
+                return [
+                    'id' => $doc->id,
+                    'uraian_spp' => $doc->uraian_spp ?? '-',
+                    'nomor_spp' => $doc->nomor_spp ?? '-',
+                    'bagian' => $doc->bagian ?? '-',
+                    'nilai_rupiah' => $doc->nilai_rupiah ?? 0,
+                    'status_label' => $statusLabel,
+                    'status_class' => $statusClass,
+                    'created_at' => $doc->created_at ? $doc->created_at->toISOString() : null,
+                    'updated_at' => $doc->updated_at ? $doc->updated_at->toISOString() : null,
+                ];
+            })
+            ->toArray();
+
+        return view('owner.home', compact(
+            'greeting',
+            'hariIni',
+            'bagianStats',
+            'maxBagian',
+            'totalDokumen',
+            'dokumenProses',
+            'dokumenSiapBayar',
+            'dokumenSelesai',
+            'totalNilai',
+            'nilaiBelumDibayar',
+            'nilaiSiapDibayar',
+            'nilaiSudahDibayar',
+            'totalDokumenTrend',
+            'prosesTrend',
+            'siapTrend',
+            'selesaiTrend',
+            'nilaiTrend',
+            'chartLabels',
+            'chartData',
+            'recentDocuments'
+        ))
+            ->with('title', 'Dashboard Kabag Keuangan - Home')
+            ->with('module', 'owner')
+            ->with('menuHome', 'active')
+            ->with('menuDokumen', '')
+            ->with('menuRekapanKeterlambatan', '');
+    }
+
+    /**
+     * Get document statistics per bagian (with terlambat count)
+     */
+    private function getBagianStatistics(): array
+    {
+        $bagianList = [
+            'AKN' => ['icon' => 'fa-calculator', 'emoji' => 'ðŸ§®', 'color' => '#7C3AED'],
+            'DPM' => ['icon' => 'fa-chart-line', 'emoji' => 'ðŸ“ˆ', 'color' => '#22c55e'],
+            'KPL' => ['icon' => 'fa-crown', 'emoji' => 'ðŸ‘‘', 'color' => '#f59e0b'],
+            'PMO' => ['icon' => 'fa-tasks', 'emoji' => 'ðŸ“‹', 'color' => '#06b6d4'],
+            'SDM' => ['icon' => 'fa-users', 'emoji' => 'ðŸ‘¥', 'color' => '#8b5cf6'],
+            'SKH' => ['icon' => 'fa-building', 'emoji' => 'ðŸ¢', 'color' => '#ec4899'],
+            'TAN' => ['icon' => 'fa-seedling', 'emoji' => 'ðŸŒ¿', 'color' => '#10b981'],
+            'TEP' => ['icon' => 'fa-cogs', 'emoji' => 'âš™ï¸', 'color' => '#6366f1'],
+            'PTI' => ['icon' => 'fa-laptop-code', 'emoji' => 'ðŸ–¥', 'color' => '#3B82F6'],
+        ];
+
+        $stats = [];
+        foreach ($bagianList as $code => $info) {
+            $baseQuery = Dokumen::where('bagian', $code);
+            $count = (clone $baseQuery)->count();
+
+            // Terlambat: dokumen > 3 hari dan belum selesai
+            $terlambat = (clone $baseQuery)
+                ->where('created_at', '<', now()->subDays(3))
+                ->whereNull('tanggal_dibayar')
+                ->where('current_handler', '!=', 'operator')
+                ->where(function($q) {
+                    $q->whereNull('status_pembayaran')
+                      ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })->count();
+
+            $stats[] = [
+                'code'      => $code,
+                'icon'      => $info['icon'],
+                'emoji'     => $info['emoji'],
+                'color'     => $info['color'],
+                'count'     => $count,
+                'terlambat' => $terlambat,
+            ];
+        }
+
+        // Sort by count descending
+        usort($stats, fn($a, $b) => $b['count'] - $a['count']);
+
+        return $stats;
+    }
+
+    /**
+     * API: Get recent documents for real-time dashboard polling
+     */
+    public function getRecentDocuments(): JsonResponse
+    {
+        $docs = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'current_handler', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($doc) {
+                [$statusLabel, $statusClass] = $this->resolveDocStatus($doc->status_pembayaran, $doc->tanggal_dibayar, $doc->current_handler);
+                return [
+                    'id' => $doc->id,
+                    'uraian_spp' => $doc->uraian_spp ?? '-',
+                    'nomor_spp' => $doc->nomor_spp ?? '-',
+                    'bagian' => $doc->bagian ?? '-',
+                    'nilai_rupiah' => $doc->nilai_rupiah ?? 0,
+                    'status_label' => $statusLabel,
+                    'status_class' => $statusClass,
+                    'created_at' => $doc->created_at ? $doc->created_at->toISOString() : null,
+                    'updated_at' => $doc->updated_at ? $doc->updated_at->toISOString() : null,
+                ];
+            });
+
+        return response()->json(['success' => true, 'documents' => $docs]);
+    }
+
+    /**
+     * API: Get trend chart data for a given number of days
+     */
+    public function getTrendChart(Request $request): JsonResponse
+    {
+        $days = min(max((int) $request->query('days', 30), 7), 365);
+
+        $trend = Dokumen::selectRaw('DATE(created_at) as tgl, COUNT(*) as total')
+            ->where('created_at', '>=', now()->subDays($days))
+            ->groupBy('tgl')
+            ->orderBy('tgl')
+            ->get();
+
+        $labels = $trend->pluck('tgl')->map(fn($d) => Carbon::parse($d)->format('d M'))->toArray();
+        $data   = $trend->pluck('total')->toArray();
+
+        return response()->json(['success' => true, 'labels' => $labels, 'data' => $data]);
+    }
+
+    /**
+     * Resolve document status label & CSS class from status_pembayaran and current_handler.
+     * Mapping:
+     *   sudah_dibayar / tanggal_dibayar set â†’ Dibayar
+     *   siap_dibayar                        â†’ Siap Bayar
+     *   otherwise, based on current_handler:
+     *     operator        â†’ Input
+     *     team_verifikasi â†’ Verifikasi
+     *     perpajakan      â†’ Perpajakan
+     *     akutansi        â†’ Akuntansi
+     *     pembayaran      â†’ Menunggu Bayar
+     *     (default)       â†’ Menunggu
+     */
+    private function resolveDocStatus(?string $statusPembayaran, $tanggalDibayar, ?string $currentHandler): array
+    {
+        if ($statusPembayaran === 'sudah_dibayar' || !empty($tanggalDibayar)) {
+            return ['Dibayar', 'status-sudah'];
+        }
+        if ($statusPembayaran === 'siap_dibayar') {
+            return ['Siap Bayar', 'status-siap'];
+        }
+
+        // Map current_handler to human-readable label
+        $handlerMap = [
+            'operator'        => ['Input',          'status-input'],
+            'team_verifikasi' => ['Verifikasi',      'status-verifikasi'],
+            'perpajakan'      => ['Perpajakan',      'status-perpajakan'],
+            'akutansi'        => ['Akuntansi',       'status-akutansi'],
+            'pembayaran'      => ['Menunggu Bayar',  'status-pembayaran-role'],
+        ];
+
+        $handler = strtolower(trim($currentHandler ?? 'operator'));
+        return $handlerMap[$handler] ?? ['Menunggu', 'status-belum'];
     }
 
     /**
@@ -127,7 +587,7 @@ class OwnerDashboardController extends Controller
                 'nilai_rupiah' => $dokumen->nilai_rupiah,
                 'status' => $dokumen->status,
                 'current_handler' => $dokumen->current_handler,
-                'created_at' => $dokumen->created_at->format('d M Y H:i'),
+                'created_at' => $dokumen->created_at ? $dokumen->created_at->format('d M Y H:i') : '-',
                 'progress_percentage' => $this->calculateProgress($dokumen),
             ],
             'timeline' => $timeline
@@ -139,24 +599,196 @@ class OwnerDashboardController extends Controller
      */
     private function getDocumentsWithTracking(Request $request = null, $perPage = 10)
     {
-        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData']);
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData', 'roleStatuses']);
 
         // Apply status filter if provided
         if ($request && $request->has('status') && !empty($request->status)) {
             $status = $request->status;
-            if ($status === 'proses') {
+
+            // Semua Dokumen: no status filter, show everything
+            if ($status === 'semua') {
+                // Don't apply any status filter - show all documents
+            }
+            // Belum Siap Dibayar: dokumen dari operator sampai akutansi (belum di pembayaran)
+            elseif ($status === 'belum_siap' || $status === '') {
                 $query->where(function ($q) {
-                    $q->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                        ->where(function ($subQ) {
-                            $subQ->whereNull('status_pembayaran')
-                                ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                    $q->whereIn('current_handler', ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'])
+                        ->orWhereIn('status', [
+                            'draft',
+                            'sedang diproses',
+                            'menunggu_verifikasi',
+                            'pending_approval_team_verifikasi',
+                            'sent_to_team_verifikasi',
+                            'sent_to_perpajakan',
+                            'sent_to_akutansi',
+                            'pending_approval_perpajakan',
+                            'pending_approval_akutansi',
+                        ]);
+                })
+                    ->where(function ($subQ) {
+                        $subQ->whereNull('status_pembayaran')
+                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                    })
+                    ->where(function ($subQ) {
+                        $subQ->where('current_handler', '!=', 'pembayaran')
+                            ->orWhereNull('current_handler');
+                    });
+            }
+            // Siap Dibayar: dokumen yang sudah di role pembayaran tapi belum dibayar
+            elseif ($status === 'siap_dibayar') {
+                $query->where(function ($q) {
+                    $q->where('current_handler', 'pembayaran')
+                        ->orWhere('status', 'sent_to_pembayaran')
+                        ->orWhere('status_pembayaran', 'siap_dibayar')
+                        ->orWhere('status_pembayaran', 'siap_bayar');
+                })
+                    ->where(function ($subQ) {
+                        $subQ->whereNull('status_pembayaran')
+                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                    })
+                    ->whereNull('tanggal_dibayar');
+            }
+            // Sudah Dibayar: dokumen yang sudah dibayar
+            elseif ($status === 'sudah_dibayar') {
+                $query->where(function ($q) {
+                    $q->where('status_pembayaran', 'sudah_dibayar')
+                        ->orWhereNotNull('tanggal_dibayar')
+                        ->orWhereNotNull('link_bukti_pembayaran');
+                });
+            }
+        } else {
+            // Default: show Belum Siap Dibayar (operator to akutansi)
+            // BUT skip this filter if user is searching, so search can find all documents
+            $hasSearch = $request && $request->has('search') && !empty($request->search) && trim((string) $request->search) !== '';
+
+            if (!$hasSearch) {
+                $query->where(function ($q) {
+                    $q->whereIn('current_handler', ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'])
+                        ->orWhereIn('status', [
+                            'draft',
+                            'sedang diproses',
+                            'menunggu_verifikasi',
+                            'pending_approval_team_verifikasi',
+                            'sent_to_team_verifikasi',
+                            'sent_to_perpajakan',
+                            'sent_to_akutansi',
+                            'pending_approval_perpajakan',
+                            'pending_approval_akutansi',
+                        ]);
+                })
+                    ->where(function ($subQ) {
+                        $subQ->whereNull('status_pembayaran')
+                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                    })
+                    ->where(function ($subQ) {
+                        $subQ->where('current_handler', '!=', 'pembayaran')
+                            ->orWhereNull('current_handler');
+                    });
+            }
+        }
+
+        // Apply advanced filters
+        // Filter by bagian
+        if ($request && $request->has('filter_bagian') && !empty($request->filter_bagian)) {
+            $query->where('bagian', $request->filter_bagian);
+        }
+
+        // Filter by umur dokumen â€” tampilkan semua dokumen belum dibayar berumur > X hari
+        if ($request && $request->has('filter_umur') && !empty($request->filter_umur)) {
+            $days = (int) $request->filter_umur;
+            $query->where('created_at', '<', now()->subDays($days))
+                  ->whereNull('tanggal_dibayar')
+                  ->where(function ($q) {
+                      $q->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                  });
+        }
+
+        // Filter by vendor/dibayar_kepada
+        if ($request && $request->has('filter_vendor') && !empty($request->filter_vendor)) {
+            $query->where(function ($q) use ($request) {
+                $q->where('dibayar_kepada', $request->filter_vendor)
+                    ->orWhereHas('dibayarKepadas', function ($subQ) use ($request) {
+                        $subQ->where('nama_penerima', $request->filter_vendor);
+                    });
+            });
+        }
+
+        // Filter by kriteria CF (by ID or name)
+        if ($request && $request->has('filter_kriteria_cf') && !empty($request->filter_kriteria_cf)) {
+            try {
+                $kriteriaCf = \App\Models\KategoriKriteria::on('cash_bank')
+                    ->where('id_kategori_kriteria', $request->filter_kriteria_cf)
+                    ->orWhere('nama_kriteria', $request->filter_kriteria_cf)
+                    ->first();
+                if ($kriteriaCf) {
+                    $query->where('kategori', $kriteriaCf->nama_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error filtering by kriteria CF: ' . $e->getMessage());
+            }
+        }
+
+        // Filter by sub kriteria (by ID or name)
+        if ($request && $request->has('filter_sub_kriteria') && !empty($request->filter_sub_kriteria)) {
+            try {
+                $subKriteria = \App\Models\SubKriteria::on('cash_bank')
+                    ->where('id_sub_kriteria', $request->filter_sub_kriteria)
+                    ->orWhere('nama_sub_kriteria', $request->filter_sub_kriteria)
+                    ->first();
+                if ($subKriteria) {
+                    $query->where('jenis_dokumen', $subKriteria->nama_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error filtering by sub kriteria: ' . $e->getMessage());
+            }
+        }
+
+        // Filter by item sub kriteria (by ID or name)
+        if ($request && $request->has('filter_item_sub_kriteria') && !empty($request->filter_item_sub_kriteria)) {
+            try {
+                $itemSubKriteria = \App\Models\ItemSubKriteria::on('cash_bank')
+                    ->where('id_item_sub_kriteria', $request->filter_item_sub_kriteria)
+                    ->orWhere('nama_item_sub_kriteria', $request->filter_item_sub_kriteria)
+                    ->first();
+                if ($itemSubKriteria) {
+                    $query->where('jenis_sub_pekerjaan', $itemSubKriteria->nama_item_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error filtering by item sub kriteria: ' . $e->getMessage());
+            }
+        }
+
+        // Filter by kebun
+        if ($request && $request->has('filter_kebun') && !empty($request->filter_kebun)) {
+            $query->where('kebun', $request->filter_kebun);
+        }
+
+        // Filter by status pembayaran
+        if ($request && $request->has('filter_status_pembayaran') && !empty($request->filter_status_pembayaran)) {
+            $statusPembayaran = $request->filter_status_pembayaran;
+            if ($statusPembayaran === 'belum_dibayar') {
+                $query->where(function ($q) {
+                    $q->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar')
+                        ->orWhere('status_pembayaran', 'pending');
+                })
+                    ->whereNull('tanggal_dibayar')
+                    ->whereNull('link_bukti_pembayaran');
+            } elseif ($statusPembayaran === 'siap_dibayar') {
+                $query->where(function ($q) {
+                    $q->where('status_pembayaran', 'siap_dibayar')
+                        ->orWhere('status_pembayaran', 'siap_bayar')
+                        ->orWhere(function ($subQ) {
+                            $subQ->where('current_handler', 'pembayaran')
+                                ->where('status', 'sent_to_pembayaran')
+                                ->whereNull('tanggal_dibayar')
+                                ->whereNull('link_bukti_pembayaran');
                         });
                 });
-            } elseif ($status === 'selesai') {
-                $query->where(function ($q) {
-                    $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
-                        ->orWhere('status_pembayaran', 'sudah_dibayar');
-                });
+            } elseif ($statusPembayaran === 'sudah_dibayar') {
+                // Dokumen sudah dibayar - hanya cek tanggal_dibayar
+                $query->whereNotNull('tanggal_dibayar');
             }
         }
 
@@ -174,7 +806,6 @@ class OwnerDashboardController extends Controller
                     ->orWhere('jenis_dokumen', 'like', '%' . $search . '%')
                     ->orWhere('no_berita_acara', 'like', '%' . $search . '%')
                     ->orWhere('no_spk', 'like', '%' . $search . '%')
-                    ->orWhere('nomor_mirror', 'like', '%' . $search . '%')
                     ->orWhere('nomor_miro', 'like', '%' . $search . '%')
                     ->orWhere('keterangan', 'like', '%' . $search . '%')
                     ->orWhere('dibayar_kepada', 'like', '%' . $search . '%')
@@ -189,16 +820,18 @@ class OwnerDashboardController extends Controller
                 if (is_numeric($numericSearch) && $numericSearch > 0) {
                     $q->orWhereRaw('CAST(nilai_rupiah AS CHAR) LIKE ?', ['%' . $numericSearch . '%']);
                 }
-            })
-                ->orWhereHas('dibayarKepadas', function ($q) use ($search) {
-                    $q->where('nama_penerima', 'like', '%' . $search . '%');
+
+                // Search in related tables
+                $q->orWhereHas('dibayarKepadas', function ($subQ) use ($search) {
+                    $subQ->where('nama_penerima', 'like', '%' . $search . '%');
                 })
-                ->orWhereHas('dokumenPos', function ($q) use ($search) {
-                    $q->where('nomor_po', 'like', '%' . $search . '%');
-                })
-                ->orWhereHas('dokumenPrs', function ($q) use ($search) {
-                    $q->where('nomor_pr', 'like', '%' . $search . '%');
-                });
+                    ->orWhereHas('dokumenPos', function ($subQ) use ($search) {
+                        $subQ->where('nomor_po', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('dokumenPrs', function ($subQ) use ($search) {
+                        $subQ->where('nomor_pr', 'like', '%' . $search . '%');
+                    });
+            });
         }
 
         // Paginate the query
@@ -218,13 +851,24 @@ class OwnerDashboardController extends Controller
                 'status_display' => $this->getStatusDisplayName($dokumen->status),
                 'current_handler' => $dokumen->current_handler,
                 'current_handler_display' => $this->getRoleDisplayName($dokumen->current_handler),
-                'created_at' => $dokumen->created_at->format('d M Y H:i'),
-                'tanggal_masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d M Y') : $dokumen->created_at->format('d M Y'),
+                'created_at' => $dokumen->created_at ? $dokumen->created_at->format('d M Y H:i') : '-',
+                'tanggal_masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d M Y') : ($dokumen->created_at ? $dokumen->created_at->format('d M Y') : '-'),
                 'progress_percentage' => $this->calculateProgress($dokumen),
                 'status_badge_color' => $this->getStatusBadgeColor($dokumen->status),
                 'progress_color' => $this->getProgressColor($dokumen->status),
                 'is_overdue' => $this->isDocumentOverdue($dokumen),
+                'is_paid' => $dokumen->status_pembayaran === 'sudah_dibayar' || $dokumen->status === 'completed' || !empty($dokumen->tanggal_dibayar),
+                'tanggal_dibayar' => $dokumen->tanggal_dibayar,
                 'deadline_info' => $this->getDeadlineInfo($dokumen),
+                'step_deadline_levels' => $this->getStepDeadlineLevels($dokumen),
+                'workflow_timeline' => $this->getWorkflowTimeline($dokumen),
+                'umur_dokumen' => $this->calculateDocumentAge($dokumen),
+                'kebun' => $dokumen->kebun ?? '-',
+                'vendor' => $dokumen->dibayar_kepada ?? ($dokumen->dibayarKepadas->first()->nama_penerima ?? '-'),
+                // Urgency alert fields
+                'urgency_active'       => (bool) ($dokumen->urgency_active ?? false),
+                'urgency_sent_at_human'=> $dokumen->urgency_sent_at ? $dokumen->urgency_sent_at->diffForHumans() : null,
+                'urgency_sent_at'      => $dokumen->urgency_sent_at ? $dokumen->urgency_sent_at->toISOString() : null,
             ];
         });
 
@@ -239,15 +883,15 @@ class OwnerDashboardController extends Controller
         $events = [];
         $previousTime = null;
 
-        // Event 1: Dokumen Dibuat
+        // Event 1: Dokumen DOperatort
         if ($dokumen->created_at) {
             $events[] = [
                 'type' => 'created',
-                'icon' => '✅',
-                'title' => 'Dokumen Dibuat',
+                'icon' => 'âœ…',
+                'title' => 'Dokumen DOperatort',
                 'timestamp' => $dokumen->created_at->format('d M Y H:i'),
                 'info' => [
-                    'Dibuat oleh' => $this->getRoleDisplayName($dokumen->created_by),
+                    'DOperatort oleh' => $this->getRoleDisplayName($dokumen->created_by),
                     'Nomor Agenda' => $dokumen->nomor_agenda,
                     'Nomor SPP' => $dokumen->nomor_spp,
                     'Nilai' => 'Rp. ' . number_format($dokumen->nilai_rupiah, 0, ',', '.'),
@@ -258,20 +902,20 @@ class OwnerDashboardController extends Controller
         }
 
         // Event 2: Dikirim ke Ibu Yuni
-        $ibubData = $dokumen->getDataForRole('ibub');
-        if ($ibubData && $ibubData->received_at) {
-            $receivedAt = $ibubData->received_at;
+        $teamVerifikasiData = $dokumen->getDataForRole('team_verifikasi');
+        if ($teamVerifikasiData && $teamVerifikasiData->received_at) {
+            $receivedAt = $teamVerifikasiData->received_at;
             $duration = $previousTime ? $this->calculateDuration($previousTime, $receivedAt) : null;
             $events[] = [
-                'type' => 'sent_to_ibub',
-                'icon' => '🚀',
+                'type' => 'sent_to_team_verifikasi',
+                'icon' => 'ðŸš€',
                 'title' => 'Dikirim ke Ibu Yuni',
                 'timestamp' => $receivedAt->format('d M Y H:i'),
                 'duration' => $duration,
                 'info' => [
-                    'Pengirim' => 'Ibu Tarapul',
+                    'Pengirim' => 'Operator',
                     'Penerima' => 'Ibu Yuni',
-                    'Durasi dari dibuat' => $duration,
+                    'Durasi dari dOperatort' => $duration,
                 ]
             ];
             $previousTime = $receivedAt;
@@ -282,7 +926,7 @@ class OwnerDashboardController extends Controller
             $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->deadline_at) : null;
             $events[] = [
                 'type' => 'deadline_set',
-                'icon' => '⏰',
+                'icon' => 'â°',
                 'title' => 'Deadline Ditetapkan',
                 'timestamp' => $dokumen->deadline_at->format('d M Y H:i'),
                 'duration' => $duration,
@@ -297,8 +941,8 @@ class OwnerDashboardController extends Controller
         if ($dokumen->processed_at) {
             $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->processed_at) : null;
             $events[] = [
-                'type' => 'processed_ibub',
-                'icon' => '⚡',
+                'type' => 'processed_Team Verifikasi',
+                'icon' => 'âš¡',
                 'title' => 'Diproses Ibu Yuni',
                 'timestamp' => $dokumen->processed_at->format('d M Y H:i'),
                 'duration' => $duration,
@@ -317,7 +961,7 @@ class OwnerDashboardController extends Controller
             $duration = $previousTime ? $this->calculateDuration($previousTime, $receivedAt) : null;
             $events[] = [
                 'type' => 'sent_to_perpajakan',
-                'icon' => '🚀',
+                'icon' => 'ðŸš€',
                 'title' => 'Dikirim ke Team Perpajakan',
                 'timestamp' => $receivedAt->format('d M Y H:i'),
                 'duration' => $duration,
@@ -335,7 +979,7 @@ class OwnerDashboardController extends Controller
             $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->processed_perpajakan_at) : null;
             $events[] = [
                 'type' => 'processed_perpajakan',
-                'icon' => '⚡',
+                'icon' => 'âš¡',
                 'title' => 'Diproses Team Perpajakan',
                 'timestamp' => $dokumen->processed_perpajakan_at->format('d M Y H:i'),
                 'duration' => $duration,
@@ -355,7 +999,7 @@ class OwnerDashboardController extends Controller
             $duration = $previousTime ? $this->calculateDuration($previousTime, $receivedAt) : null;
             $events[] = [
                 'type' => 'sent_to_akutansi',
-                'icon' => '🚀',
+                'icon' => 'ðŸš€',
                 'title' => 'Dikirim ke Team Akutansi',
                 'timestamp' => $receivedAt->format('d M Y H:i'),
                 'duration' => $duration,
@@ -369,20 +1013,20 @@ class OwnerDashboardController extends Controller
         }
 
         // Event 8: Dikembalikan
-        if ($dokumen->returned_to_ibua_at || $dokumen->department_returned_at || $dokumen->bidang_returned_at) {
-            $returnTime = $dokumen->returned_to_ibua_at ?? $dokumen->department_returned_at ?? $dokumen->bidang_returned_at;
+        if ($dokumen->returned_at) {
+            $returnTime = $dokumen->returned_at;
             $duration = $previousTime ? $this->calculateDuration($previousTime, $returnTime) : null;
 
             $events[] = [
                 'type' => 'returned',
-                'icon' => '↩️',
+                'icon' => 'â†©ï¸',
                 'title' => 'Dikembalikan',
                 'timestamp' => $returnTime->format('d M Y H:i'),
                 'duration' => $duration,
                 'info' => [
                     'Dikembalikan oleh' => $this->getRoleDisplayName($dokumen->current_handler),
                     'Dikembalikan ke' => $this->getReturnDestination($dokumen),
-                    'Alasan' => $dokumen->alasan_pengembalian ?? $dokumen->department_return_reason ?? $dokumen->bidang_return_reason,
+                    'Alasan' => $dokumen->return_reason,
                 ]
             ];
             $previousTime = $returnTime;
@@ -393,7 +1037,7 @@ class OwnerDashboardController extends Controller
             $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->deadline_completed_at) : null;
             $events[] = [
                 'type' => 'deadline_completed',
-                'icon' => '✅',
+                'icon' => 'âœ…',
                 'title' => 'Deadline Selesai',
                 'timestamp' => $dokumen->deadline_completed_at->format('d M Y H:i'),
                 'duration' => $duration,
@@ -411,7 +1055,7 @@ class OwnerDashboardController extends Controller
 
             $events[] = [
                 'type' => 'completed',
-                'icon' => '🎉',
+                'icon' => 'ðŸŽ‰',
                 'title' => 'Dokumen Selesai',
                 'timestamp' => $completedTime->format('d M Y H:i'),
                 'total_duration' => $totalDuration,
@@ -442,7 +1086,7 @@ class OwnerDashboardController extends Controller
             'overdue_documents' => Dokumen::whereNotNull('deadline_at')
                 ->where('deadline_at', '<', $now)
                 ->whereNotIn('status', [
-                    'approved_data_sudah_terkirim', 
+                    'approved_data_sudah_terkirim',
                     'rejected_data_tidak_lengkap',
                     'selesai',
                     'completed',
@@ -466,7 +1110,7 @@ class OwnerDashboardController extends Controller
     private function calculateProgress($dokumen)
     {
         // Calculate progress based on current_handler and status
-        $handler = $dokumen->current_handler ?? 'ibuA';
+        $handler = $dokumen->current_handler ?? 'operator';
         $status = $dokumen->status ?? 'draft';
 
         // Get status_pembayaran from model or database
@@ -483,25 +1127,29 @@ class OwnerDashboardController extends Controller
             return 100;
         }
 
+        // Normalize handler name to canonical form
+        $handler = $this->normalizeHandlerName($handler);
+
         // Calculate progress based on handler position in workflow
         $handlerProgress = [
-            'ibuA' => 0,           // Start
-            'ibuB' => 30,          // After Ibu Tarapul
-            'perpajakan' => 50,    // After Ibu Yuni
-            'akutansi' => 70,      // After Perpajakan
-            'pembayaran' => 90,    // After Akutansi
+            'operator' => 20,          // Ibu Tarapul (step 1)
+            'team_verifikasi' => 40,          // Team Verifikasi (step 2)
+            'perpajakan' => 60,    // Team Perpajakan (step 3)
+            'akutansi' => 80,      // Team Akutansi (step 4)
+            'pembayaran' => 100,   // Pembayaran (step 5)
         ];
 
-        $baseProgress = $handlerProgress[$handler] ?? 0;
+        $baseProgress = $handlerProgress[$handler] ?? 20;
 
         // Adjust based on status within handler
-        if ($status == 'draft' && $handler == 'ibuA') {
+        if ($status == 'draft' && $handler == 'operator') {
             return 0;
         }
 
         if ($status == 'sedang diproses') {
-            // Add 10% if being processed
-            return min($baseProgress + 10, 100);
+            // Don't add bonus when processing to prevent step jumping
+            // 40 + 10 = 50 would make step 3 active instead of step 2
+            return $baseProgress;
         }
 
         if (strpos($status, 'sent_to_') === 0) {
@@ -524,6 +1172,61 @@ class OwnerDashboardController extends Controller
     }
 
     /**
+     * Normalize handler name to canonical form
+     * Handles various handler name variants stored in database
+     */
+    private function normalizeHandlerName($handler)
+    {
+        // Convert to lowercase for consistent comparison
+        $handlerLower = strtolower($handler ?? '');
+
+        // Map all possible handler name variants to canonical names
+        $handlerAliases = [
+            // Operator variants
+            'operator' => 'operator',
+            'ibu_a' => 'operator',
+            'operator' => 'operator',
+            'ibu_tarapul' => 'operator',
+            'Operator' => 'operator',
+            'tarapul' => 'operator',
+
+            // Team Verifikasi variants (Team Verifikasi)
+            'team_verifikasi' => 'team_verifikasi',
+            'ibu_b' => 'team_verifikasi',
+            'ibuyuni' => 'team_verifikasi',
+            'ibu_yuni' => 'team_verifikasi',
+            'ibu yuni' => 'team_verifikasi',
+            'team_verifikasi' => 'team_verifikasi',
+            'team_verifikasi' => 'team_verifikasi',
+            'team verifikasi' => 'team_verifikasi',
+            'teamverifikasi' => 'team_verifikasi',
+
+            // Perpajakan variants
+            'perpajakan' => 'perpajakan',
+            'team_perpajakan' => 'perpajakan',
+            'team perpajakan' => 'perpajakan',
+            'teamperpajakan' => 'perpajakan',
+            'pajak' => 'perpajakan',
+
+            // Akutansi variants
+            'akutansi' => 'akutansi',
+            'team_akutansi' => 'akutansi',
+            'team akutansi' => 'akutansi',
+            'teamakutansi' => 'akutansi',
+            'akuntansi' => 'akutansi',
+
+            // Pembayaran variants
+            'pembayaran' => 'pembayaran',
+            'team_pembayaran' => 'pembayaran',
+            'team pembayaran' => 'pembayaran',
+            'teampembayaran' => 'pembayaran',
+            'payment' => 'pembayaran',
+        ];
+
+        return $handlerAliases[$handlerLower] ?? 'operator';
+    }
+
+    /**
      * Get status badge color
      */
     private function getStatusBadgeColor($status)
@@ -532,9 +1235,9 @@ class OwnerDashboardController extends Controller
             'draft' => '#6c757d', // Gray
             'sedang diproses' => '#083E40', // Green (theme)
             'menunggu_verifikasi' => '#083E40', // Green (theme)
-            'pending_approval_ibub' => '#ffc107', // Yellow
-            'sent_to_ibub' => '#0a4f52', // Dark green
-            'proses_ibub' => '#ffc107', // Yellow
+            'pending_approval_team_verifikasi' => '#ffc107', // Yellow
+            'sent_to_team_verifikasi' => '#0a4f52', // Dark green
+            'proses_Team Verifikasi' => '#ffc107', // Yellow
             'sent_to_perpajakan' => '#0a4f52', // Dark green
             'proses_perpajakan' => '#0a4f52', // Dark green
             'sent_to_akutansi' => '#6f42c1', // Purple
@@ -593,73 +1296,402 @@ class OwnerDashboardController extends Controller
     }
 
     /**
-     * Get deadline information
+     * Calculate document age (umur dokumen)
+     * From document creation/import until payment declares it paid
+     * Returns formatted string like "X hari Y jam" or "X jam" if less than a day
+     */
+    private function calculateDocumentAge($dokumen)
+    {
+        // Start time: when document was created or imported
+        $startTime = $dokumen->created_at ?? $dokumen->tanggal_masuk;
+        if (!$startTime) {
+            return null;
+        }
+
+        $startTime = Carbon::parse($startTime);
+
+        // End time: payment date if paid, otherwise current time
+        $isPaid = !empty($dokumen->tanggal_dibayar) ||
+            $dokumen->status_pembayaran === 'sudah_dibayar' ||
+            $dokumen->status === 'completed';
+
+        if ($isPaid && !empty($dokumen->tanggal_dibayar)) {
+            $endTime = Carbon::parse($dokumen->tanggal_dibayar);
+        } else {
+            $endTime = Carbon::now();
+        }
+
+        // Calculate total difference in hours first, then derive days
+        $totalHours = (int) $startTime->diffInHours($endTime);
+        $diffDays = (int) floor($totalHours / 24);
+        $diffHours = $totalHours % 24;
+
+        // Format output
+        if ($diffDays > 0) {
+            $text = $diffDays . ' hari';
+            if ($diffHours > 0) {
+                $text .= ' ' . $diffHours . ' jam';
+            }
+        } else {
+            $text = $diffHours . ' jam';
+            if ($diffHours == 0) {
+                // Less than 1 hour, show minutes
+                $diffMinutes = (int) $startTime->diffInMinutes($endTime);
+                $text = $diffMinutes . ' menit';
+            }
+        }
+
+        return [
+            'text' => $text,
+            'days' => $diffDays,
+            'hours' => $diffHours,
+            'is_paid' => $isPaid,
+            'start_date' => $startTime->format('d M Y'),
+            'end_date' => $endTime->format('d M Y'),
+        ];
+    }
+
+    /**
+     * Get deadline information based on elapsed time since document approval
+     * Color coding:
+     * - Green (aman): < 1 day elapsed
+     * - Yellow (warning): 1-2 days elapsed  
+     * - Red (danger): >= 2 days elapsed
      */
     private function getDeadlineInfo($dokumen)
     {
-        if (!$dokumen->deadline_at)
-            return null;
+        // Get the approval timestamp - when the document started being processed
+        // This is when the "timer" begins
+        $startTime = null;
 
-        $now = Carbon::now();
-        $deadline = Carbon::parse($dokumen->deadline_at);
-
-        if ($now->greaterThan($deadline)) {
-            // Calculate days overdue: use diff to get exact difference, then get days
-            $diff = $now->diff($deadline);
-            $daysOverdue = (int) $diff->days;
-            return [
-                'text' => 'Terlambat ' . $daysOverdue . ' hari',
-                'class' => 'overdue'
-            ];
+        // Priority: processed_at (when Team Verifikasi approved) -> received_at from roleData -> deadline_at
+        if ($dokumen->processed_at) {
+            $startTime = Carbon::parse($dokumen->processed_at);
         } else {
-            // Calculate days remaining: use diff to get exact difference, then get days
-            $diff = $deadline->diff($now);
-            $daysRemaining = (int) $diff->days;
+            // Try to get from roleData - when received by Team Verifikasi (approval from inbox)
+            $teamVerifikasiData = null;
+            if (method_exists($dokumen, 'getDataForRole')) {
+                $teamVerifikasiData = $dokumen->getDataForRole('team_verifikasi');
+            } elseif (isset($dokumen->roleData)) {
+                $teamVerifikasiData = $dokumen->roleData->where('role_code', 'team_verifikasi')->first();
+            }
+
+            if ($teamVerifikasiData && isset($teamVerifikasiData->processed_at) && $teamVerifikasiData->processed_at) {
+                $startTime = Carbon::parse($teamVerifikasiData->processed_at);
+            } elseif ($teamVerifikasiData && isset($teamVerifikasiData->received_at) && $teamVerifikasiData->received_at) {
+                $startTime = Carbon::parse($teamVerifikasiData->received_at);
+            }
+        }
+
+        // If no approval time found, check deadline_at as fallback for display
+        if (!$startTime) {
+            if (!$dokumen->deadline_at) {
+                return null;
+            }
+            // Show deadline date if no start time
             return [
-                'text' => $daysRemaining . ' hari lagi',
-                'class' => 'on-time'
+                'date' => Carbon::parse($dokumen->deadline_at)->format('d M Y, H:i'),
+                'text' => 'Belum diproses',
+                'elapsed' => '',
+                'class' => 'safe',
+                'color' => 'success'
             ];
         }
+
+        // For paid documents, use tanggal_dibayar as end time (freeze the timer)
+        // Otherwise use current time
+        $endTime = Carbon::now();
+        $isPaid = !empty($dokumen->tanggal_dibayar) || $dokumen->status_pembayaran === 'sudah_dibayar' || $dokumen->status === 'completed';
+
+        if ($isPaid && !empty($dokumen->tanggal_dibayar)) {
+            $endTime = Carbon::parse($dokumen->tanggal_dibayar);
+        }
+
+        // Calculate elapsed time since approval
+        $diff = $startTime->diff($endTime);
+        $totalHours = ($diff->days * 24) + $diff->h;
+        $totalMinutes = $totalHours * 60 + $diff->i;
+
+        // Format elapsed time as "X hari Y jam Z menit"
+        $elapsedParts = [];
+        if ($diff->days > 0) {
+            $elapsedParts[] = $diff->days . ' hari';
+        }
+        if ($diff->h > 0) {
+            $elapsedParts[] = $diff->h . ' jam';
+        }
+        if ($diff->i > 0 || empty($elapsedParts)) {
+            $elapsedParts[] = $diff->i . ' menit';
+        }
+        $elapsedText = implode(' ', $elapsedParts);
+
+        // Determine color based on elapsed time (in hours)
+        // < 24 hours = green (aman)
+        // 24-72 hours = yellow (warning)
+        // >= 72 hours = red (danger)
+        $class = 'safe';
+        $color = 'success';
+        $statusText = 'AMAN';
+
+        if ($totalHours >= 72) {
+            $class = 'danger';
+            $color = 'danger';
+            $statusText = 'TERLAMBAT';
+        } elseif ($totalHours >= 24) {
+            $class = 'warning';
+            $color = 'warning';
+            $statusText = 'PERINGATAN';
+        }
+
+        return [
+            'date' => $startTime->format('d M Y, H:i'),
+            'text' => $statusText,
+            'elapsed' => $elapsedText,
+            'class' => $class,
+            'color' => $color
+        ];
+    }
+
+    /**
+     * Get per-step deadline levels for the stepper component
+     * Returns array indexed by step number (1-5) with deadline level for each
+     */
+    private function getStepDeadlineLevels($dokumen)
+    {
+        $levels = [1 => 'aman']; // Step 1 (Operator) is always aman
+        $roles = [
+            2 => 'team_verifikasi',
+            3 => 'perpajakan',
+            4 => 'akutansi',
+            5 => 'pembayaran',
+        ];
+
+        foreach ($roles as $step => $roleCode) {
+            $roleData = null;
+            if (method_exists($dokumen, 'getDataForRole')) {
+                $roleData = $dokumen->getDataForRole($roleCode);
+            }
+
+            if ($roleData && $roleData->received_at) {
+                $endTime = $roleData->processed_at ?? now();
+                $hoursElapsed = $roleData->received_at->diffInHours($endTime);
+
+                if ($hoursElapsed >= 72) {
+                    $levels[$step] = 'terlambat';
+                } elseif ($hoursElapsed >= 24) {
+                    $levels[$step] = 'peringatan';
+                } else {
+                    $levels[$step] = 'aman';
+                }
+            }
+        }
+
+        return $levels;
     }
 
     /**
      * Calculate duration between two dates
+     * Returns an array with minutes and display keys for workflow stages
      */
     private function calculateDuration($from, $to)
     {
-        $from = Carbon::parse($from);
-        $to = Carbon::parse($to);
-        $diff = $from->diff($to);
+        if (!$from || !$to) {
+            return null;
+        }
 
-        $parts = [];
-        if ($diff->y > 0)
-            $parts[] = $diff->y . ' tahun';
-        if ($diff->m > 0)
-            $parts[] = $diff->m . ' bulan';
-        if ($diff->d > 0)
-            $parts[] = $diff->d . ' hari';
-        if ($diff->h > 0)
-            $parts[] = $diff->h . ' jam';
-        if ($diff->i > 0)
-            $parts[] = $diff->i . ' menit';
+        try {
+            $from = Carbon::parse($from);
+            $to = Carbon::parse($to);
+            $diffMinutes = abs($from->diffInMinutes($to));
 
-        return empty($parts) ? 'kurang dari 1 menit' : implode(' ', $parts);
+            // Format display string
+            $diff = $from->diff($to);
+            $parts = [];
+            if ($diff->y > 0)
+                $parts[] = $diff->y . ' tahun';
+            if ($diff->m > 0)
+                $parts[] = $diff->m . ' bulan';
+            if ($diff->d > 0)
+                $parts[] = $diff->d . ' hari';
+            if ($diff->h > 0)
+                $parts[] = $diff->h . ' jam';
+            if ($diff->i > 0)
+                $parts[] = $diff->i . ' menit';
+
+            $display = empty($parts) ? '< 1 menit' : implode(' ', $parts);
+
+            return [
+                'minutes' => $diffMinutes,
+                'display' => $display,
+            ];
+        } catch (\Exception $e) {
+            return null;
+        }
     }
+
 
     /**
      * Get display name for role
      */
     private function getRoleDisplayName($role)
     {
+        // Normalize handler name first to handle all variants
+        $normalizedRole = $this->normalizeHandlerName($role);
+
         $roleMap = [
-            'ibuA' => 'Ibu Tarapul',
-            'ibuB' => 'Ibu Yuni',
+            'operator' => 'Operator',
+            'team_verifikasi' => 'Team Verifikasi',
             'perpajakan' => 'Team Perpajakan',
             'akutansi' => 'Team Akutansi',
             'pembayaran' => 'Pembayaran',
         ];
 
-        return $roleMap[$role] ?? $role;
+        return $roleMap[$normalizedRole] ?? $role;
+    }
+
+    /**
+     * Get workflow timeline with inbox step for transparency
+     * Returns timeline data showing when document was sent, received in inbox, and processed by each role
+     */
+    private function getWorkflowTimeline($dokumen): array
+    {
+        $roleOrder = [
+            'operator' => ['label' => 'Bagian', 'icon' => 'ðŸ“‹'],
+            'team_verifikasi' => ['label' => 'Verif', 'icon' => 'âœ“'],
+            'perpajakan' => ['label' => 'Perpajakan', 'icon' => 'ðŸ’°'],
+            'akutansi' => ['label' => 'Akutansi', 'icon' => 'ðŸ“Š'],
+            'pembayaran' => ['label' => 'Pembayaran', 'icon' => 'ðŸ’³'],
+        ];
+
+        $currentHandler = $dokumen->current_handler ?? 'operator';
+
+        // Normalize handler to match roleOrder keys
+        $normalizedHandler = strtolower($currentHandler);
+        if ($normalizedHandler === 'team_verifikasi' || $normalizedHandler === 'team_verifikasi') {
+            $normalizedHandler = 'team_verifikasi';
+        }
+
+        $status = $dokumen->status ?? 'draft';
+        $roleKeys = array_keys($roleOrder);
+        $currentIndex = array_search($normalizedHandler, $roleKeys);
+
+        // Determine if document is in inbox (sent but not yet approved/processed by current role)
+        $isInInbox = false;
+        if ($currentHandler !== 'operator') {
+            // Check roleStatuses to see if current role has approved the document
+            $hasApproved = false;
+            if (method_exists($dokumen, 'roleStatuses') && $dokumen->roleStatuses) {
+                $roleStatus = $dokumen->roleStatuses->where('role_code', $currentHandler)->first();
+                if (!$roleStatus) {
+                    // Try with lowercase Team Verifikasi for verifikasi
+                    $roleStatus = $dokumen->roleStatuses->where('role_code', 'team_verifikasi')->first();
+                }
+                if ($roleStatus && $roleStatus->status === \App\Models\DokumenStatus::STATUS_APPROVED) {
+                    $hasApproved = true;
+                }
+            }
+
+            // Document is in inbox if current role hasn't approved it yet
+            // But we also need to check if document is actually in inbox (sent_to status)
+            $isInboxStatus = in_array($status, [
+                'sent_to_team_verifikasi',
+                'menunggu_verifikasi',
+                'pending_approval_team_verifikasi',
+                'sent_to_perpajakan',
+                'pending_approval_perpajakan',
+                'sent_to_akutansi',
+                'pending_approval_akutansi',
+                'sent_to_pembayaran',
+                'pending_approval_pembayaran',
+            ]);
+
+            // If role has already approved, document is NOT in inbox (it's in daftar dokumen)
+            $isInInbox = !$hasApproved && $isInboxStatus;
+        }
+
+        $timeline = [];
+        foreach ($roleKeys as $index => $role) {
+            $roleInfo = $roleOrder[$role];
+            $roleData = null;
+
+            if (method_exists($dokumen, 'getDataForRole')) {
+                $roleData = $dokumen->getDataForRole($role);
+            } elseif (isset($dokumen->roleData)) {
+                $roleData = $dokumen->roleData->where('role_code', $role)->first();
+            }
+
+            // Determine step status
+            $stepStatus = 'pending';
+            $inboxStatus = 'pending';
+
+            if ($index < $currentIndex) {
+                $stepStatus = 'completed';
+                $inboxStatus = 'completed';
+            } elseif ($index === $currentIndex) {
+                if ($isInInbox) {
+                    $stepStatus = 'waiting'; // In inbox, waiting to be processed
+                    $inboxStatus = 'active';
+                } else {
+                    $stepStatus = 'active'; // Being processed
+                    $inboxStatus = 'completed';
+                }
+            }
+
+            // Get timestamps
+            $sentAt = null;
+            $receivedAt = null;
+            $processedAt = null;
+            $elapsedInRole = null;
+
+            if ($roleData) {
+                $receivedAt = $roleData->received_at;
+                $processedAt = $roleData->processed_at;
+
+                if ($receivedAt) {
+                    $now = Carbon::now();
+                    $elapsedInRole = Carbon::parse($receivedAt)->diffForHumans($now, true);
+                }
+            }
+
+            // Get sent_at from previous role or dokumen timestamps
+            if ($role === 'team_verifikasi' && $dokumen->sent_to_team_verifikasi_at) {
+                $sentAt = $dokumen->sent_to_team_verifikasi_at;
+            } elseif ($index > 0) {
+                $prevRole = $roleKeys[$index - 1];
+                $prevRoleData = null;
+                if (method_exists($dokumen, 'getDataForRole')) {
+                    $prevRoleData = $dokumen->getDataForRole($prevRole);
+                } elseif (isset($dokumen->roleData)) {
+                    $prevRoleData = $dokumen->roleData->where('role_code', $prevRole)->first();
+                }
+                if ($prevRoleData && $prevRoleData->processed_at) {
+                    $sentAt = $prevRoleData->processed_at;
+                }
+            }
+
+            $timeline[] = [
+                'role' => $role,
+                'label' => $roleInfo['label'],
+                'icon' => $roleInfo['icon'],
+                'status' => $stepStatus,
+                'inbox_status' => $inboxStatus,
+                'is_current' => $index === $currentIndex,
+                'in_inbox' => $index === $currentIndex && $isInInbox,
+                'sent_at' => $sentAt ? Carbon::parse($sentAt)->format('d M Y, H:i') : null,
+                'received_at' => $receivedAt ? Carbon::parse($receivedAt)->format('d M Y, H:i') : null,
+                'processed_at' => $processedAt ? Carbon::parse($processedAt)->format('d M Y, H:i') : null,
+                'elapsed' => $elapsedInRole,
+            ];
+        }
+
+        return [
+            'steps' => $timeline,
+            'current_handler' => $currentHandler,
+            'current_handler_display' => $this->getRoleDisplayName($currentHandler),
+            'is_in_inbox' => $isInInbox,
+            'total_steps' => count($roleKeys),
+            'current_step' => $currentIndex + 1,
+        ];
     }
 
     /**
@@ -667,12 +1699,12 @@ class OwnerDashboardController extends Controller
      */
     private function getReturnDestination($dokumen)
     {
-        if ($dokumen->returned_to_ibua_at)
-            return 'Ibu Tarapul';
-        if ($dokumen->department_returned_at)
+        if ($dokumen->returned_at)
+            return 'Operator';
+        if ($dokumen->return_source === 'perpajakan' || $dokumen->return_source === 'akutansi' || $dokumen->return_source === 'pembayaran')
             return 'Ibu Tarapul (Department)';
-        if ($dokumen->bidang_returned_at)
-            return 'Ibu Yuni';
+        if ($dokumen->returned_at)
+            return 'Team Verifikasi';
         return 'Tidak Diketahui';
     }
 
@@ -685,9 +1717,9 @@ class OwnerDashboardController extends Controller
             'draft' => 'Draft',
             'sedang diproses' => 'Sedang Diproses',
             'menunggu_verifikasi' => 'Menunggu Verifikasi',
-            'pending_approval_ibub' => 'Menunggu Persetujuan Ibu Yuni',
-            'sent_to_ibub' => 'Terkirim ke Ibu Yuni',
-            'proses_ibub' => 'Diproses Ibu Yuni',
+            'pending_approval_team_verifikasi' => 'Menunggu Persetujuan Team Verifikasi',
+            'sent_to_team_verifikasi' => 'Terkirim ke Team Verifikasi',
+            'proses_Team Verifikasi' => 'Diproses Team Verifikasi',
             'sent_to_perpajakan' => 'Terkirim ke Team Perpajakan',
             'proses_perpajakan' => 'Diproses Team Perpajakan',
             'sent_to_akutansi' => 'Terkirim ke Team Akutansi',
@@ -698,7 +1730,7 @@ class OwnerDashboardController extends Controller
             'approved_data_sudah_terkirim' => 'Data Sudah Terkirim',
             'rejected_data_tidak_lengkap' => 'Ditolak - Data Tidak Lengkap',
             'selesai' => 'Selesai',
-            'returned_to_ibua' => 'Dikembalikan ke Ibu Tarapul',
+            'returned_to_operator' => 'Dikembalikan ke Ibu Tarapul',
             'returned_to_department' => 'Dikembalikan ke Department',
             'returned_to_bidang' => 'Dikembalikan ke Bidang',
         ];
@@ -738,7 +1770,7 @@ class OwnerDashboardController extends Controller
      */
     private function getFastestDepartment()
     {
-        $departments = ['ibuB', 'perpajakan', 'akutansi', 'pembayaran'];
+        $departments = ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
         $avgTimes = [];
 
         foreach ($departments as $dept) {
@@ -753,7 +1785,7 @@ class OwnerDashboardController extends Controller
      */
     private function getSlowestDepartment()
     {
-        $departments = ['ibuB', 'perpajakan', 'akutansi', 'pembayaran'];
+        $departments = ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
         $avgTimes = [];
 
         foreach ($departments as $dept) {
@@ -786,9 +1818,51 @@ class OwnerDashboardController extends Controller
     }
 
     /**
+     * Display tracking dokumen page for all roles (without header and statistics)
+     */
+    public function trackingDokumen(Request $request)
+    {
+        // Get paginated documents with latest status and apply search filter
+        $perPage = $request->get('per_page', session('owner_tracking_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['owner_tracking_per_page' => $perPage]);
+
+        $documents = $this->getDocumentsWithTracking($request, $perPage);
+
+        // Get filter data for dropdowns
+        $filterData = $this->getFilterData();
+
+        // Determine module based on user role
+        $user = auth()->user();
+        $module = 'operator'; // default
+        if ($user) {
+            $role = strtolower($user->role ?? '');
+            if (in_array($role, ['team_verifikasi', 'pembayaran', 'akutansi', 'perpajakan'])) {
+                $module = $role;
+            }
+        }
+
+        return view('tracking.dokumen', [
+            'documents' => $documents,
+            'filterData' => $filterData,
+            'search' => $request->get('search', ''),
+            'module' => $module,
+            'title' => 'Tracking Dokumen',
+            'menuDashboard' => '',
+            'menuDokumen' => '',
+            'menuDaftarDokumen' => '',
+            'menuRekapanDokumen' => '',
+        ]);
+    }
+
+    /**
      * Show workflow tracking page for a document
      */
-    public function showWorkflow($id)
+    public function showWorkflow(Request $request, $id)
     {
         $dokumen = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
             ->findOrFail($id);
@@ -808,16 +1882,40 @@ class OwnerDashboardController extends Controller
         $user = auth()->user();
         $userRole = strtolower($user->role ?? $user->name ?? 'owner');
         $module = 'owner';
-        $dashboardUrl = '/owner/dashboard';
+        $dashboardUrl = '/tracking-dokumen'; // Default to tracking dokumen for all roles
 
-        // If user is Pembayaran accessing workflow, set module to pembayaran for proper layout
-        if (
-            strtolower($userRole) === 'pembayaran' ||
-            (isset($user->name) && strtolower($user->name) === 'pembayaran') ||
-            (isset($user->role) && strtolower($user->role) === 'pembayaran')
-        ) {
+        // Set module and dashboard URL based on user role
+        if (in_array($userRole, ['operator', 'ibutara', 'Operator'])) {
+            $module = 'operator';
+            $dashboardUrl = '/dashboard';
+        } elseif (in_array($userRole, ['team_verifikasi', 'ibuyuni', 'ibu b', 'team verifikasi'])) {
+            $module = 'team_verifikasi';
+            $dashboardUrl = '/dashboardB';
+        } elseif (in_array($userRole, ['pembayaran', 'team pembayaran'])) {
             $module = 'pembayaran';
             $dashboardUrl = '/dashboardPembayaran';
+        } elseif (in_array($userRole, ['akutansi', 'team akutansi'])) {
+            $module = 'akutansi';
+            $dashboardUrl = '/dashboardAkutansi';
+        } elseif (in_array($userRole, ['perpajakan', 'team perpajakan'])) {
+            $module = 'perpajakan';
+            $dashboardUrl = '/dashboardPerpajakan';
+        } elseif (str_starts_with($userRole, 'bagian') || preg_match('/^[A-Z]{3}$/', $user->role ?? '')) {
+            // Bagian users have role codes like SDM, KEU, etc or starts with 'bagian'
+            $module = 'bagian';
+            $dashboardUrl = '/bagian/tracking';
+        } elseif (in_array($userRole, ['admin', 'owner'])) {
+            $module = 'owner';
+            $dashboardUrl = '/owner/dokumen';
+        }
+
+        // If a return_url was passed (e.g., from document list with filters), use it
+        // Only accept relative URLs starting with / to prevent open redirect
+        if ($request->has('return_url') && $request->return_url) {
+            $returnUrl = $request->return_url;
+            if (str_starts_with($returnUrl, '/') && !str_starts_with($returnUrl, '//')) {
+                $dashboardUrl = $returnUrl;
+            }
         }
 
         return view('owner.workflow', compact('dokumen', 'workflowStages', 'activityLogsByStage'))
@@ -843,15 +1941,15 @@ class OwnerDashboardController extends Controller
         // Stage 1: ibutara (Ibu Tarapul) - Always completed
         $stages[] = [
             'id' => 'sender',
-            'name' => 'Ibu Tarapul',
+            'name' => 'Operator',
             'label' => 'ibutara',
             'status' => 'completed',
             'timestamp' => $dokumen->created_at,
             'icon' => 'fa-user',
             'color' => '#10b981',
-            'description' => 'Dokumen Dibuat',
+            'description' => 'Dokumen DOperatort',
             'details' => [
-                'Dibuat oleh' => 'Ibu Tarapul',
+                'DOperatort oleh' => 'Operator',
                 'Nomor Agenda' => $dokumen->nomor_agenda,
                 'Nomor SPP' => $dokumen->nomor_spp,
                 'Nilai' => 'Rp. ' . number_format($dokumen->nilai_rupiah, 0, ',', '.'),
@@ -867,25 +1965,29 @@ class OwnerDashboardController extends Controller
         $reviewerReturnInfo = $this->getReturnInfoForStage($dokumen, 'reviewer', $returnEvents);
         $reviewerCycleInfo = $this->getCycleInfo($dokumen, 'reviewer');
 
-        if ($dokumen->getDataForRole('ibub')?->received_at) {
-            $reviewerStatus = 'completed';
-            $reviewerTimestamp = $dokumen->getDataForRole('ibub')->received_at;
-            $reviewerDescription = 'Dikirim ke Ibu Yuni';
+        // Get role data for Team Verifikasi
+        $reviewerRoleData = $dokumen->getDataForRole('team_verifikasi');
+
+        // Check if document was sent to next role (perpajakan or akutansi)
+        $sentToNextRole = ($dokumen->getDataForRole('perpajakan')?->received_at || $dokumen->getDataForRole('akutansi')?->received_at);
+
+        if ($reviewerRoleData?->received_at) {
+            // Document is received at Team Verifikasi
+            if ($sentToNextRole || $reviewerRoleData->processed_at) {
+                // Document has been processed and sent to next role
+                $reviewerStatus = 'completed';
+                $reviewerTimestamp = $reviewerRoleData->processed_at ?? $reviewerRoleData->received_at;
+                $reviewerDescription = 'Diproses Ibu Yuni';
+            } else {
+                // Document is still being processed at Team Verifikasi
+                $reviewerStatus = 'processing';
+                $reviewerTimestamp = $reviewerRoleData->received_at;
+                $reviewerDescription = 'Sedang diproses Ibu Yuni';
+            }
 
             // Check if this is a re-send after return
             if ($reviewerCycleInfo && $reviewerCycleInfo['isResend']) {
-                $reviewerDescription = 'Dikirim kembali ke Ibu Yuni (Attempt ' . $reviewerCycleInfo['attemptCount'] . ')';
-            }
-        }
-
-        if ($dokumen->processed_at) {
-            $reviewerStatus = 'completed';
-            $reviewerTimestamp = $dokumen->processed_at;
-            $reviewerDescription = 'Diproses Ibu Yuni';
-
-            // Check if processed after return
-            if ($reviewerCycleInfo && $reviewerCycleInfo['isResend']) {
-                $reviewerDescription = 'Diproses Ibu Yuni (Attempt ' . $reviewerCycleInfo['attemptCount'] . ')';
+                $reviewerDescription .= ' (Attempt ' . $reviewerCycleInfo['attemptCount'] . ')';
             }
         }
 
@@ -893,27 +1995,102 @@ class OwnerDashboardController extends Controller
         if ($reviewerReturnInfo && !$reviewerCycleInfo['isResend']) {
             $reviewerStatus = 'returned';
             if (!$reviewerTimestamp) {
-                $reviewerTimestamp = $dokumen->getDataForRole('ibub')?->received_at ?? $dokumen->created_at;
+                $reviewerTimestamp = $reviewerRoleData?->received_at ?? $dokumen->created_at;
+            }
+        }
+
+        // Calculate deadline level based on received_at (count up from when document was received)
+        $reviewerRoleData = $dokumen->getDataForRole('team_verifikasi');
+        $reviewerIsOverdue = false;
+        $reviewerDeadlineInfo = null;
+        $reviewerDeadlineLevel = null;
+
+        // Calculate for both active (vs now) and completed (vs processed_at) stages
+        if ($reviewerRoleData && $reviewerRoleData->received_at) {
+            // For completed: use processed_at as endpoint; for active: use now()
+            $endTime = $reviewerRoleData->processed_at ?? now();
+            $hoursElapsed = $reviewerRoleData->received_at->diffInHours($endTime);
+            $daysElapsed = floor($hoursElapsed / 24);
+
+            if ($hoursElapsed >= 72) {
+                if (!$reviewerRoleData->processed_at) $reviewerIsOverdue = true;
+                $reviewerDeadlineLevel = 'terlambat';
+
+                $hoursOverdue = $hoursElapsed - 72;
+                $daysOverdue = floor($hoursOverdue / 24);
+                $remainingHours = $hoursOverdue % 24;
+
+                $reviewerDeadlineInfo = [
+                    'received_at' => $reviewerRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
+                    'days_overdue' => $daysOverdue,
+                    'hours_overdue' => $remainingHours,
+                    'deadline_at' => $reviewerRoleData->received_at->copy()->addHours(72),
+                    'is_historical' => $reviewerRoleData->processed_at ? true : false,
+                ];
+            } elseif ($hoursElapsed >= 24) {
+                $reviewerDeadlineLevel = 'peringatan';
+                $reviewerDeadlineInfo = [
+                    'received_at' => $reviewerRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
+                    'days_overdue' => 0,
+                    'hours_overdue' => 0,
+                    'deadline_at' => $reviewerRoleData->received_at->copy()->addHours(72),
+                    'is_historical' => $reviewerRoleData->processed_at ? true : false,
+                ];
+            } else {
+                $reviewerDeadlineLevel = 'aman';
+                $reviewerDeadlineInfo = [
+                    'received_at' => $reviewerRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_overdue' => 0,
+                    'hours_overdue' => 0,
+                    'is_historical' => $reviewerRoleData->processed_at ? true : false,
+                ];
+            }
+        }
+
+        // Calculate duration for Team Verifikasi
+        $reviewerDuration = null;
+        if ($reviewerRoleData && $reviewerRoleData->received_at) {
+            // If still processing, calculate from received_at to now
+            // If completed, calculate from received_at to processed_at
+            if ($reviewerStatus === 'processing') {
+                $reviewerDuration = $this->calculateDuration($reviewerRoleData->received_at, now());
+            } elseif ($reviewerStatus === 'completed' && $reviewerRoleData->processed_at) {
+                $reviewerDuration = $this->calculateDuration($reviewerRoleData->received_at, $reviewerRoleData->processed_at);
+            } elseif ($sentToNextRole) {
+                // If sent to next role but no processed_at, use received_at of next role
+                $nextRoleReceivedAt = $dokumen->getDataForRole('perpajakan')?->received_at ?? $dokumen->getDataForRole('akutansi')?->received_at;
+                if ($nextRoleReceivedAt) {
+                    $reviewerDuration = $this->calculateDuration($reviewerRoleData->received_at, $nextRoleReceivedAt);
+                }
             }
         }
 
         $stages[] = [
             'id' => 'reviewer',
-            'name' => 'Ibu Yuni',
+            'name' => 'Team Verifikasi',
             'label' => 'teamverifikasi',
             'status' => $reviewerStatus,
             'timestamp' => $reviewerTimestamp,
             'icon' => 'fa-user-check',
             'color' => $reviewerStatus === 'completed' ? '#10b981' : ($reviewerStatus === 'processing' ? '#3b82f6' : ($reviewerStatus === 'returned' ? '#ef4444' : '#9ca3af')),
             'description' => $reviewerDescription,
+            'duration' => $reviewerDuration,
             'details' => $reviewerTimestamp ? [
-                'Dikirim pada' => $dokumen->getDataForRole('ibub')?->received_at ? $dokumen->getDataForRole('ibub')->received_at->format('d M Y H:i') : '-',
+                'Dikirim pada' => $dokumen->getDataForRole('team_verifikasi')?->received_at ? $dokumen->getDataForRole('team_verifikasi')->received_at->format('d M Y H:i') : '-',
                 'Diproses pada' => $dokumen->processed_at ? $dokumen->processed_at->format('d M Y H:i') : '-',
             ] : [],
             'hasReturn' => $reviewerReturnInfo !== null,
             'returnInfo' => $reviewerReturnInfo,
             'hasCycle' => $reviewerCycleInfo['hasCycle'],
-            'cycleInfo' => $reviewerCycleInfo
+            'cycleInfo' => $reviewerCycleInfo,
+            'isOverdue' => $reviewerIsOverdue,
+            'deadlineInfo' => $reviewerDeadlineInfo,
+            'deadlineLevel' => $reviewerDeadlineLevel
         ];
 
         // Stage 3: TAX (Team Perpajakan)
@@ -961,6 +2138,45 @@ class OwnerDashboardController extends Controller
             }
         }
 
+        // Calculate deadline level based on received_at (count up from when document was received)
+        $taxRoleData = $dokumen->getDataForRole('perpajakan');
+        $taxIsOverdue = false;
+        $taxDeadlineInfo = null;
+        $taxDeadlineLevel = null;
+
+        // Calculate for both active (vs now) and completed (vs processed_at) stages
+        if ($taxRoleData && $taxRoleData->received_at) {
+            $endTime = $taxRoleData->processed_at ?? now();
+            $hoursElapsed = $taxRoleData->received_at->diffInHours($endTime);
+            $daysElapsed = floor($hoursElapsed / 24);
+
+            if ($hoursElapsed >= 72) {
+                if (!$taxRoleData->processed_at) $taxIsOverdue = true;
+                $taxDeadlineLevel = 'terlambat';
+                $taxDeadlineInfo = [
+                    'received_at' => $taxRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
+                    'is_historical' => $taxRoleData->processed_at ? true : false,
+                ];
+            } elseif ($hoursElapsed >= 24) {
+                $taxDeadlineLevel = 'peringatan';
+                $taxDeadlineInfo = [
+                    'received_at' => $taxRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
+                    'is_historical' => $taxRoleData->processed_at ? true : false,
+                ];
+            } else {
+                $taxDeadlineLevel = 'aman';
+                $taxDeadlineInfo = [
+                    'received_at' => $taxRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'is_historical' => $taxRoleData->processed_at ? true : false,
+                ];
+            }
+        }
+
         $stages[] = [
             'id' => 'tax',
             'name' => 'Team Perpajakan',
@@ -978,7 +2194,10 @@ class OwnerDashboardController extends Controller
             'hasReturn' => $taxReturnInfo !== null,
             'returnInfo' => $taxReturnInfo,
             'hasCycle' => $taxCycleInfo['hasCycle'],
-            'cycleInfo' => $taxCycleInfo
+            'cycleInfo' => $taxCycleInfo,
+            'isOverdue' => $taxIsOverdue,
+            'deadlineInfo' => $taxDeadlineInfo,
+            'deadlineLevel' => $taxDeadlineLevel
         ];
 
         // Stage 4: ACCOUNTING (Team Akutansi)
@@ -1023,6 +2242,45 @@ class OwnerDashboardController extends Controller
             }
         }
 
+        // Calculate deadline level based on received_at (count up from when document was received)
+        $accountingRoleData = $dokumen->getDataForRole('akutansi');
+        $accountingIsOverdue = false;
+        $accountingDeadlineInfo = null;
+        $accountingDeadlineLevel = null;
+
+        // Calculate for both active (vs now) and completed (vs processed_at) stages
+        if ($accountingRoleData && $accountingRoleData->received_at) {
+            $endTime = $accountingRoleData->processed_at ?? now();
+            $hoursElapsed = $accountingRoleData->received_at->diffInHours($endTime);
+            $daysElapsed = floor($hoursElapsed / 24);
+
+            if ($hoursElapsed >= 72) {
+                if (!$accountingRoleData->processed_at) $accountingIsOverdue = true;
+                $accountingDeadlineLevel = 'terlambat';
+                $accountingDeadlineInfo = [
+                    'received_at' => $accountingRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
+                    'is_historical' => $accountingRoleData->processed_at ? true : false,
+                ];
+            } elseif ($hoursElapsed >= 24) {
+                $accountingDeadlineLevel = 'peringatan';
+                $accountingDeadlineInfo = [
+                    'received_at' => $accountingRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
+                    'is_historical' => $accountingRoleData->processed_at ? true : false,
+                ];
+            } else {
+                $accountingDeadlineLevel = 'aman';
+                $accountingDeadlineInfo = [
+                    'received_at' => $accountingRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'is_historical' => $accountingRoleData->processed_at ? true : false,
+                ];
+            }
+        }
+
         $stages[] = [
             'id' => 'accounting',
             'name' => 'Team Akutansi',
@@ -1037,7 +2295,10 @@ class OwnerDashboardController extends Controller
                 'Status' => $dokumen->status,
             ] : [],
             'hasReturn' => $accountingReturnInfo !== null,
-            'returnInfo' => $accountingReturnInfo
+            'returnInfo' => $accountingReturnInfo,
+            'isOverdue' => $accountingIsOverdue,
+            'deadlineInfo' => $accountingDeadlineInfo,
+            'deadlineLevel' => $accountingDeadlineLevel
         ];
 
         // Stage 5: PAYMENT (Pembayaran)
@@ -1088,6 +2349,46 @@ class OwnerDashboardController extends Controller
             $paymentDescription = 'Selesai Dibayar';
         }
 
+        // Calculate deadline level for pembayaran based on received_at (count up)
+        $paymentRoleData = $dokumen->getDataForRole('pembayaran');
+        $paymentIsOverdue = false;
+        $paymentDeadlineInfo = null;
+        $paymentDeadlineLevel = null;
+
+        // Calculate for both active (vs now) and completed (vs processed_at/tanggal_dibayar) stages
+        if ($paymentRoleData && $paymentRoleData->received_at) {
+            $isPaymentCompleted = $paymentRoleData->processed_at || $paymentStatus === 'completed';
+            $endTime = $paymentRoleData->processed_at ?? ($paymentStatus === 'completed' ? ($dokumen->tanggal_dibayar ?? now()) : now());
+            $hoursElapsed = $paymentRoleData->received_at->diffInHours($endTime);
+            $daysElapsed = floor($hoursElapsed / 24);
+
+            if ($hoursElapsed >= 72) {
+                if (!$isPaymentCompleted) $paymentIsOverdue = true;
+                $paymentDeadlineLevel = 'terlambat';
+                $paymentDeadlineInfo = [
+                    'received_at' => $paymentRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
+                    'is_historical' => $isPaymentCompleted,
+                ];
+            } elseif ($hoursElapsed >= 24) {
+                $paymentDeadlineLevel = 'peringatan';
+                $paymentDeadlineInfo = [
+                    'received_at' => $paymentRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'days_elapsed' => $daysElapsed,
+                    'is_historical' => $isPaymentCompleted,
+                ];
+            } else {
+                $paymentDeadlineLevel = 'aman';
+                $paymentDeadlineInfo = [
+                    'received_at' => $paymentRoleData->received_at,
+                    'hours_elapsed' => $hoursElapsed,
+                    'is_historical' => $isPaymentCompleted,
+                ];
+            }
+        }
+
         $stages[] = [
             'id' => 'payment',
             'name' => 'Pembayaran',
@@ -1102,7 +2403,10 @@ class OwnerDashboardController extends Controller
                 'Status' => $dokumen->status,
             ] : [],
             'hasReturn' => false,
-            'returnInfo' => null
+            'returnInfo' => null,
+            'isOverdue' => $paymentIsOverdue,
+            'deadlineInfo' => $paymentDeadlineInfo,
+            'deadlineLevel' => $paymentDeadlineLevel
         ];
 
         // Calculate durations between stages
@@ -1128,45 +2432,45 @@ class OwnerDashboardController extends Controller
                 'from' => 'tax',
                 'to' => 'reviewer',
                 'timestamp' => $dokumen->returned_from_perpajakan_at,
-                'reason' => $dokumen->alasan_pengembalian ?? 'Tidak ada alasan',
+                'reason' => $dokumen->return_reason ?? 'Tidak ada alasan',
                 'returned_by' => 'Team Perpajakan',
                 'returned_to' => 'Ibu Yuni'
             ];
         }
 
         // Return from Ibu Yuni to Bidang
-        if ($dokumen->bidang_returned_at) {
+        if ($dokumen->status === 'returned_to_bidang' && $dokumen->returned_at) {
             $returns[] = [
                 'from' => 'reviewer',
                 'to' => 'bidang',
-                'timestamp' => $dokumen->bidang_returned_at,
-                'reason' => $dokumen->bidang_return_reason ?? 'Tidak ada alasan',
+                'timestamp' => $dokumen->returned_at,
+                'reason' => $dokumen->return_reason ?? 'Tidak ada alasan',
                 'returned_by' => 'Ibu Yuni',
-                'returned_to' => 'Bidang: ' . ($dokumen->target_bidang ?? 'Tidak diketahui')
+                'returned_to' => 'Bidang: ' . ($dokumen->return_source ?? 'Tidak diketahui')
             ];
         }
 
         // Return to Department
-        if ($dokumen->department_returned_at) {
+        if ($dokumen->status === 'returned_to_department' && $dokumen->returned_at) {
             $returns[] = [
                 'from' => $dokumen->current_handler === 'perpajakan' ? 'tax' : ($dokumen->current_handler === 'akutansi' ? 'accounting' : 'reviewer'),
                 'to' => 'department',
-                'timestamp' => $dokumen->department_returned_at,
-                'reason' => $dokumen->department_return_reason ?? 'Tidak ada alasan',
+                'timestamp' => $dokumen->returned_at,
+                'reason' => $dokumen->return_reason ?? 'Tidak ada alasan',
                 'returned_by' => $this->getRoleDisplayName($dokumen->current_handler),
                 'returned_to' => 'Department'
             ];
         }
 
         // Return to Ibu A
-        if ($dokumen->returned_to_ibua_at) {
+        if ($dokumen->returned_at) {
             $returns[] = [
                 'from' => 'reviewer',
                 'to' => 'sender',
-                'timestamp' => $dokumen->returned_to_ibua_at,
-                'reason' => $dokumen->alasan_pengembalian ?? 'Tidak ada alasan',
+                'timestamp' => $dokumen->returned_at,
+                'reason' => $dokumen->return_reason ?? 'Tidak ada alasan',
                 'returned_by' => 'Ibu Yuni',
-                'returned_to' => 'Ibu Tarapul'
+                'returned_to' => 'Operator'
             ];
         }
 
@@ -1222,15 +2526,15 @@ class OwnerDashboardController extends Controller
             }
         } elseif ($stageId === 'reviewer') {
             // Check if returned to bidang and sent back
-            if ($dokumen->bidang_returned_at) {
+            if ($dokumen->returned_at && $dokumen->status === 'returned_to_bidang') {
                 $hasCycle = true;
-                $returnTimestamp = $dokumen->bidang_returned_at;
+                $returnTimestamp = $dokumen->returned_at;
                 $attemptCount = 1;
 
                 // Check if processed again after return from bidang
                 if (
                     $dokumen->processed_at &&
-                    $dokumen->processed_at->gt($dokumen->bidang_returned_at)
+                    $dokumen->processed_at->gt($dokumen->returned_at)
                 ) {
                     $isResend = true;
                     $resendTimestamp = $dokumen->processed_at;
@@ -1239,21 +2543,21 @@ class OwnerDashboardController extends Controller
             }
 
             // Check if returned to Ibu A and sent back
-            if ($dokumen->returned_to_ibua_at) {
+            if ($dokumen->returned_at) {
                 $hasCycle = true;
-                if (!$returnTimestamp || $dokumen->returned_to_ibua_at->gt($returnTimestamp)) {
-                    $returnTimestamp = $dokumen->returned_to_ibua_at;
+                if (!$returnTimestamp || $dokumen->returned_at->gt($returnTimestamp)) {
+                    $returnTimestamp = $dokumen->returned_at;
                 }
 
                 // Check if sent to Ibu B again after return
-                $ibubReceivedAt = $dokumen->getDataForRole('ibub')?->received_at;
+                $teamVerifikasiReceivedAt = $dokumen->getDataForRole('team_verifikasi')?->received_at;
                 if (
-                    $ibubReceivedAt &&
-                    $ibubReceivedAt->gt($dokumen->returned_to_ibua_at)
+                    $teamVerifikasiReceivedAt &&
+                    $teamVerifikasiReceivedAt->gt($dokumen->returned_at)
                 ) {
                     $isResend = true;
-                    if (!$resendTimestamp || $ibubReceivedAt->gt($resendTimestamp)) {
-                        $resendTimestamp = $ibubReceivedAt;
+                    if (!$resendTimestamp || $teamVerifikasiReceivedAt->gt($resendTimestamp)) {
+                        $resendTimestamp = $teamVerifikasiReceivedAt;
                     }
                     $attemptCount = max($attemptCount, 2);
                 }
@@ -1402,14 +2706,14 @@ class OwnerDashboardController extends Controller
     public function rekapanByHandler(Request $request, $handler)
     {
         // Validate handler
-        $validHandlers = ['ibuA', 'ibuB', 'perpajakan', 'akutansi'];
+        $validHandlers = ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'];
         if (!in_array($handler, $validHandlers)) {
             abort(404, 'Handler tidak valid');
         }
 
         $handlerNames = [
-            'ibuA' => 'Ibu Tarapul',
-            'ibuB' => 'Ibu Yuni',
+            'operator' => 'Operator',
+            'team_verifikasi' => 'Ibu Yuni',
             'perpajakan' => 'Team Perpajakan',
             'akutansi' => 'Team Akutansi'
         ];
@@ -1417,25 +2721,25 @@ class OwnerDashboardController extends Controller
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
 
         // Filter by handler
-        if ($handler === 'ibuA') {
-            // Ibu Tarapul: dokumen dengan current_handler = 'ibuA' atau status draft
+        if ($handler === 'operator') {
+            // Ibu Tarapul: dokumen dengan current_handler = 'operator' atau status draft
             $query->where(function ($q) {
-                $q->where('current_handler', 'ibuA')
+                $q->where('current_handler', 'operator')
                     ->orWhere(function ($subQ) {
                         $subQ->where('status', 'draft')
                             ->where(function ($subSubQ) {
                                 $subSubQ->whereNull('current_handler')
-                                    ->orWhere('current_handler', 'ibuA');
+                                    ->orWhere('current_handler', 'operator');
                             });
                     });
             });
-        } elseif ($handler === 'ibuB') {
-            // Ibu Yuni: dokumen dengan current_handler = 'ibuB' atau status sent_to_ibub
+        } elseif ($handler === 'team_verifikasi') {
+            // Ibu Yuni: dokumen dengan current_handler = 'team_verifikasi' atau status sent_to_team_verifikasi
             $query->where(function ($q) {
-                $q->where('current_handler', 'ibuB')
-                    ->orWhere('status', 'sent_to_ibub')
-                    ->orWhere('status', 'pending_approval_ibub')
-                    ->orWhere('status', 'proses_ibub');
+                $q->where('current_handler', 'team_verifikasi')
+                    ->orWhere('status', 'sent_to_team_verifikasi')
+                    ->orWhere('status', 'pending_approval_team_verifikasi')
+                    ->orWhere('status', 'proses_Team Verifikasi');
             });
         } elseif ($handler === 'perpajakan') {
             // Team Perpajakan: dokumen dengan current_handler = 'perpajakan' atau status sent_to_perpajakan
@@ -1468,7 +2772,7 @@ class OwnerDashboardController extends Controller
             $query->when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
                 $query->where(function ($q) {
                     $q->where('imported_from_csv', false)
-                      ->orWhereNull('imported_from_csv');
+                        ->orWhereNull('imported_from_csv');
                 });
             });
         }
@@ -1544,23 +2848,23 @@ class OwnerDashboardController extends Controller
             $countQuery = Dokumen::where('bagian', $code);
 
             // Apply handler filter
-            if ($handler === 'ibuA') {
+            if ($handler === 'operator') {
                 $countQuery->where(function ($q) {
-                    $q->where('current_handler', 'ibuA')
+                    $q->where('current_handler', 'operator')
                         ->orWhere(function ($subQ) {
                             $subQ->where('status', 'draft')
                                 ->where(function ($subSubQ) {
                                     $subSubQ->whereNull('current_handler')
-                                        ->orWhere('current_handler', 'ibuA');
+                                        ->orWhere('current_handler', 'operator');
                                 });
                         });
                 });
-            } elseif ($handler === 'ibuB') {
+            } elseif ($handler === 'team_verifikasi') {
                 $countQuery->where(function ($q) {
-                    $q->where('current_handler', 'ibuB')
-                        ->orWhere('status', 'sent_to_ibub')
-                        ->orWhere('status', 'pending_approval_ibub')
-                        ->orWhere('status', 'proses_ibub');
+                    $q->where('current_handler', 'team_verifikasi')
+                        ->orWhere('status', 'sent_to_team_verifikasi')
+                        ->orWhere('status', 'pending_approval_team_verifikasi')
+                        ->orWhere('status', 'proses_Team Verifikasi');
                 });
             } elseif ($handler === 'perpajakan') {
                 $countQuery->where(function ($q) {
@@ -1624,7 +2928,7 @@ class OwnerDashboardController extends Controller
     public function rekapanDetail(Request $request, $type)
     {
         // Validate type
-        $validTypes = ['total', 'selesai', 'ibuA', 'ibuB', 'perpajakan', 'akutansi'];
+        $validTypes = ['total', 'selesai', 'operator', 'team_verifikasi', 'perpajakan', 'akutansi'];
         if (!in_array($type, $validTypes)) {
             abort(404, 'Type tidak valid');
         }
@@ -1632,8 +2936,8 @@ class OwnerDashboardController extends Controller
         $typeNames = [
             'total' => 'Total Dokumen',
             'selesai' => 'Dokumen Selesai',
-            'ibuA' => 'Dokumen Ibu Tarapul',
-            'ibuB' => 'Dokumen Ibu Yuni',
+            'operator' => 'Dokumen Ibu Tarapul',
+            'team_verifikasi' => 'Dokumen Ibu Yuni',
             'perpajakan' => 'Dokumen Team Perpajakan',
             'akutansi' => 'Dokumen Team Akutansi'
         ];
@@ -1650,25 +2954,25 @@ class OwnerDashboardController extends Controller
                 $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                     ->orWhere('status_pembayaran', 'sudah_dibayar');
             });
-        } elseif ($type === 'ibuA') {
+        } elseif ($type === 'operator') {
             // Ibu Tarapul documents
             $baseQuery->where(function ($q) {
-                $q->where('current_handler', 'ibuA')
+                $q->where('current_handler', 'operator')
                     ->orWhere(function ($subQ) {
                         $subQ->where('status', 'draft')
                             ->where(function ($subSubQ) {
                                 $subSubQ->whereNull('current_handler')
-                                    ->orWhere('current_handler', 'ibuA');
+                                    ->orWhere('current_handler', 'operator');
                             });
                     });
             });
-        } elseif ($type === 'ibuB') {
+        } elseif ($type === 'team_verifikasi') {
             // Ibu Yuni documents
             $baseQuery->where(function ($q) {
-                $q->where('current_handler', 'ibuB')
-                    ->orWhere('status', 'sent_to_ibub')
-                    ->orWhere('status', 'pending_approval_ibub')
-                    ->orWhere('status', 'proses_ibub');
+                $q->where('current_handler', 'team_verifikasi')
+                    ->orWhere('status', 'sent_to_team_verifikasi')
+                    ->orWhere('status', 'pending_approval_team_verifikasi')
+                    ->orWhere('status', 'proses_Team Verifikasi');
             });
         } elseif ($type === 'perpajakan') {
             // Team Perpajakan documents
@@ -1697,14 +3001,14 @@ class OwnerDashboardController extends Controller
         // 3. Total Dokumen Proses (sedang diproses)
         $totalProses = (clone $baseQuery)->where(function ($q) {
             $q->where('status', 'sedang diproses')
-                ->orWhere('status', 'sent_to_ibub')
+                ->orWhere('status', 'sent_to_team_verifikasi')
                 ->orWhere('status', 'sent_to_perpajakan')
                 ->orWhere('status', 'sent_to_akutansi')
                 ->orWhere('status', 'sent_to_pembayaran')
-                ->orWhere('status', 'proses_ibub')
+                ->orWhere('status', 'proses_Team Verifikasi')
                 ->orWhere('status', 'sent_to_perpajakan')
                 ->orWhere('status', 'sent_to_akutansi')
-                ->orWhere('status', 'pending_approval_ibub');
+                ->orWhere('status', 'pending_approval_team_verifikasi');
         })->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
             ->where(function ($subQ) {
                 $subQ->whereNull('status_pembayaran')
@@ -1775,14 +3079,14 @@ class OwnerDashboardController extends Controller
         } elseif ($statFilter === 'proses') {
             $documentsQuery->where(function ($q) {
                 $q->where('status', 'sedang diproses')
-                    ->orWhere('status', 'sent_to_ibub')
+                    ->orWhere('status', 'sent_to_team_verifikasi')
                     ->orWhere('status', 'sent_to_perpajakan')
                     ->orWhere('status', 'sent_to_akutansi')
                     ->orWhere('status', 'sent_to_pembayaran')
-                    ->orWhere('status', 'proses_ibub')
+                    ->orWhere('status', 'proses_Team Verifikasi')
                     ->orWhere('status', 'sent_to_perpajakan')
                     ->orWhere('status', 'sent_to_akutansi')
-                    ->orWhere('status', 'pending_approval_ibub');
+                    ->orWhere('status', 'pending_approval_team_verifikasi');
             })->whereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
                 ->where(function ($subQ) {
                     $subQ->whereNull('status_pembayaran')
@@ -1793,8 +3097,8 @@ class OwnerDashboardController extends Controller
             $documentsQuery->whereNotNull('deadline_at')
                 ->where('deadline_at', '<', $now)
                 ->whereNotIn('status', [
-                    'selesai', 
-                    'approved_data_sudah_terkirim', 
+                    'selesai',
+                    'approved_data_sudah_terkirim',
                     'completed',
                     'sent_to_perpajakan',
                     'sent_to_akutansi',
@@ -1843,162 +3147,658 @@ class OwnerDashboardController extends Controller
     }
 
     /**
-     * Display rekapan keterlambatan for owner
-     * Updated to use dokumen_role_data table for per-role deadline tracking
+     * Rekapan Keterlambatan + Analisis Kinerja (Gabungan)
+     * Menampilkan skor kinerja per tim (donut chart) + daftar dokumen
+     * dengan klasifikasi Tepat Waktu / Peringatan / Terlambat
      */
     public function rekapanKeterlambatan(Request $request)
     {
-        $now = Carbon::now();
-
-        // Query dokumen terlambat berdasarkan dokumen_role_data
-        // Dokumen terlambat: deadline_at < NOW() dan processed_at IS NULL
-        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
-            ->join('dokumen_role_data', 'dokumens.id', '=', 'dokumen_role_data.dokumen_id')
-            ->whereNotNull('dokumen_role_data.deadline_at')
-            ->where('dokumen_role_data.deadline_at', '<', $now)
-            ->whereNull('dokumen_role_data.processed_at')
-            ->whereIn('dokumen_role_data.role_code', ['ibuA', 'ibuB', 'perpajakan', 'akutansi'])
-            ->select('dokumens.*', 
-                'dokumen_role_data.role_code as delay_role_code', 
-                'dokumen_role_data.deadline_at as delay_deadline_at', 
-                'dokumen_role_data.processed_at as delay_processed_at');
-
-        // Search functionality
-        if ($request->has('search') && $request->search) {
-            $search = trim((string) $request->search);
-            if (!empty($search)) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('dokumens.nomor_agenda', 'like', '%' . $search . '%')
-                        ->orWhere('dokumens.nomor_spp', 'like', '%' . $search . '%')
-                        ->orWhere('dokumens.uraian_spp', 'like', '%' . $search . '%');
-                });
-            }
-        }
-
-        // Filter by team/role
-        $selectedTeam = $request->get('team', '');
-        if ($selectedTeam) {
-            $query->where('dokumen_role_data.role_code', $selectedTeam);
-        }
-
-        // Filter by year
-        if ($request->has('year') && $request->year) {
-            $query->where('dokumens.tahun', $request->year);
-        }
-
-        $dokumens = $query->orderBy('dokumen_role_data.deadline_at', 'asc')->paginate(20)->appends($request->query());
-
-        // Team configuration
-        $teams = [
-            'ibuA' => ['name' => 'Ibu Tara', 'code' => 'ibuA'],
-            'ibuB' => ['name' => 'Team Verifikasi', 'code' => 'ibuB'],
-            'perpajakan' => ['name' => 'Team Perpajakan', 'code' => 'perpajakan'],
-            'akutansi' => ['name' => 'Team Akutansi', 'code' => 'akutansi'],
+        // SLA default per tim (hari kerja)
+        $slaByRole = [
+            'team_verifikasi' => 5,
+            'perpajakan'      => 5,
+            'akutansi'        => 5,
+            'pembayaran'      => 7,
+            'operator'        => 3,
         ];
 
-        // Calculate team statistics
-        $teamStats = [];
-        foreach ($teams as $teamCode => $teamInfo) {
-            // Count total delayed documents for this team
-            $totalDelayed = DokumenRoleData::where('role_code', $teamCode)
-                ->whereNotNull('deadline_at')
-                ->where('deadline_at', '<', $now)
-                ->whereNull('processed_at')
-                ->count();
+        $teamLabels = [
+            'team_verifikasi' => 'Tim Verifikasi',
+            'perpajakan'      => 'Tim Perpajakan',
+            'akutansi'        => 'Tim Akuntansi',
+            'pembayaran'      => 'Tim Pembayaran',
+        ];
 
-            // Calculate average delay in days
-            $delayedDocs = DokumenRoleData::where('role_code', $teamCode)
-                ->whereNotNull('deadline_at')
-                ->where('deadline_at', '<', $now)
-                ->whereNull('processed_at')
-                ->get();
+        $bagianColors = [
+            'AKN' => '#7C3AED', 'DPM' => '#22c55e', 'KPL' => '#f59e0b',
+            'PMO' => '#06b6d4', 'SDM' => '#8b5cf6', 'SKH' => '#ec4899',
+            'TAN' => '#10b981', 'TEP' => '#6366f1', 'PTI' => '#3B82F6',
+        ];
 
-            $totalDelayDays = 0;
-            foreach ($delayedDocs as $doc) {
-                $delayDays = $now->diffInDays($doc->deadline_at);
-                $totalDelayDays += $delayDays;
+        /* â”€â”€ Filter Parameters â”€â”€ */
+        $filterBulan  = $request->get('bulan');
+        $filterTahun  = $request->get('tahun', now()->year);
+        $filterBagian = $request->get('bagian');
+
+        /* â”€â”€ Base query â”€â”€ */
+        $baseQuery = Dokumen::select(
+            'id', 'nomor_spp', 'uraian_spp', 'bagian', 'dibayar_kepada',
+            'nilai_rupiah', 'current_handler', 'status_pembayaran',
+            'tanggal_masuk', 'tanggal_dibayar', 'created_at', 'updated_at',
+            'status'
+        );
+
+        if ($filterBagian) {
+            $baseQuery->where('bagian', $filterBagian);
+        }
+        if ($filterBulan) {
+            $baseQuery->whereMonth('created_at', $filterBulan)
+                      ->whereYear('created_at', $filterTahun);
+        } elseif ($filterTahun) {
+            $baseQuery->whereYear('created_at', $filterTahun);
+        }
+
+        $allDocs = $baseQuery->orderBy('created_at', 'desc')->get();
+
+        /* â”€â”€ Classify each document â”€â”€ */
+        $now = Carbon::now();
+
+        $classified = $allDocs->map(function ($doc) use ($now, $slaByRole) {
+            $handler   = $doc->current_handler ?? 'operator';
+            $sla       = $slaByRole[$handler] ?? 7;
+
+            $startDate = $doc->tanggal_masuk
+                ? Carbon::parse($doc->tanggal_masuk)
+                : Carbon::parse($doc->created_at);
+
+            $deadline = $startDate->copy()->addWeekdays($sla);
+
+            $isSelesai = !empty($doc->tanggal_dibayar)
+                         || $doc->status_pembayaran === 'sudah_dibayar'
+                         || in_array($doc->status, ['selesai', 'completed', 'approved_data_sudah_terkirim']);
+
+            $selesaiDate = $isSelesai && $doc->tanggal_dibayar
+                ? Carbon::parse($doc->tanggal_dibayar)
+                : null;
+
+            $compareDate = $isSelesai && $selesaiDate ? $selesaiDate : $now;
+            $sisaHari    = (int) $deadline->diffInDays($compareDate, false);
+
+            if ($isSelesai) {
+                $statusClass = $sisaHari <= 0 ? 'aman' : 'late';
+            } elseif ($sisaHari >= 0) {
+                $statusClass = 'late';
+            } elseif ($sisaHari >= -3) {
+                $statusClass = 'warn';
+            } else {
+                $statusClass = 'aman';
             }
-            $avgDelay = $delayedDocs->count() > 0 ? round($totalDelayDays / $delayedDocs->count(), 1) : 0;
 
-            // Count total documents handled by this team (with deadline set)
-            $totalHandled = DokumenRoleData::where('role_code', $teamCode)
-                ->whereNotNull('deadline_at')
-                ->count();
+            $hariBadge = $isSelesai
+                ? ($sisaHari <= 0 ? abs($sisaHari) : -$sisaHari)
+                : $sisaHari;
 
-            // Calculate percentage
-            $percentage = $totalHandled > 0 ? round(($totalDelayed / $totalHandled) * 100, 1) : 0;
-
-            $teamStats[$teamCode] = [
-                'name' => $teamInfo['name'],
-                'total' => $totalDelayed,
-                'avgDelay' => $avgDelay,
-                'percentage' => $percentage,
-                'totalHandled' => $totalHandled,
+            return [
+                'id'              => $doc->id,
+                'nomor_spp'       => $doc->nomor_spp ?? '-',
+                'uraian_spp'      => $doc->uraian_spp ?? '-',
+                'bagian'          => $doc->bagian ?? '-',
+                'vendor'          => $doc->dibayar_kepada ?? '-',
+                'nilai_rupiah'    => $doc->nilai_rupiah ?? 0,
+                'tim'             => $this->handlerToTeamLabel($handler),
+                'tim_code'        => $handler,
+                'tanggal_masuk'   => $startDate->format('d M Y'),
+                'tanggal_selesai' => $selesaiDate ? $selesaiDate->format('d M Y') : null,
+                'deadline'        => $deadline->format('d M Y'),
+                'hari'            => $hariBadge,
+                'status'          => $statusClass,
+                'is_selesai'      => $isSelesai,
             ];
-        }
+        });
 
-        // Calculate total delayed documents across all teams
-        $totalTerlambat = DokumenRoleData::whereIn('role_code', ['ibuA', 'ibuB', 'perpajakan', 'akutansi'])
-            ->whereNotNull('deadline_at')
-            ->where('deadline_at', '<', $now)
-            ->whereNull('processed_at')
-            ->count();
+        /* â”€â”€ Count per status â”€â”€ */
+        $countAman = $classified->where('status', 'aman')->count();
+        $countWarn = $classified->where('status', 'warn')->count();
+        $countLate = $classified->where('status', 'late')->count();
 
-        // Get monthly statistics for chart (last 12 months)
-        $monthlyStats = [];
-        $months = [];
-        for ($i = 11; $i >= 0; $i--) {
-            $monthDate = Carbon::now()->subMonths($i);
-            $monthStart = $monthDate->copy()->startOfMonth();
-            $monthEnd = $monthDate->copy()->endOfMonth();
-            $monthLabel = $monthDate->format('M Y');
-            $months[] = $monthLabel;
+        /* â”€â”€ Score cards per tim â”€â”€ */
+        $teamScores = $this->calcTeamScores($classified, $teamLabels);
 
-            foreach ($teams as $teamCode => $teamInfo) {
-                // Count documents that were overdue during this month
-                // (deadline_at is in this month and deadline_at < now)
-                $count = DokumenRoleData::where('role_code', $teamCode)
-                    ->whereNotNull('deadline_at')
-                    ->where('deadline_at', '<', $now)
-                    ->whereNull('processed_at')
-                    ->whereBetween('deadline_at', [$monthStart, $monthEnd])
-                    ->count();
+        /* â”€â”€ Keseluruhan â”€â”€ */
+        $totalAll  = $classified->count() ?: 1;
+        $scoreAll  = max(0, min(100, round(100 - (($countLate * 2 + $countWarn * 0.5) / $totalAll * 100) / 10 * 10, 1)));
 
-                if (!isset($monthlyStats[$teamCode])) {
-                    $monthlyStats[$teamCode] = [];
-                }
-                $monthlyStats[$teamCode][] = $count;
-            }
-        }
+        $keseluruhan = [
+            'label' => 'Keseluruhan',
+            'score' => $scoreAll,
+            'aman'  => $countAman,
+            'warn'  => $countWarn,
+            'late'  => $countLate,
+        ];
 
-        // Get available years
-        $availableYears = Dokumen::selectRaw('DISTINCT tahun')
-            ->whereNotNull('tahun')
-            ->orderBy('tahun', 'desc')
-            ->pluck('tahun')
-            ->toArray();
+        /* â”€â”€ Filter lists â”€â”€ */
+        $bagianList = Dokumen::select('bagian')->distinct()->orderBy('bagian')
+            ->pluck('bagian')->filter()->values();
 
-        // Team list for filter
-        $teamList = array_map(function ($team) {
-            return $team['name'];
-        }, $teams);
+        $tahunList = Dokumen::selectRaw('YEAR(created_at) as yr')->distinct()
+            ->orderBy('yr', 'desc')->pluck('yr')->filter()->values();
 
-        return view('owner.rekapanKeterlambatan', compact(
-            'dokumens', 
-            'totalTerlambat', 
-            'teamStats', 
-            'availableYears', 
-            'teams', 
-            'selectedTeam',
-            'monthlyStats',
-            'months'
-        ))
-            ->with('title', 'Rekapan Keterlambatan - Owner')
+        return view('owner.rekapanKeterlambatan', [
+            'classified'   => $classified,
+            'countAman'    => $countAman,
+            'countWarn'    => $countWarn,
+            'countLate'    => $countLate,
+            'keseluruhan'  => $keseluruhan,
+            'teamScores'   => $teamScores,
+            'bagianList'   => $bagianList,
+            'tahunList'    => $tahunList,
+            'bagianColors' => $bagianColors,
+            'filterBulan'  => $filterBulan,
+            'filterTahun'  => $filterTahun,
+            'filterBagian' => $filterBagian,
+        ])
+            ->with('title', 'Rekapan Keterlambatan & Analisis Kinerja')
             ->with('module', 'owner')
-            ->with('menuDashboard', '')
-            ->with('menuRekapan', '')
-            ->with('menuRekapanKeterlambatan', 'active')
-            ->with('dashboardUrl', '/owner/dashboard');
+            ->with('menuHome', '')
+            ->with('menuDokumen', '')
+            ->with('menuRekapanKeterlambatan', 'active');
+    }
+
+    /**
+     * Export rekapan keterlambatan per role ke Excel (XML Spreadsheet format)
+     * Supports multiple worksheets - one per month when "Semua Bulan" is selected
+     * Supports status filter: aman, peringatan, terlambat, or all (empty)
+     */
+    public function exportRekapanKeterlambatan(Request $request, $roleCode)
+    {
+        // Validate roleCode
+        $validRoles = ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
+        if (!in_array($roleCode, $validRoles)) {
+            abort(404, 'Role tidak ditemukan');
+        }
+
+        $year = $request->get('year');
+        $month = $request->get('month');
+        $statusFilter = $request->get('status'); // aman, peringatan, terlambat, or empty for all
+
+        $roleNames = [
+            'team_verifikasi' => 'Team Verifikasi',
+            'perpajakan' => 'Perpajakan',
+            'akutansi' => 'Akutansi',
+            'pembayaran' => 'Pembayaran',
+        ];
+
+        $monthNames = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
+        ];
+
+        $roleName = $roleNames[$roleCode] ?? $roleCode;
+        $statusSuffix = $statusFilter ? '_' . strtoupper($statusFilter) : '';
+        $filename = 'Rekapan_Keterlambatan_' . str_replace(' ', '_', $roleName) . $statusSuffix . '_' . now()->format('Y-m-d_H-i') . '.xls';
+
+        // Deadline thresholds per role (in HOURS - must match rekapan page logic)
+        // Non-pembayaran: AMAN < 24h, PERINGATAN 24-72h, TERLAMBAT >= 72h
+        // Pembayaran: AMAN < 168h (1 week), PERINGATAN 168-504h (1-3 weeks), TERLAMBAT >= 504h
+        $deadlineThresholds = [
+            'team_verifikasi' => [24, 72],    // hours
+            'perpajakan' => [24, 72],         // hours
+            'akutansi' => [24, 72],           // hours
+            'pembayaran' => [168, 504],       // hours (weekly)
+        ];
+
+        $thresholds = $deadlineThresholds[$roleCode] ?? [24, 72];
+        $isWeekly = $roleCode === 'pembayaran';
+        $now = \Carbon\Carbon::now();
+
+        // If specific month is selected, export single sheet (old behavior)
+        if ($month) {
+            return $this->exportSingleSheetRekapan($roleCode, $roleName, $year, $month, $monthNames, $thresholds, $isWeekly, $now, $filename, $statusFilter);
+        }
+
+        // Multi-sheet export: one sheet per month
+        $displayYear = $year ?? now()->year;
+
+        // Get all data for the year first, then group by month
+        $query = DokumenRoleData::where('role_code', $roleCode)
+            ->whereNotNull('received_at')
+            ->with(['dokumen']);
+
+        if ($year) {
+            $query->whereYear('received_at', $year);
+        }
+
+        $allRoleData = $query->orderBy('received_at', 'asc')->get();
+
+        // Group data by month
+        $dataByMonth = [];
+        foreach ($allRoleData as $roleData) {
+            $receivedMonth = \Carbon\Carbon::parse($roleData->received_at)->month;
+            if (!isset($dataByMonth[$receivedMonth])) {
+                $dataByMonth[$receivedMonth] = [];
+            }
+            $dataByMonth[$receivedMonth][] = $roleData;
+        }
+
+        // Build Excel XML with multiple worksheets
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10"/>
+  </Style>
+  <Style ss:ID="Title">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="14" ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#2E7D32" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="Header">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#1976D2" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="Cell">
+   <Alignment ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="CellCenter">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="CellRight">
+   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="StatusAman">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#4CAF50" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="StatusPeringatan">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#000000"/>
+   <Interior ss:Color="#FFC107" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="StatusTerlambat">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#F44336" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="Summary">
+   <Alignment ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1"/>
+   <Interior ss:Color="#E3F2FD" ss:Pattern="Solid"/>
+  </Style>
+ </Styles>
+';
+
+        // Create a worksheet for each month (1-12)
+        for ($m = 1; $m <= 12; $m++) {
+            $sheetName = $monthNames[$m] . ' ' . $displayYear;
+            $monthData = $dataByMonth[$m] ?? [];
+
+            $xml .= ' <Worksheet ss:Name="' . htmlspecialchars($sheetName) . '">
+  <Table ss:DefaultColumnWidth="100">
+   <Column ss:Width="40"/>
+   <Column ss:Width="120"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="60"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="150"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="180"/>
+   <Column ss:Width="250"/>
+   <Column ss:Width="120"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="130"/>
+   <Row ss:Height="30">
+    <Cell ss:StyleID="Title" ss:MergeAcross="14"><Data ss:Type="String">REKAPAN KETERLAMBATAN - ' . strtoupper($roleName) . ' (' . strtoupper($sheetName) . ')</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">No</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Nomor Agenda</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Bulan</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Tahun</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Bagian</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Nomor SPP</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Tanggal SPP</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Tanggal Masuk</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Dibayar Kepada</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Uraian SPP</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Nilai Rupiah</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Durasi</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Status Deadline</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Status Proses</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Tanggal Selesai</Data></Cell>
+   </Row>
+';
+
+            if (count($monthData) > 0) {
+                $no = 1;
+                foreach ($monthData as $roleData) {
+                    $dokumen = $roleData->dokumen;
+                    if (!$dokumen)
+                        continue;
+
+                    $receivedAt = \Carbon\Carbon::parse($roleData->received_at);
+                    $diffInMinutes = $receivedAt->diffInMinutes($now);
+                    $ageHours = $diffInMinutes / 60; // Convert to hours for threshold comparison
+
+                    // Calculate duration for display
+                    $days = floor($diffInMinutes / (60 * 24));
+                    $hours = floor(($diffInMinutes % (60 * 24)) / 60);
+                    $minutes = $diffInMinutes % 60;
+                    $durationParts = [];
+                    if ($days > 0)
+                        $durationParts[] = $days . ' hari';
+                    if ($hours > 0)
+                        $durationParts[] = $hours . ' jam';
+                    if ($minutes > 0 || empty($durationParts))
+                        $durationParts[] = $minutes . ' menit';
+                    $duration = implode(' ', $durationParts);
+
+                    // Determine status using hours (thresholds are in hours)
+                    if ($ageHours < $thresholds[0]) {
+                        $status = 'AMAN';
+                        $statusStyle = 'StatusAman';
+                    } elseif ($ageHours < $thresholds[1]) {
+                        $status = 'PERINGATAN';
+                        $statusStyle = 'StatusPeringatan';
+                    } else {
+                        $status = 'TERLAMBAT';
+                        $statusStyle = 'StatusTerlambat';
+                    }
+
+                    // Filter by status if specified
+                    if ($statusFilter) {
+                        $statusLower = strtolower($status);
+                        if ($statusLower !== strtolower($statusFilter)) {
+                            continue; // Skip this document
+                        }
+                    }
+
+                    $completedAt = $roleData->processed_at;
+                    $isCompleted = !is_null($completedAt);
+                    $prosesStatus = $isCompleted ? 'Selesai' : 'Sedang Diproses';
+                    $completedDate = $isCompleted ? \Carbon\Carbon::parse($completedAt)->format('d/m/Y H:i') : '-';
+
+                    // Derive bulan/tahun from tanggal_masuk or created_at
+                    $docDate = $dokumen->tanggal_masuk ?? $dokumen->created_at;
+                    $bulanDoc = $docDate ? \Carbon\Carbon::parse($docDate)->format('F') : '-';
+                    $tahunDoc = $docDate ? \Carbon\Carbon::parse($docDate)->format('Y') : '-';
+                    $tglSpp = $dokumen->tanggal_spp ? \Carbon\Carbon::parse($dokumen->tanggal_spp)->format('d/m/Y') : '-';
+                    $tglMasuk = $docDate ? \Carbon\Carbon::parse($docDate)->format('d/m/Y') : '-';
+
+                    $xml .= '   <Row>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="Number">' . $no++ . '</Data></Cell>
+    <Cell ss:StyleID="Cell"><Data ss:Type="String">' . htmlspecialchars($dokumen->nomor_agenda ?? '-') . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $bulanDoc . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $tahunDoc . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . htmlspecialchars($dokumen->bagian ?? '-') . '</Data></Cell>
+    <Cell ss:StyleID="Cell"><Data ss:Type="String">' . htmlspecialchars($dokumen->nomor_spp ?? '-') . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $tglSpp . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $tglMasuk . '</Data></Cell>
+    <Cell ss:StyleID="Cell"><Data ss:Type="String">' . htmlspecialchars($dokumen->dibayar_kepada ?? '-') . '</Data></Cell>
+    <Cell ss:StyleID="Cell"><Data ss:Type="String">' . htmlspecialchars($dokumen->uraian_spp ?? '-') . '</Data></Cell>
+    <Cell ss:StyleID="CellRight"><Data ss:Type="String">' . ($dokumen->nilai_rupiah ? 'Rp ' . number_format($dokumen->nilai_rupiah, 0, ',', '.') : '-') . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $duration . '</Data></Cell>
+    <Cell ss:StyleID="' . $statusStyle . '"><Data ss:Type="String">' . $status . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $prosesStatus . '</Data></Cell>
+    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">' . $completedDate . '</Data></Cell>
+   </Row>
+';
+                }
+
+                // Summary row
+                $xml .= '   <Row>
+    <Cell ss:StyleID="Summary" ss:MergeAcross="4"><Data ss:Type="String">Total Dokumen: ' . ($no - 1) . '</Data></Cell>
+    <Cell ss:StyleID="Summary" ss:MergeAcross="9"><Data ss:Type="String"></Data></Cell>
+   </Row>
+';
+            } else {
+                // No data message
+                $xml .= '   <Row>
+    <Cell ss:StyleID="Cell" ss:MergeAcross="14"><Data ss:Type="String">Tidak ada data untuk bulan ini</Data></Cell>
+   </Row>
+';
+            }
+
+            $xml .= '  </Table>
+ </Worksheet>
+';
+        }
+
+        $xml .= '</Workbook>';
+
+        return response($xml)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
+    }
+
+    /**
+     * Helper: Export single sheet rekapan (when specific month is selected)
+     */
+    private function exportSingleSheetRekapan($roleCode, $roleName, $year, $month, $monthNames, $thresholds, $isWeekly, $now, $filename, $statusFilter = null)
+    {
+        $query = DokumenRoleData::where('role_code', $roleCode)
+            ->whereNotNull('received_at')
+            ->with(['dokumen']);
+
+        if ($year) {
+            $query->whereYear('received_at', $year);
+        }
+        if ($month) {
+            $query->whereMonth('received_at', $month);
+        }
+
+        $roleDataList = $query->orderBy('received_at', 'asc')->get();
+
+        // Build HTML table that Excel can read
+        $statusLabel = $statusFilter ? ' - ' . strtoupper($statusFilter) : '';
+        $html = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+        th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+        .title { background-color: #2E7D32; color: white; font-size: 18px; font-weight: bold; text-align: center; }
+        .subtitle { background-color: #E8F5E9; color: #666; font-size: 12px; text-align: center; font-style: italic; }
+        .header { background-color: #1976D2; color: white; font-weight: bold; text-align: center; }
+        .row-even { background-color: #F5F5F5; }
+        .status-aman { background-color: #4CAF50; color: white; font-weight: bold; text-align: center; }
+        .status-peringatan { background-color: #FFC107; color: black; font-weight: bold; text-align: center; }
+        .status-terlambat { background-color: #F44336; color: white; font-weight: bold; text-align: center; }
+        .proses-selesai { background-color: #4CAF50; color: white; text-align: center; }
+        .proses-pending { background-color: #2196F3; color: white; text-align: center; }
+        .summary { background-color: #E3F2FD; font-weight: bold; }
+        .center { text-align: center; }
+        .right { text-align: right; }
+    </style>
+</head>
+<body>
+<table>
+    <tr>
+        <td colspan="15" class="title">REKAPAN KETERLAMBATAN - ' . strtoupper($roleName) . $statusLabel . '</td>
+    </tr>
+    <tr>
+        <td colspan="15" class="subtitle">Diekspor: ' . now()->format('d/m/Y H:i') . ($year ? ' | Tahun: ' . $year : '') . ($month ? ' | Bulan: ' . ($monthNames[$month] ?? $month) : '') . ($statusFilter ? ' | Status: ' . strtoupper($statusFilter) : '') . '</td>
+    </tr>
+    <tr><td colspan="15"></td></tr>
+    <tr class="header">
+        <th>No</th>
+        <th>Nomor Agenda</th>
+        <th>Bulan</th>
+        <th>Tahun</th>
+        <th>Bagian</th>
+        <th>Nomor SPP</th>
+        <th>Tanggal SPP</th>
+        <th>Tanggal Masuk</th>
+        <th>Dibayar Kepada</th>
+        <th>Uraian SPP</th>
+        <th>Nilai Rupiah</th>
+        <th>Durasi</th>
+        <th>Status Deadline</th>
+        <th>Status Proses</th>
+        <th>Tanggal Selesai</th>
+    </tr>';
+
+        $no = 1;
+        foreach ($roleDataList as $roleData) {
+            $dokumen = $roleData->dokumen;
+            if (!$dokumen)
+                continue;
+
+            $receivedAt = \Carbon\Carbon::parse($roleData->received_at);
+
+            // Determine end time based on completion status
+            // Match display logic: use processed_at for completed documents to create "permanent" age
+            // This ensures consistency between display and export
+            $processedAt = $roleData->processed_at;
+            $endTime = $processedAt ? \Carbon\Carbon::parse($processedAt) : $now;
+
+            // Calculate age using correct end time (processed_at for completed, now for active)
+            $diffInMinutes = $receivedAt->diffInMinutes($endTime);
+            $ageHours = $diffInMinutes / 60; // Convert to hours for threshold comparison
+
+            // Calculate duration for display
+            $days = floor($diffInMinutes / (60 * 24));
+            $hours = floor(($diffInMinutes % (60 * 24)) / 60);
+            $minutes = $diffInMinutes % 60;
+            $durationParts = [];
+            if ($days > 0)
+                $durationParts[] = $days . ' hari';
+            if ($hours > 0)
+                $durationParts[] = $hours . ' jam';
+            if ($minutes > 0 || empty($durationParts))
+                $durationParts[] = $minutes . ' menit';
+            $duration = implode(' ', $durationParts);
+
+            // Determine status using hours (thresholds are in hours)
+            if ($ageHours < $thresholds[0]) {
+                $status = 'AMAN';
+                $statusClass = 'status-aman';
+            } elseif ($ageHours < $thresholds[1]) {
+                $status = 'PERINGATAN';
+                $statusClass = 'status-peringatan';
+            } else {
+                $status = 'TERLAMBAT';
+                $statusClass = 'status-terlambat';
+            }
+
+            // Filter by status if specified
+            if ($statusFilter) {
+                $statusLower = strtolower($status);
+                if ($statusLower !== strtolower($statusFilter)) {
+                    continue; // Skip this document
+                }
+            }
+
+            $completedAt = $roleData->processed_at;
+            $isCompleted = !is_null($completedAt);
+            $prosesClass = $isCompleted ? 'proses-selesai' : 'proses-pending';
+            $rowClass = ($no % 2 == 0) ? 'row-even' : '';
+
+            // Derive bulan/tahun from tanggal_masuk or created_at
+            $docDate = $dokumen->tanggal_masuk ?? $dokumen->created_at;
+            $bulanDoc = $docDate ? \Carbon\Carbon::parse($docDate)->format('F') : '-';
+            $tahunDoc = $docDate ? \Carbon\Carbon::parse($docDate)->format('Y') : '-';
+            $tglSpp = $dokumen->tanggal_spp ? \Carbon\Carbon::parse($dokumen->tanggal_spp)->format('d/m/Y') : '-';
+            $tglMasuk = $docDate ? \Carbon\Carbon::parse($docDate)->format('d/m/Y') : '-';
+
+            $html .= '
+    <tr class="' . $rowClass . '">
+        <td class="center">' . $no++ . '</td>
+        <td>' . htmlspecialchars($dokumen->nomor_agenda ?? '-') . '</td>
+        <td class="center">' . $bulanDoc . '</td>
+        <td class="center">' . $tahunDoc . '</td>
+        <td class="center">' . htmlspecialchars($dokumen->bagian ?? '-') . '</td>
+        <td>' . htmlspecialchars($dokumen->nomor_spp ?? '-') . '</td>
+        <td class="center">' . $tglSpp . '</td>
+        <td class="center">' . $tglMasuk . '</td>
+        <td>' . htmlspecialchars($dokumen->dibayar_kepada ?? '-') . '</td>
+        <td>' . htmlspecialchars($dokumen->uraian_spp ?? '-') . '</td>
+        <td class="right">' . ($dokumen->nilai_rupiah ? 'Rp ' . number_format($dokumen->nilai_rupiah, 0, ',', '.') : '-') . '</td>
+        <td class="center">' . $duration . '</td>
+        <td class="' . $statusClass . '">' . $status . '</td>
+        <td class="' . $prosesClass . '">' . ($isCompleted ? 'Selesai' : 'Sedang Diproses') . '</td>
+        <td class="center">' . ($isCompleted ? \Carbon\Carbon::parse($completedAt)->format('d/m/Y H:i') : '-') . '</td>
+    </tr>';
+        }
+
+        $html .= '
+    <tr><td colspan="15"></td></tr>
+    <tr class="summary">
+        <td colspan="5">Total Dokumen: ' . ($no - 1) . '</td>
+        <td colspan="10"></td>
+    </tr>
+</table>
+</body>
+</html>';
+
+        return response($html)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
     }
 
     /**
@@ -2026,36 +3826,36 @@ class OwnerDashboardController extends Controller
         })->count();
 
         // Count documents by handler
-        $ibuTarapulQuery = Dokumen::query();
+        $operatorQuery = Dokumen::query();
         $ibuYuniQuery = Dokumen::query();
         $perpajakanQuery = Dokumen::query();
         $akutansiQuery = Dokumen::query();
 
         if ($filterBagian) {
-            $ibuTarapulQuery->where('bagian', $filterBagian);
+            $operatorQuery->where('bagian', $filterBagian);
             $ibuYuniQuery->where('bagian', $filterBagian);
             $perpajakanQuery->where('bagian', $filterBagian);
             $akutansiQuery->where('bagian', $filterBagian);
         }
 
-        // Ibu Tarapul: dokumen dengan current_handler = 'ibuA' atau status draft
-        $ibuTarapulCount = $ibuTarapulQuery->where(function ($q) {
-            $q->where('current_handler', 'ibuA')
+        // Ibu Tarapul: dokumen dengan current_handler = 'operator' atau status draft
+        $operatorCount = $operatorQuery->where(function ($q) {
+            $q->where('current_handler', 'operator')
                 ->orWhere(function ($subQ) {
                     $subQ->where('status', 'draft')
                         ->where(function ($subSubQ) {
                             $subSubQ->whereNull('current_handler')
-                                ->orWhere('current_handler', 'ibuA');
+                                ->orWhere('current_handler', 'operator');
                         });
                 });
         })->count();
 
-        // Ibu Yuni: dokumen dengan current_handler = 'ibuB' atau status sent_to_ibub
+        // Ibu Yuni: dokumen dengan current_handler = 'team_verifikasi' atau status sent_to_team_verifikasi
         $ibuYuniCount = $ibuYuniQuery->where(function ($q) {
-            $q->where('current_handler', 'ibuB')
-                ->orWhere('status', 'sent_to_ibub')
-                ->orWhere('status', 'pending_approval_ibub')
-                ->orWhere('status', 'proses_ibub');
+            $q->where('current_handler', 'team_verifikasi')
+                ->orWhere('status', 'sent_to_team_verifikasi')
+                ->orWhere('status', 'pending_approval_team_verifikasi')
+                ->orWhere('status', 'proses_Team Verifikasi');
         })->count();
 
         // Team Perpajakan: dokumen dengan current_handler = 'perpajakan' atau status sent_to_perpajakan
@@ -2075,7 +3875,7 @@ class OwnerDashboardController extends Controller
         return [
             'total_documents' => $total,
             'completed_documents' => $completedCount,
-            'ibu_tarapul' => $ibuTarapulCount,
+            'ibu_tarapul' => $operatorCount,
             'ibu_yuni' => $ibuYuniCount,
             'perpajakan' => $perpajakanCount,
             'akutansi' => $akutansiCount
@@ -2128,7 +3928,7 @@ class OwnerDashboardController extends Controller
             'Tanggal Akhir SPK' => $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d/m/Y') : '-',
             'No PO' => $dokumen->dokumenPos->count() > 0 ? htmlspecialchars($dokumen->dokumenPos->pluck('nomor_po')->join(', ')) : '-',
             'No PR' => $dokumen->dokumenPrs->count() > 0 ? htmlspecialchars($dokumen->dokumenPrs->pluck('nomor_pr')->join(', ')) : '-',
-            'No Mirror' => $dokumen->nomor_mirror ?? '-',
+            'Nomor Miro' => $dokumen->nomor_miro ?? '-',
             'Status' => $this->getStatusDisplayName($dokumen->status),
             'Current Handler' => $this->getRoleDisplayName($dokumen->current_handler),
         ];
@@ -2302,5 +4102,1044 @@ class OwnerDashboardController extends Controller
         }
 
         return htmlspecialchars($link);
+    }
+
+    /**
+     * Get filter data for dropdowns
+     */
+    private function getFilterData(): array
+    {
+        // Get distinct bagian values
+        $bagianList = Dokumen::whereNotNull('bagian')
+            ->where('bagian', '!=', '')
+            ->distinct()
+            ->orderBy('bagian')
+            ->pluck('bagian', 'bagian')
+            ->toArray();
+
+        // Get distinct vendor/dibayar_kepada values
+        $vendorList = [];
+        try {
+            // From dibayar_kepadas table
+            $vendorList = DB::table('dibayar_kepadas')
+                ->whereNotNull('nama_penerima')
+                ->where('nama_penerima', '!=', '')
+                ->distinct()
+                ->orderBy('nama_penerima')
+                ->pluck('nama_penerima', 'nama_penerima')
+                ->toArray();
+
+            // Also include from dokumens.dibayar_kepada column (legacy)
+            $legacyVendors = Dokumen::whereNotNull('dibayar_kepada')
+                ->where('dibayar_kepada', '!=', '')
+                ->distinct()
+                ->pluck('dibayar_kepada', 'dibayar_kepada')
+                ->toArray();
+
+            $vendorList = array_merge($vendorList, $legacyVendors);
+            $vendorList = array_unique($vendorList);
+            asort($vendorList);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching vendor list: ' . $e->getMessage());
+        }
+
+        // Get distinct kebun values
+        $kebunList = Dokumen::whereNotNull('kebun')
+            ->where('kebun', '!=', '')
+            ->distinct()
+            ->orderBy('kebun')
+            ->pluck('kebun', 'kebun')
+            ->toArray();
+
+        // Get Kriteria CF, Sub Kriteria, Item Sub Kriteria from cash_bank database
+        $kriteriaCfList = [];
+        $subKriteriaList = [];
+        $itemSubKriteriaList = [];
+
+        try {
+            $kriteriaCfList = \App\Models\KategoriKriteria::on('cash_bank')
+                ->where('tipe', 'Keluar')
+                ->orderBy('nama_kriteria')
+                ->pluck('nama_kriteria', 'id_kategori_kriteria')
+                ->toArray();
+
+            $subKriteriaList = \App\Models\SubKriteria::on('cash_bank')
+                ->orderBy('nama_sub_kriteria')
+                ->pluck('nama_sub_kriteria', 'id_sub_kriteria')
+                ->toArray();
+
+            $itemSubKriteriaList = \App\Models\ItemSubKriteria::on('cash_bank')
+                ->orderBy('nama_item_sub_kriteria')
+                ->pluck('nama_item_sub_kriteria', 'id_item_sub_kriteria')
+                ->toArray();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching kriteria data from cash_bank: ' . $e->getMessage());
+        }
+
+        return [
+            'bagian' => $bagianList,
+            'vendor' => $vendorList,
+            'kriteria_cf' => $kriteriaCfList,
+            'sub_kriteria' => $subKriteriaList,
+            'item_sub_kriteria' => $itemSubKriteriaList,
+            'kebun' => $kebunList,
+        ];
+    }
+
+    /**
+     * Rekapan keterlambatan per role
+     */
+    public function rekapanKeterlambatanByRole(Request $request, $roleCode)
+    {
+        $now = Carbon::now();
+
+        // Validasi role
+        $validRoles = ['operator', 'team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
+        if (!in_array($roleCode, $validRoles)) {
+            abort(404, 'Role tidak ditemukan');
+        }
+
+        // Access control: Check if user can access this role's recap
+        // Admin/Owner can view any role. Regular users can only view their own role.
+        $user = auth()->user();
+        $userRole = strtolower($user->role ?? '');
+        $isAdminOrOwner = in_array($userRole, ['admin', 'owner']);
+
+        if (!$isAdminOrOwner) {
+            // Map user role to roleCode format
+            $userRoleMapping = [
+                'operator' => 'operator',
+                'team_verifikasi' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
+                'perpajakan' => 'perpajakan',
+                'akutansi' => 'akutansi',
+                'pembayaran' => 'pembayaran',
+            ];
+            $userRoleCode = $userRoleMapping[$userRole] ?? null;
+
+            // Check if user is trying to access their own role's recap
+            if ($userRoleCode !== $roleCode) {
+                return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
+            }
+        }
+
+
+        // Role configuration
+        $roleConfig = [
+            'operator' => ['name' => 'Ibu Tara', 'code' => 'operator'],
+            'team_verifikasi' => ['name' => 'Team Verifikasi', 'code' => 'team_verifikasi'],
+            'perpajakan' => ['name' => 'Team Perpajakan', 'code' => 'perpajakan'],
+            'akutansi' => ['name' => 'Team Akutansi', 'code' => 'akutansi'],
+            'pembayaran' => ['name' => 'Pembayaran', 'code' => 'pembayaran'],
+        ];
+
+
+        // Query dokumen berdasarkan role dengan umur dokumen sejak received_at
+        // Untuk pembayaran, gunakan sama seperti role lainnya dengan dokumen_role_data
+        if ($roleCode === 'pembayaran') {
+            $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+                ->leftJoin('dokumen_role_data', function ($join) use ($roleCode) {
+                    $join->on('dokumens.id', '=', 'dokumen_role_data.dokumen_id')
+                        ->where('dokumen_role_data.role_code', '=', $roleCode);
+                })
+                // Show ALL documents that have been received by pembayaran (including sudah_dibayar)
+                ->whereNotNull('dokumen_role_data.received_at')
+                ->select(
+                    'dokumens.*',
+                    'dokumen_role_data.role_code as delay_role_code',
+                    'dokumen_role_data.received_at as delay_received_at',
+                    'dokumen_role_data.processed_at as delay_processed_at',
+                    'dokumen_role_data.deadline_at as delay_deadline_at'
+                );
+        } else {
+            // Query ALL documents that have ever been in this role (permanent tracking)
+            // This shows both active documents AND completed documents (already sent to next role)
+            // Active = current_handler is still this role
+            // Completed = current_handler has moved to another role
+
+            // Filter by status: 'active', 'completed', or 'all' (default)
+            $statusFilter = $request->get('status_filter', 'all');
+
+            // Map role code to expected handler
+            $roleHandlerMapping = [
+                'team_verifikasi' => 'team_verifikasi',
+                'perpajakan' => 'perpajakan',
+                'akutansi' => 'akutansi',
+            ];
+            $expectedHandler = $roleHandlerMapping[$roleCode] ?? $roleCode;
+
+            // Query based on dokumen_role_data.received_at (permanent record)
+            $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
+                ->join('dokumen_role_data', 'dokumens.id', '=', 'dokumen_role_data.dokumen_id')
+                ->whereRaw('LOWER(dokumen_role_data.role_code) = ?', [strtolower($roleCode)])
+                ->whereNotNull('dokumen_role_data.received_at');
+
+            // Apply status filter based on current_handler (not processed_at)
+            // Active = document is still being handled by this role
+            // Completed = document has moved to another role
+            if ($statusFilter === 'active') {
+                $query->whereRaw('LOWER(dokumens.current_handler) = ?', [strtolower($expectedHandler)]);
+            } elseif ($statusFilter === 'completed') {
+                $query->whereRaw('LOWER(dokumens.current_handler) != ?', [strtolower($expectedHandler)]);
+            }
+            // 'all' = no additional filter
+
+            $query->select(
+                'dokumens.*',
+                'dokumen_role_data.role_code as delay_role_code',
+                'dokumen_role_data.received_at as delay_received_at',
+                'dokumen_role_data.processed_at as delay_processed_at',
+                'dokumen_role_data.deadline_at as delay_deadline_at'
+            );
+        }
+
+
+
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $search = trim((string) $request->search);
+            if (!empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('dokumens.nomor_agenda', 'like', '%' . $search . '%')
+                        ->orWhere('dokumens.nomor_spp', 'like', '%' . $search . '%')
+                        ->orWhere('dokumens.uraian_spp', 'like', '%' . $search . '%');
+                });
+            }
+        }
+
+        // Filter by year
+        if ($request->has('year') && $request->year) {
+            $query->where('dokumens.tahun', $request->year);
+        }
+
+        // Filter by month from received_at
+        if ($request->has('month') && $request->month) {
+            $query->whereMonth('dokumen_role_data.received_at', $request->month);
+        }
+
+        // Apply advanced filters (similar to owner dashboard)
+        if ($request->has('filter_bagian') && $request->filter_bagian) {
+            $query->where('dokumens.bagian', $request->filter_bagian);
+        }
+
+        if ($request->has('filter_vendor') && $request->filter_vendor) {
+            $vendorSearch = $request->filter_vendor;
+            $query->where(function ($q) use ($vendorSearch) {
+                // Check legacy dibayar_kepada column on dokumens table
+                $q->where('dokumens.dibayar_kepada', 'like', '%' . $vendorSearch . '%')
+                    // Check related dibayar_kepadas table (new structure)
+                    ->orWhereExists(function ($subQ) use ($vendorSearch) {
+                        $subQ->select(\DB::raw(1))
+                            ->from('dibayar_kepadas')
+                            ->whereColumn('dibayar_kepadas.dokumen_id', 'dokumens.id')
+                            ->where('dibayar_kepadas.nama_penerima', 'like', '%' . $vendorSearch . '%');
+                    });
+            });
+        }
+
+        if ($request->has('filter_kriteria_cf') && $request->filter_kriteria_cf) {
+            try {
+                $kriteria = \App\Models\KategoriKriteria::on('cash_bank')->find($request->filter_kriteria_cf);
+                if ($kriteria) {
+                    $query->where('dokumens.kategori', $kriteria->nama_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Cash_bank database not available for filter_kriteria_cf: ' . $e->getMessage());
+            }
+        }
+
+        if ($request->has('filter_sub_kriteria') && $request->filter_sub_kriteria) {
+            try {
+                $subKriteria = \App\Models\SubKriteria::on('cash_bank')->find($request->filter_sub_kriteria);
+                if ($subKriteria) {
+                    $query->where('dokumens.jenis_dokumen', $subKriteria->nama_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Cash_bank database not available for filter_sub_kriteria: ' . $e->getMessage());
+            }
+        }
+
+        if ($request->has('filter_item_sub_kriteria') && $request->filter_item_sub_kriteria) {
+            try {
+                $itemSubKriteria = \App\Models\ItemSubKriteria::on('cash_bank')->find($request->filter_item_sub_kriteria);
+                if ($itemSubKriteria) {
+                    $query->where('dokumens.jenis_sub_pekerjaan', $itemSubKriteria->nama_item_sub_kriteria);
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Cash_bank database not available for filter_item_sub_kriteria: ' . $e->getMessage());
+            }
+        }
+
+        if ($request->has('filter_kebun') && $request->filter_kebun) {
+            $query->where('dokumens.kebun', $request->filter_kebun);
+        }
+
+        // Order by received_at
+        // Sort by nomor_agenda descending (highest first), then by received_at descending
+        $query->orderByRaw("CASE 
+            WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
+            ELSE 0
+        END DESC")
+            ->orderBy('dokumens.nomor_agenda', 'DESC')
+            ->orderBy('dokumen_role_data.received_at', 'desc');
+
+        // Debug: Log SQL query and count before get()
+        \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, SQL Query: " . $query->toSql());
+        \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Query Bindings: " . json_encode($query->getBindings()));
+        $countBeforeGet = $query->count();
+        \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Count before get(): {$countBeforeGet}");
+
+        // Get all documents first to calculate age and filter by age
+        $allDokumens = $query->get();
+
+        // Debug: Log count of documents retrieved
+        \Log::info("Rekapan Keterlambatan - Role: {$roleCode}, Documents retrieved: " . $allDokumens->count());
+
+        // Calculate age for each document and filter by age if needed
+        $filterAge = $request->get('filter_age');
+        $filteredDokumens = $allDokumens->map(function ($dokumen) use ($now, $roleCode) {
+            // Get received_at and processed_at from the joined dokumen_role_data
+            $receivedAt = null;
+            $processedAt = null;
+
+            // Check if processed_at exists (completed document)
+            if (isset($dokumen->delay_processed_at) && $dokumen->delay_processed_at) {
+                $processedAt = Carbon::parse($dokumen->delay_processed_at);
+            }
+
+            // Get received_at
+            if (isset($dokumen->delay_received_at) && $dokumen->delay_received_at) {
+                $receivedAt = Carbon::parse($dokumen->delay_received_at);
+            }
+            // Load roleData relationship as fallback
+            else {
+                if (!$dokumen->relationLoaded('roleData')) {
+                    $dokumen->load('roleData');
+                }
+                $roleCodeLower = strtolower($roleCode);
+                $roleData = $dokumen->roleData->first(function ($rd) use ($roleCodeLower) {
+                    return strtolower($rd->role_code) === $roleCodeLower;
+                });
+                if ($roleData) {
+                    if ($roleData->received_at) {
+                        $receivedAt = Carbon::parse($roleData->received_at);
+                    }
+                    if ($roleData->processed_at) {
+                        $processedAt = Carbon::parse($roleData->processed_at);
+                    }
+                }
+            }
+
+            // If still no received_at, try direct query
+            if (!$receivedAt) {
+                $roleDataDirect = \App\Models\DokumenRoleData::where('dokumen_id', $dokumen->id)
+                    ->whereRaw('LOWER(role_code) = ?', [strtolower($roleCode)])
+                    ->whereNotNull('received_at')
+                    ->first();
+                if ($roleDataDirect) {
+                    $receivedAt = Carbon::parse($roleDataDirect->received_at);
+                    if ($roleDataDirect->processed_at) {
+                        $processedAt = Carbon::parse($roleDataDirect->processed_at);
+                    }
+                }
+            }
+
+            // IMPORTANT: Determine completion status correctly
+            // For pembayaran role: a document is completed if status_pembayaran = 'sudah_dibayar'
+            // For other roles: document is completed if processed_at is set AND current_handler has moved
+            $roleHandlerMapping = [
+                'team_verifikasi' => 'team_verifikasi',
+                'perpajakan' => 'perpajakan',
+                'akutansi' => 'akutansi',
+            ];
+            $expectedHandler = $roleHandlerMapping[$roleCode] ?? $roleCode;
+            $currentHandler = $dokumen->current_handler ?? '';
+
+            // Special handling for pembayaran role
+            if ($roleCode === 'pembayaran') {
+                // Document is completed if payment status is 'sudah_dibayar'
+                $isCompleted = ($dokumen->status_pembayaran === 'sudah_dibayar');
+            } else {
+                // Document is completed if processed_at exists AND current_handler has moved on
+                $isCompleted = ($processedAt !== null) && (strtolower($currentHandler) !== strtolower($expectedHandler));
+            }
+
+            // Calculate age based on completion status
+            // - Active documents: compare received_at to NOW (time keeps running)
+            // - Completed documents: compare received_at to processed_at (PERMANENT time)
+            // Note: For pembayaran with sudah_dibayar status, processedAt may be null - use now()
+            $endTime = ($isCompleted && $processedAt) ? $processedAt : $now;
+
+            $ageHours = $receivedAt ? $receivedAt->diffInHours($endTime) : 0;
+            $ageMinutes = $receivedAt ? $receivedAt->diffInMinutes($endTime) : 0;
+            $ageDays = ($receivedAt && $endTime) ? $endTime->diffInDays($receivedAt, false) : 0;
+            $ageDays = max(0, $ageDays);
+
+            $dokumen->is_completed = $isCompleted;
+            $dokumen->age_days = $ageDays;
+            $dokumen->age_hours = $ageHours;
+            $dokumen->age_formatted = $this->formatAge($ageDays, $ageHours, $ageMinutes);
+            $dokumen->effective_received_at = $receivedAt ? $receivedAt->format('Y-m-d H:i:s') : null;
+            $dokumen->effective_processed_at = $processedAt ? $processedAt->format('Y-m-d H:i:s') : null;
+
+            return $dokumen;
+        });
+
+
+        // Filter by age if filter_age is set (using hours to match dashboard)
+        // Pembayaran uses weekly thresholds, others use daily
+        if ($filterAge) {
+            $filteredDokumens = $filteredDokumens->filter(function ($dokumen) use ($filterAge, $roleCode) {
+                $ageHours = $dokumen->age_hours ?? 0;
+
+                // Pembayaran: weekly thresholds (1 week = 168 hours, 3 weeks = 504 hours)
+                if ($roleCode === 'pembayaran') {
+                    if ($filterAge === '1') {
+                        // AMAN: < 1 week (168 hours)
+                        return $ageHours < 168;
+                    } elseif ($filterAge === '2') {
+                        // PERINGATAN: 1-3 weeks (168-504 hours)
+                        return $ageHours >= 168 && $ageHours < 504;
+                    } elseif ($filterAge === '3+') {
+                        // TERLAMBAT: > 3 weeks (504+ hours)
+                        return $ageHours >= 504;
+                    }
+                } else {
+                    // Other roles: daily thresholds (24 hours, 72 hours)
+                    if ($filterAge === '1') {
+                        // AMAN: < 24 hours
+                        return $ageHours < 24;
+                    } elseif ($filterAge === '2') {
+                        // PERINGATAN: 24-72 hours
+                        return $ageHours >= 24 && $ageHours < 72;
+                    } elseif ($filterAge === '3+') {
+                        // TERLAMBAT: > 72 hours
+                        return $ageHours >= 72;
+                    }
+                }
+                return true;
+            });
+        }
+
+
+        // Paginate the filtered results
+        $perPage = (int) $request->get('per_page', 10);
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 10;
+        }
+        $currentPage = $request->get('page', 1);
+        $currentItems = $filteredDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        $dokumens = new \Illuminate\Pagination\LengthAwarePaginator(
+            $currentItems,
+            $filteredDokumens->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        // Calculate card statistics berdasarkan umur dokumen
+        // Include ALL documents (active + completed) and use permanent time for completed
+        $cardStats = [];
+
+        // Calculate card statistics hanya untuk role yang memerlukan card
+        if (in_array($roleCode, ['team_verifikasi', 'perpajakan', 'akutansi'])) {
+            $roleCodeLower = strtolower($roleCode);
+
+            // Get ALL documents that have ever been in this role
+            $allRoleDocsQuery = DokumenRoleData::where('dokumen_role_data.role_code', $roleCode)
+                ->whereNotNull('dokumen_role_data.received_at')
+                ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id');
+
+            // Apply year filter to card stats if present
+            if ($request->has('year') && $request->year) {
+                $allRoleDocsQuery->where('dokumens.tahun', $request->year);
+            }
+
+            // Apply month filter to card stats if present
+            if ($request->has('month') && $request->month) {
+                $allRoleDocsQuery->whereMonth('dokumen_role_data.received_at', $request->month);
+            }
+
+            $allRoleDocs = $allRoleDocsQuery->select('dokumen_role_data.*')->get();
+
+            // Card 1: Dokumen dengan umur < 24 jam (hijau) - AMAN
+            $card1Count = 0;
+            // Card 2: Dokumen dengan umur 24-72 jam (kuning) - PERINGATAN
+            $card2Count = 0;
+            // Card 3: Dokumen dengan umur > 72 jam (merah) - TERLAMBAT
+            $card3Count = 0;
+
+            foreach ($allRoleDocs as $doc) {
+                $receivedAt = Carbon::parse($doc->received_at);
+
+                // Use processed_at as end time for completed documents (PERMANENT)
+                // Use now for active documents (time keeps running)
+                $endTime = $doc->processed_at ? Carbon::parse($doc->processed_at) : $now;
+                $hoursDiff = $receivedAt->diffInHours($endTime);
+
+                if ($hoursDiff < 24) {
+                    $card1Count++;
+                } elseif ($hoursDiff < 72) {
+                    $card2Count++;
+                } else {
+                    $card3Count++;
+                }
+            }
+        } elseif ($roleCode === 'pembayaran') {
+            // Pembayaran: weekly thresholds (1 week = 168 hours, 3 weeks = 504 hours)
+            // Include ALL documents that have been received by pembayaran (including sudah_dibayar)
+            $allRoleDocsQuery = DokumenRoleData::where('dokumen_role_data.role_code', $roleCode)
+                ->whereNotNull('dokumen_role_data.received_at')
+                ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id');
+
+            // Apply year filter to card stats if present
+            if ($request->has('year') && $request->year) {
+                $allRoleDocsQuery->where('dokumens.tahun', $request->year);
+            }
+
+            // Apply month filter to card stats if present
+            if ($request->has('month') && $request->month) {
+                $allRoleDocsQuery->whereMonth('dokumen_role_data.received_at', $request->month);
+            }
+
+            $allRoleDocs = $allRoleDocsQuery->select('dokumen_role_data.*', 'dokumens.status_pembayaran')->get();
+
+            // Card 1: < 1 minggu (< 168 jam) - AMAN
+            $card1Count = 0;
+            // Card 2: 1-3 minggu (168-504 jam) - PERINGATAN
+            $card2Count = 0;
+            // Card 3: > 3 minggu (> 504 jam) - TERLAMBAT
+            $card3Count = 0;
+
+            foreach ($allRoleDocs as $doc) {
+                $receivedAt = Carbon::parse($doc->received_at);
+
+                // For paid documents, use processed_at as end time (PERMANENT) if available
+                // For active documents, use now (time keeps running)
+                if ($doc->status_pembayaran === 'sudah_dibayar' && $doc->processed_at) {
+                    // Document is paid with processed_at - use permanent time
+                    $endTime = Carbon::parse($doc->processed_at);
+                } else {
+                    $endTime = $now;
+                }
+
+                $hoursDiff = $receivedAt->diffInHours($endTime);
+
+                if ($hoursDiff < 168) {
+                    $card1Count++;
+                } elseif ($hoursDiff < 504) {
+                    $card2Count++;
+                } else {
+                    $card3Count++;
+                }
+            }
+        } else {
+            // Untuk role lain (Operator), set default values
+            $card1Count = 0;
+            $card2Count = 0;
+            $card3Count = 0;
+        }
+
+
+
+        // Only set cardStats for roles that need cards
+        if (in_array($roleCode, ['team_verifikasi', 'perpajakan', 'akutansi'])) {
+            $cardStats = [
+                'card1' => [
+                    'count' => $card1Count,
+                    'label' => '1 Hari',
+                    'color' => 'green',
+                ],
+                'card2' => [
+                    'count' => $card2Count,
+                    'label' => '2 Hari',
+                    'color' => 'yellow',
+                ],
+                'card3' => [
+                    'count' => $card3Count,
+                    'label' => '3+ Hari',
+                    'color' => 'red',
+                ],
+            ];
+        } elseif ($roleCode === 'pembayaran') {
+            $cardStats = [
+                'card1' => [
+                    'count' => $card1Count,
+                    'label' => '< 1 Minggu',
+                    'color' => 'green',
+                ],
+                'card2' => [
+                    'count' => $card2Count,
+                    'label' => '1-3 Minggu',
+                    'color' => 'yellow',
+                ],
+                'card3' => [
+                    'count' => $card3Count,
+                    'label' => '> 3 Minggu',
+                    'color' => 'red',
+                ],
+            ];
+        } else {
+            // Empty cardStats for roles that don't need cards
+            $cardStats = [
+                'card1' => ['count' => 0, 'label' => '-', 'color' => 'green'],
+                'card2' => ['count' => 0, 'label' => '-', 'color' => 'yellow'],
+                'card3' => ['count' => 0, 'label' => '-', 'color' => 'red'],
+            ];
+        }
+
+        // Calculate total statistics
+        if ($roleCode === 'pembayaran') {
+            $totalDocuments = Dokumen::where(function ($q) {
+                $q->where('current_handler', 'pembayaran')
+                    ->orWhere('status', 'sent_to_pembayaran')
+                    ->orWhere('status', 'proses_pembayaran');
+            })
+                ->where(function ($q) {
+                    $q->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })
+                ->count();
+        } else {
+            $totalDocuments = DokumenRoleData::where('role_code', $roleCode)
+                ->whereNotNull('received_at')
+                ->whereNull('processed_at')
+                ->count();
+        }
+
+        // Get available years
+        $availableYears = Dokumen::selectRaw('DISTINCT tahun')
+            ->whereNotNull('tahun')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun')
+            ->toArray();
+
+        // Get available months (1-12)
+        $availableMonths = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
+
+        // Get filter data for dropdowns
+        $filterData = $this->getFilterData();
+
+        return view('owner.rekapanKeterlambatanByRole', compact(
+            'dokumens',
+            'cardStats',
+            'totalDocuments',
+            'availableYears',
+            'availableMonths',
+            'roleConfig',
+            'roleCode',
+            'filterData'
+        ))
+            ->with('title', 'Rekapan Keterlambatan - ' . $roleConfig[$roleCode]['name'])
+            ->with('module', $isAdminOrOwner ? 'owner' : ($roleCode === 'team_verifikasi' ? 'team_verifikasi' : ($roleCode === 'operator' ? 'operator' : $roleCode)))
+            ->with('menuDashboard', '')
+            ->with('menuRekapan', '')
+            ->with('menuRekapKeterlambatan', 'active')
+            ->with('dashboardUrl', $isAdminOrOwner ? '/owner/dashboard' : ($roleCode === 'team_verifikasi' ? '/dashboard/verifikasi' : '/dashboard'));
+    }
+
+
+    /**
+     * Format age in days and hours to readable format
+     * Uses total hours to calculate days for more accurate display
+     */
+    private function formatAge($days, $hours = 0, $totalMinutes = 0)
+    {
+        // Calculate days and remaining hours from total hours
+        // This is more reliable than using separate $days parameter
+        $calculatedDays = floor($hours / 24);
+        $remainingHours = $hours % 24;
+
+        // Use the calculated days from hours for consistency
+        $actualDays = max($days, $calculatedDays);
+
+        if ($actualDays == 0 && $remainingHours == 0) {
+            // Show minutes when less than 1 hour
+            $remainingMinutes = $totalMinutes % 60;
+            if ($remainingMinutes > 0) {
+                return $remainingMinutes . ' menit';
+            }
+            return 'Baru';
+        } elseif ($actualDays == 0) {
+            return $remainingHours . ' jam';
+        } elseif ($actualDays == 1 && $remainingHours == 0) {
+            return '1 hari';
+        } elseif ($actualDays == 1) {
+            return '1 hari ' . $remainingHours . ' jam';
+        } elseif ($actualDays < 30) {
+            if ($remainingHours > 0) {
+                return $actualDays . ' hari ' . $remainingHours . ' jam';
+            }
+            return $actualDays . ' hari';
+        } elseif ($actualDays == 30) {
+            return '1 bulan';
+        } elseif ($actualDays % 30 == 0) {
+            return ($actualDays / 30) . ' bulan';
+        } else {
+            $months = floor($actualDays / 30);
+            $remainingDays = $actualDays % 30;
+            if ($months > 0 && $remainingDays > 0) {
+                return $months . ' bulan ' . $remainingDays . ' hari';
+            } elseif ($months > 0) {
+                return $months . ' bulan';
+            } else {
+                return $actualDays . ' hari';
+            }
+        }
+    }
+
+    // =========================================================================
+    //  URGENCY ALERT METHODS
+    // =========================================================================
+
+    /**
+     * POST /owner/dokumen/{id}/urgency
+     * Send an urgency alert for a document. Only admin/owner can call this.
+     */
+    public function sendUrgency(Request $request, $id): JsonResponse
+    {
+        try {
+            $dokumen = Dokumen::findOrFail($id);
+
+            // Prevent sending if urgency is already active
+            if ($dokumen->urgency_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Notifikasi urgency sudah aktif untuk dokumen ini. Tunggu hingga dokumen diselesaikan.',
+                ], 422);
+            }
+
+            $dokumen->update([
+                'urgency_active'  => true,
+                'urgency_sent_at' => now(),
+                'urgency_sent_by' => auth()->id(),
+            ]);
+
+            \Log::info('Urgency alert sent', [
+                'dokumen_id'   => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'handler'      => $dokumen->current_handler,
+                'sent_by'      => auth()->user()?->name,
+                'sent_at'      => now()->toDateTimeString(),
+            ]);
+
+            return response()->json([
+                'success'               => true,
+                'message'               => 'Pengingat urgency berhasil dikirim!',
+                'urgency_sent_at_human' => now()->diffForHumans(),
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Dokumen tidak ditemukan.'], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error sending urgency: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan. Silakan coba lagi.'], 500);
+        }
+    }
+
+    /**
+     * DELETE /owner/dokumen/{id}/urgency
+     * Reset (deactivate) urgency for a document.
+     */
+    public function resetUrgency(Request $request, $id): JsonResponse
+    {
+        try {
+            $dokumen = Dokumen::findOrFail($id);
+
+            $dokumen->update([
+                'urgency_active'  => false,
+                'urgency_sent_at' => null,
+                'urgency_sent_by' => null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Urgency berhasil direset.',
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Dokumen tidak ditemukan.'], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error resetting urgency: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan.'], 500);
+        }
+    }
+
+    /**
+     * DELETE /owner/urgency/reset-all
+     * Bulk-reset ALL urgency flags across all documents.
+     */
+    public function resetAllUrgencies(Request $request): JsonResponse
+    {
+        try {
+            $affected = Dokumen::where('urgency_active', true)->update([
+                'urgency_active'  => false,
+                'urgency_sent_at' => null,
+                'urgency_sent_by' => null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Semua urgency berhasil direset ({$affected} dokumen).",
+                'affected' => $affected,
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error resetting all urgencies: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan.'], 500);
+        }
+    }
+
+    /**
+     * GET /api/documents/urgency/active
+     * Returns urgency-active documents for the logged-in user's role.
+     * Used by recipient-role dashboards for polling.
+     */
+    public function getActiveUrgencies(Request $request): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+            }
+
+            $role = strtolower($user->role ?? '');
+
+            // Map role to current_handler values stored in dokumens
+            $roleHandlerMap = [
+                'operator'        => ['operator'],
+                'team_verifikasi' => ['team_verifikasi', 'verifikasi'],
+                'verifikasi'      => ['team_verifikasi', 'verifikasi'],
+                'perpajakan'      => ['perpajakan'],
+                'akutansi'        => ['akutansi'],
+                'pembayaran'      => ['pembayaran'],
+            ];
+
+            $handlers = $roleHandlerMap[$role] ?? [];
+
+        // If the role is not in the handler map, return empty results
+        // This prevents non-recipient roles (e.g., programmer, owner) from seeing ALL urgency documents
+        if (empty($handlers)) {
+            return response()->json([
+                'success'   => true,
+                'count'     => 0,
+                'urgencies' => [],
+            ]);
+        }
+
+        $query = Dokumen::where('urgency_active', true)
+            ->select('id', 'nomor_agenda', 'nomor_spp', 'current_handler', 'urgency_sent_at', 'urgency_sent_by')
+            ->whereIn('current_handler', $handlers);
+
+            $urgencies = $query->orderBy('urgency_sent_at', 'asc')->get()->map(function ($dok) {
+                return [
+                    'id'            => $dok->id,
+                    'nomor_agenda'  => $dok->nomor_agenda,
+                    'nomor_spp'     => $dok->nomor_spp,
+                    'sent_at_human' => $dok->urgency_sent_at ? $dok->urgency_sent_at->diffForHumans() : null,
+                    'sent_at'       => $dok->urgency_sent_at ? $dok->urgency_sent_at->toISOString() : null,
+                ];
+            });
+
+            return response()->json([
+                'success'   => true,
+                'count'     => $urgencies->count(),
+                'urgencies' => $urgencies,
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error fetching active urgencies: ' . $e->getMessage());
+            return response()->json(['success' => false, 'urgencies' => [], 'count' => 0], 500);
+        }
+    }
+
+    /**
+     * GET /owner/dokumen/{id}/history
+     * Returns the DocumentTracking timeline for a Dokumen record.
+     */
+    public function getHistory(int $id): \Illuminate\Http\JsonResponse
+    {
+        $dokumen = Dokumen::findOrFail($id);
+
+        $entries = \App\Models\DocumentTracking::where('document_id', $id)
+            ->orderBy('action_at', 'asc')
+            ->get();
+
+        $actorLabels = [
+            'operator'       => 'Operator',
+            'team_verifikasi'=> 'Team Verifikasi',
+            'perpajakan'     => 'Perpajakan',
+            'akutansi'       => 'Akutansi',
+            'pembayaran'     => 'Pembayaran',
+            'system'         => 'System',
+        ];
+
+        $actionLabels = [
+            'created'                    => 'Dokumen Dibuat',
+            'sent_to_team_verifikasi'    => 'Dikirim ke Team Verifikasi',
+            'sent_to_perpajakan'         => 'Dikirim ke Perpajakan',
+            'sent_to_akutansi'           => 'Dikirim ke Akutansi',
+            'sent_to_pembayaran'         => 'Dikirim ke Pembayaran',
+            'returned_to_perpajakan'     => 'Dikembalikan ke Perpajakan',
+            'returned_to_akutansi'       => 'Dikembalikan ke Akutansi',
+            'returned_to_operator'       => 'Dikembalikan ke Operator',
+            'returned_to_verifikasi'     => 'Dikembalikan ke Verifikasi',
+            'deadline_set'               => 'Deadline Ditetapkan',
+            'processed_perpajakan'       => 'Diproses Perpajakan',
+            'processed_akutansi'         => 'Diproses Akutansi',
+            'processed_pembayaran'       => 'Pembayaran Dikonfirmasi',
+            'urgency_sent'               => 'Urgency Dikirim',
+        ];
+
+        $actionColors = [
+            'created'                 => '#10b981', // green
+            'sent_to_team_verifikasi' => '#3b82f6', // blue
+            'sent_to_perpajakan'      => '#6366f1', // indigo
+            'sent_to_akutansi'        => '#f59e0b', // amber
+            'sent_to_pembayaran'      => '#14b8a6', // teal
+            'returned_to_perpajakan'  => '#ef4444', // red
+            'returned_to_akutansi'    => '#ef4444',
+            'returned_to_operator'    => '#ef4444',
+            'deadline_set'            => '#f59e0b',
+            'processed_perpajakan'    => '#6366f1',
+            'processed_akutansi'      => '#f59e0b',
+            'processed_pembayaran'    => '#10b981',
+            'urgency_sent'            => '#f97316', // orange
+        ];
+
+        $actionIcons = [
+            'created'                 => 'fa-plus-circle',
+            'sent_to_team_verifikasi' => 'fa-paper-plane',
+            'sent_to_perpajakan'      => 'fa-file-invoice',
+            'sent_to_akutansi'        => 'fa-calculator',
+            'sent_to_pembayaran'      => 'fa-money-bill-wave',
+            'returned_to_perpajakan'  => 'fa-undo',
+            'returned_to_akutansi'    => 'fa-undo',
+            'returned_to_operator'    => 'fa-undo',
+            'deadline_set'            => 'fa-clock',
+            'processed_perpajakan'    => 'fa-stamp',
+            'processed_akutansi'      => 'fa-check-double',
+            'processed_pembayaran'    => 'fa-check-circle',
+            'urgency_sent'            => 'fa-bell',
+        ];
+
+        $nodes = $entries->map(function ($entry, $index) use (
+            $entries, $actionLabels, $actorLabels, $actionColors, $actionIcons
+        ) {
+            $next      = $entries->get($index + 1);
+            $durationSec = $next
+                ? $entry->action_at->diffInSeconds($next->action_at)
+                : null;
+
+            return [
+                'id'           => $entry->id,
+                'action'       => $entry->action,
+                'action_label' => $actionLabels[$entry->action] ?? ucfirst(str_replace('_', ' ', $entry->action)),
+                'actor'        => $entry->actor,
+                'actor_label'  => $actorLabels[$entry->actor] ?? $entry->actor,
+                'action_at'    => $entry->action_at->format('d M Y H:i'),
+                'action_at_iso'=> $entry->action_at->toISOString(),
+                'metadata'     => $entry->metadata ?? [],
+                'color'        => $actionColors[$entry->action] ?? '#64748b',
+                'icon'         => $actionIcons[$entry->action]  ?? 'fa-circle',
+                'duration_sec' => $durationSec,
+                'duration_label' => $durationSec !== null ? $this->formatDuration($durationSec) : null,
+                'is_last'      => $index === $entries->count() - 1,
+            ];
+        })->values();
+
+        // Identify slowest stage (for red highlight)
+        $maxDuration = $nodes->max('duration_sec');
+
+        $nodes = $nodes->map(function ($node) use ($maxDuration) {
+            $node['is_slowest'] = $maxDuration && $node['duration_sec'] === $maxDuration && $maxDuration > 86400;
+            return $node;
+        });
+
+        // Summary
+        $totalSec = $entries->count() > 1
+            ? $entries->first()->action_at->diffInSeconds($entries->last()->action_at)
+            : null;
+
+        return response()->json([
+            'success'       => true,
+            'document'      => [
+                'id'           => $dokumen->id,
+                'nomor_agenda' => $dokumen->nomor_agenda,
+                'nomor_spp'    => $dokumen->nomor_spp,
+                'dibayar_kepada' => $dokumen->dibayar_kepada,
+                'status'       => $dokumen->status,
+            ],
+            'nodes'         => $nodes,
+            'summary'       => [
+                'total_events'  => $entries->count(),
+                'total_duration'=> $totalSec ? $this->formatDuration($totalSec) : '-',
+                'total_sec'     => $totalSec,
+            ],
+        ]);
+    }
+
+    /** Format seconds into "X hari Y jam Z menit" */
+    private function formatDuration(int $seconds): string
+    {
+        $days    = intdiv($seconds, 86400);
+        $hours   = intdiv($seconds % 86400, 3600);
+        $minutes = intdiv($seconds % 3600, 60);
+
+        $parts = [];
+        if ($days)    $parts[] = "{$days} hari";
+        if ($hours)   $parts[] = "{$hours} jam";
+        if ($minutes) $parts[] = "{$minutes} menit";
+        return $parts ? implode(' ', $parts) : 'Kurang dari 1 menit';
+    }
+
+    /** Map current_handler key to display label */
+    private function handlerToTeamLabel(string $handler): string
+    {
+        return match ($handler) {
+            'team_verifikasi' => 'Verifikasi',
+            'perpajakan'      => 'Perpajakan',
+            'akutansi'        => 'Akuntansi',
+            'pembayaran'      => 'Pembayaran',
+            'operator'        => 'Operator',
+            default           => ucfirst($handler),
+        };
+    }
+
+    /** Calculate score cards per team */
+    private function calcTeamScores($classified, array $teamLabels): array
+    {
+        $scores = [];
+        foreach ($teamLabels as $code => $label) {
+            $docs  = $classified->where('tim_code', $code);
+            $total = $docs->count() ?: 1;
+            $aman  = $docs->where('status', 'aman')->count();
+            $warn  = $docs->where('status', 'warn')->count();
+            $late  = $docs->where('status', 'late')->count();
+            $score = max(0, min(100, round(100 - (($late * 2 + $warn * 0.5) / $total * 100) / 10 * 10, 1)));
+            $scores[$code] = [
+                'label' => $label,
+                'score' => $score,
+                'aman'  => $aman,
+                'warn'  => $warn,
+                'late'  => $late,
+            ];
+        }
+        return $scores;
     }
 }

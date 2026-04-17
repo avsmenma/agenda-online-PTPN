@@ -477,8 +477,8 @@
               @case('draft')
                 <span class="badge badge-draft">Draft</span>
                 @break
-              @case('sent_to_ibub')
-                <span class="badge badge-sent">Terkirim ke Ibu Yuni</span>
+              @case('sent_to_team_verifikasi')
+                <span class="badge badge-sent">Terkirim ke Team Verifikasi</span>
                 @break
               @case('sent_to_perpajakan')
                 <span class="badge badge-sent">Terkirim ke Team Perpajakan</span>
@@ -495,7 +495,7 @@
               @case('selesai')
                 <span class="badge badge-completed">Selesai</span>
                 @break
-              @case('returned_to_ibua')
+              @case('returned_to_operator')
                 <span class="badge badge-returned">Dikembalikan ke Ibu Tarapul</span>
                 @break
               @case('returned_to_department')
@@ -525,3 +525,7 @@
 @include('partials.pagination-enhanced', ['paginator' => $dokumens])
 
 @endsection
+
+
+
+

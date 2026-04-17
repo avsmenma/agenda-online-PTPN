@@ -5,47 +5,39 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Dokumen;
+use App\Models\Bagian;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DokumenRekapanController extends Controller
 {
-    /**
-     * Daftar bagian yang tersedia
-     */
-    private const BAGIAN_LIST = [
-        'DPM' => 'DPM',
-        'SKH' => 'SKH',
-        'SDM' => 'SDM',
-        'TEP' => 'TEP',
-        'KPL' => 'KPL',
-        'AKN' => 'AKN',
-        'TAN' => 'TAN',
-        'PMO' => 'PMO'
-    ];
 
     /**
      * Display the rekapan page
      */
     public function index(Request $request): View
     {
-        $query = Dokumen::where('created_by', 'ibuA')
+        $query = Dokumen::where('created_by', 'operator')
             ->with(['dokumenPos', 'dokumenPrs']);
 
         // Filter by bagian
         $selectedBagian = $request->get('bagian', '');
-        if ($selectedBagian && in_array($selectedBagian, array_keys(self::BAGIAN_LIST))) {
-            $query->where('bagian', $selectedBagian);
+        if ($selectedBagian) {
+            // Validate against database
+            $validBagian = Bagian::active()->where('kode', $selectedBagian)->exists();
+            if ($validBagian) {
+                $query->where('bagian', $selectedBagian);
+            }
         }
 
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nomor_agenda', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_spp', 'like', '%' . $search . '%')
-                  ->orWhere('uraian_spp', 'like', '%' . $search . '%')
-                  ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
+                    ->orWhere('nomor_spp', 'like', '%' . $search . '%')
+                    ->orWhere('uraian_spp', 'like', '%' . $search . '%')
+                    ->orWhere('nama_pengirim', 'like', '%' . $search . '%');
             });
         }
 
@@ -54,15 +46,24 @@ class DokumenRekapanController extends Controller
             $query->where('tahun', $request->year);
         }
 
-        $perPage = $request->get('per_page', 10);
+        $perPage = $request->get('per_page', session('operator_rekapan_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['operator_rekapan_per_page' => $perPage]);
         $dokumens = $query->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
 
         // Get statistics
         $statistics = $this->getStatistics($selectedBagian);
 
+        // Get bagian list from database
+        $bagianList = Bagian::active()->ordered()->pluck('nama', 'kode')->toArray();
+
         $data = array(
             "title" => "Rekapan Dokumen",
-            "module" => "IbuA",
+            "module" => "Operator",
             "menuDokumen" => "active",
             "menuRekapan" => "active",
             "menuDaftarDokumen" => "",
@@ -71,11 +72,11 @@ class DokumenRekapanController extends Controller
             "menuDashboard" => "",
             "dokumens" => $dokumens,
             "statistics" => $statistics,
-            "bagianList" => self::BAGIAN_LIST,
+            "bagianList" => $bagianList,
             "selectedBagian" => $selectedBagian,
         );
 
-        return view('IbuA.dokumens.rekapan', $data);
+        return view('operator.dokumens.rekapan', $data);
     }
 
     /**
@@ -83,19 +84,23 @@ class DokumenRekapanController extends Controller
      */
     private function getStatistics(string $filterBagian = ''): array
     {
-        $query = Dokumen::where('created_by', 'ibuA');
+        $query = Dokumen::where('created_by', 'operator');
 
-        if ($filterBagian && in_array($filterBagian, array_keys(self::BAGIAN_LIST))) {
-            $query->where('bagian', $filterBagian);
+        if ($filterBagian) {
+            $validBagian = Bagian::active()->where('kode', $filterBagian)->exists();
+            if ($validBagian) {
+                $query->where('bagian', $filterBagian);
+            }
         }
 
         $total = $query->count();
 
         $bagianStats = [];
-        foreach (self::BAGIAN_LIST as $bagianCode => $bagianName) {
-            $bagianQuery = Dokumen::where('created_by', 'ibuA')->where('bagian', $bagianCode);
-            $bagianStats[$bagianCode] = [
-                'name' => $bagianName,
+        $bagianList = Bagian::active()->ordered()->get();
+        foreach ($bagianList as $bagian) {
+            $bagianQuery = Dokumen::where('created_by', 'operator')->where('bagian', $bagian->kode);
+            $bagianStats[$bagian->kode] = [
+                'name' => $bagian->nama,
                 'total' => $bagianQuery->count()
             ];
         }
@@ -105,10 +110,10 @@ class DokumenRekapanController extends Controller
             'by_bagian' => $bagianStats,
             'by_status' => [
                 'draft' => $query->where('status', 'draft')->count(),
-                'sent_to_ibub' => $query->where('status', 'sent_to_ibub')->count(),
+                'sent_to_team_verifikasi' => $query->where('status', 'sent_to_team_verifikasi')->count(),
                 'sedang diproses' => $query->where('status', 'sedang diproses')->count(),
                 'selesai' => $query->where('status', 'selesai')->count(),
-                'returned_to_ibua' => $query->where('status', 'returned_to_ibua')->count(),
+                'returned_to_operator' => $query->where('status', 'returned_to_operator')->count(),
             ]
         ];
     }
@@ -129,12 +134,15 @@ class DokumenRekapanController extends Controller
         }
 
         // Base query for Ibu Tarapul documents
-        $baseQuery = Dokumen::where('created_by', 'ibuA')
+        $baseQuery = Dokumen::where('created_by', 'operator')
             ->whereYear('tanggal_masuk', $selectedYear);
 
         // Filter by bagian if selected
-        if ($selectedBagian && in_array($selectedBagian, array_keys(self::BAGIAN_LIST))) {
-            $baseQuery->where('bagian', $selectedBagian);
+        if ($selectedBagian) {
+            $validBagian = Bagian::active()->where('kode', $selectedBagian)->exists();
+            if ($validBagian) {
+                $baseQuery->where('bagian', $selectedBagian);
+            }
         }
 
         // Get yearly summary
@@ -146,9 +154,18 @@ class DokumenRekapanController extends Controller
         // Get monthly statistics
         $monthlyStats = [];
         $monthNames = [
-            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
         ];
 
         for ($month = 1; $month <= 12; $month++) {
@@ -168,11 +185,17 @@ class DokumenRekapanController extends Controller
         }
 
         // Pagination
-        $perPage = $request->get('per_page', 10);
+        $perPage = $request->get('per_page', session('operator_analytics_per_page', 10));
+        if ($perPage === 'all') {
+            $perPage = 999999;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['operator_analytics_per_page' => $perPage]);
         $tableDokumens = $tableQuery->latest('tanggal_masuk')->paginate($perPage)->appends($request->query());
 
         // Get available years
-        $availableYears = Dokumen::where('created_by', 'ibuA')
+        $availableYears = Dokumen::where('created_by', 'operator')
             ->whereNotNull('tanggal_masuk')
             ->selectRaw('DISTINCT YEAR(tanggal_masuk) as year')
             ->orderBy('year', 'desc')
@@ -181,24 +204,29 @@ class DokumenRekapanController extends Controller
             ->toArray();
 
         if (empty($availableYears)) {
-            $availableYears = [(int)date('Y')];
+            $availableYears = [(int) date('Y')];
         }
 
         $data = [
             'title' => 'Analitik Dokumen',
-            'module' => 'IbuA',
+            'module' => 'operator',
             'menuDokumen' => 'active',
             'menuRekapan' => 'active',
-            'selectedYear' => (int)$selectedYear,
+            'selectedYear' => (int) $selectedYear,
             'selectedBagian' => $selectedBagian,
-            'selectedMonth' => $selectedMonth ? (int)$selectedMonth : null,
+            'selectedMonth' => $selectedMonth ? (int) $selectedMonth : null,
             'yearlySummary' => $yearlySummary,
             'monthlyStats' => $monthlyStats,
             'dokumens' => $tableDokumens,
             'availableYears' => $availableYears,
-            'bagianList' => self::BAGIAN_LIST,
+            'bagianList' => Bagian::active()->ordered()->pluck('nama', 'kode')->toArray(),
         ];
 
-        return view('IbuA.dokumens.analytics', $data);
+        return view('operator.dokumens.analytics', $data);
     }
 }
+
+
+
+
+

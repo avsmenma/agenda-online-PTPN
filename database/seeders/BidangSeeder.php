@@ -30,3 +30,4 @@ class BidangSeeder extends Seeder
         }
     }
 }
+

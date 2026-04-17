@@ -18,41 +18,44 @@ class InboxController extends Controller
      * Menampilkan daftar dokumen yang menunggu approval di inbox
      * Updated to use new dokumen_statuses table
      */
-    public function index()
+    public function index(Request $request)
     {
         try {
             $user = auth()->user();
             $userRole = $this->getUserRole($user);
 
-            // Hanya allow IbuB, Perpajakan, Akutansi, Pembayaran
-            $allowedRoles = ['IbuB', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+            // Hanya allow Operator, Team Verifikasi/Verifikasi, Perpajakan, Akutansi, Pembayaran
+            $allowedRoles = ['operator', 'team_verifikasi', 'team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
             if (!$userRole || !in_array($userRole, $allowedRoles)) {
-                abort(403, 'Unauthorized access - Halaman ini hanya untuk IbuB, Perpajakan, Akutansi, dan Pembayaran');
+                abort(403, 'Unauthorized access - Halaman ini hanya untuk Ibu Tarapul, Team Verifikasi, Perpajakan, Akutansi, dan Pembayaran');
             }
 
             // Normalize role code for database query (lowercase)
+            // For Verifikasi, we also need to check 'team_verifikasi' for backward compatibility
             $roleCode = strtolower($userRole);
+            $roleCodes = $this->getRoleCodes($userRole);
 
             // Query documents using new dokumen_statuses table
             $documents = Dokumen::with(['activityLogs', 'roleStatuses'])
-                ->whereHas('roleStatuses', function ($query) use ($roleCode) {
-                    $query->where('role_code', $roleCode)
+                ->whereHas('roleStatuses', function ($query) use ($roleCodes) {
+                    $query->whereIn('role_code', $roleCodes)
                         ->where('status', \App\Models\DokumenStatus::STATUS_PENDING);
                 })
                 ->latest('created_at')
-                ->paginate(10);
+                ->paginate($request->get('per_page', 10))
+                ->appends($request->query());
 
             // Count statistics using new table
-            $pendingCount = \App\Models\DokumenStatus::where('role_code', $roleCode)
+            $pendingCount = \App\Models\DokumenStatus::whereIn('role_code', $roleCodes)
                 ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
                 ->count();
 
-            $approvedToday = \App\Models\DokumenStatus::where('role_code', $roleCode)
+            $approvedToday = \App\Models\DokumenStatus::whereIn('role_code', $roleCodes)
                 ->where('status', \App\Models\DokumenStatus::STATUS_APPROVED)
                 ->whereDate('status_changed_at', today())
                 ->count();
 
-            $totalProcessed = \App\Models\DokumenStatus::where('role_code', $roleCode)
+            $totalProcessed = \App\Models\DokumenStatus::whereIn('role_code', $roleCodes)
                 ->whereIn('status', [
                     \App\Models\DokumenStatus::STATUS_APPROVED,
                     \App\Models\DokumenStatus::STATUS_REJECTED
@@ -61,7 +64,9 @@ class InboxController extends Controller
 
             // Normalize module untuk layout
             $moduleMap = [
-                'IbuB' => 'ibub',
+                'operator' => 'operator',
+                'team_verifikasi' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
                 'Perpajakan' => 'perpajakan',
                 'Akutansi' => 'akutansi',
                 'Pembayaran' => 'pembayaran',
@@ -69,7 +74,7 @@ class InboxController extends Controller
             $normalizedModule = $moduleMap[$userRole] ?? strtolower($userRole);
 
             // Hitung dokumen baru (masuk dalam 24 jam terakhir)
-            $newDocumentsCount = \App\Models\DokumenStatus::where('role_code', $roleCode)
+            $newDocumentsCount = \App\Models\DokumenStatus::whereIn('role_code', $roleCodes)
                 ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
                 ->where('status_changed_at', '>=', now()->subHours(24))
                 ->count();
@@ -96,13 +101,156 @@ class InboxController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Show detailed error in development, generic message in production
-            $errorMessage = config('app.debug') 
+            $errorMessage = config('app.debug')
                 ? 'Gagal memuat daftar dokumen inbox: ' . $e->getMessage() . ' (Line: ' . $e->getLine() . ')'
                 : 'Gagal memuat daftar dokumen inbox. Silakan cek log untuk detail.';
-            
+
             return back()->with('error', $errorMessage);
+        }
+    }
+
+    /**
+     * API endpoint for inbox history - Get documents that entered inbox on a specific date
+     */
+    public function history(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            $userRole = $this->getUserRole($user);
+
+            // Hanya allow Team Verifikasi/Verifikasi, Perpajakan, Akutansi, Pembayaran
+            $allowedRoles = ['team_verifikasi', 'team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+            if (!$userRole || !in_array($userRole, $allowedRoles)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access'
+                ], 403);
+            }
+
+            $roleCodes = $this->getRoleCodes($userRole);
+
+            // Get date filter - default to today
+            $dateFilter = $request->input('date', 'today');
+            $targetDate = null;
+
+            switch ($dateFilter) {
+                case 'today':
+                    $targetDate = today();
+                    break;
+                case 'yesterday':
+                    $targetDate = today()->subDay();
+                    break;
+                case '3days':
+                    $targetDate = today()->subDays(3);
+                    break;
+                case '7days':
+                    $targetDate = today()->subDays(7);
+                    break;
+                default:
+                    // Custom date in format Y-m-d
+                    try {
+                        $targetDate = \Carbon\Carbon::parse($dateFilter)->startOfDay();
+                    } catch (\Exception $e) {
+                        $targetDate = today();
+                    }
+            }
+
+            // Get documents that entered inbox on target date
+            // We look at status_changed_at in dokumen_statuses table
+            $documents = Dokumen::whereHas('roleStatuses', function ($query) use ($roleCodes, $targetDate, $dateFilter) {
+                $query->whereIn('role_code', $roleCodes);
+
+                // For multi-day ranges (3days, 7days), get documents from that date to today
+                if ($dateFilter === '3days' || $dateFilter === '7days') {
+                    $query->whereDate('status_changed_at', '>=', $targetDate)
+                        ->whereDate('status_changed_at', '<=', today());
+                } else {
+                    // Single day filter
+                    $query->whereDate('status_changed_at', $targetDate);
+                }
+            })
+                ->with([
+                    'roleStatuses' => function ($q) use ($roleCodes) {
+                        $q->whereIn('role_code', $roleCodes);
+                    }
+                ])
+                ->latest('created_at')
+                ->take(50) // Limit to 50 documents
+                ->get();
+
+            // Format documents for JSON response
+            $formattedDocs = $documents->map(function ($doc) use ($roleCodes) {
+                $roleStatus = $doc->roleStatuses->first();
+                return [
+                    'id' => $doc->id,
+                    'nomor_agenda' => $doc->nomor_agenda,
+                    'nomor_spp' => $doc->nomor_spp,
+                    'uraian_spp' => \Illuminate\Support\Str::limit($doc->uraian_spp ?? '-', 80),
+                    'nilai_rupiah' => $doc->formatted_nilai_rupiah ?? 'Rp 0',
+                    'status' => $roleStatus->status ?? 'unknown',
+                    'status_label' => $this->getStatusLabel($roleStatus->status ?? 'unknown'),
+                    'received_at' => $roleStatus && $roleStatus->status_changed_at
+                        ? $roleStatus->status_changed_at->format('d M Y, H:i')
+                        : '-',
+                    'url' => route('inbox.show', $doc->id),
+                ];
+            });
+
+            // Get date label for display
+            $dateLabel = $this->getDateLabel($dateFilter, $targetDate);
+
+            return response()->json([
+                'success' => true,
+                'date_label' => $dateLabel,
+                'documents_count' => $formattedDocs->count(),
+                'documents' => $formattedDocs,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error loading inbox history: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat riwayat inbox'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get human-readable status label
+     */
+    private function getStatusLabel($status)
+    {
+        $labels = [
+            'pending' => 'Menunggu',
+            'approved' => 'Disetujui',
+            'rejected' => 'Ditolak',
+        ];
+        return $labels[$status] ?? ucfirst($status);
+    }
+
+    /**
+     * Get human-readable date label
+     */
+    private function getDateLabel($dateFilter, $targetDate)
+    {
+        switch ($dateFilter) {
+            case 'today':
+                return 'Hari Ini (' . $targetDate->format('d M Y') . ')';
+            case 'yesterday':
+                return 'Kemarin (' . $targetDate->format('d M Y') . ')';
+            case '3days':
+                return '3 Hari Terakhir';
+            case '7days':
+                return '7 Hari Terakhir';
+            default:
+                return $targetDate->format('d M Y');
         }
     }
 
@@ -146,7 +294,8 @@ class InboxController extends Controller
 
             // Normalize module untuk layout (harus lowercase untuk match statement)
             $moduleMap = [
-                'IbuB' => 'ibub',
+                'team_verifikasi' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
                 'Perpajakan' => 'perpajakan',
                 'Akutansi' => 'akutansi',
                 'Pembayaran' => 'pembayaran',
@@ -174,12 +323,12 @@ class InboxController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Show detailed error in development, generic message in production
-            $errorMessage = config('app.debug') 
+            $errorMessage = config('app.debug')
                 ? 'Gagal memuat detail dokumen: ' . $e->getMessage() . ' (Line: ' . $e->getLine() . ')'
                 : 'Gagal memuat detail dokumen. Silakan cek log untuk detail.';
-            
+
             return back()->with('error', $errorMessage);
         }
     }
@@ -187,9 +336,12 @@ class InboxController extends Controller
     /**
      * Approve dokumen dari inbox
      * Updated to use new dokumen_statuses table
+     * Supports AJAX (returns JSON) and regular form POST (redirect)
      */
     public function approve(Request $request, Dokumen $dokumen)
     {
+        $isAjax = $request->ajax() || $request->wantsJson();
+
         try {
             $user = auth()->user();
             $userRole = $this->getUserRole($user);
@@ -197,7 +349,7 @@ class InboxController extends Controller
 
             // Refresh dokumen untuk memastikan data terbaru (mencegah race condition)
             $dokumen->refresh();
-            
+
             // Reload relationship untuk mendapatkan status terbaru
             $dokumen->load('roleStatuses');
 
@@ -206,21 +358,40 @@ class InboxController extends Controller
                 // Cek apakah dokumen sudah di-approve oleh user ini
                 $status = $dokumen->getStatusForRole($roleCode);
                 if ($status && $status->status === DokumenStatus::STATUS_APPROVED) {
-                    // Dokumen sudah di-approve, redirect dengan success message
-                    return redirect()->route('inbox.index')
-                        ->with('info', 'Dokumen ini sudah disetujui sebelumnya dan telah masuk ke daftar dokumen resmi.');
+                    $msg = 'Dokumen ini sudah disetujui sebelumnya dan telah masuk ke daftar dokumen resmi.';
+                    if ($isAjax) {
+                        return response()->json(['success' => true, 'message' => $msg, 'type' => 'info']);
+                    }
+                    return redirect()->route('inbox.index')->with('info', $msg);
                 }
-                
-                // Dokumen tidak pending dan tidak approved - mungkin sudah di-reject atau tidak ada akses
-                return redirect()->route('inbox.index')
-                    ->with('error', 'Dokumen ini sudah diproses atau tidak tersedia untuk approval.');
+
+                $msg = 'Dokumen ini sudah diproses atau tidak tersedia untuk approval.';
+                if ($isAjax) {
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+                }
+                return redirect()->route('inbox.index')->with('error', $msg);
             }
 
             // Use new approval method
             $dokumen->approveFromRoleInbox($roleCode);
 
-            return redirect()->route('inbox.index')
-                ->with('success', 'Dokumen berhasil disetujui dan masuk ke daftar dokumen resmi.');
+            // Log activity: dokumen di-approve dari inbox
+            try {
+                \App\Helpers\ActivityLogHelper::logStatusChanged(
+                    $dokumen,
+                    'pending',
+                    'approved',
+                    $roleCode
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for inbox approve: ' . $logException->getMessage());
+            }
+
+            $msg = 'Dokumen berhasil disetujui dan masuk ke daftar dokumen resmi.';
+            if ($isAjax) {
+                return response()->json(['success' => true, 'message' => $msg]);
+            }
+            return redirect()->route('inbox.index')->with('success', $msg);
 
         } catch (\Exception $e) {
             Log::error('Error approving document from inbox: ' . $e->getMessage(), [
@@ -228,23 +399,39 @@ class InboxController extends Controller
                 'user_role' => $userRole ?? 'unknown',
                 'trace' => $e->getTraceAsString()
             ]);
-            return redirect()->route('inbox.index')
-                ->with('error', 'Gagal menyetujui dokumen: ' . $e->getMessage());
+            $msg = 'Gagal menyetujui dokumen: ' . $e->getMessage();
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => $msg], 500);
+            }
+            return redirect()->route('inbox.index')->with('error', $msg);
         }
     }
 
     /**
      * Reject dokumen dari inbox
      * Updated to use new dokumen_statuses table
+     * Supports AJAX (returns JSON) and regular form POST (redirect)
      */
     public function reject(Request $request, Dokumen $dokumen)
     {
-        $request->validate([
-            'reason' => 'required|string|max:500'
-        ], [
-            'reason.required' => 'Alasan penolakan harus diisi',
-            'reason.max' => 'Alasan penolakan maksimal 500 karakter'
-        ]);
+        $isAjax = $request->ajax() || $request->wantsJson();
+
+        try {
+            $request->validate([
+                'reason' => 'required|string|max:500'
+            ], [
+                'reason.required' => 'Alasan penolakan harus diisi',
+                'reason.max' => 'Alasan penolakan maksimal 500 karakter'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'Alasan penolakan harus diisi', 'errors' => $e->errors()], 422);
+            }
+            // Redirect back to show page with validation errors
+            return redirect()->route('inbox.show', $dokumen)
+                ->withErrors($e->errors())
+                ->withInput();
+        }
 
         try {
             $user = auth()->user();
@@ -260,22 +447,90 @@ class InboxController extends Controller
                 // Cek apakah dokumen sudah di-process
                 $status = $dokumen->getStatusForRole($roleCode);
                 if ($status && $status->status === DokumenStatus::STATUS_APPROVED) {
+                    $msg = 'Dokumen ini sudah disetujui sebelumnya dan tidak dapat ditolak.';
+                    if ($isAjax) {
+                        return response()->json(['success' => true, 'message' => $msg, 'type' => 'info']);
+                    }
                     return redirect()->route('inbox.index')
-                        ->with('info', 'Dokumen ini sudah disetujui sebelumnya dan tidak dapat ditolak.');
+                        ->with('info', $msg);
                 } elseif ($status && $status->status === DokumenStatus::STATUS_REJECTED) {
+                    $msg = 'Dokumen ini sudah ditolak sebelumnya.';
+                    if ($isAjax) {
+                        return response()->json(['success' => true, 'message' => $msg, 'type' => 'info']);
+                    }
                     return redirect()->route('inbox.index')
-                        ->with('info', 'Dokumen ini sudah ditolak sebelumnya.');
+                        ->with('info', $msg);
                 }
-                
+
+                $msg = 'Dokumen ini sudah diproses atau tidak tersedia untuk penolakan.';
+                if ($isAjax) {
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+                }
                 return redirect()->route('inbox.index')
-                    ->with('error', 'Dokumen ini sudah diproses atau tidak tersedia untuk penolakan.');
+                    ->with('error', $msg);
             }
 
             // Use new rejection method
             $dokumen->rejectFromRoleInbox($roleCode, $request->reason);
 
+            // Update current_handler and status based on rejection
+            // Tentukan ke mana dokumen harus dikembalikan berdasarkan alur workflow
+            // Alur: Ibu Tarapul -> Verifikasi -> Perpajakan -> Akutansi -> Pembayaran
+
+            if ($roleCode === 'team_verifikasi') {
+                // Team Verifikasi menolak dari inbox -> dikembalikan ke Operator
+                $dokumen->current_handler = 'operator';
+                $dokumen->status = 'returned_to_operator';
+                $dokumen->return_source = 'team_verifikasi';
+                $dokumen->return_reason = $request->reason;
+                $dokumen->returned_at = now();
+                $dokumen->save();
+            } elseif ($roleCode === 'perpajakan') {
+                // Perpajakan menolak -> kembali ke Verifikasi
+                $dokumen->current_handler = 'team_verifikasi';
+                $dokumen->status = 'returned_to_department';
+                $dokumen->return_source = 'perpajakan';
+                $dokumen->return_reason = $request->reason;
+                $dokumen->returned_at = now();
+                $dokumen->save();
+            } elseif ($roleCode === 'akutansi') {
+                // Akutansi menolak -> kembali ke Perpajakan (pengirim sebelumnya)
+                $dokumen->current_handler = 'perpajakan';
+                $dokumen->status = 'returned_to_department';
+                $dokumen->return_source = 'akutansi';
+                $dokumen->return_reason = $request->reason;
+                $dokumen->returned_at = now();
+                $dokumen->save();
+            }
+            // Pembayaran -> Akutansi
+            elseif ($roleCode === 'pembayaran') {
+                $dokumen->current_handler = 'akutansi';
+                $dokumen->status = 'returned_to_department';
+                $dokumen->return_source = 'akutansi';
+                $dokumen->return_reason = $request->reason;
+                $dokumen->returned_at = now();
+                $dokumen->save();
+            }
+
+            $msg = 'Dokumen ditolak dan dikembalikan ke pengirim dengan alasan: ' . $request->reason;
+
+            // Log activity: dokumen di-reject dari inbox
+            try {
+                \App\Helpers\ActivityLogHelper::logStatusChanged(
+                    $dokumen,
+                    'pending',
+                    'rejected',
+                    $roleCode
+                );
+            } catch (\Exception $logException) {
+                \Log::error('Failed to log activity for inbox reject: ' . $logException->getMessage());
+            }
+
+            if ($isAjax) {
+                return response()->json(['success' => true, 'message' => $msg]);
+            }
             return redirect()->route('inbox.index')
-                ->with('success', 'Dokumen ditolak dan dikembalikan ke pengirim dengan alasan: ' . $request->reason);
+                ->with('success', $msg);
 
         } catch (\Exception $e) {
             Log::error('Error rejecting document from inbox: ' . $e->getMessage(), [
@@ -285,12 +540,15 @@ class InboxController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Show detailed error in development, generic message in production
-            $errorMessage = config('app.debug') 
+            $errorMessage = config('app.debug')
                 ? 'Gagal menolak dokumen: ' . $e->getMessage() . ' (File: ' . basename($e->getFile()) . ', Line: ' . $e->getLine() . ')'
                 : 'Gagal menolak dokumen. Silakan cek log untuk detail.';
-            
+
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => $errorMessage], 500);
+            }
             return redirect()->route('inbox.index')
                 ->with('error', $errorMessage);
         }
@@ -309,14 +567,28 @@ class InboxController extends Controller
         // Prioritize role field over name field
         if (isset($user->role)) {
             $role = $user->role;
-            // Map role ke format yang sesuai untuk inbox (must match enum: IbuB, Perpajakan, Akutansi)
+            // Map role ke format yang sesuai untuk inbox (must match enum: Operator, Team Verifikasi/Verifikasi, Perpajakan, Akutansi)
             $roleMap = [
-                'ibuB' => 'IbuB',
-                'IbuB' => 'IbuB',
-                'Ibu B' => 'IbuB',
-                'ibu B' => 'IbuB',
-                'Ibu Yuni' => 'IbuB',
-                'ibu yuni' => 'IbuB',
+                // Operator / Ibu Tarapul mappings
+                'operator' => 'operator',
+                'operator' => 'operator',
+                'Operator' => 'operator',
+                'Operator' => 'operator',
+                'Operator' => 'operator',
+                'Operator' => 'operator',
+                'operator' => 'operator',
+                'operator' => 'operator',
+                // Team Verifikasi / Verifikasi mappings
+                'team_verifikasi' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
+                'Ibu B' => 'team_verifikasi',
+                'ibu B' => 'team_verifikasi',
+                'Ibu Yuni' => 'team_verifikasi',
+                'ibu yuni' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
+                'Team Verifikasi' => 'team_verifikasi',
+                'team verifikasi' => 'team_verifikasi',
                 'perpajakan' => 'Perpajakan',
                 'Perpajakan' => 'Perpajakan',
                 'akutansi' => 'Akutansi',
@@ -339,16 +611,17 @@ class InboxController extends Controller
         if (isset($user->name)) {
             $name = $user->name;
             $nameToRole = [
-                'Ibu A' => 'ibuA',
-                'IbuA' => 'ibuA',
-                'ibuA' => 'ibuA',
-                'Ibu Tarapul' => 'ibuA',
-                'IbuB' => 'IbuB',
-                'Ibu B' => 'IbuB',
-                'ibuB' => 'IbuB',
-                'ibu B' => 'IbuB',
-                'Ibu Yuni' => 'IbuB',
-                'ibu yuni' => 'IbuB',
+                'Operator' => 'operator',
+                'operator' => 'operator',
+                'operator' => 'operator',
+                'Operator' => 'operator',
+                'Operator' => 'operator',
+                'team_verifikasi' => 'team_verifikasi',
+                'Ibu B' => 'team_verifikasi',
+                'team_verifikasi' => 'team_verifikasi',
+                'ibu B' => 'team_verifikasi',
+                'Ibu Yuni' => 'team_verifikasi',
+                'ibu yuni' => 'team_verifikasi',
                 'Perpajakan' => 'Perpajakan',
                 'perpajakan' => 'Perpajakan',
                 'Akutansi' => 'Akutansi',
@@ -374,6 +647,27 @@ class InboxController extends Controller
     }
 
     /**
+     * Get role codes for database query
+     * For Verifikasi, also include 'team_verifikasi' for backward compatibility
+     */
+    private function getRoleCodes($userRole)
+    {
+        $roleCode = strtolower($userRole);
+
+        // Operator should also match 'operator' for backward compatibility
+        if ($roleCode === 'operator' || $roleCode === 'operator') {
+            return ['operator', 'operator'];
+        }
+
+        // Verifikasi should also match 'team_verifikasi' for backward compatibility
+        if ($roleCode === 'team_verifikasi' || $roleCode === 'team_verifikasi') {
+            return ['team_verifikasi', 'team_verifikasi'];
+        }
+
+        return [$roleCode];
+    }
+
+    /**
      * API endpoint untuk check dokumen baru di inbox
      */
     public function checkNewDocuments(Request $request)
@@ -387,10 +681,10 @@ class InboxController extends Controller
                 'user_id' => $user->id ?? null,
                 'user_role_raw' => $user->role ?? null,
                 'user_role_mapped' => $userRole,
-                'allowed_roles' => ['IbuB', 'Perpajakan', 'Akutansi']
+                'allowed_roles' => ['team_verifikasi', 'team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran']
             ]);
 
-            if (!$userRole || !in_array($userRole, ['IbuB', 'Perpajakan', 'Akutansi', 'Pembayaran'])) {
+            if (!$userRole || !in_array($userRole, ['team_verifikasi', 'team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'])) {
                 Log::warning('Unauthorized access to checkNewDocuments', [
                     'user_role' => $userRole,
                     'user_role_raw' => $user->role ?? null
@@ -408,15 +702,16 @@ class InboxController extends Controller
             // Cari dokumen baru yang masuk setelah last check
             // Use DokumenStatus to find new pending documents
             // Exclude documents imported from CSV to prevent notification spam
-            $newDocuments = Dokumen::when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function($query) {
-                    // Exclude CSV imported documents (only if column exists)
-                    $query->where(function($q) {
-                        $q->where('imported_from_csv', false)
-                          ->orWhereNull('imported_from_csv');
-                    });
-                })
-                ->whereHas('roleStatuses', function ($query) use ($userRole, $checkFrom) {
-                    $query->where('role_code', strtolower($userRole))
+            $roleCodes = $this->getRoleCodes($userRole);
+            $newDocuments = Dokumen::when(\Schema::hasColumn('dokumens', 'imported_from_csv'), function ($query) {
+                // Exclude CSV imported documents (only if column exists)
+                $query->where(function ($q) {
+                    $q->where('imported_from_csv', false)
+                        ->orWhereNull('imported_from_csv');
+                });
+            })
+                ->whereHas('roleStatuses', function ($query) use ($roleCodes, $checkFrom) {
+                    $query->whereIn('role_code', $roleCodes)
                         ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
                         ->where('status_changed_at', '>', $checkFrom);
                 })
@@ -425,14 +720,14 @@ class InboxController extends Controller
                 ->map(function ($doc) use ($userRole) {
                     // Get the status record for date info
                     $status = $doc->getStatusForRole($userRole);
-                    $doc->inbox_approval_sent_at = $status->status_changed_at;
+                    $doc->inbox_approval_sent_at = $status->status_changed_at ?? now();
                     return $doc;
                 })
                 ->sortByDesc('inbox_approval_sent_at')
                 ->values();
 
             // Hitung total pending
-            $pendingCount = \App\Models\DokumenStatus::where('role_code', strtolower($userRole))
+            $pendingCount = \App\Models\DokumenStatus::whereIn('role_code', $roleCodes)
                 ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
                 ->count();
 
@@ -488,14 +783,14 @@ class InboxController extends Controller
             }
 
             $activityType = $request->input('activity_type', DocumentActivity::TYPE_VIEWING);
-            
+
             Log::info('Activity tracking request', [
                 'dokumen_id' => $dokumenId,
                 'user_id' => $user->id,
                 'user_name' => $user->name,
                 'activity_type' => $activityType
             ]);
-            
+
             // Validate activity type
             if (!in_array($activityType, [DocumentActivity::TYPE_VIEWING, DocumentActivity::TYPE_EDITING])) {
                 return response()->json([
@@ -535,7 +830,7 @@ class InboxController extends Controller
                     $activityType,
                     now()->toIso8601String()
                 ))->toOthers();
-                
+
                 Log::info('Activity broadcasted successfully', [
                     'dokumen_id' => $dokumenId,
                     'user_id' => $user->id,
@@ -578,12 +873,12 @@ class InboxController extends Controller
                 'dokumen_id' => $dokumenId,
                 'current_user_id' => $currentUserId
             ]);
-            
+
             // Get all activities (not just active) to see what's in database
             $allActivities = DocumentActivity::with('user')
                 ->where('dokumen_id', $dokumenId)
                 ->get();
-            
+
             Log::info('All activities in database', [
                 'dokumen_id' => $dokumenId,
                 'total_count' => $allActivities->count(),
@@ -596,7 +891,7 @@ class InboxController extends Controller
                     'is_active' => $a->last_activity_at->gte(now()->subMinutes(5))
                 ])->toArray()
             ]);
-            
+
             // Get only active activities
             $activities = DocumentActivity::with('user')
                 ->where('dokumen_id', $dokumenId)
@@ -686,4 +981,120 @@ class InboxController extends Controller
             return response()->json(['success' => false], 500);
         }
     }
+
+    /**
+     * Bulk approve multiple documents from inbox
+     * Allows roles to approve multiple documents at once for efficiency
+     */
+    public function bulkApprove(Request $request)
+    {
+        $request->validate([
+            'document_ids' => 'required|array|min:1',
+            'document_ids.*' => 'exists:dokumens,id'
+        ]);
+
+        $user = auth()->user();
+        $userRole = $this->getUserRole($user);
+        $roleCode = strtolower($userRole);
+
+        $successCount = 0;
+        $failedCount = 0;
+        $failedDocuments = [];
+        $successDocuments = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($request->document_ids as $docId) {
+                $dokumen = Dokumen::findOrFail($docId);
+
+                // Refresh to prevent race condition
+                $dokumen->refresh();
+                $dokumen->load('roleStatuses');
+
+                // Check if document is pending for this role
+                if (!$dokumen->isPendingForRole($roleCode)) {
+                    // Check if already approved
+                    $status = $dokumen->getStatusForRole($roleCode);
+                    if ($status && $status->status === DokumenStatus::STATUS_APPROVED) {
+                        // Already approved, count as success but note it
+                        $successCount++;
+                        $successDocuments[] = [
+                            'nomor_agenda' => $dokumen->nomor_agenda,
+                            'note' => 'Sudah disetujui sebelumnya'
+                        ];
+                        continue;
+                    }
+
+                    $failedCount++;
+                    $failedDocuments[] = [
+                        'nomor_agenda' => $dokumen->nomor_agenda,
+                        'reason' => 'Dokumen tidak pending untuk role ini'
+                    ];
+                    continue;
+                }
+
+                // Approve document using existing method
+                // This will also update sender's display_status to "terkirim"
+                $dokumen->approveFromRoleInbox($roleCode);
+
+                // Log activity: dokumen di-approve dari bulk approve
+                try {
+                    \App\Helpers\ActivityLogHelper::logStatusChanged(
+                        $dokumen,
+                        'pending',
+                        'approved',
+                        $roleCode
+                    );
+                } catch (\Exception $logException) {
+                    \Log::error('Failed to log activity for bulk approve: ' . $logException->getMessage());
+                }
+
+                $successCount++;
+                $successDocuments[] = [
+                    'nomor_agenda' => $dokumen->nomor_agenda,
+                    'note' => 'Berhasil disetujui'
+                ];
+            }
+
+            DB::commit();
+
+            Log::info('Bulk approve completed', [
+                'user_role' => $userRole,
+                'success_count' => $successCount,
+                'failed_count' => $failedCount,
+                'success_documents' => array_column($successDocuments, 'nomor_agenda'),
+                'failed_documents' => $failedDocuments
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Berhasil menyetujui {$successCount} dokumen." .
+                    ($failedCount > 0 ? " {$failedCount} dokumen gagal." : ''),
+                'details' => [
+                    'success_count' => $successCount,
+                    'failed_count' => $failedCount,
+                    'success_documents' => $successDocuments,
+                    'failed_documents' => $failedDocuments
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error in bulk approve: ' . $e->getMessage(), [
+                'user_role' => $userRole ?? 'unknown',
+                'document_ids' => $request->document_ids,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memproses bulk approve: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
+
+
+
+
+
+

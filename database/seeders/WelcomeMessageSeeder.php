@@ -16,13 +16,13 @@ final class WelcomeMessageSeeder extends Seeder
     {
         $messages = [
             [
-                'module' => 'IbuA',
+                'module' => 'operator',
                 'message' => 'Selamat datang, Ibu Tarapul',
                 'type' => WelcomeMessage::TYPE_PERSONAL,
                 'is_active' => true,
             ],
             [
-                'module' => 'ibuB',
+                'module' => 'team_verifikasi',
                 'message' => 'Selamat datang, Team Verifikasi',
                 'type' => WelcomeMessage::TYPE_TEAM,
                 'is_active' => true,
@@ -66,3 +66,4 @@ final class WelcomeMessageSeeder extends Seeder
         $this->command->info('✅ Welcome messages seeded successfully!');
     }
 }
+

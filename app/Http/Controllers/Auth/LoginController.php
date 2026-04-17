@@ -33,6 +33,27 @@ final class LoginController extends Controller
             /** @var \App\Models\User $user */
             $user = Auth::user();
 
+            // Check if user has 2FA enabled
+            if ($user->hasTwoFactorEnabled()) {
+                // Store user ID in session (don't login yet)
+                session(['2fa_user_id' => $user->id]);
+                session(['2fa_remember' => $request->boolean('remember')]);
+                
+                // Logout user (will login after 2FA verification)
+                Auth::logout();
+                $request->session()->regenerate();
+
+                Log::info('User requires 2FA verification', [
+                    'user_id' => $user->id,
+                    'username' => $user->username,
+                    'ip_address' => $request->ip(),
+                ]);
+
+                // Redirect to 2FA verification page
+                return redirect()->route('2fa.verify')
+                    ->with('info', 'Masukkan kode 6 digit dari aplikasi authenticator Anda.');
+            }
+
             Log::info('User logged in successfully', [
                 'user_id' => $user->id,
                 'username' => $user->username,
@@ -41,9 +62,7 @@ final class LoginController extends Controller
             ]);
 
             // Redirect to role-specific dashboard
-            return redirect()
-                ->intended($user->getDashboardRoute())
-                ->with('success', 'Selamat datang, ' . $user->name . '!');
+            return redirect()->intended($user->getDashboardRoute());
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Login attempt failed', [
@@ -117,3 +136,8 @@ final class LoginController extends Controller
         return redirect($user->getDashboardRoute());
     }
 }
+
+
+
+
+
