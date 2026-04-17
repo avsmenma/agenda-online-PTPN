@@ -62,14 +62,16 @@ class ProcessAutoForwardQueue extends Command
 
         // === SUMBER 2: Polling Fallback ===
         // Cari dokumen yang statusnya sudah_dibayar tapi belum di-auto-forward
-        // dan belum ada di queue (trigger mungkin gagal / tidak terpasang)
+        // dan belum ada di queue (trigger mungkin gagal / tidak terpasang).
+        // PENTING: Exclude juga dokumen yang sudah tercatat 'failed' di queue
+        // agar tidak terus diulang setiap menit dan membanjiri log.
         $fallbackIds = Dokumen::where('status_pembayaran', 'sudah_dibayar')
             ->whereNull('auto_forwarded_at')
             ->where('current_handler', '!=', 'pembayaran')
             ->whereNotIn('id', function ($query) {
                 $query->select('dokumen_id')
                       ->from('dokumen_auto_forward_queue')
-                      ->whereIn('status', ['pending', 'processing', 'done']);
+                      ->whereIn('status', ['pending', 'processing', 'done', 'failed']);
             })
             ->pluck('id');
 
