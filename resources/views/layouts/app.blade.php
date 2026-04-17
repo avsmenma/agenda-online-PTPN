@@ -3920,10 +3920,11 @@
     $isSubmenuPageForHeader = false;
 
     // Check if owner is on rekapan keterlambatan page (includes analytics - merged)
-    $isOwnerRekapanKeterlambatan = $isOwner && (request()->is('*rekapan-keterlambatan*') ||
-      request()->routeIs('owner.rekapan-keterlambatan*') ||
-      request()->is('*owner/analytics*') ||
-      request()->routeIs('analytics.index'));
+    // Only show secondary sidebar header offset for per-role sub-pages
+    $isOwnerRekapanKeterlambatan = $isOwner && (
+      request()->routeIs('owner.rekapan-keterlambatan.role') ||
+      (request()->is('*rekapan-keterlambatan/*') && request()->route('roleCode'))
+    );
 
     if ($isOwnerRekapanKeterlambatan) {
       $isSubmenuPageForHeader = true;
@@ -4506,12 +4507,10 @@
   <!-- Secondary Sidebar (Submenu Panel) - Mekari Style -->
   @if($isOwner)
     @php
-      // Check if owner is on rekapan keterlambatan / analisis kerja page (merged)
-      $isRekapanKeterlambatanPage = request()->is('*rekapan-keterlambatan*') ||
-        request()->routeIs('owner.rekapan-keterlambatan*') ||
-        request()->is('*owner/analytics*') ||
-        request()->routeIs('analytics.index');
-      $shouldShowSecondarySidebarOwner = $isRekapanKeterlambatanPage;
+      // Secondary sidebar only shows on per-role sub-pages (with roleCode), NOT on main unified page
+      $isRekapanByRolePage = request()->routeIs('owner.rekapan-keterlambatan.role') ||
+        (request()->is('*rekapan-keterlambatan/*') && request()->route('roleCode'));
+      $shouldShowSecondarySidebarOwner = $isRekapanByRolePage;
     @endphp
     <div class="secondary-sidebar {{ $shouldShowSecondarySidebarOwner ? 'active' : '' }}"
       id="sidebar-rekapan-keterlambatan" role="complementary" aria-label="Submenu Panel">

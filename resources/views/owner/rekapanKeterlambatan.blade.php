@@ -418,14 +418,36 @@ const donutDatas = [
   [{{ $ts['aman'] }},{{ $ts['warn'] }},{{ $ts['late'] }}],
   @endforeach
 ];
+const donutScores = [
+  {{ $keseluruhan['score'] }},
+  @foreach($teamScores as $ts)
+  {{ $ts['score'] }},
+  @endforeach
+];
 donutDatas.forEach((d,i)=>{
   const ctx = document.getElementById('donut'+i)?.getContext('2d');
   if(!ctx) return;
+  const total = d.reduce((a,b)=>a+b,0);
+  // If all data is zero, show a grey placeholder arc with score 100
+  const isBlank = total === 0;
   new Chart(ctx,{
     type:'doughnut',
-    data:{labels:['Tepat Waktu','Peringatan','Terlambat'],
-      datasets:[{data:d,backgroundColor:['#16a34a','#d97706','#dc2626'],borderWidth:0,hoverOffset:4}]},
-    options:{cutout:'72%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw} dokumen`}}}}
+    data:{
+      labels:isBlank ? ['Tidak ada data'] : ['Tepat Waktu','Peringatan','Terlambat'],
+      datasets:[{
+        data: isBlank ? [1] : d,
+        backgroundColor: isBlank ? ['#e2e8f0'] : ['#16a34a','#d97706','#dc2626'],
+        borderWidth:0,
+        hoverOffset:4
+      }]
+    },
+    options:{
+      cutout:'72%',
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=> isBlank ? ' Belum ada dokumen' : ` ${c.raw} dokumen`}}
+      }
+    }
   });
 });
 
