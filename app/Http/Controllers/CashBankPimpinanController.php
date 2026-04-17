@@ -45,7 +45,10 @@ final class CashBankPimpinanController extends Controller
             9=>'September', 10=>'Oktober', 11=>'November', 12=>'Desember',
         ];
 
+        $module = 'owner'; // Diperlukan agar body.owner-layout class aktif → margin-left: 240px
+
         return view('owner.cashbank.index', compact(
+            'module',
             'ringkasan',
             'saldoRekening',
             'saldoVA',

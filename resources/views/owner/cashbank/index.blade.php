@@ -12,9 +12,22 @@
   --yellow:#d97706;--yellow-bg:#fffbeb;--red:#dc2626;--red-bg:#fef2f2;
   --r:12px;--sh:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.05);
 }
+
+/* Pastikan sidebar owner tidak menimpa konten
+   body.owner-layout sudah set margin-left:240px via layouts/app.blade.php
+   Tambahan ini sebagai fallback jika module belum terpas  */
+body.owner-layout .content,
+body .content {
+  /* sudah dihandle layout; tidak perlu override di sini */
+}
+
 .cb-wrap{
-  font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);
-  padding:24px 28px;min-height:100vh;font-size:13.5px;color:var(--primary);
+  font-family:'Plus Jakarta Sans',sans-serif;
+  background:var(--bg);
+  /* Hapus padding — layout .content sudah punya padding:20px */
+  min-height:calc(100vh - 60px);
+  font-size:13.5px;
+  color:var(--primary);
 }
 
 /* ── HEADER ── */
