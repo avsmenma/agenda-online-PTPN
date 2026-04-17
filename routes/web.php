@@ -260,8 +260,8 @@ Route::get('owner/rekapan-keterlambatan-export/{roleCode}', [OwnerDashboardContr
     ->where('roleCode', 'team_verifikasi|perpajakan|akutansi|pembayaran')
     ->name('owner.rekapan-keterlambatan.export');
 
-// Analytics Dashboard - Performance analysis for all roles
-Route::get('owner/analytics', [\App\Http\Controllers\AnalyticsController::class, 'index'])
+// Analytics Dashboard - merged with Rekapan Keterlambatan (redirect for backward compat)
+Route::get('owner/analytics', fn() => redirect()->route('owner.rekapan-keterlambatan'))
     ->middleware('auth', 'role:admin,owner')
     ->name('analytics.index');
 Route::get('owner/analytics/data', [\App\Http\Controllers\AnalyticsController::class, 'getAnalyticsData'])

@@ -3919,9 +3919,11 @@
     $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
     $isSubmenuPageForHeader = false;
 
-    // Check if owner is on rekapan keterlambatan page
+    // Check if owner is on rekapan keterlambatan page (includes analytics - merged)
     $isOwnerRekapanKeterlambatan = $isOwner && (request()->is('*rekapan-keterlambatan*') ||
-      request()->routeIs('owner.rekapan-keterlambatan*'));
+      request()->routeIs('owner.rekapan-keterlambatan*') ||
+      request()->is('*owner/analytics*') ||
+      request()->routeIs('analytics.index'));
 
     if ($isOwnerRekapanKeterlambatan) {
       $isSubmenuPageForHeader = true;
@@ -4254,14 +4256,16 @@
         </a>
         @php
           $isRekapanKeterlambatanActive = request()->is('*rekapan-keterlambatan*') ||
-            request()->routeIs('owner.rekapan-keterlambatan*');
+            request()->routeIs('owner.rekapan-keterlambatan*') ||
+            request()->is('*owner/analytics*') ||
+            request()->routeIs('analytics.index');
         @endphp
         <a href="{{ url('/owner/rekapan-keterlambatan') }}"
           class="owner-nav-item {{ $menuRekapanKeterlambatan ?? '' }} {{ $isRekapanKeterlambatanActive ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
           </svg>
-          Rekapan Keterlambatan
+          Rekapan &amp; Analisis Kerja
         </a>
 
 
@@ -4502,15 +4506,17 @@
   <!-- Secondary Sidebar (Submenu Panel) - Mekari Style -->
   @if($isOwner)
     @php
-      // Check if owner is on rekapan keterlambatan page
+      // Check if owner is on rekapan keterlambatan / analisis kerja page (merged)
       $isRekapanKeterlambatanPage = request()->is('*rekapan-keterlambatan*') ||
-        request()->routeIs('owner.rekapan-keterlambatan*');
+        request()->routeIs('owner.rekapan-keterlambatan*') ||
+        request()->is('*owner/analytics*') ||
+        request()->routeIs('analytics.index');
       $shouldShowSecondarySidebarOwner = $isRekapanKeterlambatanPage;
     @endphp
     <div class="secondary-sidebar {{ $shouldShowSecondarySidebarOwner ? 'active' : '' }}"
       id="sidebar-rekapan-keterlambatan" role="complementary" aria-label="Submenu Panel">
       <div class="secondary-sidebar-header">
-        MENU REKAPAN KETERLAMBATAN
+        REKAPAN &amp; ANALISIS KERJA
       </div>
       <div class="secondary-sidebar-content">
         @php
