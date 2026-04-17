@@ -1,694 +1,643 @@
 @extends('layouts/app')
 @section('content')
 
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <style>
-  /* Color Variables - Always use Perpajakan Green Theme */
-  :root {
-    --primary-color: #1a4d3e;
-    --primary-dark: #0f3d2e;
-    --secondary-color: #40916c;
-    --primary-rgba: rgba(26, 77, 62, 0.1);
-    --primary-rgba-dark: rgba(26, 77, 62, 0.2);
-    --primary-border: rgba(26, 77, 62, 0.08);
-    --primary-border-hover: rgba(26, 77, 62, 0.15);
-  }
+/* ── CSS Variables ── */
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --bg:#f5f6fa;
+  --card:#fff;
+  --border:#e9ecf3;
+  --primary:#1a2340;
+  --muted:#8492a6;
+  --accent:#2563eb;
+  --green:#16a34a;
+  --green-bg:#f0fdf4;
+  --yellow:#d97706;
+  --yellow-bg:#fffbeb;
+  --red:#dc2626;
+  --red-bg:#fef2f2;
+  --teal:#0d9488;
+  --teal-bg:#f0fdfa;
+  --r:12px;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.05);
+}
 
-  h2 {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 30px;
-    font-weight: 700;
-    font-size: 28px;
-  }
+/* ── CONTENT ── */
+.rk-wrap{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  background:var(--bg);
+  padding:24px 28px;
+  min-height:100vh;
+  font-size:13.5px;
+  color:var(--primary);
+}
 
-  /* Summary Cards per Team */
-  .team-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-  }
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.filter-pill{display:flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:12px;color:var(--muted);font-weight:500;cursor:pointer;transition:.15s;white-space:nowrap}
+.filter-pill:hover{border-color:var(--accent);color:var(--accent)}
+.filter-pill svg{width:13px;height:13px;flex-shrink:0}
+.filter-pill select{border:none;background:transparent;outline:none;font-size:12px;font-family:inherit;color:var(--primary);cursor:pointer;max-width:130px}
+.filter-spacer{flex:1}
+.export-btn{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s;border:none}
+.btn-excel{background:#16a34a;color:#fff}.btn-excel:hover{background:#15803d}
+.btn-pdf{background:#dc2626;color:#fff}.btn-pdf:hover{background:#b91c1c}
+.btn-icon{width:13px;height:13px;margin-right:2px}
 
-  .team-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05);
-    border: 1px solid var(--primary-border);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-  }
+/* ── CARDS ROW ── */
+.cards-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px}
+@media(max-width:1280px){.cards-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:768px){.cards-row{grid-template-columns:1fr 1fr}}
 
-  .team-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-  }
+/* ── SCORE CARD ── */
+.score-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh);transition:transform .2s,box-shadow .2s;cursor:default;animation:fadeUp .4s ease both}
+.score-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.09)}
+.score-card:nth-child(1){animation-delay:.05s}.score-card:nth-child(2){animation-delay:.1s}
+.score-card:nth-child(3){animation-delay:.15s}.score-card:nth-child(4){animation-delay:.2s}
+.score-card:nth-child(5){animation-delay:.25s}
+.sc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sc-title{font-size:11.5px;font-weight:700;color:var(--primary)}
+.sc-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px}
+.badge-recap{background:#eff4ff;color:#2563eb}
+.badge-verif{background:#f0fdf4;color:#16a34a}
+.badge-pajak{background:#fdf4ff;color:#9333ea}
+.badge-akun{background:#fffbeb;color:#d97706}
+.badge-bayar{background:#f0fdfa;color:#0d9488}
 
-  .team-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 40px var(--primary-rgba-dark), 0 4px 16px rgba(64, 145, 108, 0.1);
-    border-color: var(--primary-border-hover);
-  }
+.sc-donut{position:relative;width:100px;height:100px;margin:0 auto 14px}
+.sc-donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.sc-score-val{font-family:'Sora',sans-serif;font-size:19px;font-weight:700;color:var(--primary);line-height:1}
+.sc-score-lbl{font-size:9.5px;color:var(--muted);margin-top:2px}
 
-  .team-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-  }
+.sc-stats{display:flex;flex-direction:column;gap:7px}
+.sc-stat-row{display:flex;align-items:center;justify-content:space-between}
+.sc-stat-left{display:flex;align-items:center;gap:6px}
+.sc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sc-stat-name{font-size:11px;color:var(--muted)}
+.sc-stat-val{font-size:11.5px;font-weight:700;color:var(--primary)}
 
-  .team-card-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--primary-color);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+/* ── SECTION TOOLBAR ── */
+.section-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.view-toggle{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:3px}
+.vt-btn{display:flex;align-items:center;gap:5px;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:.15s;border:none;background:transparent}
+.vt-btn.active{background:#fff;color:var(--primary);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.vt-btn svg{width:14px;height:14px}
 
-  .team-card-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    color: white;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-  }
+/* ── TABLE WRAPPER ── */
+.table-wrapper{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.status-tabs{display:flex;gap:0;border-bottom:1px solid var(--border)}
+.stab{padding:10px 18px;font-size:12.5px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;display:flex;align-items:center;gap:6px}
+.stab:hover{color:var(--primary)}
+.stab.active{color:var(--accent);border-color:var(--accent);font-weight:600}
+.stab-count{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px}
+.count-green{background:var(--green-bg);color:var(--green)}
+.count-yellow{background:var(--yellow-bg);color:var(--yellow)}
+.count-red{background:var(--red-bg);color:var(--red)}
 
-  .team-card-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
+.table-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.table-search{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;color:var(--muted);width:200px}
+.table-search svg{width:12px;height:12px;flex-shrink:0}
+.table-search input{border:none;background:transparent;outline:none;font-size:12px;color:var(--primary);font-family:inherit;width:100%}
+.tbl-actions{display:flex;gap:6px;align-items:center}
+.tbl-btn{display:flex;align-items:center;gap:4px;padding:5px 11px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:11.5px;color:var(--muted);font-weight:500;cursor:pointer}
+.tbl-btn svg{width:12px;height:12px}
+.rows-ctrl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.rows-ctrl select{border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:inherit;color:var(--primary);background:#fff;outline:none;cursor:pointer}
 
-  .team-stat-item {
-    text-align: center;
-  }
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse}
+thead th{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:11px 12px;text-align:left;background:#fafbfd;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+thead th:hover{color:var(--primary)}
+thead th.sort-asc::after{content:' ↑'}
+thead th.sort-desc::after{content:' ↓'}
+tbody tr{transition:background .1s;border-bottom:1px solid var(--border)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#fafbfd}
+tbody td{padding:10px 12px;font-size:12px;vertical-align:middle}
+.cb{width:14px;height:14px;accent-color:var(--accent);cursor:pointer}
 
-  .team-stat-value {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 4px;
-    line-height: 1;
-  }
+/* No. Dokumen cell */
+.doc-no{font-weight:700;color:var(--primary);font-size:11.5px;line-height:1.2}
+.doc-title{font-size:11px;color:var(--muted);margin-top:2px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help}
 
-  .team-stat-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #6c757d;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+/* Bagian tag */
+.bagian-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700}
 
-  /* Tab Navigation */
-  .tab-navigation {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    padding: 8px;
-    border-radius: 16px;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05);
-    border: 1px solid var(--primary-border);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
+/* Vendor */
+.vendor-cell{font-size:11.5px;color:var(--primary);max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  .tab-button {
-    padding: 12px 24px;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--primary-color);
-    background: transparent;
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    display: inline-block;
-  }
+/* Tim */
+.team-name{font-size:11.5px;color:var(--primary);font-weight:500}
 
-  .tab-button:hover {
-    background: var(--primary-rgba);
-    color: var(--primary-color);
-  }
+/* Amount */
+.amount{font-weight:600;font-size:11.5px;text-align:right;white-space:nowrap}
 
-  .tab-button.active {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
-    border-color: var(--primary-color);
-  }
+/* Date */
+.date-cell{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.date-cell.highlight{color:var(--primary);font-weight:500}
 
-  /* Chart Section */
-  .chart-section {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    padding: 30px;
-    border-radius: 16px;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05);
-    border: 1px solid var(--primary-border);
-  }
+/* Status pills */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.pill-green{background:var(--green-bg);color:var(--green)}
+.pill-yellow{background:var(--yellow-bg);color:var(--yellow)}
+.pill-red{background:var(--red-bg);color:var(--red)}
+.pill::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block}
 
-  .chart-header {
-    margin-bottom: 24px;
-  }
+/* Hari badge */
+.hari-badge{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap}
+.hari-ok{background:var(--green-bg);color:var(--green)}
+.hari-warn{background:var(--yellow-bg);color:var(--yellow)}
+.hari-late{background:var(--red-bg);color:var(--red)}
 
-  .chart-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 8px;
-  }
+/* Action btn */
+.action-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);transition:.15s;text-decoration:none}
+.action-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.action-btn svg{width:12px;height:12px}
 
-  .chart-subtitle {
-    font-size: 13px;
-    color: #6c757d;
-  }
+/* ── CARD VIEW ── */
+.card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px}
+@media(max-width:1024px){.card-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.card-grid{grid-template-columns:1fr}}
+.doc-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;box-shadow:var(--sh);transition:transform .2s;border-top:3px solid transparent}
+.doc-card:hover{transform:translateY(-2px)}
+.doc-card.aman-card{border-top-color:var(--green)}
+.doc-card.warn-card{border-top-color:var(--yellow)}
+.doc-card.late-card{border-top-color:var(--red)}
+.dc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.dc-no{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:2px}
+.dc-title{font-size:12.5px;font-weight:600;color:var(--primary);line-height:1.3}
+.dc-meta{display:flex;flex-direction:column;gap:5px;margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
+.dc-row{display:flex;align-items:center;justify-content:space-between}
+.dc-key{font-size:11px;color:var(--muted)}
+.dc-val{font-size:11.5px;font-weight:600;color:var(--primary);text-align:right;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  .chart-container {
-    position: relative;
-    height: 400px;
-  }
+/* ── PAGINATION ── */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);background:#fafbfd}
+.pag-info{font-size:12px;color:var(--muted)}
+.pag-controls{display:flex;gap:4px}
+.pag-btn{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:.15s}
+.pag-btn:hover,.pag-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pag-btn svg{width:12px;height:12px}
 
-  /* Filter Section */
-  .filter-section {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    padding: 30px;
-    border-radius: 16px;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05);
-    border: 1px solid var(--primary-border);
-  }
+/* ── TOAST ── */
+.toast-rk{position:fixed;bottom:24px;right:24px;display:flex;align-items:center;gap:10px;padding:12px 18px;background:#1a2340;color:#fff;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s ease}
+.toast-rk.show{transform:translateY(0);opacity:1}
+.toast-icon-rk{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#16a34a}
+.toast-icon-rk svg{width:11px;height:11px;color:#fff}
 
-  .filter-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-bottom: 20px;
-  }
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
-  .table-container {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px var(--primary-rgba), 0 2px 8px rgba(64, 145, 108, 0.05);
-    border: 1px solid var(--primary-border);
-  }
-
-  .table-responsive {
-    overflow-x: auto;
-    overflow-y: visible;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .table-responsive::-webkit-scrollbar {
-    height: 12px;
-    -webkit-appearance: none;
-  }
-
-  .table-responsive::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    border-radius: 6px;
-    border: 2px solid #ffffff;
-  }
-
-  .table-responsive::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 6px;
-  }
-
-  .table thead {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
-  }
-
-  .table thead th {
-    background: transparent !important;
-    color: white !important;
-    font-weight: 600;
-    font-size: 13px;
-    letter-spacing: 0.5px;
-    padding: 18px 16px;
-    border: none !important;
-    text-transform: uppercase;
-  }
-
-  .table tbody tr {
-    transition: all 0.3s ease;
-    border-left: 3px solid transparent;
-  }
-
-  .table tbody tr.clickable-row {
-    cursor: pointer;
-  }
-
-  .table tbody tr.clickable-row:hover {
-    background: linear-gradient(90deg, var(--primary-rgba) 0%, transparent 100%);
-    border-left: 3px solid var(--secondary-color);
-    transform: scale(1.002);
-  }
-
-  .table tbody tr:hover {
-    background: linear-gradient(90deg, var(--primary-rgba) 0%, transparent 100%);
-    border-left: 3px solid var(--secondary-color);
-    transform: scale(1.002);
-  }
-
-  .badge {
-    padding: 8px 20px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .badge-terlambat {
-    padding: 8px 20px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white !important;
-  }
-
-  .team-badge {
-    display: inline-block;
-    padding: 6px 12px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
-    border: none;
-  }
-
-  .pagination {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 24px;
-  }
-
-  .pagination a, .pagination span {
-    padding: 8px 16px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.3s ease;
-  }
-
-  .pagination .page-link {
-    color: var(--primary-color);
-    background: white;
-    border: 2px solid var(--primary-color);
-  }
-
-  .pagination .page-link:hover {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
-  }
-
-  .pagination .active .page-link {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
-    border-color: var(--primary-color);
-  }
-
-  .form-control, .form-select {
-    border: 2px solid rgba(8, 62, 64, 0.1);
-    border-radius: 8px;
-    padding: 10px 16px;
-    transition: all 0.3s ease;
-  }
-
-  .form-control:focus, .form-select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem var(--primary-rgba);
-  }
-
-  .btn-filter {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 24px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-  }
-
-  .btn-filter:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--primary-rgba-dark);
-  }
+/* ── Empty state ── */
+.empty-state{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty-state svg{width:48px;height:48px;margin:0 auto 12px;display:block;opacity:.3}
+.empty-state p{font-size:13px}
 </style>
 
-<div class="container-fluid">
-  <h2><i class="fa-solid fa-exclamation-triangle"></i> Rekapan Keterlambatan Dokumen</h2>
+<div class="rk-wrap">
 
-  <!-- Summary Cards per Team -->
-  <div class="team-cards">
-    @foreach($teamStats as $teamCode => $stats)
-      <div class="team-card">
-        <div class="team-card-header">
-          <div class="team-card-title">{{ $stats['name'] }}</div>
-          <div class="team-card-icon">
-            <i class="fa-solid fa-users"></i>
-          </div>
-        </div>
-        <div class="team-card-stats">
-          <div class="team-stat-item">
-            <div class="team-stat-value">{{ $stats['total'] }}</div>
-            <div class="team-stat-label">Total Terlambat</div>
-          </div>
-          <div class="team-stat-item">
-            <div class="team-stat-value">{{ $stats['avgDelay'] }}</div>
-            <div class="team-stat-label">Rata-rata Hari</div>
-          </div>
-          <div class="team-stat-item">
-            <div class="team-stat-value">{{ $stats['percentage'] }}%</div>
-            <div class="team-stat-label">% Terlambat</div>
-          </div>
-        </div>
-      </div>
-    @endforeach
-  </div>
-
-  <!-- Tab Navigation -->
-  <div class="tab-navigation">
-    <a href="{{ url('/owner/rekapan-keterlambatan') }}" class="tab-button {{ !$selectedTeam ? 'active' : '' }}">
-      <i class="fa-solid fa-list"></i> Semua
-    </a>
-    @foreach($teams as $teamCode => $teamInfo)
-      <a href="{{ url('/owner/rekapan-keterlambatan?team=' . $teamCode) }}" class="tab-button {{ $selectedTeam == $teamCode ? 'active' : '' }}">
-        {{ $teamInfo['name'] }}
-      </a>
-    @endforeach
-  </div>
-
-  <!-- Chart Section -->
-  <div class="chart-section">
-    <div class="chart-header">
-      <div class="chart-title">Tren Keterlambatan Bulanan per Team</div>
-      <div class="chart-subtitle">Statistik keterlambatan dokumen dalam 12 bulan terakhir</div>
+  {{-- FILTER BAR --}}
+  <div class="filter-bar">
+    {{-- Bulan Filter --}}
+    <div class="filter-pill">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <select id="filterBulan" onchange="applyFilter()">
+        <option value="">Semua Bulan</option>
+        @foreach(['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] as $i => $bln)
+          <option value="{{ $i+1 }}" {{ $filterBulan == ($i+1) ? 'selected' : '' }}>{{ $bln }}</option>
+        @endforeach
+      </select>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:10px;height:10px"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
-    <div class="chart-container">
-      <canvas id="delayChart"></canvas>
+
+    {{-- Bagian Filter --}}
+    <div class="filter-pill">
+      <select id="filterBagian" onchange="applyFilter()">
+        <option value="">Semua Bagian</option>
+        @foreach($bagianList as $b)
+          <option value="{{ $b }}" {{ $filterBagian == $b ? 'selected' : '' }}>{{ $b }}</option>
+        @endforeach
+      </select>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:10px;height:10px"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    {{-- Tahun Filter --}}
+    <div class="filter-pill">
+      <select id="filterTahun" onchange="applyFilter()">
+        @foreach($tahunList as $t)
+          <option value="{{ $t }}" {{ $filterTahun == $t ? 'selected' : '' }}>{{ $t }}</option>
+        @endforeach
+      </select>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:10px;height:10px"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    <div class="filter-spacer"></div>
+
+    <button class="export-btn btn-excel" onclick="exportExcel()">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+      Export Excel
+    </button>
+    <button class="export-btn btn-pdf" onclick="exportPdf()">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      Export PDF
+    </button>
+  </div>
+
+  {{-- SCORE CARDS --}}
+  <div class="cards-row">
+
+    {{-- Keseluruhan --}}
+    <div class="score-card">
+      <div class="sc-header">
+        <div class="sc-title">Rekapan Semua Tim</div>
+        <span class="sc-badge badge-recap">{{ $keseluruhan['label'] }}</span>
+      </div>
+      <div class="sc-donut">
+        <canvas id="donut0"></canvas>
+        <div class="sc-donut-center">
+          <div class="sc-score-val">{{ $keseluruhan['score'] }}</div>
+          <div class="sc-score-lbl">Skor</div>
+        </div>
+      </div>
+      <div class="sc-stats">
+        <div class="sc-stat-row"><div class="sc-stat-left"><div class="sc-dot" style="background:#16a34a"></div><span class="sc-stat-name">Tepat Waktu</span></div><span class="sc-stat-val" style="color:#16a34a">{{ $keseluruhan['aman'] }}</span></div>
+        <div class="sc-stat-row"><div class="sc-stat-left"><div class="sc-dot" style="background:#d97706"></div><span class="sc-stat-name">Peringatan</span></div><span class="sc-stat-val" style="color:#d97706">{{ $keseluruhan['warn'] }}</span></div>
+        <div class="sc-stat-row"><div class="sc-stat-left"><div class="sc-dot" style="background:#dc2626"></div><span class="sc-stat-name">Terlambat</span></div><span class="sc-stat-val" style="color:#dc2626">{{ $keseluruhan['late'] }}</span></div>
+      </div>
+    </div>
+
+    {{-- Per Tim --}}
+    @php $donutIdx = 1; $badgeClasses = ['team_verifikasi'=>'badge-verif','perpajakan'=>'badge-pajak','akutansi'=>'badge-akun','pembayaran'=>'badge-bayar']; @endphp
+    @foreach($teamScores as $code => $ts)
+    <div class="score-card">
+      <div class="sc-header">
+        <div class="sc-title">{{ $ts['label'] }}</div>
+        <span class="sc-badge {{ $badgeClasses[$code] ?? 'badge-recap' }}">{{ $ts['score'] }}</span>
+      </div>
+      <div class="sc-donut">
+        <canvas id="donut{{ $donutIdx }}"></canvas>
+        <div class="sc-donut-center">
+          <div class="sc-score-val">{{ $ts['score'] }}</div>
+          <div class="sc-score-lbl">Skor</div>
+        </div>
+      </div>
+      <div class="sc-stats">
+        <div class="sc-stat-row"><div class="sc-stat-left"><div class="sc-dot" style="background:#16a34a"></div><span class="sc-stat-name">Tepat Waktu</span></div><span class="sc-stat-val" style="color:#16a34a">{{ $ts['aman'] }}</span></div>
+        <div class="sc-stat-row"><div class="sc-stat-left"><div class="sc-dot" style="background:#d97706"></div><span class="sc-stat-name">Peringatan</span></div><span class="sc-stat-val" style="color:#d97706">{{ $ts['warn'] }}</span></div>
+        <div class="sc-stat-row"><div class="sc-stat-left"><div class="sc-dot" style="background:#dc2626"></div><span class="sc-stat-name">Terlambat</span></div><span class="sc-stat-val" style="color:#dc2626">{{ $ts['late'] }}</span></div>
+      </div>
+    </div>
+    @php $donutIdx++; @endphp
+    @endforeach
+
+  </div>
+
+  {{-- SECTION TOOLBAR --}}
+  <div class="section-toolbar">
+    <div class="view-toggle">
+      <button class="vt-btn active" id="btnTable" onclick="switchView('table')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Tabel
+      </button>
+      <button class="vt-btn" id="btnCard" onclick="switchView('card')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Card
+      </button>
     </div>
   </div>
 
-  <!-- Filter Section -->
-  <div class="filter-section">
-    <div class="filter-title"><i class="fa-solid fa-filter"></i> Filter Data</div>
-    <form method="GET" action="{{ url('/owner/rekapan-keterlambatan') }}" class="row g-3">
-      @if($selectedTeam)
-        <input type="hidden" name="team" value="{{ $selectedTeam }}">
-      @endif
-      <div class="col-md-4">
-        <label class="form-label">Cari Dokumen</label>
-        <input type="text" name="search" class="form-control" value="{{ request('search') }}" placeholder="Nomor agenda, SPP, dll">
+  {{-- TABLE WRAPPER --}}
+  <div class="table-wrapper">
+    {{-- STATUS TABS --}}
+    <div class="status-tabs">
+      <div class="stab active" onclick="switchTab(this,'aman')">
+        Tepat Waktu <span class="stab-count count-green" id="cnt-aman">{{ $countAman }}</span>
       </div>
-      <div class="col-md-3">
-        <label class="form-label">Tahun</label>
-        <select name="year" class="form-select">
-          <option value="">Semua Tahun</option>
-          @foreach($availableYears as $year)
-            <option value="{{ $year }}" {{ request('year') == $year ? 'selected' : '' }}>{{ $year }}</option>
-          @endforeach
-        </select>
+      <div class="stab" onclick="switchTab(this,'warn')">
+        Peringatan <span class="stab-count count-yellow" id="cnt-warn">{{ $countWarn }}</span>
       </div>
-      <div class="col-md-3">
-        <label class="form-label">Team</label>
-        <select name="team" class="form-select">
-          <option value="">Semua Team</option>
-          @foreach($teams as $teamCode => $teamInfo)
-            <option value="{{ $teamCode }}" {{ $selectedTeam == $teamCode ? 'selected' : '' }}>{{ $teamInfo['name'] }}</option>
-          @endforeach
-        </select>
+      <div class="stab" onclick="switchTab(this,'late')">
+        Terlambat <span class="stab-count count-red" id="cnt-late">{{ $countLate }}</span>
       </div>
-      <div class="col-md-2">
-        <label class="form-label">&nbsp;</label>
-        <button type="submit" class="btn btn-filter w-100">
-          <i class="fa-solid fa-search"></i> Filter
-        </button>
-      </div>
-    </form>
-  </div>
+    </div>
 
-  <!-- Table Section -->
-  <div class="table-container">
-    <h6 style="font-size: 18px; font-weight: 700; color: var(--primary-color); margin-bottom: 24px;">
-      <span>Daftar Dokumen Terlambat</span>
-    </h6>
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Nomor Agenda</th>
-            <th>Nomor SPP</th>
-            <th>Handler</th>
-            <th>Deadline</th>
-            <th>Keterlambatan</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          @forelse($dokumens as $index => $dokumen)
-            @php
-              $now = \Carbon\Carbon::now();
-              $deadlineDate = $dokumen->delay_deadline_at ?? null;
-              if (!$deadlineDate) {
-                  // Fallback: try to get from dokumen's deadline_at if exists
-                  $deadlineDate = isset($dokumen->deadline_at) ? $dokumen->deadline_at : null;
-              }
-              $deadline = $deadlineDate ? \Carbon\Carbon::parse($deadlineDate) : $now;
-              $delayRoleCode = $dokumen->delay_role_code ?? 'unknown';
-              $teamName = isset($teams[$delayRoleCode]) ? $teams[$delayRoleCode]['name'] : $delayRoleCode;
-              
-              // Calculate keterlambatan
-              $diff = $deadline->diff($now);
-              $terlambatHari = $diff->days;
-              $terlambatJam = $diff->h;
-              $terlambatMenit = $diff->i;
-              
-              // Format keterlambatan
-              $keterlambatanParts = [];
-              
-              if ($terlambatHari > 0) {
-                $keterlambatanParts[] = $terlambatHari . ' hari';
-              }
-              if ($terlambatJam > 0) {
-                $keterlambatanParts[] = $terlambatJam . ' jam';
-              }
-              if ($terlambatMenit > 0 || empty($keterlambatanParts)) {
-                $keterlambatanParts[] = $terlambatMenit . ' menit';
-              }
-              
-              $keterlambatanText = implode(' ', $keterlambatanParts);
-            @endphp
-            <tr class="clickable-row" onclick="window.location.href='{{ route('owner.workflow', ['id' => $dokumen->id]) }}'" title="Klik untuk melihat detail workflow dokumen">
-              <td>{{ $dokumens->firstItem() + $index }}</td>
-              <td>{{ $dokumen->nomor_agenda }}</td>
-              <td>{{ $dokumen->nomor_spp }}</td>
-              <td>
-                <span class="team-badge">
-                  {{ $teamName }}
-                </span>
-              </td>
-              <td>{{ $deadline->format('d M Y H:i') }}</td>
-              <td>
-                <span class="badge-terlambat">
-                  <i class="fa-solid fa-exclamation-triangle"></i>
-                  {{ $keterlambatanText }}
-                </span>
-              </td>
-              <td>
-                <span class="badge badge-processing">
-                  Terlambat
-                </span>
-              </td>
-            </tr>
-          @empty
+    {{-- TABLE TOP --}}
+    <div class="table-top">
+      <div class="table-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Cari nomor / judul dokumen…" id="searchInput" oninput="renderTable()">
+      </div>
+      <div class="tbl-actions">
+        <div class="tbl-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          Filter
+        </div>
+        <div class="tbl-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+          Kelompokkan
+        </div>
+        <div class="rows-ctrl">
+          <span>Baris</span>
+          <select onchange="rowsPerPage=+this.value;currentPage=1;renderTable()">
+            <option>10</option><option selected>25</option><option>50</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {{-- TABLE VIEW --}}
+    <div id="tableView">
+      <div style="overflow-x:auto">
+        <table id="mainTable">
+          <thead>
             <tr>
-              <td colspan="7" class="text-center py-5">
-                <i class="fa-solid fa-check-circle fa-3x text-success mb-3"></i>
-                <p class="text-muted">Tidak ada dokumen terlambat</p>
-              </td>
+              <th><input type="checkbox" class="cb" onchange="toggleAll(this)"></th>
+              <th onclick="sortTable('nomor_spp')">No. Dokumen</th>
+              <th onclick="sortTable('bagian')">Bagian</th>
+              <th onclick="sortTable('vendor')">Dibayar Kepada/Vendor</th>
+              <th onclick="sortTable('nilai_rupiah')">Nilai (Rp)</th>
+              <th onclick="sortTable('tim')">Tim</th>
+              <th onclick="sortTable('tanggal_masuk')">Tgl Masuk</th>
+              <th onclick="sortTable('tanggal_selesai')">Tgl Selesai</th>
+              <th onclick="sortTable('hari')">Hari</th>
+              <th>Status</th>
+              <th></th>
             </tr>
-          @endforelse
-        </tbody>
-      </table>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Pagination -->
-    @if($dokumens->hasPages())
-      <div class="pagination">
-        @if($dokumens->onFirstPage())
-          <span class="page-link disabled">«</span>
-        @else
-          <a href="{{ $dokumens->previousPageUrl() }}" class="page-link">«</a>
-        @endif
+    {{-- CARD VIEW --}}
+    <div id="cardView" style="display:none">
+      <div class="card-grid" id="cardGrid"></div>
+    </div>
 
-        @for($i = 1; $i <= $dokumens->lastPage(); $i++)
-          @if($i == $dokumens->currentPage())
-            <span class="page-link active">{{ $i }}</span>
-          @else
-            <a href="{{ $dokumens->url($i) }}" class="page-link">{{ $i }}</a>
-          @endif
-        @endfor
-
-        @if($dokumens->hasMorePages())
-          <a href="{{ $dokumens->nextPageUrl() }}" class="page-link">»</a>
-        @else
-          <span class="page-link disabled">»</span>
-        @endif
-      </div>
-    @endif
+    {{-- PAGINATION --}}
+    <div class="pagination">
+      <div class="pag-info" id="pagInfo">Memuat…</div>
+      <div class="pag-controls" id="pagControls"></div>
+    </div>
   </div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{-- TOAST --}}
+<div class="toast-rk" id="toast">
+  <div class="toast-icon-rk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+  <span id="toastMsg"></span>
+</div>
+
 <script>
-  // Data from controller
-  const monthlyStats = @json($monthlyStats);
-  const months = @json($months);
-  const teams = @json($teams);
-  // Chart colors - Always use Perpajakan Green Theme
-  const teamColors = {
-    'operator': 'rgba(8, 62, 64, 1)',
-    'team_verifikasi': 'rgba(136, 151, 23, 1)',
-    'perpajakan': 'rgba(26, 77, 62, 1)',
-    'akutansi': 'rgba(23, 162, 184, 1)',
-  };
+/* ─── DATA FROM PHP ─── */
+const DOCS_RAW = @json($classified->values()->all());
 
-  const teamColorsTransparent = {
-    'operator': 'rgba(8, 62, 64, 0.1)',
-    'team_verifikasi': 'rgba(136, 151, 23, 0.1)',
-    'perpajakan': 'rgba(26, 77, 62, 0.1)',
-    'akutansi': 'rgba(23, 162, 184, 0.1)',
-  };
+const BAGIAN_COLOR = @json($bagianColors);
 
-  // Get CSS variable values for chart
-  const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-  const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+/* ─── HELPERS ─── */
+function fmtNum(n){ return new Intl.NumberFormat('id-ID').format(n||0); }
+function truncate(str,len){ if(!str||str==='-') return '-'; return str.length>len?str.substring(0,len)+'…':str; }
 
-  // Prepare datasets
-  const datasets = [];
-  Object.keys(teams).forEach(teamCode => {
-    if (monthlyStats[teamCode]) {
-      datasets.push({
-        label: teams[teamCode].name,
-        data: monthlyStats[teamCode],
-        borderColor: teamColors[teamCode],
-        backgroundColor: teamColorsTransparent[teamCode],
-        borderWidth: 3,
-        tension: 0.4,
-        fill: true,
-        pointBackgroundColor: teamColors[teamCode],
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 7
-      });
-    }
+/* ─── STATE ─── */
+let currentTab  = 'aman';
+let currentView = 'table';
+let rowsPerPage = 25;
+let currentPage = 1;
+let sortKey     = null;
+let sortDir     = 1;
+
+/* ─── DONUT CHARTS ─── */
+const donutDatas = [
+  [{{ $keseluruhan['aman'] }}, {{ $keseluruhan['warn'] }}, {{ $keseluruhan['late'] }}],
+  @foreach($teamScores as $ts)
+  [{{ $ts['aman'] }},{{ $ts['warn'] }},{{ $ts['late'] }}],
+  @endforeach
+];
+donutDatas.forEach((d,i)=>{
+  const ctx = document.getElementById('donut'+i)?.getContext('2d');
+  if(!ctx) return;
+  new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:['Tepat Waktu','Peringatan','Terlambat'],
+      datasets:[{data:d,backgroundColor:['#16a34a','#d97706','#dc2626'],borderWidth:0,hoverOffset:4}]},
+    options:{cutout:'72%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw} dokumen`}}}}
   });
+});
 
-  // Create chart
-  const ctx = document.getElementById('delayChart').getContext('2d');
-  const delayChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: months,
-      datasets: datasets
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          labels: {
-            font: {
-              size: 12,
-              weight: '600'
-            },
-            padding: 15,
-            usePointStyle: true,
-            pointStyle: 'circle'
-          }
-        },
-        tooltip: {
-          backgroundColor: 'rgba(26, 77, 62, 0.9)',
-          padding: 12,
-          cornerRadius: 8,
-          titleFont: {
-            size: 14,
-            weight: 'bold'
-          },
-          bodyFont: {
-            size: 13
-          },
-          multiKeyBackground: 'rgba(255, 255, 255, 0.1)'
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          grid: {
-            color: 'rgba(26, 77, 62, 0.05)',
-            drawBorder: false
-          },
-          ticks: {
-            color: primaryColor || '#1a4d3e',
-            font: {
-              size: 12,
-              weight: '500'
-            },
-            stepSize: 1
-          }
-        },
-        x: {
-          grid: {
-            display: false,
-            drawBorder: false
-          },
-          ticks: {
-            color: primaryColor || '#1a4d3e',
-            font: {
-              size: 11,
-              weight: '500'
-            }
-          }
-        }
-      },
-      interaction: {
-        mode: 'index',
-        intersect: false
-      }
-    }
+/* ─── FILTER REDIRECT ─── */
+function applyFilter(){
+  const b = document.getElementById('filterBulan').value;
+  const g = document.getElementById('filterBagian').value;
+  const t = document.getElementById('filterTahun').value;
+  let url = '/owner/rekapan-keterlambatan?';
+  if(b) url+='bulan='+b+'&';
+  if(g) url+='bagian='+g+'&';
+  if(t) url+='tahun='+t+'&';
+  window.location.href = url;
+}
+
+/* ─── TAB SWITCH ─── */
+function switchTab(el, tab){
+  document.querySelectorAll('.stab').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  currentTab = tab;
+  currentPage = 1;
+  renderTable();
+}
+
+/* ─── VIEW SWITCH ─── */
+function switchView(v){
+  currentView = v;
+  document.getElementById('btnTable').classList.toggle('active',v==='table');
+  document.getElementById('btnCard').classList.toggle('active',v==='card');
+  document.getElementById('tableView').style.display = v==='table'?'block':'none';
+  document.getElementById('cardView').style.display  = v==='card'?'block':'none';
+  renderTable();
+}
+
+/* ─── SORT ─── */
+function sortTable(key){
+  if(sortKey===key) sortDir*=-1;
+  else{ sortKey=key; sortDir=1; }
+  document.querySelectorAll('thead th').forEach(th=>{th.classList.remove('sort-asc','sort-desc')});
+  if(event?.target) event.target.classList.add(sortDir===1?'sort-asc':'sort-desc');
+  renderTable();
+}
+
+/* ─── TOGGLE ALL ─── */
+function toggleAll(cb){
+  document.querySelectorAll('#tableBody .cb').forEach(c=>c.checked=cb.checked);
+}
+
+/* ─── GET FILTERED ─── */
+function getFiltered(){
+  const q = (document.getElementById('searchInput')?.value||'').toLowerCase();
+  return DOCS_RAW.filter(d=>{
+    if(d.status!==currentTab) return false;
+    if(q && !d.nomor_spp?.toLowerCase().includes(q) && !d.uraian_spp?.toLowerCase().includes(q)) return false;
+    return true;
   });
+}
+
+/* ─── HARI LABEL ─── */
+function hariLabel(d){
+  const h = d.hari;
+  if(d.status==='aman') return `<span class="hari-badge hari-ok">+${Math.abs(h)} hari</span>`;
+  if(d.status==='warn') return `<span class="hari-badge hari-warn">+${Math.abs(h)} hari</span>`;
+  return `<span class="hari-badge hari-late">-${Math.abs(h)} hari</span>`;
+}
+
+/* ─── STATUS PILL ─── */
+function statusPill(s){
+  if(s==='aman') return `<span class="pill pill-green">Tepat Waktu</span>`;
+  if(s==='warn') return `<span class="pill pill-yellow">Peringatan</span>`;
+  return `<span class="pill pill-red">Terlambat</span>`;
+}
+
+/* ─── RENDER ─── */
+function renderTable(){
+  let filtered = getFiltered();
+  if(sortKey){
+    filtered.sort((a,b)=>{
+      let av=a[sortKey]??'', bv=b[sortKey]??'';
+      if(typeof av==='string') return av.localeCompare(bv)*sortDir;
+      return (av-bv)*sortDir;
+    });
+  }
+  const total = filtered.length;
+  const totalPages = Math.max(1,Math.ceil(total/rowsPerPage));
+  if(currentPage>totalPages) currentPage=totalPages;
+  const start=(currentPage-1)*rowsPerPage;
+  const paged = filtered.slice(start,start+rowsPerPage);
+
+  if(currentView==='table'){
+    const tbody = document.getElementById('tableBody');
+    if(!paged.length){
+      tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:48px;color:#94a3b8">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;display:block;margin:0 auto 8px;opacity:.3"><circle cx="12" cy="12" r="10"/><path d="M9 9h.01M15 9h.01M8 14s1.5 2 4 2 4-2 4-2"/></svg>
+        Tidak ada data</td></tr>`;
+    } else {
+      tbody.innerHTML = paged.map(d=>{
+        const bColor = BAGIAN_COLOR[d.bagian]||'#94a3b8';
+        const uraianShort = truncate(d.uraian_spp, 32);
+        const uraianFull  = (d.uraian_spp||'-').replace(/"/g,'&quot;');
+        const selesaiDisplay = d.tanggal_selesai || '<span style="color:#94a3b8">—</span>';
+        const vendorShort = truncate(d.vendor, 20);
+        const vendorFull  = (d.vendor||'-').replace(/"/g,'&quot;');
+        return `<tr>
+          <td><input type="checkbox" class="cb"></td>
+          <td>
+            <div class="doc-no">${d.nomor_spp||'-'}</div>
+            <div class="doc-title" title="${uraianFull}">${uraianShort}</div>
+          </td>
+          <td><span class="bagian-tag" style="color:${bColor}">● ${d.bagian||'-'}</span></td>
+          <td><span class="vendor-cell" title="${vendorFull}">${vendorShort}</span></td>
+          <td class="amount">Rp ${fmtNum(d.nilai_rupiah)}</td>
+          <td><span class="team-name">${d.tim||'-'}</span></td>
+          <td class="date-cell">${d.tanggal_masuk||'-'}</td>
+          <td class="date-cell ${d.tanggal_selesai?'highlight':''}">${selesaiDisplay}</td>
+          <td>${hariLabel(d)}</td>
+          <td>${statusPill(d.status)}</td>
+          <td>
+            <a href="/owner/workflow/${d.id}" class="action-btn" title="Lihat Detail">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </a>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+  } else {
+    const grid = document.getElementById('cardGrid');
+    if(!paged.length){
+      grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:48px;color:#94a3b8">Tidak ada data</div>`;
+    } else {
+      grid.innerHTML = paged.map(d=>{
+        const bColor = BAGIAN_COLOR[d.bagian]||'#94a3b8';
+        const selesaiDisplay = d.tanggal_selesai || '—';
+        const vendorShort = truncate(d.vendor, 22);
+        return `<div class="doc-card ${d.status}-card">
+          <div class="dc-header">
+            <div>
+              <div class="dc-no">${d.nomor_spp||'-'}</div>
+              <div class="dc-title" title="${(d.uraian_spp||'-').replace(/"/g,'&quot;')}">${truncate(d.uraian_spp,40)}</div>
+            </div>
+            ${statusPill(d.status)}
+          </div>
+          <div class="dc-meta">
+            <div class="dc-row"><span class="dc-key">Bagian</span><span class="dc-val" style="color:${bColor}">${d.bagian||'-'}</span></div>
+            <div class="dc-row"><span class="dc-key">Vendor</span><span class="dc-val" title="${(d.vendor||'-').replace(/"/g,'&quot;')}">${vendorShort}</span></div>
+            <div class="dc-row"><span class="dc-key">Nilai</span><span class="dc-val">Rp ${fmtNum(d.nilai_rupiah)}</span></div>
+            <div class="dc-row"><span class="dc-key">Tim</span><span class="dc-val">${d.tim||'-'}</span></div>
+            <div class="dc-row"><span class="dc-key">Tgl Masuk</span><span class="dc-val">${d.tanggal_masuk||'-'}</span></div>
+            <div class="dc-row"><span class="dc-key">Tgl Selesai</span><span class="dc-val">${selesaiDisplay}</span></div>
+            <div class="dc-row"><span class="dc-key">Hari</span>${hariLabel(d)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  /* pagination info */
+  document.getElementById('pagInfo').textContent =
+    total===0?'Tidak ada data':`Menampilkan ${start+1}–${Math.min(start+rowsPerPage,total)} dari ${total} entri`;
+
+  /* pagination controls */
+  const ctrl = document.getElementById('pagControls');
+  ctrl.innerHTML='';
+  const addBtn=(label,page,active=false,disabled=false)=>{
+    const btn=document.createElement('div');
+    btn.className='pag-btn'+(active?' active':'');
+    btn.innerHTML=label;
+    if(!disabled) btn.onclick=()=>{currentPage=page;renderTable()};
+    else btn.style.opacity='.4';
+    ctrl.appendChild(btn);
+  };
+  addBtn('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>',currentPage-1,false,currentPage===1);
+  for(let p=1;p<=totalPages;p++){
+    if(p===1||p===totalPages||Math.abs(p-currentPage)<=1) addBtn(p,p,p===currentPage);
+    else if(Math.abs(p-currentPage)===2) addBtn('…',p,false,true);
+  }
+  addBtn('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>',currentPage+1,false,currentPage===totalPages);
+}
+
+/* ─── EXPORT EXCEL ─── */
+function exportExcel(){
+  const filtered = getFiltered();
+  const ws_data=[['No. Dokumen','Uraian SPP','Bagian','Dibayar Kepada/Vendor','Nilai (Rp)','Tim','Tgl Masuk','Tgl Selesai','Hari','Status']];
+  filtered.forEach(d=>ws_data.push([
+    d.nomor_spp, d.uraian_spp, d.bagian, d.vendor,
+    d.nilai_rupiah, d.tim, d.tanggal_masuk, d.tanggal_selesai||'-', d.hari,
+    d.status==='aman'?'Tepat Waktu':d.status==='warn'?'Peringatan':'Terlambat'
+  ]));
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(ws_data);
+  ws['!cols']=[{wch:20},{wch:35},{wch:8},{wch:25},{wch:18},{wch:14},{wch:14},{wch:14},{wch:8},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws,'Rekapan Keterlambatan');
+  XLSX.writeFile(wb,'Rekapan_Keterlambatan.xlsx');
+  showToast('✓ File Excel berhasil diunduh');
+}
+
+/* ─── EXPORT PDF ─── */
+function exportPdf(){
+  showToast('⟳ Menyiapkan PDF…');
+  setTimeout(()=>window.print(),600);
+}
+
+/* ─── TOAST ─── */
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Init
+renderTable();
 </script>
 
 @endsection
-
-
-
-
-
