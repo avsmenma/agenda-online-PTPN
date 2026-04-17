@@ -62,9 +62,7 @@ final class LoginController extends Controller
             ]);
 
             // Redirect to role-specific dashboard
-            return redirect()
-                ->intended($user->getDashboardRoute())
-                ->with('success', 'Selamat datang, ' . $user->name . '!');
+            return redirect()->intended($user->getDashboardRoute());
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Login attempt failed', [

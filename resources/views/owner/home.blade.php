@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('content')
 <style>
@@ -402,7 +402,6 @@
         @endphp
         <div class="stat-value">{{ $totalNilaiShort }}</div>
         <div class="stat-sub">Rp {{ number_format($totalNilaiNum, 0, ',', '.') }}</div>
-        <div style="margin-top:12px;font-size:11px;color:rgba(255,255,255,.7)">Per {{ now()->format('d F Y') }}</div>
       </div>
 
     </div>{{-- /.stats-row --}}

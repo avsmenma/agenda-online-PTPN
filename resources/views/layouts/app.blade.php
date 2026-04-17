@@ -4285,24 +4285,6 @@
         </a>
       </div>
 
-      {{-- BAGIAN Section --}}
-      <div class="owner-sidebar-section" style="flex:0 0 auto; overflow-y: auto;">
-        <div class="owner-sidebar-label">Bagian</div>
-        @php
-          $bagianColors = [
-            'AKN' => '#7C3AED', 'DPM' => '#22c55e', 'KPL' => '#f59e0b',
-            'PMO' => '#06b6d4', 'SDM' => '#8b5cf6', 'SKH' => '#ec4899',
-            'TAN' => '#10b981', 'TEP' => '#6366f1', 'PTI' => '#3B82F6',
-          ];
-        @endphp
-        @foreach($bagianColors as $bagianCode => $bagianColor)
-          <div class="owner-nav-item" style="cursor:default">
-            <span class="bagian-dot-nav" style="background:{{ $bagianColor }}; width:8px; height:8px;"></span>
-            {{ $bagianCode }}
-          </div>
-        @endforeach
-      </div>
-
       {{-- User Card Bottom --}}
       <div class="owner-sidebar-bottom">
         <a class="owner-user-card" href="{{ url('/logout') }}"
