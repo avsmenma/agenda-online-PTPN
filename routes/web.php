@@ -837,3 +837,16 @@ Route::middleware(['auth', 'role:owner,admin'])
             ->name('owner.notification-logs');
     });
 
+// =============================================================================
+// OWNER / ADMIN: Laporan Cash Bank (read-only dari database cash_bank_new)
+// =============================================================================
+Route::middleware(['auth', 'role:owner,admin'])
+    ->prefix('owner/cashbank')
+    ->name('owner.cashbank.')
+    ->group(function () {
+        Route::get('/', [\App\Http\Controllers\CashBankPimpinanController::class, 'index'])
+            ->name('index');
+        Route::get('/chart-data', [\App\Http\Controllers\CashBankPimpinanController::class, 'chartData'])
+            ->name('chart');
+    });
+

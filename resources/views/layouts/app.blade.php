@@ -4281,7 +4281,20 @@
           </svg>
           Audit Trail
         </a>
+
+        @php
+          $isCashBankActive = request()->is('*owner/cashbank*') || request()->routeIs('owner.cashbank.*');
+        @endphp
+        <a href="{{ route('owner.cashbank.index') }}"
+           class="owner-nav-item {{ $isCashBankActive ? 'active' : '' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <path d="M8 21h8M12 17v4"/>
+          </svg>
+          Laporan Cash Bank
+        </a>
       </div>
+
 
       {{-- User Card Bottom --}}
       <div class="owner-sidebar-bottom">
