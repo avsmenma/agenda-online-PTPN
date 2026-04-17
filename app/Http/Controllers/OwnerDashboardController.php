@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers;
 
@@ -444,15 +444,15 @@ class OwnerDashboardController extends Controller
     private function getBagianStatistics(): array
     {
         $bagianList = [
-            'AKN' => ['icon' => 'fa-calculator', 'emoji' => '🧮', 'color' => '#7C3AED'],
-            'DPM' => ['icon' => 'fa-chart-line', 'emoji' => '📈', 'color' => '#22c55e'],
-            'KPL' => ['icon' => 'fa-crown', 'emoji' => '👑', 'color' => '#f59e0b'],
-            'PMO' => ['icon' => 'fa-tasks', 'emoji' => '📋', 'color' => '#06b6d4'],
-            'SDM' => ['icon' => 'fa-users', 'emoji' => '👥', 'color' => '#8b5cf6'],
-            'SKH' => ['icon' => 'fa-building', 'emoji' => '🏢', 'color' => '#ec4899'],
-            'TAN' => ['icon' => 'fa-seedling', 'emoji' => '🌿', 'color' => '#10b981'],
-            'TEP' => ['icon' => 'fa-cogs', 'emoji' => '⚙️', 'color' => '#6366f1'],
-            'PTI' => ['icon' => 'fa-laptop-code', 'emoji' => '🖥', 'color' => '#3B82F6'],
+            'AKN' => ['icon' => 'fa-calculator', 'emoji' => 'ðŸ§®', 'color' => '#7C3AED'],
+            'DPM' => ['icon' => 'fa-chart-line', 'emoji' => 'ðŸ“ˆ', 'color' => '#22c55e'],
+            'KPL' => ['icon' => 'fa-crown', 'emoji' => 'ðŸ‘‘', 'color' => '#f59e0b'],
+            'PMO' => ['icon' => 'fa-tasks', 'emoji' => 'ðŸ“‹', 'color' => '#06b6d4'],
+            'SDM' => ['icon' => 'fa-users', 'emoji' => 'ðŸ‘¥', 'color' => '#8b5cf6'],
+            'SKH' => ['icon' => 'fa-building', 'emoji' => 'ðŸ¢', 'color' => '#ec4899'],
+            'TAN' => ['icon' => 'fa-seedling', 'emoji' => 'ðŸŒ¿', 'color' => '#10b981'],
+            'TEP' => ['icon' => 'fa-cogs', 'emoji' => 'âš™ï¸', 'color' => '#6366f1'],
+            'PTI' => ['icon' => 'fa-laptop-code', 'emoji' => 'ðŸ–¥', 'color' => '#3B82F6'],
         ];
 
         $stats = [];
@@ -535,15 +535,15 @@ class OwnerDashboardController extends Controller
     /**
      * Resolve document status label & CSS class from status_pembayaran and current_handler.
      * Mapping:
-     *   sudah_dibayar / tanggal_dibayar set → Dibayar
-     *   siap_dibayar                        → Siap Bayar
+     *   sudah_dibayar / tanggal_dibayar set â†’ Dibayar
+     *   siap_dibayar                        â†’ Siap Bayar
      *   otherwise, based on current_handler:
-     *     operator        → Input
-     *     team_verifikasi → Verifikasi
-     *     perpajakan      → Perpajakan
-     *     akutansi        → Akuntansi
-     *     pembayaran      → Menunggu Bayar
-     *     (default)       → Menunggu
+     *     operator        â†’ Input
+     *     team_verifikasi â†’ Verifikasi
+     *     perpajakan      â†’ Perpajakan
+     *     akutansi        â†’ Akuntansi
+     *     pembayaran      â†’ Menunggu Bayar
+     *     (default)       â†’ Menunggu
      */
     private function resolveDocStatus(?string $statusPembayaran, $tanggalDibayar, ?string $currentHandler): array
     {
@@ -693,7 +693,7 @@ class OwnerDashboardController extends Controller
             $query->where('bagian', $request->filter_bagian);
         }
 
-        // Filter by umur dokumen — tampilkan semua dokumen belum dibayar berumur > X hari
+        // Filter by umur dokumen â€” tampilkan semua dokumen belum dibayar berumur > X hari
         if ($request && $request->has('filter_umur') && !empty($request->filter_umur)) {
             $days = (int) $request->filter_umur;
             $query->where('created_at', '<', now()->subDays($days))
@@ -887,7 +887,7 @@ class OwnerDashboardController extends Controller
         if ($dokumen->created_at) {
             $events[] = [
                 'type' => 'created',
-                'icon' => '✅',
+                'icon' => 'âœ…',
                 'title' => 'Dokumen DOperatort',
                 'timestamp' => $dokumen->created_at->format('d M Y H:i'),
                 'info' => [
@@ -908,7 +908,7 @@ class OwnerDashboardController extends Controller
             $duration = $previousTime ? $this->calculateDuration($previousTime, $receivedAt) : null;
             $events[] = [
                 'type' => 'sent_to_team_verifikasi',
-                'icon' => '🚀',
+                'icon' => 'ðŸš€',
                 'title' => 'Dikirim ke Ibu Yuni',
                 'timestamp' => $receivedAt->format('d M Y H:i'),
                 'duration' => $duration,
@@ -926,7 +926,7 @@ class OwnerDashboardController extends Controller
             $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->deadline_at) : null;
             $events[] = [
                 'type' => 'deadline_set',
-                'icon' => '⏰',
+                'icon' => 'â°',
                 'title' => 'Deadline Ditetapkan',
                 'timestamp' => $dokumen->deadline_at->format('d M Y H:i'),
                 'duration' => $duration,
@@ -942,7 +942,7 @@ class OwnerDashboardController extends Controller
             $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->processed_at) : null;
             $events[] = [
                 'type' => 'processed_Team Verifikasi',
-                'icon' => '⚡',
+                'icon' => 'âš¡',
                 'title' => 'Diproses Ibu Yuni',
                 'timestamp' => $dokumen->processed_at->format('d M Y H:i'),
                 'duration' => $duration,
@@ -961,7 +961,7 @@ class OwnerDashboardController extends Controller
             $duration = $previousTime ? $this->calculateDuration($previousTime, $receivedAt) : null;
             $events[] = [
                 'type' => 'sent_to_perpajakan',
-                'icon' => '🚀',
+                'icon' => 'ðŸš€',
                 'title' => 'Dikirim ke Team Perpajakan',
                 'timestamp' => $receivedAt->format('d M Y H:i'),
                 'duration' => $duration,
@@ -979,7 +979,7 @@ class OwnerDashboardController extends Controller
             $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->processed_perpajakan_at) : null;
             $events[] = [
                 'type' => 'processed_perpajakan',
-                'icon' => '⚡',
+                'icon' => 'âš¡',
                 'title' => 'Diproses Team Perpajakan',
                 'timestamp' => $dokumen->processed_perpajakan_at->format('d M Y H:i'),
                 'duration' => $duration,
@@ -999,7 +999,7 @@ class OwnerDashboardController extends Controller
             $duration = $previousTime ? $this->calculateDuration($previousTime, $receivedAt) : null;
             $events[] = [
                 'type' => 'sent_to_akutansi',
-                'icon' => '🚀',
+                'icon' => 'ðŸš€',
                 'title' => 'Dikirim ke Team Akutansi',
                 'timestamp' => $receivedAt->format('d M Y H:i'),
                 'duration' => $duration,
@@ -1019,7 +1019,7 @@ class OwnerDashboardController extends Controller
 
             $events[] = [
                 'type' => 'returned',
-                'icon' => '↩️',
+                'icon' => 'â†©ï¸',
                 'title' => 'Dikembalikan',
                 'timestamp' => $returnTime->format('d M Y H:i'),
                 'duration' => $duration,
@@ -1037,7 +1037,7 @@ class OwnerDashboardController extends Controller
             $duration = $previousTime ? $this->calculateDuration($previousTime, $dokumen->deadline_completed_at) : null;
             $events[] = [
                 'type' => 'deadline_completed',
-                'icon' => '✅',
+                'icon' => 'âœ…',
                 'title' => 'Deadline Selesai',
                 'timestamp' => $dokumen->deadline_completed_at->format('d M Y H:i'),
                 'duration' => $duration,
@@ -1055,7 +1055,7 @@ class OwnerDashboardController extends Controller
 
             $events[] = [
                 'type' => 'completed',
-                'icon' => '🎉',
+                'icon' => 'ðŸŽ‰',
                 'title' => 'Dokumen Selesai',
                 'timestamp' => $completedTime->format('d M Y H:i'),
                 'total_duration' => $totalDuration,
@@ -1556,11 +1556,11 @@ class OwnerDashboardController extends Controller
     private function getWorkflowTimeline($dokumen): array
     {
         $roleOrder = [
-            'operator' => ['label' => 'Bagian', 'icon' => '📋'],
-            'team_verifikasi' => ['label' => 'Verif', 'icon' => '✓'],
-            'perpajakan' => ['label' => 'Perpajakan', 'icon' => '💰'],
-            'akutansi' => ['label' => 'Akutansi', 'icon' => '📊'],
-            'pembayaran' => ['label' => 'Pembayaran', 'icon' => '💳'],
+            'operator' => ['label' => 'Bagian', 'icon' => 'ðŸ“‹'],
+            'team_verifikasi' => ['label' => 'Verif', 'icon' => 'âœ“'],
+            'perpajakan' => ['label' => 'Perpajakan', 'icon' => 'ðŸ’°'],
+            'akutansi' => ['label' => 'Akutansi', 'icon' => 'ðŸ“Š'],
+            'pembayaran' => ['label' => 'Pembayaran', 'icon' => 'ðŸ’³'],
         ];
 
         $currentHandler = $dokumen->current_handler ?? 'operator';
@@ -3147,16 +3147,161 @@ class OwnerDashboardController extends Controller
     }
 
     /**
-     * Display rekapan keterlambatan for owner
-     * Updated to use dokumen_role_data table for per-role deadline tracking
+     * Rekapan Keterlambatan + Analisis Kinerja (Gabungan)
+     * Menampilkan skor kinerja per tim (donut chart) + daftar dokumen
+     * dengan klasifikasi Tepat Waktu / Peringatan / Terlambat
      */
     public function rekapanKeterlambatan(Request $request)
     {
-        // Redirect langsung ke submenu Team Verifikasi dengan mempertahankan query parameters
-        $queryParams = $request->query();
-        return redirect()->route('owner.rekapan-keterlambatan.role', [
-            'roleCode' => 'team_verifikasi'
-        ] + $queryParams);
+        // SLA default per tim (hari kerja)
+        $slaByRole = [
+            'team_verifikasi' => 5,
+            'perpajakan'      => 5,
+            'akutansi'        => 5,
+            'pembayaran'      => 7,
+            'operator'        => 3,
+        ];
+
+        $teamLabels = [
+            'team_verifikasi' => 'Tim Verifikasi',
+            'perpajakan'      => 'Tim Perpajakan',
+            'akutansi'        => 'Tim Akuntansi',
+            'pembayaran'      => 'Tim Pembayaran',
+        ];
+
+        $bagianColors = [
+            'AKN' => '#7C3AED', 'DPM' => '#22c55e', 'KPL' => '#f59e0b',
+            'PMO' => '#06b6d4', 'SDM' => '#8b5cf6', 'SKH' => '#ec4899',
+            'TAN' => '#10b981', 'TEP' => '#6366f1', 'PTI' => '#3B82F6',
+        ];
+
+        /* â”€â”€ Filter Parameters â”€â”€ */
+        $filterBulan  = $request->get('bulan');
+        $filterTahun  = $request->get('tahun', now()->year);
+        $filterBagian = $request->get('bagian');
+
+        /* â”€â”€ Base query â”€â”€ */
+        $baseQuery = Dokumen::select(
+            'id', 'nomor_spp', 'uraian_spp', 'bagian', 'dibayar_kepada',
+            'nilai_rupiah', 'current_handler', 'status_pembayaran',
+            'tanggal_masuk', 'tanggal_dibayar', 'created_at', 'updated_at',
+            'status'
+        );
+
+        if ($filterBagian) {
+            $baseQuery->where('bagian', $filterBagian);
+        }
+        if ($filterBulan) {
+            $baseQuery->whereMonth('created_at', $filterBulan)
+                      ->whereYear('created_at', $filterTahun);
+        } elseif ($filterTahun) {
+            $baseQuery->whereYear('created_at', $filterTahun);
+        }
+
+        $allDocs = $baseQuery->orderBy('created_at', 'desc')->get();
+
+        /* â”€â”€ Classify each document â”€â”€ */
+        $now = Carbon::now();
+
+        $classified = $allDocs->map(function ($doc) use ($now, $slaByRole) {
+            $handler   = $doc->current_handler ?? 'operator';
+            $sla       = $slaByRole[$handler] ?? 7;
+
+            $startDate = $doc->tanggal_masuk
+                ? Carbon::parse($doc->tanggal_masuk)
+                : Carbon::parse($doc->created_at);
+
+            $deadline = $startDate->copy()->addWeekdays($sla);
+
+            $isSelesai = !empty($doc->tanggal_dibayar)
+                         || $doc->status_pembayaran === 'sudah_dibayar'
+                         || in_array($doc->status, ['selesai', 'completed', 'approved_data_sudah_terkirim']);
+
+            $selesaiDate = $isSelesai && $doc->tanggal_dibayar
+                ? Carbon::parse($doc->tanggal_dibayar)
+                : null;
+
+            $compareDate = $isSelesai && $selesaiDate ? $selesaiDate : $now;
+            $sisaHari    = (int) $deadline->diffInDays($compareDate, false);
+
+            if ($isSelesai) {
+                $statusClass = $sisaHari <= 0 ? 'aman' : 'late';
+            } elseif ($sisaHari >= 0) {
+                $statusClass = 'late';
+            } elseif ($sisaHari >= -3) {
+                $statusClass = 'warn';
+            } else {
+                $statusClass = 'aman';
+            }
+
+            $hariBadge = $isSelesai
+                ? ($sisaHari <= 0 ? abs($sisaHari) : -$sisaHari)
+                : $sisaHari;
+
+            return [
+                'id'              => $doc->id,
+                'nomor_spp'       => $doc->nomor_spp ?? '-',
+                'uraian_spp'      => $doc->uraian_spp ?? '-',
+                'bagian'          => $doc->bagian ?? '-',
+                'vendor'          => $doc->dibayar_kepada ?? '-',
+                'nilai_rupiah'    => $doc->nilai_rupiah ?? 0,
+                'tim'             => $this->handlerToTeamLabel($handler),
+                'tim_code'        => $handler,
+                'tanggal_masuk'   => $startDate->format('d M Y'),
+                'tanggal_selesai' => $selesaiDate ? $selesaiDate->format('d M Y') : null,
+                'deadline'        => $deadline->format('d M Y'),
+                'hari'            => $hariBadge,
+                'status'          => $statusClass,
+                'is_selesai'      => $isSelesai,
+            ];
+        });
+
+        /* â”€â”€ Count per status â”€â”€ */
+        $countAman = $classified->where('status', 'aman')->count();
+        $countWarn = $classified->where('status', 'warn')->count();
+        $countLate = $classified->where('status', 'late')->count();
+
+        /* â”€â”€ Score cards per tim â”€â”€ */
+        $teamScores = $this->calcTeamScores($classified, $teamLabels);
+
+        /* â”€â”€ Keseluruhan â”€â”€ */
+        $totalAll  = $classified->count() ?: 1;
+        $scoreAll  = max(0, min(100, round(100 - (($countLate * 2 + $countWarn * 0.5) / $totalAll * 100) / 10 * 10, 1)));
+
+        $keseluruhan = [
+            'label' => 'Keseluruhan',
+            'score' => $scoreAll,
+            'aman'  => $countAman,
+            'warn'  => $countWarn,
+            'late'  => $countLate,
+        ];
+
+        /* â”€â”€ Filter lists â”€â”€ */
+        $bagianList = Dokumen::select('bagian')->distinct()->orderBy('bagian')
+            ->pluck('bagian')->filter()->values();
+
+        $tahunList = Dokumen::selectRaw('YEAR(created_at) as yr')->distinct()
+            ->orderBy('yr', 'desc')->pluck('yr')->filter()->values();
+
+        return view('owner.rekapanKeterlambatan', [
+            'classified'   => $classified,
+            'countAman'    => $countAman,
+            'countWarn'    => $countWarn,
+            'countLate'    => $countLate,
+            'keseluruhan'  => $keseluruhan,
+            'teamScores'   => $teamScores,
+            'bagianList'   => $bagianList,
+            'tahunList'    => $tahunList,
+            'bagianColors' => $bagianColors,
+            'filterBulan'  => $filterBulan,
+            'filterTahun'  => $filterTahun,
+            'filterBagian' => $filterBagian,
+        ])
+            ->with('title', 'Rekapan Keterlambatan & Analisis Kinerja')
+            ->with('module', 'owner')
+            ->with('menuHome', '')
+            ->with('menuDokumen', '')
+            ->with('menuRekapanKeterlambatan', 'active');
     }
 
     /**
@@ -4962,219 +5107,4 @@ class OwnerDashboardController extends Controller
         if ($minutes) $parts[] = "{$minutes} menit";
         return $parts ? implode(' ', $parts) : 'Kurang dari 1 menit';
     }
-
-    /**
-     * Rekapan Keterlambatan + Analisis Kinerja (Gabungan)
-     * Menampilkan skor kinerja per tim (donut chart) + daftar dokumen
-     * dengan klasifikasi Tepat Waktu / Peringatan / Terlambat
-     */
-    public function rekapanKeterlambatan(Request $request)
-    {
-        // SLA default per tim (hari kerja)
-        $slaByRole = [
-            'team_verifikasi' => 5,
-            'perpajakan'      => 5,
-            'akutansi'        => 5,
-            'pembayaran'      => 7,
-            'operator'        => 3,
-        ];
-
-        $teamLabels = [
-            'team_verifikasi' => 'Tim Verifikasi',
-            'perpajakan'      => 'Tim Perpajakan',
-            'akutansi'        => 'Tim Akuntansi',
-            'pembayaran'      => 'Tim Pembayaran',
-        ];
-
-        $bagianColors = [
-            'AKN' => '#7C3AED', 'DPM' => '#22c55e', 'KPL' => '#f59e0b',
-            'PMO' => '#06b6d4', 'SDM' => '#8b5cf6', 'SKH' => '#ec4899',
-            'TAN' => '#10b981', 'TEP' => '#6366f1', 'PTI' => '#3B82F6',
-        ];
-
-        /* ── Filter Parameters ── */
-        $filterBulan  = $request->get('bulan');
-        $filterTahun  = $request->get('tahun', now()->year);
-        $filterBagian = $request->get('bagian');
-
-        /* ── Base query: semua dokumen (dokumen yang sudah pernah diproses) ── */
-        $baseQuery = Dokumen::select(
-            'id', 'nomor_spp', 'uraian_spp', 'bagian', 'dibayar_kepada',
-            'nilai_rupiah', 'current_handler', 'status_pembayaran',
-            'tanggal_masuk', 'tanggal_dibayar', 'created_at', 'updated_at',
-            'status'
-        );
-
-        if ($filterBagian) {
-            $baseQuery->where('bagian', $filterBagian);
-        }
-        if ($filterBulan) {
-            $baseQuery->whereMonth('created_at', $filterBulan)
-                      ->whereYear('created_at', $filterTahun);
-        } elseif ($filterTahun) {
-            $baseQuery->whereYear('created_at', $filterTahun);
-        }
-
-        $allDocs = $baseQuery->orderBy('created_at', 'desc')->get();
-
-        /* ── Classify each document ── */
-        $now = Carbon::now();
-
-        $classified = $allDocs->map(function ($doc) use ($now, $slaByRole) {
-            $handler   = $doc->current_handler ?? 'operator';
-            $sla       = $slaByRole[$handler] ?? 7;
-
-            // Use tanggal_masuk or created_at as start
-            $startDate = $doc->tanggal_masuk
-                ? Carbon::parse($doc->tanggal_masuk)
-                : Carbon::parse($doc->created_at);
-
-            // Deadline = start + SLA
-            $deadline = $startDate->copy()->addWeekdays($sla);
-
-            // If already paid → tanggal_dibayar is "selesai"
-            $isSelesai   = !empty($doc->tanggal_dibayar)
-                           || $doc->status_pembayaran === 'sudah_dibayar'
-                           || in_array($doc->status, ['selesai', 'completed', 'approved_data_sudah_terkirim']);
-
-            $selesaiDate = $isSelesai && $doc->tanggal_dibayar
-                ? Carbon::parse($doc->tanggal_dibayar)
-                : null;
-
-            // Hitung sisa hari
-            $compareDate  = $isSelesai && $selesaiDate ? $selesaiDate : $now;
-            $sisaHari     = (int) $deadline->diffInDays($compareDate, false); // positif = sudah lewat, negatif = masih sisa
-
-            // Determine status
-            if ($isSelesai) {
-                // Tepat waktu jika selesai sebelum/sama dengan deadline
-                $statusClass = $sisaHari <= 0 ? 'aman' : 'late';
-            } elseif ($sisaHari >= 0) {
-                // Sudah lewat deadline dan belum selesai
-                $statusClass = 'late';
-            } elseif ($sisaHari >= -3) {
-                // Sisa 0–3 hari → peringatan
-                $statusClass = 'warn';
-            } else {
-                $statusClass = 'aman';
-            }
-
-            // Hari badge value
-            $hariBadge = $isSelesai
-                ? ($sisaHari <= 0 ? abs($sisaHari) : -$sisaHari) // selesai tepat/terlambat
-                : $sisaHari; // negatif = sisa hari, positif = terlambat
-
-            // Vendor / dibayar kepada
-            $vendor = $doc->dibayar_kepada ?? '-';
-
-            return [
-                'id'            => $doc->id,
-                'nomor_spp'     => $doc->nomor_spp ?? '-',
-                'uraian_spp'    => $doc->uraian_spp ?? '-',
-                'bagian'        => $doc->bagian ?? '-',
-                'vendor'        => $vendor,
-                'nilai_rupiah'  => $doc->nilai_rupiah ?? 0,
-                'tim'           => $this->handlerToTeamLabel($handler),
-                'tim_code'      => $handler,
-                'tanggal_masuk' => $startDate->format('d M Y'),
-                'tanggal_selesai' => $selesaiDate ? $selesaiDate->format('d M Y') : null,
-                'deadline'      => $deadline->format('d M Y'),
-                'hari'          => $hariBadge,
-                'status'        => $statusClass,
-                'is_selesai'    => $isSelesai,
-            ];
-        });
-
-        /* ── Count per status ── */
-        $countAman = $classified->where('status', 'aman')->count();
-        $countWarn = $classified->where('status', 'warn')->count();
-        $countLate = $classified->where('status', 'late')->count();
-
-        /* ── Score cards per tim ── */
-        $teamScores = $this->calcTeamScores($classified, $teamLabels);
-
-        /* ── Keseluruhan (card pertama) ── */
-        $totalAll   = $classified->count() ?: 1;
-        $scoreAll   = round(100 - (($countLate * 2 + $countWarn * 0.5) / $totalAll * 100) / 10 * 10, 1);
-        $scoreAll   = max(0, min(100, $scoreAll));
-
-        $keseluruhan = [
-            'label'  => 'Keseluruhan',
-            'score'  => $scoreAll,
-            'aman'   => $countAman,
-            'warn'   => $countWarn,
-            'late'   => $countLate,
-        ];
-
-        /* ── Bagian list for filter ── */
-        $bagianList = Dokumen::select('bagian')->distinct()->orderBy('bagian')
-            ->pluck('bagian')->filter()->values();
-
-        /* ── Tahun list for filter ── */
-        $tahunList = Dokumen::selectRaw('YEAR(created_at) as yr')->distinct()
-            ->orderBy('yr', 'desc')->pluck('yr')->filter()->values();
-
-        return view('owner.rekapanKeterlambatan', [
-            'classified'   => $classified,
-            'countAman'    => $countAman,
-            'countWarn'    => $countWarn,
-            'countLate'    => $countLate,
-            'keseluruhan'  => $keseluruhan,
-            'teamScores'   => $teamScores,
-            'bagianList'   => $bagianList,
-            'tahunList'    => $tahunList,
-            'bagianColors' => $bagianColors,
-            'filterBulan'  => $filterBulan,
-            'filterTahun'  => $filterTahun,
-            'filterBagian' => $filterBagian,
-        ])
-            ->with('title', 'Rekapan Keterlambatan & Analisis Kinerja')
-            ->with('module', 'owner')
-            ->with('menuHome', '')
-            ->with('menuDokumen', '')
-            ->with('menuRekapanKeterlambatan', 'active');
-    }
-
-    /** Map current_handler key to display label */
-    private function handlerToTeamLabel(string $handler): string
-    {
-        return match ($handler) {
-            'team_verifikasi' => 'Verifikasi',
-            'perpajakan'      => 'Perpajakan',
-            'akutansi'        => 'Akuntansi',
-            'pembayaran'      => 'Pembayaran',
-            'operator'        => 'Operator',
-            default           => ucfirst($handler),
-        };
-    }
-
-    /** Calculate score cards per team */
-    private function calcTeamScores($classified, array $teamLabels): array
-    {
-        $scores = [];
-        foreach ($teamLabels as $code => $label) {
-            $docs  = $classified->where('tim_code', $code);
-            $total = $docs->count() ?: 1;
-            $aman  = $docs->where('status', 'aman')->count();
-            $warn  = $docs->where('status', 'warn')->count();
-            $late  = $docs->where('status', 'late')->count();
-            $score = round(100 - (($late * 2 + $warn * 0.5) / $total * 100) / 10 * 10, 1);
-            $score = max(0, min(100, $score));
-            $scores[$code] = [
-                'label' => $label,
-                'score' => $score,
-                'aman'  => $aman,
-                'warn'  => $warn,
-                'late'  => $late,
-            ];
-        }
-        return $scores;
-    }
 }
-
-
-
-
-
-
-
