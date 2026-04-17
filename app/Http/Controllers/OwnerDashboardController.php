@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Http\Controllers;
 
@@ -5106,5 +5106,40 @@ class OwnerDashboardController extends Controller
         if ($hours)   $parts[] = "{$hours} jam";
         if ($minutes) $parts[] = "{$minutes} menit";
         return $parts ? implode(' ', $parts) : 'Kurang dari 1 menit';
+    }
+
+    /** Map current_handler key to display label */
+    private function handlerToTeamLabel(string $handler): string
+    {
+        return match ($handler) {
+            'team_verifikasi' => 'Verifikasi',
+            'perpajakan'      => 'Perpajakan',
+            'akutansi'        => 'Akuntansi',
+            'pembayaran'      => 'Pembayaran',
+            'operator'        => 'Operator',
+            default           => ucfirst($handler),
+        };
+    }
+
+    /** Calculate score cards per team */
+    private function calcTeamScores($classified, array $teamLabels): array
+    {
+        $scores = [];
+        foreach ($teamLabels as $code => $label) {
+            $docs  = $classified->where('tim_code', $code);
+            $total = $docs->count() ?: 1;
+            $aman  = $docs->where('status', 'aman')->count();
+            $warn  = $docs->where('status', 'warn')->count();
+            $late  = $docs->where('status', 'late')->count();
+            $score = max(0, min(100, round(100 - (($late * 2 + $warn * 0.5) / $total * 100) / 10 * 10, 1)));
+            $scores[$code] = [
+                'label' => $label,
+                'score' => $score,
+                'aman'  => $aman,
+                'warn'  => $warn,
+                'late'  => $late,
+            ];
+        }
+        return $scores;
     }
 }
