@@ -55,11 +55,16 @@
 @media(max-width:768px){.cards-row{grid-template-columns:1fr 1fr}}
 
 /* ── SCORE CARD ── */
-.score-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh);transition:transform .2s,box-shadow .2s;cursor:default;animation:fadeUp .4s ease both}
+.score-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh);transition:transform .2s,box-shadow .2s,border-color .2s,ring-color .2s;cursor:pointer;animation:fadeUp .4s ease both;position:relative}
 .score-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.09)}
 .score-card:nth-child(1){animation-delay:.05s}.score-card:nth-child(2){animation-delay:.1s}
 .score-card:nth-child(3){animation-delay:.15s}.score-card:nth-child(4){animation-delay:.2s}
 .score-card:nth-child(5){animation-delay:.25s}
+.score-card.card-active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12),0 6px 20px rgba(0,0,0,.09);transform:translateY(-3px)}
+.score-card.card-active::after{content:'✓ Dipilih';position:absolute;top:8px;right:8px;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--accent);color:#fff}
+.active-filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 14px;background:#eff4ff;border:1px solid #bfdbfe;border-radius:9px;font-size:12px;color:var(--accent);font-weight:600}
+.active-filter-bar .clear-filter{margin-left:auto;cursor:pointer;font-size:11px;color:var(--accent);text-decoration:underline;white-space:nowrap}
+.active-filter-bar svg{width:14px;height:14px;flex-shrink:0}
 .sc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .sc-title{font-size:11.5px;font-weight:700;color:var(--primary)}
 .sc-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px}
@@ -251,7 +256,7 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle}
   <div class="cards-row">
 
     {{-- Keseluruhan --}}
-    <div class="score-card">
+    <div class="score-card card-active" data-team="" onclick="filterByTeam(this,'','Semua Tim')">
       <div class="sc-header">
         <div class="sc-title">Rekapan Semua Tim</div>
         <span class="sc-badge badge-recap">{{ $keseluruhan['label'] }}</span>
@@ -273,7 +278,7 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle}
     {{-- Per Tim --}}
     @php $donutIdx = 1; $badgeClasses = ['team_verifikasi'=>'badge-verif','perpajakan'=>'badge-pajak','akutansi'=>'badge-akun','pembayaran'=>'badge-bayar']; @endphp
     @foreach($teamScores as $code => $ts)
-    <div class="score-card">
+    <div class="score-card" data-team="{{ $ts['label'] }}" onclick="filterByTeam(this,'{{ $ts['label'] }}','{{ $ts['label'] }}')">
       <div class="sc-header">
         <div class="sc-title">{{ $ts['label'] }}</div>
         <span class="sc-badge {{ $badgeClasses[$code] ?? 'badge-recap' }}">{{ $ts['score'] }}</span>
@@ -308,6 +313,13 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle}
         Card
       </button>
     </div>
+  </div>
+
+  {{-- ACTIVE TEAM FILTER BAR --}}
+  <div class="active-filter-bar" id="activeFilterBar" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    <span>Menampilkan keterlambatan: <strong id="activeFilterLabel"></strong></span>
+    <span class="clear-filter" onclick="filterByTeam(document.querySelector('.score-card'),'','Semua Tim')">✕ Tampilkan semua tim</span>
   </div>
 
   {{-- TABLE WRAPPER --}}
@@ -404,12 +416,13 @@ function fmtNum(n){ return new Intl.NumberFormat('id-ID').format(n||0); }
 function truncate(str,len){ if(!str||str==='-') return '-'; return str.length>len?str.substring(0,len)+'…':str; }
 
 /* ─── STATE ─── */
-let currentTab  = 'aman';
-let currentView = 'table';
-let rowsPerPage = 25;
-let currentPage = 1;
-let sortKey     = null;
-let sortDir     = 1;
+let currentTab    = 'aman';
+let currentView   = 'table';
+let rowsPerPage   = 25;
+let currentPage   = 1;
+let sortKey       = null;
+let sortDir       = 1;
+let activeTeam    = '';   // '' = semua tim
 
 /* ─── DONUT CHARTS ─── */
 const donutDatas = [
@@ -496,11 +509,36 @@ function toggleAll(cb){
   document.querySelectorAll('#tableBody .cb').forEach(c=>c.checked=cb.checked);
 }
 
+/* ─── FILTER BY TEAM (card click) ─── */
+function filterByTeam(cardEl, teamValue, teamLabel){
+  // deactivate all cards
+  document.querySelectorAll('.score-card').forEach(c=>c.classList.remove('card-active'));
+  cardEl.classList.add('card-active');
+  activeTeam = teamValue;
+
+  // show / hide filter bar
+  const bar = document.getElementById('activeFilterBar');
+  if(teamValue){
+    bar.style.display = 'flex';
+    document.getElementById('activeFilterLabel').textContent = teamLabel;
+  } else {
+    bar.style.display = 'none';
+  }
+
+  // reset to page 1 & re-render
+  currentPage = 1;
+  renderTable();
+
+  // smooth scroll to table
+  document.querySelector('.section-toolbar')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
 /* ─── GET FILTERED ─── */
 function getFiltered(){
   const q = (document.getElementById('searchInput')?.value||'').toLowerCase();
   return DOCS_RAW.filter(d=>{
     if(d.status!==currentTab) return false;
+    if(activeTeam && d.tim !== activeTeam) return false;
     if(q && !d.nomor_spp?.toLowerCase().includes(q) && !d.uraian_spp?.toLowerCase().includes(q)) return false;
     return true;
   });
