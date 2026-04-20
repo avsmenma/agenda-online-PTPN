@@ -434,7 +434,7 @@
             <div class="dash-card-title">Top Bagian</div>
             <div class="dash-card-sub">Volume & keterlambatan</div>
           </div>
-          <a class="see-all" href="{{ url('/owner/analytics') }}">Lihat Semua â†’</a>
+          <a class="see-all" href="{{ url('/owner/analytics') }}">Lihat Semua &rarr;</a>
         </div>
         <table class="top-table">
           <thead>
@@ -458,7 +458,7 @@
                 </td>
                 <td>{{ number_format($b['count']) }}</td>
                 <td class="return-val {{ ($b['terlambat'] ?? 0) > 0 ? 'val-down' : 'val-up' }}">
-                  {{ ($b['terlambat'] ?? 0) > 0 ? 'â†“ '.$b['terlambat'] : 'âœ“ 0' }}
+                  {{ ($b['terlambat'] ?? 0) > 0 ? '&#8595; '.$b['terlambat'] : '&#10003; 0' }}
                 </td>
               </tr>
             @endforeach
@@ -471,18 +471,18 @@
     {{-- BOTTOM ROW --}}
     <div class="bottom-row" style="grid-template-columns: 1fr 300px;">
 
-      {{-- Dokumen Terbaru (Real-time) â€” Extended --}}
+      {{-- Dokumen Terbaru (Real-time) &mdash; Extended --}}
       <div class="dash-card">
         <div class="dash-card-header">
           <div>
             <div class="dash-card-title">Dokumen Terbaru</div>
             <div class="dash-card-sub">
               <span class="realtime-badge">
-                <span class="realtime-dot"></span> Live â€” update otomatis
+                <span class="realtime-dot"></span> Live &mdash; update otomatis
               </span>
             </div>
           </div>
-          <a class="see-all" href="{{ url('/owner/dokumen') }}">Lihat Semua â†’</a>
+          <a class="see-all" href="{{ url('/owner/dokumen') }}">Lihat Semua &rarr;</a>
         </div>
         <table class="doc-table" id="recentDocsTable">
           <thead>
@@ -534,12 +534,12 @@
                 </td>
                 <td style="text-align:center">
                   <span class="timer-cell timer-age" style="font-size:11px;font-family:'Sora',monospace;color:#475569;white-space:nowrap">
-                    â€”
+                    &mdash;
                   </span>
                 </td>
                 <td style="text-align:center">
                   <span class="timer-cell timer-role" style="font-size:11px;font-family:'Sora',monospace;color:#0f766e;white-space:nowrap">
-                    â€”
+                    &mdash;
                   </span>
                 </td>
               </tr>
@@ -606,7 +606,7 @@
 </div>{{-- /.owner-dash --}}
 
 <script>
-// â”€â”€ Trend Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Trend Chart --------------------------------------------------------------------------
 const trendLabels = @json($chartLabels ?? []);
 const trendData   = @json($chartData ?? []);
 
@@ -657,7 +657,7 @@ document.querySelectorAll('.period-tab').forEach(tab => {
   });
 });
 
-// â”€â”€ Donut Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Donut Chart --------------------------------------------------------------------------
 const dCtx = document.getElementById('donutChart')?.getContext('2d');
 if (dCtx) {
   new Chart(dCtx, {
@@ -670,7 +670,7 @@ if (dCtx) {
   });
 }
 
-// â”€â”€ Real-time Dokumen Terbaru â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Real-time Dokumen Terbaru ------------------------------------------------------------
 const bagianColors = {
   'AKN': '#7C3AED', 'DPM': '#22c55e', 'KPL': '#f59e0b',
   'PMO': '#06b6d4', 'SDM': '#8b5cf6', 'SKH': '#ec4899',
@@ -689,7 +689,7 @@ function truncate(str, len) {
 }
 
 /**
- * Format elapsed seconds â†’ compact string
+ * Format elapsed seconds &rarr; compact string
  * e.g: "2h 03j 15m"  /  "5j 03m 10d"  /  "43m 10d"  /  "12d"
  * (h=hari, j=jam, m=menit, d=detik)
  */
@@ -719,15 +719,15 @@ function buildDocRow(doc) {
       <td><span class="status-pill ${doc.status_class || 'status-belum'}">${doc.status_label || 'Menunggu'}</span></td>
       <td class="doc-amount">${formatCurrency(doc.nilai_rupiah)}</td>
       <td style="text-align:center">
-        <span class="timer-cell timer-age" style="font-size:11px;font-family:'Sora',monospace;color:#475569;white-space:nowrap">â€”</span>
+        <span class="timer-cell timer-age" style="font-size:11px;font-family:'Sora',monospace;color:#475569;white-space:nowrap">&mdash;</span>
       </td>
       <td style="text-align:center">
-        <span class="timer-cell timer-role" style="font-size:11px;font-family:'Sora',monospace;color:#0f766e;white-space:nowrap">â€”</span>
+        <span class="timer-cell timer-role" style="font-size:11px;font-family:'Sora',monospace;color:#0f766e;white-space:nowrap">&mdash;</span>
       </td>
     </tr>`;
 }
 
-// â”€â”€ Real-time timer tick â€” every 1 second â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Real-time timer tick &mdash; every 1 second ------------------------------------------
 function tickTimers() {
   const now = Date.now();
   document.querySelectorAll('#recentDocsTbody tr[data-created]').forEach(row => {
