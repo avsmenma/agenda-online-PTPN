@@ -2,21 +2,14 @@
   _activeCellNav.blade.php
   Spreadsheet-style active cell navigation untuk tabel daftar dokumen.
 
-  Usage: @include('partials._activeCellNav', ['tableSelector' => '.data-table'])
-
-  Parameter:
-    $tableSelector (string) – CSS selector tabel target. Default: '.data-table'
+  Usage: @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 --}}
 @php
   $tableSelector = $tableSelector ?? '.data-table';
 @endphp
 
 <style>
-  /* ===== Active Cell Navigation ===== */
-
-  /* Cell position indicator (misal: Baris 3, Kolom 4) */
   .acn-indicator {
-    display: none;
     position: sticky;
     bottom: 0;
     left: 0;
@@ -69,7 +62,6 @@
     border: 1px solid rgba(255,255,255,0.3);
   }
 
-  /* Active Cell highlight */
   td.acn-active {
     outline: 3px solid #083E40 !important;
     outline-offset: -2px !important;
@@ -79,18 +71,15 @@
     transition: background-color 0.15s ease;
   }
 
-  /* Active row soft tint */
   tr.acn-active-row > td {
     background-color: rgba(136, 151, 23, 0.04);
   }
 
-  /* Active col header tint (optional visual) */
   th.acn-active-col {
     background: linear-gradient(135deg, #0a5f52 0%, #083E40 100%) !important;
     box-shadow: inset 0 -3px 0 #889717;
   }
 
-  /* Corner indicator on active cell (top-left triangle) */
   td.acn-active::before {
     content: '';
     position: absolute;
@@ -104,7 +93,6 @@
     pointer-events: none;
   }
 
-  /* Pulse animation saat pertama aktif */
   @keyframes acn-pulse {
     0%   { box-shadow: 0 0 0 0 rgba(8, 62, 64, 0.5); }
     70%  { box-shadow: 0 0 0 6px rgba(8, 62, 64, 0); }
@@ -115,8 +103,8 @@
     animation: acn-pulse 0.4s ease-out;
   }
 
-  /* ===== Scrollbar wrapper untuk navigasi keyboard ===== */
-  .table-wrapper, .table-responsive {
+  .table-wrapper,
+  .table-responsive {
     scroll-behavior: smooth;
   }
 </style>
@@ -126,193 +114,72 @@
   'use strict';
 
   const TABLE_SELECTOR = '{{ $tableSelector }}';
+  const INDICATOR_ID = 'acnIndicator';
+  const REBIND_EVENT = 'document-table-refreshed';
 
-  /** State */
-  let activeCell   = null; // current <td>
-  let activeRow    = 0;    // 0-based row index in tbody
-  let activeCol    = 0;    // 0-based col index in tr
+  let tableEl = null;
+  let tbodyEl = null;
+  let theadEl = null;
+  let wrapperEl = null;
+  let indicatorEl = null;
+  let observer = null;
+  let rebindTimer = null;
+  let keyboardBound = false;
 
-  /** Cache DOM references after DOM ready */
-  let tableEl      = null;
-  let tbodyEl      = null;
-  let theadEl      = null;
-  let wrapperEl    = null;
-  let indicatorEl  = null;
+  let activeCell = null;
+  let activeRow = 0;
+  let activeCol = 0;
+  let activeDocId = null;
 
-  function init() {
-    tableEl = document.querySelector(TABLE_SELECTOR);
-    if (!tableEl) return; // tabel tidak ada di halaman ini
-
-    tbodyEl   = tableEl.querySelector('tbody');
-    theadEl   = tableEl.querySelector('thead');
-    wrapperEl = tableEl.closest('.table-wrapper, .table-responsive') || tableEl.parentElement;
-
-    createIndicator();
-    attachCellListeners();
-    attachKeyboardListener();
-
-    // Auto-pilih cell pertama saat halaman dimuat (seperti spreadsheet)
-    autoSelectFirstCell();
-
-    console.log('✅ Active Cell Navigation initialized on', TABLE_SELECTOR);
+  function findTable() {
+    return document.querySelector(TABLE_SELECTOR);
   }
 
-  /**
-   * Otomatis pilih cell pertama dari baris pertama data.
-   * Kolom yang dipilih = kolom ke-1 (index 1) agar skip kolom "No" / checkbox.
-   * Jika tabel hanya punya 1 kolom, fallback ke kolom ke-0.
-   */
-  function autoSelectFirstCell() {
-    // Tunggu sebentar agar layout/render selesai sepenuhnya
-    setTimeout(function () {
-      if (!tbodyEl) return;
-      const rows = Array.from(tbodyEl.querySelectorAll('tr:not(.detail-row)'));
-      if (rows.length === 0) return; // tabel kosong, tidak ada yang dipilih
-
-      const firstRow = rows[0];
-      const cols = Array.from(firstRow.querySelectorAll('td'));
-      if (cols.length === 0) return;
-
-      // Pilih kolom ke-1 (Nomor Agenda) jika ada, fallback ke kolom ke-0
-      const startCol = cols.length > 1 ? 1 : 0;
-
-      setActiveCell(0, startCol);
-    }, 150); // 150ms cukup untuk render selesai
+  function getDataRows() {
+    if (!tbodyEl) return [];
+    return Array.from(tbodyEl.querySelectorAll('tr:not(.detail-row)'))
+      .filter(row => row.querySelectorAll('td').length > 0);
   }
 
-  /** Buat elemen indikator posisi di bawah tabel */
+  function getCells(row) {
+    return Array.from(row.querySelectorAll('td'));
+  }
+
+  function getDocId(row) {
+    return row?.dataset?.dokumenId || row?.dataset?.id || null;
+  }
+
   function createIndicator() {
-    indicatorEl = document.createElement('div');
-    indicatorEl.className = 'acn-indicator';
-    indicatorEl.id = 'acnIndicator';
-    indicatorEl.innerHTML = `
-      <i class="fa-solid fa-table-cells" style="font-size:13px; opacity:0.8;"></i>
-      <span class="acn-cell-ref" id="acnCellRef">-</span>
-      <span id="acnColName" style="opacity:0.85; font-size:11px;"></span>
-      <span class="acn-hint">
-        <span class="acn-key">↑↓←→</span> navigasi &nbsp;
-        <span class="acn-key">Esc</span> lepas
-      </span>`;
+    indicatorEl = document.getElementById(INDICATOR_ID);
+    if (!indicatorEl) {
+      indicatorEl = document.createElement('div');
+      indicatorEl.className = 'acn-indicator';
+      indicatorEl.id = INDICATOR_ID;
+      indicatorEl.innerHTML = `
+        <i class="fa-solid fa-table-cells" style="font-size:13px; opacity:0.8;"></i>
+        <span class="acn-cell-ref" id="acnCellRef">-</span>
+        <span id="acnColName" style="opacity:0.85; font-size:11px;"></span>
+        <span class="acn-hint">
+          <span class="acn-key">Arrow</span> navigasi &nbsp;
+          <span class="acn-key">Enter</span> edit
+        </span>`;
+    }
 
-    // Sisipkan tepat setelah wrapper tabel
-    wrapperEl.insertAdjacentElement('afterend', indicatorEl);
-    // Pastikan tampil
+    if (wrapperEl && indicatorEl.previousElementSibling !== wrapperEl) {
+      wrapperEl.insertAdjacentElement('afterend', indicatorEl);
+    }
     indicatorEl.style.display = 'flex';
   }
 
-  /** Pasang event click pada setiap <td> di tbody */
-  function attachCellListeners() {
-    if (!tbodyEl) return;
-
-    // Event delegation - lebih efisien
-    tbodyEl.addEventListener('click', function (e) {
-      const td = e.target.closest('td');
-      if (!td) return;
-
-      const tr = td.closest('tr');
-      if (!tr || tr.classList.contains('detail-row')) return;
-
-      // Jangan aktifkan jika klik pada tombol/link interaktif
-      const isInteractive =
-        e.target.closest('a') ||
-        e.target.closest('button') ||
-        e.target.closest('.btn') ||
-        e.target.closest('select') ||
-        e.target.closest('input');
-
-      if (isInteractive) return;
-
-      const rows = Array.from(tbodyEl.querySelectorAll('tr:not(.detail-row)'));
-      const cols = Array.from(tr.querySelectorAll('td'));
-
-      let rIdx = rows.indexOf(tr);
-      let cIdx = cols.indexOf(td);
-
-      if (rIdx < 0 || cIdx < 0) return;
-
-      setActiveCell(rIdx, cIdx);
-    });
-  }
-
-  /** Set active cell berdasarkan index baris & kolom */
-  function setActiveCell(rowIdx, colIdx) {
-    const rows = Array.from(tbodyEl.querySelectorAll('tr:not(.detail-row)'));
-    if (rowIdx < 0 || rowIdx >= rows.length) return;
-
-    const tr = rows[rowIdx];
-    const cols = Array.from(tr.querySelectorAll('td'));
-    if (colIdx < 0 || colIdx >= cols.length) return;
-
-    const td = cols[colIdx];
-
-    // Hapus highlight lama
-    clearHighlight();
-
-    // Set baru
-    activeCell = td;
-    activeRow  = rowIdx;
-    activeCol  = colIdx;
-
-    // Highlight row
-    tr.classList.add('acn-active-row');
-
-    // Highlight cell
-    td.classList.add('acn-active', 'acn-pulse');
-    td.addEventListener('animationend', () => td.classList.remove('acn-pulse'), { once: true });
-
-    // Highlight header kolom
-    if (theadEl) {
-      const thRow = theadEl.querySelector('tr');
-      if (thRow) {
-        const ths = Array.from(thRow.querySelectorAll('th'));
-        ths.forEach(th => th.classList.remove('acn-active-col'));
-        if (ths[colIdx]) ths[colIdx].classList.add('acn-active-col');
-      }
-    }
-
-    // Update indikator
-    updateIndicator(rowIdx, colIdx);
-
-    // Scroll ke cell agar terlihat
-    scrollCellIntoView(td);
-  }
-
-  /** Update teks pada indikator bawah */
-  function updateIndicator(rowIdx, colIdx) {
-    if (!indicatorEl) return;
-
-    // Label kolom: A, B, C, ... Z, AA, ...
-    const colLabel = colIndexToLetter(colIdx);
-    const rowLabel = rowIdx + 1;
-
-    const ref     = document.getElementById('acnCellRef');
-    const colName = document.getElementById('acnColName');
-
-    if (ref) ref.textContent = `${colLabel}${rowLabel}`;
-
-    // Ambil nama kolom dari header
-    if (colName && theadEl) {
-      const thRow = theadEl.querySelector('tr');
-      if (thRow) {
-        const ths = Array.from(thRow.querySelectorAll('th'));
-        colName.textContent = ths[colIdx]?.innerText?.trim() || '';
-      }
-    }
-
-    indicatorEl.classList.add('visible');
-  }
-
-  /** Hapus semua highlight */
-  function clearHighlight() {
-    // Cell lama
+  function clearHighlightOnly() {
     if (activeCell) {
       activeCell.classList.remove('acn-active', 'acn-pulse');
     }
 
-    // Row lama
-    tbodyEl.querySelectorAll('tr.acn-active-row').forEach(tr => tr.classList.remove('acn-active-row'));
+    if (tbodyEl) {
+      tbodyEl.querySelectorAll('tr.acn-active-row').forEach(tr => tr.classList.remove('acn-active-row'));
+    }
 
-    // Header lama
     if (theadEl) {
       theadEl.querySelectorAll('th.acn-active-col').forEach(th => th.classList.remove('acn-active-col'));
     }
@@ -320,95 +187,210 @@
     activeCell = null;
   }
 
-  /** Keyboard navigation */
-  function attachKeyboardListener() {
-    document.addEventListener('keydown', function (e) {
-      // Jangan aktifkan jika sedang mengetik di input/textarea/select
-      const tag = document.activeElement?.tagName?.toLowerCase();
-      if (['input', 'textarea', 'select'].includes(tag)) return;
-      // Jangan aktifkan jika inline edit sedang aktif (ada ie-editing)
-      if (document.querySelector('.ie-cell.ie-editing')) return;
-      // Jangan aktifkan jika ada modal terbuka
-      if (document.querySelector('.modal-overlay.show, .modal.show')) return;
-      // Jangan aktifkan jika belum ada cell aktif dan bukan Enter
-      if (!activeCell && e.key !== 'Enter') return;
+  function setActiveCell(rowIdx, colIdx, options = {}) {
+    const rows = getDataRows();
+    if (rows.length === 0) return false;
 
-      switch (e.key) {
+    const clampedRow = Math.max(0, Math.min(rowIdx, rows.length - 1));
+    const row = rows[clampedRow];
+    const cells = getCells(row);
+    if (cells.length === 0) return false;
+
+    const clampedCol = Math.max(0, Math.min(colIdx, cells.length - 1));
+    const cell = cells[clampedCol];
+
+    clearHighlightOnly();
+
+    activeCell = cell;
+    activeRow = clampedRow;
+    activeCol = clampedCol;
+    activeDocId = getDocId(row);
+
+    row.classList.add('acn-active-row');
+    cell.classList.add('acn-active');
+    if (!options.noPulse) {
+      cell.classList.add('acn-pulse');
+      cell.addEventListener('animationend', () => cell.classList.remove('acn-pulse'), { once: true });
+    }
+
+    if (theadEl) {
+      const headerRow = theadEl.querySelector('tr');
+      const headers = headerRow ? Array.from(headerRow.querySelectorAll('th')) : [];
+      headers.forEach(th => th.classList.remove('acn-active-col'));
+      if (headers[clampedCol]) headers[clampedCol].classList.add('acn-active-col');
+    }
+
+    updateIndicator(clampedRow, clampedCol);
+
+    if (!options.preventScroll) {
+      scrollCellIntoView(cell);
+    }
+
+    return true;
+  }
+
+  function autoSelectFirstCell(options = {}) {
+    const rows = getDataRows();
+    if (rows.length === 0) return false;
+
+    const cells = getCells(rows[0]);
+    if (cells.length === 0) return false;
+
+    const startCol = cells.length > 1 ? 1 : 0;
+    return setActiveCell(0, startCol, options);
+  }
+
+  function restoreActiveCell(options = {}) {
+    const rows = getDataRows();
+    if (rows.length === 0) {
+      clearHighlightOnly();
+      return false;
+    }
+
+    if (activeDocId) {
+      const rowByDoc = rows.find(row => getDocId(row) === activeDocId);
+      if (rowByDoc) {
+        return setActiveCell(rows.indexOf(rowByDoc), activeCol, options);
+      }
+    }
+
+    if (activeCell) {
+      return setActiveCell(activeRow, activeCol, options);
+    }
+
+    return autoSelectFirstCell(options);
+  }
+
+  function updateIndicator(rowIdx, colIdx) {
+    if (!indicatorEl) return;
+
+    const ref = document.getElementById('acnCellRef');
+    const colName = document.getElementById('acnColName');
+
+    if (ref) ref.textContent = `${colIndexToLetter(colIdx)}${rowIdx + 1}`;
+
+    if (colName && theadEl) {
+      const headerRow = theadEl.querySelector('tr');
+      const headers = headerRow ? Array.from(headerRow.querySelectorAll('th')) : [];
+      colName.textContent = headers[colIdx]?.innerText?.trim() || '';
+    }
+
+    indicatorEl.classList.add('visible');
+  }
+
+  function attachCellListeners() {
+    if (!tbodyEl || tbodyEl.dataset.acnBound === 'true') return;
+
+    tbodyEl.addEventListener('click', function (event) {
+      const td = event.target.closest('td');
+      if (!td) return;
+
+      const row = td.closest('tr');
+      if (!row || row.classList.contains('detail-row')) return;
+
+      const isInteractive = Boolean(
+        event.target.closest('a, button, .btn, select, input, textarea, [contenteditable="true"]')
+      );
+
+      if (isInteractive) return;
+
+      const rows = getDataRows();
+      const cells = getCells(row);
+      const rowIdx = rows.indexOf(row);
+      const colIdx = cells.indexOf(td);
+
+      if (rowIdx >= 0 && colIdx >= 0) {
+        setActiveCell(rowIdx, colIdx);
+      }
+    });
+
+    tbodyEl.dataset.acnBound = 'true';
+  }
+
+  function bindKeyboard() {
+    if (keyboardBound) return;
+
+    document.addEventListener('keydown', function (event) {
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      if (['input', 'textarea', 'select'].includes(activeTag)) return;
+      if (document.querySelector('.ie-cell.ie-editing, .modal-overlay.show, .modal.show, .swal2-container.swal2-shown')) return;
+
+      const navigationKeys = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Tab', 'Enter', 'Escape'];
+      if (!navigationKeys.includes(event.key)) return;
+
+      if (!activeCell || !document.body.contains(activeCell)) {
+        rebind({ restore: true, noPulse: true, preventScroll: true });
+      }
+
+      if (!activeCell && event.key !== 'Enter') {
+        autoSelectFirstCell();
+      }
+
+      switch (event.key) {
         case 'ArrowRight':
-          e.preventDefault();
-          moveCell(0, +1);
+          event.preventDefault();
+          moveCell(0, 1);
           break;
         case 'ArrowLeft':
-          e.preventDefault();
+          event.preventDefault();
           moveCell(0, -1);
           break;
         case 'ArrowDown':
-          e.preventDefault();
-          moveCell(+1, 0);
+          event.preventDefault();
+          moveCell(1, 0);
           break;
         case 'ArrowUp':
-          e.preventDefault();
+          event.preventDefault();
           moveCell(-1, 0);
           break;
+        case 'Tab':
+          event.preventDefault();
+          moveCell(0, event.shiftKey ? -1 : 1);
+          break;
         case 'Enter':
-          // Jika cell aktif adalah ie-cell (dapat diedit), Enter = masuk edit mode
           if (activeCell && activeCell.classList.contains('ie-cell')) {
-            e.preventDefault();
-            // Panggil inline edit engine jika sudah di-load
+            event.preventDefault();
             if (typeof window.ieActivateCell === 'function') {
               window.ieActivateCell(activeCell);
             } else {
-              // Fallback: simulasi klik jika inline edit engine belum load
               activeCell.click();
             }
           }
           break;
         case 'Escape':
-          clearHighlight();
-          if (indicatorEl) indicatorEl.classList.remove('visible');
-          activeCell = null;
-          activeRow  = 0;
-          activeCol  = 0;
-          break;
-        case 'Tab':
-          // Tab = gerak kanan, Shift+Tab = kiri (mirip Excel)
-          e.preventDefault();
-          moveCell(0, e.shiftKey ? -1 : +1);
+          event.preventDefault();
+          restoreActiveCell({ noPulse: true, preventScroll: true });
           break;
         default:
           break;
       }
     });
+
+    keyboardBound = true;
   }
 
-  /** Pindah cell secara relatif (deltaRow, deltaCol) */
   function moveCell(deltaRow, deltaCol) {
-    const rows = Array.from(tbodyEl.querySelectorAll('tr:not(.detail-row)'));
-    let newRow = activeRow + deltaRow;
-    let newCol = activeCol + deltaCol;
+    const rows = getDataRows();
+    if (rows.length === 0) return;
 
-    // Clamp row
-    if (newRow < 0) newRow = 0;
-    if (newRow >= rows.length) newRow = rows.length - 1;
+    let nextRow = activeRow + deltaRow;
+    nextRow = Math.max(0, Math.min(nextRow, rows.length - 1));
 
-    // Clamp col
-    const maxCols = rows[newRow]?.querySelectorAll('td').length || 1;
-    if (newCol < 0) newCol = 0;
-    if (newCol >= maxCols) newCol = maxCols - 1;
+    const maxCol = getCells(rows[nextRow]).length - 1;
+    let nextCol = activeCol + deltaCol;
+    nextCol = Math.max(0, Math.min(nextCol, maxCol));
 
-    setActiveCell(newRow, newCol);
+    setActiveCell(nextRow, nextCol);
   }
 
-  /** Scroll cell ke viewport */
-  function scrollCellIntoView(td) {
-    if (!td) return;
-    td.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  function scrollCellIntoView(cell) {
+    if (!cell) return;
+    cell.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
   }
 
-  /** Konversi index kolom ke label huruf (0→A, 1→B, 25→Z, 26→AA) */
-  function colIndexToLetter(idx) {
+  function colIndexToLetter(index) {
     let label = '';
-    let n = idx;
+    let n = index;
     do {
       label = String.fromCharCode(65 + (n % 26)) + label;
       n = Math.floor(n / 26) - 1;
@@ -416,19 +398,68 @@
     return label;
   }
 
-  // Init saat DOM siap
+  function setupObserver() {
+    const container = document.getElementById('documentTableContainer');
+    if (!container || observer) return;
+
+    observer = new MutationObserver(function () {
+      scheduleRebind();
+    });
+    observer.observe(container, { childList: true, subtree: true });
+  }
+
+  function scheduleRebind() {
+    clearTimeout(rebindTimer);
+    rebindTimer = setTimeout(function () {
+      rebind({ restore: true, noPulse: true, preventScroll: true });
+    }, 50);
+  }
+
+  function rebind(options = {}) {
+    tableEl = findTable();
+    if (!tableEl) return false;
+
+    tbodyEl = tableEl.querySelector('tbody');
+    theadEl = tableEl.querySelector('thead');
+    wrapperEl = tableEl.closest('.table-wrapper, .table-responsive') || tableEl.parentElement;
+
+    createIndicator();
+    attachCellListeners();
+    bindKeyboard();
+
+    if (options.restore) {
+      return restoreActiveCell(options);
+    }
+
+    return activeCell && document.body.contains(activeCell)
+      ? restoreActiveCell({ noPulse: true, preventScroll: true })
+      : autoSelectFirstCell({ noPulse: true, preventScroll: true });
+  }
+
+  function init() {
+    if (!rebind({ restore: true, noPulse: true, preventScroll: true })) return;
+    setupObserver();
+  }
+
+  function handleExternalRebind() {
+    rebind({ restore: true, noPulse: true, preventScroll: true });
+  }
+
+  document.addEventListener(REBIND_EVENT, handleExternalRebind);
+  window.addEventListener(REBIND_EVENT, handleExternalRebind);
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', init, { once: true });
   } else {
     init();
   }
 
-  // Expose untuk keperluan lain
   window.acnSetActive = setActiveCell;
-  window.acnClear     = function () {
-    clearHighlight();
-    if (indicatorEl) indicatorEl.classList.remove('visible');
+  window.acnRefresh = function () {
+    return rebind({ restore: true, noPulse: true, preventScroll: true });
   };
-
+  window.acnClear = function () {
+    restoreActiveCell({ noPulse: true, preventScroll: true });
+  };
 })();
 </script>

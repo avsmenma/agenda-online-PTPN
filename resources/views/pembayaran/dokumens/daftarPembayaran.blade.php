@@ -2229,8 +2229,9 @@ if (searchInput) {
 }
 </script>
 
-@endsection
+@include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
+@endsection
 
 
 

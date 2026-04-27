@@ -7095,6 +7095,8 @@
                       container.innerHTML = newTable.innerHTML;
                       requestAnimationFrame(() => {
                         restoreRefreshPosition(container, position);
+                        window.dispatchEvent(new CustomEvent('document-table-refreshed'));
+                        if (typeof window.acnRefresh === 'function') window.acnRefresh();
                         requestAnimationFrame(() => restoreRefreshPosition(container, position));
                       });
                       if (!isSilent) showRefreshToast('success', 'Data berhasil diperbarui!');
@@ -7125,5 +7127,6 @@
               </script>
 
 @include('partials._inlineEditEngine')
+@include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 @include('partials.auto-refresh-documents')
 @endsection
