@@ -3304,6 +3304,7 @@
             @endforeach
             <th class="col-deadline">Deadline</th>
             <th class="col-status">Status</th>
+            <th class="col-handler">Pengurus Dokumen</th>
             <th class="col-action">Aksi</th>
           </tr>
         </thead>
@@ -3809,6 +3810,9 @@
                   <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
                 @endif
               </td>
+              <td class="col-handler" onclick="event.stopPropagation()">
+                @include('partials.document-handler-select', ['dokumen' => $dokumen])
+              </td>
               <td class="col-action" onclick="event.stopPropagation()">
                 @if(!$dokumen->is_at_my_role)
                   {{-- Cross-role visibility: document not yet at Akutansi --}}
@@ -3885,7 +3889,7 @@
               </td>
             </tr>
             <tr class="detail-row" id="detail-{{ $dokumen->id }}">
-              <td colspan="{{ count($selectedColumns) + 4 }}">
+              <td colspan="{{ count($selectedColumns) + 5 }}">
                 <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
                   <div class="text-center p-4">
                     <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
@@ -3895,7 +3899,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="{{ count($selectedColumns) + 4 }}" class="text-center py-5">
+              <td colspan="{{ count($selectedColumns) + 5 }}" class="text-center py-5">
                 <i class="fa-solid fa-inbox fa-3x text-muted mb-3"></i>
                 <p class="text-muted">Tidak ada data dokumen yang tersedia.</p>
               </td>
@@ -7068,7 +7072,6 @@
 
 @include('partials._inlineEditEngine')
 @endsection
-
 
 
 

@@ -577,6 +577,7 @@
               <th>Tanggal Masuk</th>
               <th>Nilai Rupiah</th>
               <th>Status</th>
+              <th>Pengurus Dokumen</th>
               <th>Aksi</th>
             </tr>
           </thead>
@@ -593,6 +594,9 @@
                 <td>{{ $dokumen->tanggal_masuk->format('d/m/Y H:i') }}</td>
                 <td>
                   <strong>{{ $dokumen->formatted_nilai_rupiah }}</strong>
+                </td>
+                <td onclick="event.stopPropagation()">
+                  @include('partials.document-handler-select', ['dokumen' => $dokumen])
                 </td>
                 <td>
                   @php
@@ -685,7 +689,7 @@
               </tr>
             @empty
               <tr>
-                <td colspan="7" class="text-center py-4">
+                <td colspan="8" class="text-center py-4">
                   <i class="fa-solid fa-inbox fa-2x text-muted mb-2"></i>
                   <p class="text-muted mb-0">Belum ada dokumen yang tersedia.</p>
                 </td>

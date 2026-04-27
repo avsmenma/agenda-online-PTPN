@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardAkutansiController;
 use App\Http\Controllers\DashboardPerpajakanController;
 use App\Http\Controllers\PengembalianDokumenController;
 use App\Http\Controllers\DokumenRekapanController;
+use App\Http\Controllers\DocumentHandlerController;
 use App\Http\Controllers\AutocompleteController;
 use App\Http\Controllers\WelcomeMessageController;
 use App\Http\Controllers\Auth\LoginController;
@@ -331,6 +332,13 @@ Route::middleware(['auth', 'role:admin,operator,team_verifikasi,verifikasi,perpa
     ->prefix('documents')->name('documents.')
     ->group(function () {
         Route::patch('/{dokumen}/inline-update', [DokumenController::class, 'inlineUpdate'])->name('inline-update');
+    });
+
+// Pengurus Dokumen dropdown - available for all operational roles, guarded in controller.
+Route::middleware(['auth'])
+    ->prefix('documents')->name('documents.')
+    ->group(function () {
+        Route::patch('/{dokumen}/handler', [DocumentHandlerController::class, 'update'])->name('handler.update');
     });
 
 
@@ -849,4 +857,3 @@ Route::middleware(['auth', 'role:owner,admin'])
         Route::get('/chart-data', [\App\Http\Controllers\CashBankPimpinanController::class, 'chartData'])
             ->name('chart');
     });
-

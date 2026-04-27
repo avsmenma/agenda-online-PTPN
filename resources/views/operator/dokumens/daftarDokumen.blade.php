@@ -2809,6 +2809,7 @@
                 <th class="col-{{ $col }}">{{ $availableColumns[$col] }}</th>
               @endif
             @endforeach
+            <th class="col-handler">Pengurus Dokumen</th>
             <th class="col-action">Aksi</th>
           </tr>
         </thead>
@@ -3151,6 +3152,9 @@
                    @endif
                  </td>
                @endforeach
+               <td class="col-handler" onclick="event.stopPropagation()">
+                @include('partials.document-handler-select', ['dokumen' => $dokumen])
+               </td>
                <td class="col-action" onclick="event.stopPropagation()">
                 <div class="action-buttons">
                   @php
@@ -3309,7 +3313,7 @@
                   return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);
                 });
               @endphp
-              <td colspan="{{ count($filteredColumns) + 2 }}">
+              <td colspan="{{ count($filteredColumns) + 3 }}">
                 <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
                   <div class="loading-spinner">
                     <i class="fa-solid fa-spinner fa-spin"></i>
@@ -3325,7 +3329,7 @@
               });
             @endphp
             <tr>
-              <td colspan="{{ count($filteredColumns) + 2 }}" class="text-center py-4">
+              <td colspan="{{ count($filteredColumns) + 3 }}" class="text-center py-4">
                 <i class="fa-solid fa-inbox fa-3x text-muted mb-3"></i>
                 <p class="text-muted">Tidak ada data dokumen yang tersedia.</p>
                 <a href="{{ route('documents.create') }}" class="btn btn-primary">
@@ -6861,7 +6865,6 @@
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
 @endsection
-
 
 
 

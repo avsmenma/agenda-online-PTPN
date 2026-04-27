@@ -205,6 +205,10 @@
       </td>
     @endforeach
 
+    <td class="col-handler" onclick="event.stopPropagation()">
+      @include('partials.document-handler-select', ['dokumen' => $dokumen])
+    </td>
+
     <td class="col-action" onclick="event.stopPropagation()">
       <div class="action-buttons">
         @php
@@ -243,7 +247,7 @@
     @php
       $fcAjax = array_filter($selectedColumns, fn($c) => $c !== 'nomor_mirror' && $c !== 'keterangan' && isset($availableColumns[$c]));
     @endphp
-    <td colspan="{{ count($fcAjax) + 2 }}">
+    <td colspan="{{ count($fcAjax) + 3 }}">
       <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
         <div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> <span>Memuat detail dokumen...</span></div>
       </div>

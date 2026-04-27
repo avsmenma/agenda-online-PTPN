@@ -1395,6 +1395,7 @@
             @endif
           @endforeach
           <th class="col-status">Status</th>
+          <th class="col-handler">Pengurus Dokumen</th>
           <th class="col-action">Aksi</th>
         </tr>
       </thead>
@@ -1654,6 +1655,9 @@
               @endswitch
             @endif
           </td>
+          <td class="col-handler" onclick="if(event) { event.stopPropagation(); }">
+            @include('partials.document-handler-select', ['dokumen' => $dokumen])
+          </td>
           <td class="col-action" onclick="if(event) { event.stopPropagation(); }">
             <div class="action-buttons">
               @if($paymentStatus === 'belum_siap_bayar')
@@ -1693,7 +1697,7 @@
         </tr>
       @empty
         <tr>
-          <td colspan="{{ count($selectedColumns) + 3 }}" class="text-center text-muted py-5">
+          <td colspan="{{ count($selectedColumns) + 4 }}" class="text-center text-muted py-5">
             <i class="fa-solid fa-inbox fa-3x mb-3"></i>
             <h5>Belum ada dokumen pembayaran</h5>
             <p class="mb-0">Dokumen yang telah dikirim ke pembayaran akan muncul di sini.</p>
@@ -4194,7 +4198,6 @@ document.addEventListener('DOMContentLoaded', function() {
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
 @endsection
-
 
 
 

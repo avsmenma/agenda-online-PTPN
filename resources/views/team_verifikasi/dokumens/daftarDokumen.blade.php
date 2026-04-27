@@ -4170,6 +4170,7 @@
             @endforeach
             <th class="col-deadline">Deadline</th>
             <th class="col-status">Status</th>
+            <th class="col-handler">Pengurus Dokumen</th>
             <th class="col-action">Aksi</th>
           </tr>
         </thead>
@@ -4744,6 +4745,9 @@
                   <span class="badge-status badge-proses">⏳ {{ ucfirst($dokumen->status) }}</span>
                 @endif
               </td>
+              <td class="col-handler" onclick="event.stopPropagation()">
+                @include('partials.document-handler-select', ['dokumen' => $dokumen])
+              </td>
               <td class="col-action" onclick="event.stopPropagation()">
                 @if(!$dokumen->is_at_my_role)
                   {{-- Cross-role visibility: document not yet at Team Verifikasi --}}
@@ -4879,7 +4883,7 @@
                 </tr>
           @empty
               <tr>
-                <td colspan="{{ count($selectedColumns) + 3 }}" class="text-center" style="padding: 40px;">
+                <td colspan="{{ count($selectedColumns) + 4 }}" class="text-center" style="padding: 40px;">
                   <i class="fa-solid fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 16px;"></i>
                   <p style="color: #999; font-size: 14px;">Belum ada dokumen</p>
                 </td>
@@ -8953,7 +8957,6 @@
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
 @endsection
-
 
 
 

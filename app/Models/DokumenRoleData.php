@@ -21,6 +21,7 @@ class DokumenRoleData extends Model
         'deadline_days',
         'deadline_note',
         'role_specific_data',
+        'display_status',
     ];
 
     protected $casts = [
@@ -113,7 +114,6 @@ class DokumenRoleData extends Model
         return $this;
     }
 }
-
 
 
 

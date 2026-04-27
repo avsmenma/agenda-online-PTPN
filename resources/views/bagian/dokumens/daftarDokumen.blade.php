@@ -1082,6 +1082,7 @@
                 @foreach($selectedColumns as $col)
                   <th>{{ $availableColumns[$col] ?? $col }}</th>
                 @endforeach
+                <th>Pengurus Dokumen</th>
                 <th>Aksi</th>
               </tr>
             </thead>
@@ -1349,6 +1350,9 @@
                           </td>
                           @endif {{-- end @if(in_array...) / @else non-editable --}}
                         @endforeach
+                        <td onclick="event.stopPropagation()">
+                          @include('partials.document-handler-select', ['dokumen' => $doc])
+                        </td>
                         <td onclick="event.stopPropagation()">
                           <div class="action-buttons">
                             @if($statusLower == 'belum dikirim' || $statusLower == 'returned_to_bidang')
