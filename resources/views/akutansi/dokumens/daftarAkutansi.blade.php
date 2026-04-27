@@ -7055,10 +7055,11 @@
         window.scrollTo(position.windowX, position.windowY);
       }
 
-      function refreshDocumentTable() {
+      function refreshDocumentTable(options = {}) {
+        const isSilent = Boolean(options.silent);
         const btn = document.getElementById('btnRefreshTable');
         const container = document.getElementById('documentTableContainer');
-        if (!btn || !container) return Promise.resolve();
+        if (!btn || !container) return Promise.resolve(false);
         const position = captureRefreshPosition(container);
         btn.classList.add('loading');
         btn.disabled = true;
@@ -7079,14 +7080,17 @@
               restoreRefreshPosition(container, position);
               requestAnimationFrame(() => restoreRefreshPosition(container, position));
             });
-            showRefreshToast('success', 'Data berhasil diperbarui!');
+            if (!isSilent) showRefreshToast('success', 'Data berhasil diperbarui!');
+            return true;
           } else {
-            showRefreshToast('error', 'Gagal memperbarui data.');
+            if (!isSilent) showRefreshToast('error', 'Gagal memperbarui data.');
+            return false;
           }
         })
         .catch(error => {
           console.error('Refresh error:', error);
-          showRefreshToast('error', 'Gagal memperbarui data. Coba lagi.');
+          if (!isSilent) showRefreshToast('error', 'Gagal memperbarui data. Coba lagi.');
+          return false;
         })
         .finally(() => {
           btn.classList.remove('loading');
@@ -7104,6 +7108,6 @@
     </script>
 
 @include('partials._inlineEditEngine')
+@include('partials.auto-refresh-documents')
 @endsection
-
 

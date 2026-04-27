@@ -8791,14 +8791,15 @@
                       window.scrollTo(position.windowX, position.windowY);
                     }
 
-                    function refreshDocumentTable() {
+                    function refreshDocumentTable(options = {}) {
+                      const isSilent = Boolean(options.silent);
                       const btn = document.getElementById('btnRefreshTable');
                       const container = document.getElementById('documentTableContainer');
-                      if (!btn || !container) return;
+                      if (!btn || !container) return Promise.resolve(false);
                       const position = captureRefreshPosition(container);
                       btn.classList.add('loading');
                       btn.disabled = true;
-                      fetch(window.location.href, {
+                      return fetch(window.location.href, {
                         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
                       })
                       .then(response => {
@@ -8815,14 +8816,17 @@
                             restoreRefreshPosition(container, position);
                             requestAnimationFrame(() => restoreRefreshPosition(container, position));
                           });
-                          showRefreshToast('success', 'Data berhasil diperbarui!');
+                          if (!isSilent) showRefreshToast('success', 'Data berhasil diperbarui!');
+                          return true;
                         } else {
-                          showRefreshToast('error', 'Gagal memperbarui data.');
+                          if (!isSilent) showRefreshToast('error', 'Gagal memperbarui data.');
+                          return false;
                         }
                       })
                       .catch(error => {
                         console.error('Refresh error:', error);
-                        showRefreshToast('error', 'Gagal memperbarui data. Coba lagi.');
+                        if (!isSilent) showRefreshToast('error', 'Gagal memperbarui data. Coba lagi.');
+                        return false;
                       })
                       .finally(() => {
                         btn.classList.remove('loading');
@@ -8999,7 +9003,7 @@
 
 {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
+@include('partials.auto-refresh-documents')
 
 @endsection
-
 
