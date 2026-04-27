@@ -91,6 +91,64 @@
   </style>
 
   <script>
+    const documentHandlerPositionKey = `document-handler-position:${window.location.pathname}${window.location.search}`;
+
+    function getDocumentHandlerScrollBox(select) {
+      return select?.closest('.table-responsive')
+        || document.querySelector('#documentTableContainer .table-responsive')
+        || document.querySelector('.table-responsive');
+    }
+
+    function saveDocumentHandlerPosition(select) {
+      const scrollBox = getDocumentHandlerScrollBox(select);
+      sessionStorage.setItem(documentHandlerPositionKey, JSON.stringify({
+        windowX: window.scrollX,
+        windowY: window.scrollY,
+        tableLeft: scrollBox ? scrollBox.scrollLeft : 0,
+        tableTop: scrollBox ? scrollBox.scrollTop : 0,
+        documentId: select?.dataset.documentId || null,
+      }));
+    }
+
+    function restoreDocumentHandlerPosition() {
+      const storedPosition = sessionStorage.getItem(documentHandlerPositionKey);
+      if (!storedPosition) return;
+
+      sessionStorage.removeItem(documentHandlerPositionKey);
+
+      let position;
+      try {
+        position = JSON.parse(storedPosition);
+      } catch (error) {
+        return;
+      }
+
+      const applyPosition = () => {
+        const select = position.documentId
+          ? document.querySelector(`.document-handler-select[data-document-id="${position.documentId}"]`)
+          : null;
+        const scrollBox = getDocumentHandlerScrollBox(select);
+
+        if (scrollBox) {
+          scrollBox.scrollLeft = position.tableLeft || 0;
+          scrollBox.scrollTop = position.tableTop || 0;
+        }
+
+        window.scrollTo(position.windowX || 0, position.windowY || 0);
+      };
+
+      requestAnimationFrame(() => {
+        applyPosition();
+        requestAnimationFrame(applyPosition);
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', restoreDocumentHandlerPosition, { once: true });
+    } else {
+      restoreDocumentHandlerPosition();
+    }
+
     document.addEventListener('change', async function (event) {
       const select = event.target.closest('.document-handler-select');
       if (!select) return;
@@ -126,6 +184,7 @@
         }
 
         select.dataset.originalValue = nextValue;
+        saveDocumentHandlerPosition(select);
 
         if (window.Swal) {
           Swal.fire({
