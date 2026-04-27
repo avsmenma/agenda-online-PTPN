@@ -4467,12 +4467,13 @@
                   $roleData = $dokumen->getDataForRole('team_verifikasi');
                   $receivedAt = $roleData?->received_at;
 
-                  // Check if document is returned away from Team Verifikasi (deadline should be paused)
+                  // Pause only when the document leaves Team Verifikasi.
+                  // If another role returns it to Team Verifikasi, the timer must continue.
                   $isReturnedToVerifikasi = $dokumen->status === 'returned_to_verifikasi';
                   $isReturnedAwayFromVerifikasi = in_array($dokumen->status, ['returned_to_operator', 'returned_to_bidang'])
                     || $dokumen->current_handler === 'operator'
                     || str_starts_with((string) $dokumen->current_handler, 'bagian_');
-                  $isPaused = $isReturnedToVerifikasi || $isReturnedAwayFromVerifikasi;
+                  $isPaused = $isReturnedAwayFromVerifikasi;
 
                   // Check if document is already sent to other roles (including waiting approval statuses)
                   $isSent = in_array($dokumen->status, [
@@ -9000,6 +9001,5 @@
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
 @endsection
-
 
 
