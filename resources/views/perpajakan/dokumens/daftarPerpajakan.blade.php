@@ -3676,9 +3676,50 @@
                     @elseif($col == 'kepala_sub_bagian')
                       {{ $dokumen->kepala_sub_bagian ?? '-' }}
                     @elseif($col == 'status_dokumen_custom')
-                      @if($dokumen->status_dokumen_csv)
-                        <span class="badge-status {{ $dokumen->status_dokumen_csv == 'Selesai Dibayar' ? 'badge-selesai' : ($dokumen->status_dokumen_csv == 'Dikembalikan' ? 'badge-dikembalikan' : 'badge-proses') }}" style="font-size: 10px; padding: 4px 8px;">
-                          {{ $dokumen->status_dokumen_csv }}
+                      @php
+                        $workflowStatusLabel = null;
+                        $workflowStatusClass = 'badge-proses';
+
+                        if ($isRejected) {
+                          $workflowStatusLabel = 'Ditolak / Dikembalikan';
+                          $workflowStatusClass = 'badge-dikembalikan';
+                        } elseif ($isPendingDownstream) {
+                          $workflowStatusLabel = 'Menunggu Approval dari ' . $pendingDownstreamTeam;
+                          $workflowStatusClass = 'badge-warning';
+                        } elseif ($sentToTeamFromPerpajakan) {
+                          $workflowStatusLabel = 'Terkirim ke ' . $sentToTeamFromPerpajakan;
+                          $workflowStatusClass = 'badge-sent';
+                        } elseif ($dokumen->status == 'sent_to_akutansi' && !$akutansiIsPending) {
+                          $workflowStatusLabel = 'Terkirim ke Team Akutansi';
+                          $workflowStatusClass = 'badge-sent';
+                        } elseif ($dokumen->status == 'sent_to_pembayaran' && !$pembayaranIsPending) {
+                          $workflowStatusLabel = 'Terkirim ke Team Pembayaran';
+                          $workflowStatusClass = 'badge-sent';
+                        } elseif ($dokumen->status == 'pending_approval_perpajakan') {
+                          $workflowStatusLabel = 'Menunggu Approval Perpajakan';
+                          $workflowStatusClass = 'badge-warning';
+                        } elseif ($dokumen->status == 'sent_to_perpajakan' && $dokumen->current_handler == 'perpajakan') {
+                          $workflowStatusLabel = 'Diproses Team Perpajakan';
+                          $workflowStatusClass = 'badge-proses';
+                        } elseif ($dokumen->status == 'returned_to_verifikasi') {
+                          $workflowStatusLabel = 'Dikembalikan ke Verifikasi';
+                          $workflowStatusClass = 'badge-dikembalikan';
+                        } elseif ($dokumen->status == 'sedang diproses') {
+                          $workflowStatusLabel = 'Sedang Diproses';
+                          $workflowStatusClass = 'badge-proses';
+                        } elseif (in_array($dokumen->status, ['completed', 'selesai']) || $dokumen->status_pembayaran === 'sudah_dibayar') {
+                          $workflowStatusLabel = 'Selesai Dibayar';
+                          $workflowStatusClass = 'badge-selesai';
+                        }
+
+                        $displayStatusDokumen = $workflowStatusLabel ?: $dokumen->status_dokumen_csv;
+                        $displayStatusClass = $workflowStatusLabel
+                          ? $workflowStatusClass
+                          : ($dokumen->status_dokumen_csv == 'Selesai Dibayar' ? 'badge-selesai' : ($dokumen->status_dokumen_csv == 'Dikembalikan' ? 'badge-dikembalikan' : 'badge-proses'));
+                      @endphp
+                      @if($displayStatusDokumen)
+                        <span class="badge-status {{ $displayStatusClass }}" style="font-size: 10px; padding: 4px 8px;">
+                          {{ $displayStatusDokumen }}
                         </span>
                       @else
                         -
@@ -7045,7 +7086,6 @@
 
 @include('partials._inlineEditEngine')
 @endsection
-
 
 
 
