@@ -4136,7 +4136,9 @@
     </div>
 
     <div class="table-responsive" style="overflow-x:auto;">
-      @php($showActionColumn = false)
+      @php
+        $showActionColumn = false;
+      @endphp
       <table class="table table-enhanced mb-0">
         <thead>
           <tr>

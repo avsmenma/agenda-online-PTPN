@@ -3359,7 +3359,9 @@
       </div>
     </div>
     <div class="table-responsive">
-      @php($showActionColumn = false)
+      @php
+        $showActionColumn = false;
+      @endphp
       <table class="table table-enhanced mb-0">
         <thead style="background: linear-gradient(135deg, #083E40 0%, #0d5254 100%); color: white;">
           <tr>
