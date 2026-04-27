@@ -92,6 +92,11 @@
 
   <script>
     const documentHandlerPositionKey = `document-handler-position:${window.location.pathname}${window.location.search}`;
+    let pendingDocumentHandlerSelect = null;
+
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
 
     function getDocumentHandlerScrollBox(select) {
       return select?.closest('.table-responsive')
@@ -100,6 +105,9 @@
     }
 
     function saveDocumentHandlerPosition(select) {
+      if (!select) return;
+
+      pendingDocumentHandlerSelect = select;
       const scrollBox = getDocumentHandlerScrollBox(select);
       sessionStorage.setItem(documentHandlerPositionKey, JSON.stringify({
         windowX: window.scrollX,
@@ -108,6 +116,18 @@
         tableTop: scrollBox ? scrollBox.scrollTop : 0,
         documentId: select?.dataset.documentId || null,
       }));
+    }
+
+    function reloadDocumentHandlerView(select) {
+      saveDocumentHandlerPosition(select);
+
+      if (typeof window.refreshDocumentTable === 'function') {
+        window.refreshDocumentTable();
+        restoreDocumentHandlerPosition();
+        return;
+      }
+
+      window.location.reload();
     }
 
     function restoreDocumentHandlerPosition() {
@@ -141,6 +161,8 @@
         applyPosition();
         requestAnimationFrame(applyPosition);
       });
+
+      [50, 150, 300, 600].forEach((delay) => setTimeout(applyPosition, delay));
     }
 
     if (document.readyState === 'loading') {
@@ -193,9 +215,9 @@
             text: result.message || 'Pengurus dokumen berhasil diubah.',
             timer: 1300,
             showConfirmButton: false,
-          }).then(() => window.location.reload());
+          }).then(() => reloadDocumentHandlerView(select));
         } else {
-          window.location.reload();
+          reloadDocumentHandlerView(select);
         }
       } catch (error) {
         select.value = previousValue;
@@ -204,5 +226,11 @@
         select.classList.remove('is-saving');
       }
     }, true);
+
+    window.addEventListener('beforeunload', function () {
+      if (pendingDocumentHandlerSelect) {
+        saveDocumentHandlerPosition(pendingDocumentHandlerSelect);
+      }
+    });
   </script>
 @endonce
