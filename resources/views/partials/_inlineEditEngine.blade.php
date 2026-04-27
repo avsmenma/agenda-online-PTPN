@@ -300,6 +300,7 @@
         const display = data.display_value ?? newValue ?? '-';
         cell.dataset.raw = data.raw_value ?? newValue;
         cell.innerHTML   = display || '-';
+        syncRowInlineValue(cell, field, data.raw_value ?? newValue);
         cell.classList.add('ie-saved');
         setTimeout(() => cell.classList.remove('ie-saved'), 700);
       } else {
@@ -322,14 +323,100 @@
     });
   }
 
-  function buildSelect(field, currentVal) {
+  function normalizeInlineValue(value) {
+    return String(value ?? '').trim().toLowerCase();
+  }
+
+  function getObjectValue(obj, keys) {
+    if (!obj) return '';
+    for (const key of keys) {
+      if (obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== '') {
+        return obj[key];
+      }
+    }
+    return '';
+  }
+
+  function inlineValuesEqual(left, right) {
+    return normalizeInlineValue(left) === normalizeInlineValue(right);
+  }
+
+  function findOptionByValue(list, labelKeys, value) {
+    const needle = normalizeInlineValue(value);
+    if (!needle) return null;
+    return list.find(item => labelKeys.some(key => normalizeInlineValue(item[key]) === needle)) || null;
+  }
+
+  function getRowFieldValue(cell, fieldName) {
+    const row = cell?.closest('tr');
+    if (!row) return '';
+
+    const rowDatasetKey = {
+      kategori: 'kategori',
+      jenis_dokumen: 'jenisDokumen',
+      jenis_sub_pekerjaan: 'jenisSubPekerjaan',
+    }[fieldName];
+
+    if (rowDatasetKey && row.dataset[rowDatasetKey] !== undefined) {
+      return row.dataset[rowDatasetKey] || '';
+    }
+
+    const fieldCell = row.querySelector(`td[data-field="${fieldName}"]`);
+    if (fieldCell) {
+      return fieldCell.dataset.raw ?? fieldCell.textContent.trim();
+    }
+
+    return '';
+  }
+
+  function filterSubOptions(cell) {
+    const kategoriValue = getRowFieldValue(cell, 'kategori');
+    if (!normalizeInlineValue(kategoriValue)) return IE_SUB;
+
+    const kategori = findOptionByValue(IE_KATEGORI, ['nama_kriteria', 'id'], kategoriValue);
+    const kategoriId = getObjectValue(kategori, ['id', 'id_kategori_kriteria']) || kategoriValue;
+
+    return IE_SUB.filter(sub => {
+      const parent = getObjectValue(sub, ['id_kategori_kriteria', 'kategori_id', 'id_kategori', 'kategori']);
+      if (!normalizeInlineValue(parent)) return false;
+      return inlineValuesEqual(parent, kategoriId) || inlineValuesEqual(parent, kategoriValue);
+    });
+  }
+
+  function filterItemOptions(cell) {
+    const subValue = getRowFieldValue(cell, 'jenis_dokumen');
+    if (!normalizeInlineValue(subValue)) return IE_ITEM;
+
+    const scopedSub = filterSubOptions(cell).find(sub =>
+      inlineValuesEqual(sub.nama_sub_kriteria, subValue) || inlineValuesEqual(sub.id, subValue)
+    );
+    const sub = scopedSub || findOptionByValue(IE_SUB, ['nama_sub_kriteria', 'id'], subValue);
+    const subId = getObjectValue(sub, ['id', 'id_sub_kriteria']) || subValue;
+
+    return IE_ITEM.filter(item => {
+      const parent = getObjectValue(item, ['id_sub_kriteria', 'sub_kriteria_id', 'id_sub']);
+      if (!normalizeInlineValue(parent)) return false;
+      return inlineValuesEqual(parent, subId) || inlineValuesEqual(parent, subValue);
+    });
+  }
+
+  function syncRowInlineValue(cell, field, value) {
+    const row = cell?.closest('tr');
+    if (!row) return;
+
+    if (field === 'kategori') row.dataset.kategori = value ?? '';
+    if (field === 'jenis_dokumen') row.dataset.jenisDokumen = value ?? '';
+    if (field === 'jenis_sub_pekerjaan') row.dataset.jenisSubPekerjaan = value ?? '';
+  }
+
+  function buildSelect(field, currentVal, cell) {
     const sel = document.createElement('select');
     sel.className = 'ie-input ie-select-input';
     sel.dataset.inlineSelect = 'true';
     let options = [];
     if      (field === 'select_kategori') options = IE_KATEGORI.map(k => ({ value: k.nama_kriteria,        label: k.nama_kriteria }));
-    else if (field === 'select_sub')      options = IE_SUB.map(k      => ({ value: k.nama_sub_kriteria,    label: k.nama_sub_kriteria }));
-    else if (field === 'select_item')     options = IE_ITEM.map(k     => ({ value: k.nama_item_sub_kriteria, label: k.nama_item_sub_kriteria }));
+    else if (field === 'select_sub')      options = filterSubOptions(cell).map(k => ({ value: k.nama_sub_kriteria, label: k.nama_sub_kriteria }));
+    else if (field === 'select_item')     options = filterItemOptions(cell).map(k => ({ value: k.nama_item_sub_kriteria, label: k.nama_item_sub_kriteria }));
     else if (field === 'select_jenis')    options = IE_JENIS_BAYAR.map(k => ({ value: k.nama_jenis_pembayaran, label: k.nama_jenis_pembayaran }));
     else if (field === 'select_bulan')    options = BULAN_LIST.map(b  => ({ value: b, label: b }));
     const empty = document.createElement('option');
@@ -372,13 +459,13 @@
     delete selectEl.dataset.inlineListbox;
   }
 
-  function createInput(fieldType, rawValue, fieldName) {
+  function createInput(fieldType, rawValue, fieldName, cell) {
     let el;
     if (fieldType === 'textarea') {
       el = document.createElement('textarea');
       el.className = 'ie-input ie-textarea'; el.value = rawValue ?? ''; el.rows = 3;
     } else if (fieldType.startsWith('select_')) {
-      el = buildSelect(fieldType, rawValue ?? '');
+      el = buildSelect(fieldType, rawValue ?? '', cell);
     } else if (fieldType === 'date') {
       el = document.createElement('input');
       el.type = 'date'; el.className = 'ie-input'; el.value = rawValue ?? '';
@@ -428,7 +515,7 @@
     cell.dataset.originalHtml = cell.innerHTML;
     cell.dataset.originalRaw  = rawValue;
     activeCell  = cell;
-    activeInput = createInput(fieldType, rawValue, field);
+    activeInput = createInput(fieldType, rawValue, field, cell);
     cell.classList.add('ie-editing');
     cell.innerHTML = '';
     cell.appendChild(activeInput);
@@ -514,6 +601,7 @@
         const display = data.display_value ?? newValue ?? '-';
         cell.dataset.raw = data.raw_value ?? newValue;
         cell.innerHTML   = display || '-';
+        syncRowInlineValue(cell, field, data.raw_value ?? newValue);
         cell.classList.add('ie-saved');
         setTimeout(() => cell.classList.remove('ie-saved'), 700);
       } else {

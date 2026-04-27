@@ -4319,6 +4319,9 @@
             <tr class="main-row document-row {{ $rowClass }}" data-id="{{ $dokumen->id }}"
               data-editable="{{ $canInlineEdit ? 'true' : 'false' }}"
               data-dokumen-id="{{ $dokumen->id }}"
+              data-kategori="{{ $dokumen->kategori ?? '' }}"
+              data-jenis-dokumen="{{ $dokumen->jenis_dokumen ?? '' }}"
+              data-jenis-sub-pekerjaan="{{ $dokumen->jenis_sub_pekerjaan ?? '' }}"
               ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
               {{-- Checkbox Column --}}
               <td class="col-checkbox text-center">

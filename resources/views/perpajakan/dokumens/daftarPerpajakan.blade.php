@@ -3557,6 +3557,9 @@
             <tr class="main-row clickable-row {{ $isLocked ? 'locked-row' : '' }}"
               data-editable="{{ $canInlineEdit ? 'true' : 'false' }}"
               data-dokumen-id="{{ $dokumen->id }}"
+              data-kategori="{{ $dokumen->kategori ?? '' }}"
+              data-jenis-dokumen="{{ $dokumen->jenis_dokumen ?? '' }}"
+              data-jenis-sub-pekerjaan="{{ $dokumen->jenis_sub_pekerjaan ?? '' }}"
               ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
               <td class="col-checkbox" onclick="event.stopPropagation();">
                 @if($canSend && !$isSentToAkutansi && !$isSentToPembayaran && !$isPendingApprovalAkutansi && !$isPendingApprovalPembayaran)
