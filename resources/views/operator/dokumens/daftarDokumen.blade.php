@@ -2970,7 +2970,9 @@
 
                       // OVERRIDE: Jika ditolak oleh team verifikasi, selalu tampilkan status ditolak
                       // (override display_status yang mungkin masih menunjuk ke 'menunggu_approval_verifikasi')
-                      if ($isRejectedByTeamVerifikasi) {
+                      if (strtolower($dokumen->status ?? '') === 'returned_to_operator') {
+                        $OperatorDisplayStatus = 'dikembalikan';
+                      } elseif ($isRejectedByTeamVerifikasi) {
                         $OperatorDisplayStatus = 'ditolak_verifikasi';
                       }
                       // Fallback logic jika display_status belum diset
@@ -3024,6 +3026,7 @@
                         'draft' => 'Belum Dikirim',
                         'menunggu_approval_verifikasi' => 'Menunggu Approve Team Verifikasi',
                         'ditolak_verifikasi' => 'Dokumen Ditolak oleh Team Verifikasi',
+                        'dikembalikan' => 'Dikembalikan',
                         'terkirim', 'terkirim_verifikasi', 'terkirim_perpajakan', 'terkirim_akutansi', 'terkirim_pembayaran' => 'Terkirim',
                         'selesai', 'dibayar' => 'Selesai',
                         default => 'Terkirim'
@@ -3034,12 +3037,12 @@
                         <i class="fa-solid fa-file-lines me-1"></i>
                         <span>Belum Dikirim</span>
                       </span>
-                    @elseif($OperatorDisplayStatus === 'ditolak_verifikasi')
+                    @elseif(in_array($OperatorDisplayStatus, ['ditolak_verifikasi', 'dikembalikan']))
                       <span class="badge-status badge-dikembalikan"
                         style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; cursor: pointer;"
                         onclick="event.stopPropagation(); showRejectionModal({{ $dokumen->id }})">
-                        <i class="fa-solid fa-times-circle me-1"></i>
-                        <span>Dokumen Ditolak,
+                        <i class="fa-solid fa-rotate-left me-1"></i>
+                        <span>{{ $OperatorDisplayStatus === 'dikembalikan' ? 'Dikembalikan' : 'Dokumen Ditolak' }},
                           <span style="text-decoration: underline; font-weight: 700;">Alasan</span>
                         </span>
                       </span>
@@ -6865,7 +6868,6 @@
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
 @endsection
-
 
 
 

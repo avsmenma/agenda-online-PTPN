@@ -4467,8 +4467,12 @@
                   $roleData = $dokumen->getDataForRole('team_verifikasi');
                   $receivedAt = $roleData?->received_at;
 
-                  // Check if document is returned_to_verifikasi (deadline should be paused)
+                  // Check if document is returned away from Team Verifikasi (deadline should be paused)
                   $isReturnedToVerifikasi = $dokumen->status === 'returned_to_verifikasi';
+                  $isReturnedAwayFromVerifikasi = in_array($dokumen->status, ['returned_to_operator', 'returned_to_bidang'])
+                    || $dokumen->current_handler === 'operator'
+                    || str_starts_with((string) $dokumen->current_handler, 'bagian_');
+                  $isPaused = $isReturnedToVerifikasi || $isReturnedAwayFromVerifikasi;
 
                   // Check if document is already sent to other roles (including waiting approval statuses)
                   $isSent = in_array($dokumen->status, [
@@ -4480,7 +4484,7 @@
                     'pending_approval_pembayaran',
                     'waiting_approval_perpajakan',
                     'waiting_approval_akuntansi',
-                  ]) || $isReturnedToVerifikasi; // Pause deadline for returned documents
+                  ]) || $isPaused; // Pause deadline for returned documents
 
                   // Also check frozen display_status - for tembak documents, the actual
                   // status may have progressed past this role, but display_status is frozen
@@ -4507,8 +4511,8 @@
                     // For active documents, use current time
                     $processedAt = $roleData?->processed_at;
 
-                    if (($isSent || $isCompleted) && $processedAt) {
-                      // Document is sent/completed - calculate time taken (frozen, not counting)
+                    if (($isSent || $isCompleted || $isPaused) && $processedAt) {
+                      // Document is sent/completed/returned - calculate time taken (frozen, not counting)
                       $endTime = \Carbon\Carbon::parse($processedAt);
                       $diff = $receivedAt->diff($endTime);
                     } else {
@@ -4548,9 +4552,9 @@
                       $ageIcon = 'fa-check-circle';
                     }
 
-                    // For sent/completed documents, use grey color
+                    // For sent/completed/returned documents, use grey color
                     // For active documents, use color based on time
-                    if ($isSent || $isCompleted) {
+                    if ($isSent || $isCompleted || $isPaused) {
                       $ageColor = 'gray';
                     } elseif ($totalHours >= 72) {
                       $ageColor = 'red';
@@ -4565,7 +4569,9 @@
                   // Prioritize $isSent over $isCompleted - from Team Verifikasi's perspective,
                   // a document they sent is "Terkirim", even if completed downstream
                   $deadlineType = 'active';
-                  if ($isSent) {
+                  if ($isPaused) {
+                    $deadlineType = 'paused';
+                  } elseif ($isSent) {
                     $deadlineType = 'sent';
                   } elseif ($isCompleted) {
                     $deadlineType = 'completed';
@@ -4587,7 +4593,11 @@
                       <i class="fa-solid fa-hourglass-half"></i>
                       <span>{{ $ageText }}</span>
                     </div>
-                    @if($isSent)
+                    @if($isPaused)
+                      <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
+                        <i class="fa-solid fa-pause-circle"></i> Berhenti Sementara
+                      </div>
+                    @elseif($isSent)
                       <div class="deadline-label" style="font-size: 8px; color: #6b7280; margin-top: 4px; font-weight: 600;">
                         <i class="fa-solid fa-paper-plane"></i> Terkirim
                       </div>
@@ -8957,7 +8967,6 @@
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
 @endsection
-
 
 
 

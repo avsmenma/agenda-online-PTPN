@@ -109,7 +109,9 @@
         @elseif($col === 'status')
           @php
             // Status badge using collection (no extra DB queries)
-            if ($tvRejected) {
+            if ($statusLowerForCheck === 'returned_to_operator') {
+                $OperatorDisplayStatus = 'dikembalikan';
+            } elseif ($tvRejected) {
                 $OperatorDisplayStatus = 'ditolak_verifikasi';
             } elseif ($tvPending) {
                 $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
@@ -126,6 +128,7 @@
                 'draft' => 'Belum Dikirim',
                 'menunggu_approval_verifikasi' => 'Menunggu Approve Team Verifikasi',
                 'ditolak_verifikasi' => 'Dokumen Ditolak oleh Team Verifikasi',
+                'dikembalikan' => 'Dikembalikan',
                 default => 'Terkirim',
             };
           @endphp
@@ -133,9 +136,9 @@
             <span class="badge-status badge-belum-dikirim">
               <i class="fa-solid fa-file-pen me-1"></i><span>Belum Dikirim</span>
             </span>
-          @elseif($OperatorDisplayStatus === 'ditolak_verifikasi')
+          @elseif(in_array($OperatorDisplayStatus, ['ditolak_verifikasi', 'dikembalikan']))
             <span class="badge-status badge-ditolak" style="background:linear-gradient(135deg,#dc3545,#b02a37);color:white;">
-              <i class="fa-solid fa-times-circle me-1"></i><span>Dokumen Ditolak</span>
+              <i class="fa-solid fa-rotate-left me-1"></i><span>{{ $OperatorDisplayStatus === 'dikembalikan' ? 'Dikembalikan' : 'Dokumen Ditolak' }}</span>
             </span>
           @elseif($OperatorDisplayStatus === 'menunggu_approval_verifikasi')
             <span class="badge-status" style="background:linear-gradient(135deg,#ffc107,#ff8c00);color:white;">

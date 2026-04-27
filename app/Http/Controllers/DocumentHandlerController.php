@@ -115,8 +115,17 @@ class DocumentHandlerController extends Controller
         $this->clearPendingStatuses($dokumen);
 
         $dokumen->setStatusForRole('team_verifikasi', DokumenStatus::STATUS_APPROVED, $sourceRole);
+
+        $teamVerifikasiData = $dokumen->getDataForRole('team_verifikasi');
+        $teamVerifikasiReceivedAt = $teamVerifikasiData?->received_at ?? now();
+
+        if ($sourceRole === 'operator' && $teamVerifikasiData?->received_at && $teamVerifikasiData?->processed_at) {
+            $pausedSeconds = $teamVerifikasiData->processed_at->diffInSeconds(now());
+            $teamVerifikasiReceivedAt = $teamVerifikasiData->received_at->copy()->addSeconds($pausedSeconds);
+        }
+
         $dokumen->setDataForRole('team_verifikasi', [
-            'received_at' => $dokumen->getDataForRole('team_verifikasi')?->received_at ?? now(),
+            'received_at' => $teamVerifikasiReceivedAt,
             'processed_at' => null,
         ]);
 

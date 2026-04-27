@@ -604,7 +604,12 @@
                     $isApproved = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'approved';
                     $isPending = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'pending';
                   @endphp
-                  @if(in_array($dokumen->status, ['draft', 'returned_to_operator']))
+                  @if($dokumen->status === 'returned_to_operator')
+                    <span class="badge badge-danger" style="background:#dc2626;color:white;">
+                      <i class="fas fa-undo"></i>
+                      Dikembalikan
+                    </span>
+                  @elseif(in_array($dokumen->status, ['draft']))
                     <span class="badge badge-pending">
                       <i class="fas fa-clock"></i>
                       Belum Dikirim
