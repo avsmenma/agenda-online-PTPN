@@ -7027,13 +7027,42 @@
 
     <script>
       // AJAX Refresh Document Table
+      function captureRefreshPosition(container) {
+        const scrollBox = container.querySelector('.table-responsive');
+        return {
+          windowX: window.scrollX,
+          windowY: window.scrollY,
+          tableLeft: scrollBox ? scrollBox.scrollLeft : 0,
+          tableTop: scrollBox ? scrollBox.scrollTop : 0,
+          activeElementId: document.activeElement && document.activeElement.id ? document.activeElement.id : null
+        };
+      }
+
+      function restoreRefreshPosition(container, position) {
+        const scrollBox = container.querySelector('.table-responsive');
+        if (scrollBox) {
+          scrollBox.scrollLeft = position.tableLeft;
+          scrollBox.scrollTop = position.tableTop;
+        }
+
+        if (position.activeElementId) {
+          const activeElement = document.getElementById(position.activeElementId);
+          if (activeElement && typeof activeElement.focus === 'function') {
+            activeElement.focus({ preventScroll: true });
+          }
+        }
+
+        window.scrollTo(position.windowX, position.windowY);
+      }
+
       function refreshDocumentTable() {
         const btn = document.getElementById('btnRefreshTable');
         const container = document.getElementById('documentTableContainer');
-        if (!btn || !container) return;
+        if (!btn || !container) return Promise.resolve();
+        const position = captureRefreshPosition(container);
         btn.classList.add('loading');
         btn.disabled = true;
-        fetch(window.location.href, {
+        return fetch(window.location.href, {
           headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
         })
         .then(response => {
@@ -7046,6 +7075,10 @@
           const newTable = doc.getElementById('documentTableContainer');
           if (newTable) {
             container.innerHTML = newTable.innerHTML;
+            requestAnimationFrame(() => {
+              restoreRefreshPosition(container, position);
+              requestAnimationFrame(() => restoreRefreshPosition(container, position));
+            });
             showRefreshToast('success', 'Data berhasil diperbarui!');
           } else {
             showRefreshToast('error', 'Gagal memperbarui data.');
@@ -7072,6 +7105,5 @@
 
 @include('partials._inlineEditEngine')
 @endsection
-
 
 

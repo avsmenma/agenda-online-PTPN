@@ -122,8 +122,12 @@
       saveDocumentHandlerPosition(select);
 
       if (typeof window.refreshDocumentTable === 'function') {
-        window.refreshDocumentTable();
-        restoreDocumentHandlerPosition();
+        const refreshResult = window.refreshDocumentTable();
+        if (refreshResult && typeof refreshResult.finally === 'function') {
+          refreshResult.finally(() => restoreDocumentHandlerPosition());
+        } else {
+          restoreDocumentHandlerPosition();
+        }
         return;
       }
 
