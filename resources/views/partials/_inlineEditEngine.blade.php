@@ -23,6 +23,12 @@
     background: #fff; color: #111;
   }
   .ie-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,.2); }
+  .ie-select-open {
+    min-width: 280px;
+    max-width: min(520px, calc(100vw - 32px));
+    position: relative;
+    z-index: 9997;
+  }
   .ie-textarea { resize: vertical; min-height: 60px; }
   .ie-spinner {
     display: inline-block; width: 12px; height: 12px; margin-left: 4px;
@@ -318,7 +324,8 @@
 
   function buildSelect(field, currentVal) {
     const sel = document.createElement('select');
-    sel.className = 'ie-input';
+    sel.className = 'ie-input ie-select-input';
+    sel.dataset.inlineSelect = 'true';
     let options = [];
     if      (field === 'select_kategori') options = IE_KATEGORI.map(k => ({ value: k.nama_kriteria,        label: k.nama_kriteria }));
     else if (field === 'select_sub')      options = IE_SUB.map(k      => ({ value: k.nama_sub_kriteria,    label: k.nama_sub_kriteria }));
@@ -335,6 +342,34 @@
       sel.appendChild(o);
     });
     return sel;
+  }
+
+  function openSelectPicker(selectEl) {
+    if (!selectEl || selectEl.tagName !== 'SELECT') return;
+
+    selectEl.classList.add('ie-select-open');
+
+    if (typeof selectEl.showPicker === 'function') {
+      try {
+        selectEl.showPicker();
+        return;
+      } catch (error) {
+        // Fall back to inline listbox mode below.
+      }
+    }
+
+    const optionCount = selectEl.options ? selectEl.options.length : 0;
+    if (optionCount > 0) {
+      selectEl.dataset.inlineListbox = 'true';
+      selectEl.size = Math.min(Math.max(optionCount, 2), 8);
+    }
+  }
+
+  function closeSelectPicker(selectEl) {
+    if (!selectEl || selectEl.tagName !== 'SELECT') return;
+    selectEl.classList.remove('ie-select-open');
+    selectEl.removeAttribute('size');
+    delete selectEl.dataset.inlineListbox;
   }
 
   function createInput(fieldType, rawValue, fieldName) {
@@ -397,13 +432,27 @@
     cell.classList.add('ie-editing');
     cell.innerHTML = '';
     cell.appendChild(activeInput);
+    if (activeInput.tagName === 'SELECT') {
+      activeInput.focus({ preventScroll: true });
+      openSelectPicker(activeInput);
+    }
     setTimeout(() => {
       activeInput.focus();
       if (activeInput.tagName === 'INPUT' && activeInput.type === 'text') activeInput.select();
     }, 20);
     activeInput.addEventListener('keydown', onKeyDown);
     if (activeInput.tagName === 'SELECT') {
-      activeInput.addEventListener('change', () => commitCell(cell));
+      activeInput.addEventListener('change', () => {
+        if (activeInput?.dataset.inlineListbox === 'true') return;
+        setTimeout(() => {
+          if (activeCell === cell) commitCell(cell);
+        }, 80);
+      });
+      activeInput.addEventListener('blur', () => {
+        setTimeout(() => {
+          if (activeCell === cell) commitCell(cell);
+        }, 120);
+      });
     } else {
       activeInput.addEventListener('blur', () => {
         // Cooldown: abaikan blur yang terjadi dalam 350ms setelah aktivasi.
@@ -437,6 +486,7 @@
 
     const dokumenId = cell.closest('tr').dataset.dokumenId;
     if (!dokumenId) { cancelCell(cell); return; }
+    closeSelectPicker(activeInput);
     savingCells.add(cell);
     cell.classList.remove('ie-editing');
     cell.classList.add('ie-saving');
@@ -488,6 +538,7 @@
 
   function cancelCell(cell) {
     if (!cell) return;
+    if (activeInput && activeInput.tagName === 'SELECT') closeSelectPicker(activeInput);
     cell.classList.remove('ie-editing', 'ie-saving');
     cell.innerHTML = cell.dataset.originalHtml || '';
     activeCell = null; activeInput = null;
@@ -506,6 +557,9 @@
       const msSinceActivation = Date.now() - activationTime;
       if (msSinceActivation < 250) return; // terlalu cepat — abaikan
       commitCell(activeCell);
+    } else if (e.key === 'ArrowDown' && activeInput && activeInput.tagName === 'SELECT' && e.altKey) {
+      e.preventDefault();
+      openSelectPicker(activeInput);
     } else if (e.key === 'Tab') {
       e.preventDefault();
       const direction   = e.shiftKey ? -1 : 1;
