@@ -152,6 +152,7 @@
   let activeInput    = null;
   let activeOverlay  = null; // backdrop + popup for textarea fields
   let activationTime = 0;   // timestamp saat cell diaktifkan (untuk cooldown Enter key)
+  const savingCells  = new WeakSet();
 
   /* ── Floating overlay for long-text fields ── */
   const OVERLAY_FIELDS = ['uraian_spp'];
@@ -265,8 +266,10 @@
 
   function commitOverlayValue(cell, field, newValue, oldRaw) {
     if (newValue === oldRaw) return; // no change
+    if (savingCells.has(cell)) return;
     const dokumenId = cell.closest('tr').dataset.dokumenId;
     if (!dokumenId) return;
+    savingCells.add(cell);
     cell.classList.add('ie-saving');
     cell.innerHTML = (cell.dataset.originalHtml || newValue) + '<span class="ie-spinner"></span>';
     fetch(`/documents/${dokumenId}/inline-update`, {
@@ -278,7 +281,13 @@
       },
       body: JSON.stringify({ field, value: newValue }),
     })
-    .then(r => r.json())
+    .then(async r => {
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        throw new Error(data.message || 'Gagal menyimpan.');
+      }
+      return data;
+    })
     .then(data => {
       cell.classList.remove('ie-saving');
       if (data.success) {
@@ -294,12 +303,16 @@
         showIeToast('error', data.message || 'Gagal menyimpan.');
       }
     })
-    .catch(() => {
+    .catch((error) => {
       cell.classList.remove('ie-saving');
       cell.innerHTML = cell.dataset.originalHtml;
       cell.classList.add('ie-error');
       setTimeout(() => cell.classList.remove('ie-error'), 700);
-      showIeToast('error', 'Koneksi gagal. Coba lagi.');
+      showIeToast('error', error.message || 'Koneksi gagal. Coba lagi.');
+    })
+    .finally(() => {
+      savingCells.delete(cell);
+      if (typeof window.acnRefresh === 'function') window.acnRefresh();
     });
   }
 
@@ -358,6 +371,7 @@
 
   function activateCell(cell) {
     if (activeOverlay) return; // overlay already open
+    if (cell.classList.contains('ie-saving') || savingCells.has(cell)) return;
     if (activeCell && activeCell !== cell) commitCell(activeCell);
     if (activeCell === cell) return;
     const field = cell.dataset.field;
@@ -405,6 +419,7 @@
 
   function commitCell(cell) {
     if (!cell || !activeInput) return;
+    if (savingCells.has(cell)) return;
     const field    = cell.dataset.field;
     const newValue = activeInput.value;
     const oldRaw   = cell.dataset.originalRaw ?? '';
@@ -422,6 +437,7 @@
 
     const dokumenId = cell.closest('tr').dataset.dokumenId;
     if (!dokumenId) { cancelCell(cell); return; }
+    savingCells.add(cell);
     cell.classList.remove('ie-editing');
     cell.classList.add('ie-saving');
     cell.innerHTML = (cell.dataset.originalHtml || newValue) + '<span class="ie-spinner"></span>';
@@ -435,7 +451,13 @@
       },
       body: JSON.stringify({ field, value: newValue }),
     })
-    .then(r => r.json())
+    .then(async r => {
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        throw new Error(data.message || 'Gagal menyimpan.');
+      }
+      return data;
+    })
     .then(data => {
       cell.classList.remove('ie-saving');
       if (data.success) {
@@ -451,12 +473,16 @@
         showIeToast('error', data.message || 'Gagal menyimpan.');
       }
     })
-    .catch(() => {
+    .catch((error) => {
       cell.classList.remove('ie-saving');
       cell.innerHTML = cell.dataset.originalHtml;
       cell.classList.add('ie-error');
       setTimeout(() => cell.classList.remove('ie-error'), 700);
-      showIeToast('error', 'Koneksi gagal. Coba lagi.');
+      showIeToast('error', error.message || 'Koneksi gagal. Coba lagi.');
+    })
+    .finally(() => {
+      savingCells.delete(cell);
+      if (typeof window.acnRefresh === 'function') window.acnRefresh();
     });
   }
 

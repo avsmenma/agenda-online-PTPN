@@ -402,15 +402,24 @@
     const container = document.getElementById('documentTableContainer');
     if (!container || observer) return;
 
-    observer = new MutationObserver(function () {
+    observer = new MutationObserver(function (mutations) {
+      const shouldIgnore = mutations.every(function (mutation) {
+        const target = mutation.target instanceof Element ? mutation.target : mutation.target.parentElement;
+        return Boolean(target && target.closest('.ie-editing, .ie-saving, .ie-overlay-popup, .ie-overlay-backdrop'));
+      });
+
+      if (shouldIgnore) return;
       scheduleRebind();
     });
     observer.observe(container, { childList: true, subtree: true });
   }
 
   function scheduleRebind() {
+    if (document.querySelector('.ie-editing, .ie-saving, .ie-overlay-popup, .ie-overlay-backdrop')) return;
+
     clearTimeout(rebindTimer);
     rebindTimer = setTimeout(function () {
+      if (document.querySelector('.ie-editing, .ie-saving, .ie-overlay-popup, .ie-overlay-backdrop')) return;
       rebind({ restore: true, noPulse: true, preventScroll: true });
     }, 50);
   }
