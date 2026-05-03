@@ -1727,7 +1727,7 @@
           <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25</option>
           <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
           <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
-          <option value="all" {{ $perPage >= 999999 ? 'selected' : '' }}>Semua</option>
+          <option value="all" {{ request('per_page') === 'all' ? 'selected' : '' }}>Semua</option>
         </select>
       </div>
     </div>
@@ -4187,6 +4187,7 @@ document.addEventListener('DOMContentLoaded', function() {
     $ieJenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get(['id_jenis_pembayaran', 'nama_jenis_pembayaran'])->toArray();
   } catch (\Exception $e) {}
 @endphp
+@include('partials.virtual-document-table', ['paginator' => $dokumens, 'chunkSize' => 100])
 @include('partials._inlineEditEngine', [
   'ieKategoriList'      => $ieKategoriList,
   'ieSubKriteriaList'   => $ieSubKriteriaList,
@@ -4198,6 +4199,5 @@ document.addEventListener('DOMContentLoaded', function() {
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
 @endsection
-
 
 

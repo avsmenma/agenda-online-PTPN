@@ -4130,6 +4130,7 @@
             @foreach([10, 25, 50, 100] as $pp)
               <option value="{{ $pp }}" {{ (int)$currentPerPage === $pp ? 'selected' : '' }}>{{ $pp }}</option>
             @endforeach
+            <option value="all" {{ $currentPerPage === 'all' ? 'selected' : '' }}>Semua</option>
           </select>
         </form>
       </div>
@@ -9007,6 +9008,7 @@
     };
   </script>
 
+@include('partials.virtual-document-table', ['paginator' => $dokumens, 'chunkSize' => 100])
 @include('partials._inlineEditEngine')
 
 {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
