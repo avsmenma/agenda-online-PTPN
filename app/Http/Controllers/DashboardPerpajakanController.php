@@ -197,7 +197,7 @@ class DashboardPerpajakanController extends Controller
             $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
         }
 
-        $perPage = $request->get('per_page', session('perpajakan_per_page', 10));
+        $perPage = $request->get('per_page', 100);
         if ($perPage === 'all') {
             $perPage = 100;
         } else {
@@ -2688,7 +2688,6 @@ class DashboardPerpajakanController extends Controller
         return view('perpajakan.export.pdf', $data);
     }
 }
-
 
 
 

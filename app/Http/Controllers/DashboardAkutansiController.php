@@ -297,7 +297,7 @@ class DashboardAkutansiController extends Controller
             END DESC");
         }
 
-        $perPage = $request->get('per_page', session('akutansi_per_page', 10));
+        $perPage = $request->get('per_page', 100);
         if ($perPage === 'all') {
             $perPage = 100;
         } else {
@@ -1970,7 +1970,6 @@ class DashboardAkutansiController extends Controller
         }
     }
 }
-
 
 
 

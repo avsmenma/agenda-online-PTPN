@@ -123,7 +123,7 @@ class DokumenController extends Controller
         $sortColumn = session('operator_sort_column', 'nomor_agenda');
         $sortOrder  = session('operator_sort_order', 'desc');
 
-        $perPage = $request->get('per_page', session('operator_per_page', 10));
+        $perPage = $request->get('per_page', 100);
         if ($perPage === 'all') {
             $perPage = 100;
         } else {
@@ -2126,7 +2126,6 @@ class DokumenController extends Controller
         }
     }
 }
-
 
 
 

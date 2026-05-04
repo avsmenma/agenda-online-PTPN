@@ -566,7 +566,7 @@ class DashboardPembayaranController extends Controller
         // Get status filter and search from request
         $statusFilter = $request->get('status_filter');
         $search = $request->get('search');
-        $perPage = $request->get('per_page', session('pembayaran_per_page', 10)); // Default 10, bisa diubah user
+        $perPage = $request->get('per_page', 100); // Mode daftar utama memakai virtual scroll
         if ($perPage === 'all') {
             $perPage = 100; // Mode Semua memakai virtual scroll, bukan render seluruh DOM
         } else {
@@ -5347,7 +5347,6 @@ class DashboardPembayaranController extends Controller
         return $statusMap[$status] ?? ucfirst(str_replace('_', ' ', $status));
     }
 }
-
 
 
 

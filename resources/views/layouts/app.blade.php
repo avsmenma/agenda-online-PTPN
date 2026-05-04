@@ -4775,6 +4775,7 @@
     @endif
 
     @yield('content')
+    @include('partials.compact-document-ui')
   </div>
 
   <!-- Notification Container -->
@@ -7905,7 +7906,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
-
 
 
 

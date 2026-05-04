@@ -4187,7 +4187,7 @@ document.addEventListener('DOMContentLoaded', function() {
     $ieJenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get(['id_jenis_pembayaran', 'nama_jenis_pembayaran'])->toArray();
   } catch (\Exception $e) {}
 @endphp
-@include('partials.virtual-document-table', ['paginator' => $dokumens, 'chunkSize' => 100])
+@include('partials.virtual-document-table', ['paginator' => $dokumens, 'chunkSize' => 100, 'enabled' => true])
 @include('partials._inlineEditEngine', [
   'ieKategoriList'      => $ieKategoriList,
   'ieSubKriteriaList'   => $ieSubKriteriaList,
@@ -4199,5 +4199,4 @@ document.addEventListener('DOMContentLoaded', function() {
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
 @endsection
-
 

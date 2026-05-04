@@ -9008,7 +9008,7 @@
     };
   </script>
 
-@include('partials.virtual-document-table', ['paginator' => $dokumens, 'chunkSize' => 100])
+@include('partials.virtual-document-table', ['paginator' => $dokumens, 'chunkSize' => 100, 'enabled' => true])
 @include('partials._inlineEditEngine')
 
 {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}

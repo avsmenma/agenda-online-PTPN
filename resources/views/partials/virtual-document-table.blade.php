@@ -3,9 +3,10 @@
   $virtualPerPage = (int) ($chunkSize ?? 100);
   $virtualLastPage = max(1, (int) ceil(max(1, $virtualTotal) / max(1, $virtualPerPage)));
   $virtualContainer = $containerSelector ?? '#documentTableContainer';
+  $virtualEnabled = $enabled ?? request('per_page') === 'all';
 @endphp
 
-@if(request('per_page') === 'all' && $virtualTotal > $virtualPerPage)
+@if($virtualEnabled && $virtualTotal > $virtualPerPage)
   <style>
     {{ $virtualContainer }} .table-responsive.virtual-scroll-active {
       max-height: min(72vh, 760px);
@@ -42,6 +43,13 @@
 
     .pagination-enhanced-right,
     .pagination-wrapper .pagination {
+      display: none !important;
+    }
+
+    .perpage-top-bar,
+    .pagination-enhanced-wrapper,
+    .pagination-wrapper,
+    {{ $virtualContainer }} .dtable-toolbar-right {
       display: none !important;
     }
   </style>
@@ -89,7 +97,7 @@
         summary.dataset.virtualStatusAdded = 'true';
         const badge = document.createElement('span');
         badge.className = 'virtual-scroll-status';
-        badge.innerHTML = '<i class="fa-solid fa-bolt"></i> Mode Semua pakai virtual scroll';
+        badge.innerHTML = '<i class="fa-solid fa-bolt"></i> Semua dokumen aktif, render bertahap';
         summary.insertAdjacentElement('afterend', badge);
       }
 
@@ -101,8 +109,8 @@
       function updateSummary(container, page) {
         const from = ((page - 1) * config.perPage) + 1;
         const to = Math.min(page * config.perPage, config.total);
-        const text = 'Menampilkan ' + from.toLocaleString('id-ID') + ' - ' + to.toLocaleString('id-ID') +
-          ' dari ' + config.total.toLocaleString('id-ID') + ' hasil';
+        const text = 'Semua ' + config.total.toLocaleString('id-ID') + ' dokumen tersedia. Baris ' +
+          from.toLocaleString('id-ID') + ' - ' + to.toLocaleString('id-ID') + ' sedang dirender virtual.';
         container.querySelectorAll('.pagination-enhanced-summary, .perpage-top-bar span, .dtable-toolbar-subtitle, .pagination-wrapper .text-muted')
           .forEach(el => { el.textContent = text; });
       }

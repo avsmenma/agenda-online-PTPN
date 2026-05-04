@@ -7116,7 +7116,7 @@
       }
     </script>
 
-@include('partials.virtual-document-table', ['paginator' => $dokumens, 'chunkSize' => 100])
+@include('partials.virtual-document-table', ['paginator' => $dokumens, 'chunkSize' => 100, 'enabled' => true])
 @include('partials._inlineEditEngine')
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 @include('partials.auto-refresh-documents')
