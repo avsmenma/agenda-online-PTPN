@@ -1423,7 +1423,7 @@
     <!-- Bento Grid Stats -->
     <div class="bento-grid">
       <!-- Main Stats Row -->
-      <a href="?status_pembayaran=&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}&date={{ $selectedDate ?? '' }}"
+      <a href="?status_pembayaran=&date={{ $selectedDate ?? '' }}"
         class="stat-card stat-card--total animate-fade-in animate-delay-1 {{ !$selectedStatus ? 'active' : '' }}">
         <div class="stat-card-content">
           <div class="stat-label">Total Dokumen</div>
@@ -1435,7 +1435,7 @@
         </div>
       </a>
 
-      <a href="?status_pembayaran=belum_siap_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}&date={{ $selectedDate ?? '' }}"
+      <a href="?status_pembayaran=belum_siap_dibayar&date={{ $selectedDate ?? '' }}"
         class="stat-card stat-card--pending animate-fade-in animate-delay-2 {{ $selectedStatus == 'belum_siap_dibayar' ? 'active' : '' }}">
         <div class="stat-card-content">
           <div class="stat-label">Belum Siap Bayar</div>
@@ -1452,7 +1452,7 @@
         </div>
       </a>
 
-      <a href="?status_pembayaran=siap_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}&date={{ $selectedDate ?? '' }}"
+      <a href="?status_pembayaran=siap_dibayar&date={{ $selectedDate ?? '' }}"
         class="stat-card stat-card--ready animate-fade-in animate-delay-3 {{ $selectedStatus == 'siap_dibayar' ? 'active' : '' }}">
         <div class="stat-card-content">
           <div class="stat-label">Siap Dibayar</div>
@@ -1469,7 +1469,7 @@
         </div>
       </a>
 
-      <a href="?status_pembayaran=sudah_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}&date={{ $selectedDate ?? '' }}"
+      <a href="?status_pembayaran=sudah_dibayar&date={{ $selectedDate ?? '' }}"
         class="stat-card stat-card--paid animate-fade-in animate-delay-4 {{ $selectedStatus == 'sudah_dibayar' ? 'active' : '' }}">
         <div class="stat-card-content">
           <div class="stat-label">Sudah Dibayar</div>
@@ -1543,23 +1543,6 @@
             </option>
             <option value="sudah_dibayar" {{ ($selectedStatus ?? '') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar
             </option>
-          </select>
-
-          <select name="year" class="filter-select">
-            <option value="">Semua Tahun</option>
-            @foreach($years ?? [] as $yr)
-              <option value="{{ $yr }}" {{ ($selectedYear ?? '') == $yr ? 'selected' : '' }}>{{ $yr }}</option>
-            @endforeach
-          </select>
-
-          <select name="month" class="filter-select">
-            <option value="">Semua Bulan</option>
-            @php
-              $months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-            @endphp
-            @foreach($months as $i => $m)
-              <option value="{{ $i + 1 }}" {{ ($selectedMonth ?? '') == ($i + 1) ? 'selected' : '' }}>{{ $m }}</option>
-            @endforeach
           </select>
 
           <input type="date" name="date" class="filter-date" value="{{ $selectedDate ?? '' }}"
