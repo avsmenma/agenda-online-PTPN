@@ -3056,6 +3056,10 @@
         };
         let searchDebounceTimer = null;
         let pembayaranTable = null;
+        let fallbackStart = 0;
+        let fallbackLoading = false;
+        let fallbackHasMore = true;
+        const fallbackLength = 100;
 
         function currentFilterParams() {
           const filterForm = document.getElementById('filterForm');
@@ -3086,14 +3090,111 @@
           updateUrlState();
           if (pembayaranTable) {
             pembayaranTable.ajax.reload(null, true);
+          } else {
+            loadFallbackRows(true);
           }
+        }
+
+        function buildDataRequestParams(start, length) {
+          const params = currentFilterParams();
+          params.set('draw', '1');
+          params.set('start', String(start));
+          params.set('length', String(length));
+
+          const searchValue = params.get('search');
+          if (searchValue) {
+            params.set('filter_search', searchValue);
+            params.delete('search');
+          }
+
+          selectedColumns.forEach(function (columnKey) {
+            params.append('visible_columns[]', columnKey);
+          });
+
+          return params;
+        }
+
+        function renderFallbackRows(rows, append) {
+          const tableBody = document.getElementById('tableBody');
+          if (!tableBody) return;
+
+          if (!append) {
+            tableBody.innerHTML = '';
+          }
+
+          const html = rows.map(function (row) {
+            return '<tr>' + selectedColumns.map(function (columnKey) {
+              const className = columnClassMap[columnKey] || '';
+              const value = row[columnKey] || '-';
+              return '<td class="' + className + '">' + value + '</td>';
+            }).join('') + '</tr>';
+          }).join('');
+
+          tableBody.insertAdjacentHTML('beforeend', html);
+        }
+
+        function loadFallbackRows(reset) {
+          if (fallbackLoading || (!fallbackHasMore && !reset)) return;
+
+          if (reset) {
+            fallbackStart = 0;
+            fallbackHasMore = true;
+          }
+
+          fallbackLoading = true;
+          const params = buildDataRequestParams(fallbackStart, fallbackLength);
+
+          fetch('{{ route("dashboard.pembayaran.data") }}' + '?' + params.toString(), {
+            headers: {
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+          })
+            .then(function (response) {
+              if (!response.ok) throw new Error('Gagal memuat data pembayaran');
+              return response.json();
+            })
+            .then(function (payload) {
+              const rows = payload.data || [];
+              renderFallbackRows(rows, fallbackStart > 0);
+
+              const countEl = document.getElementById('tableCount');
+              if (countEl) {
+                countEl.textContent = Number(payload.recordsFiltered || 0).toLocaleString('id-ID');
+              }
+
+              fallbackStart += rows.length;
+              fallbackHasMore = rows.length > 0 && fallbackStart < Number(payload.recordsFiltered || 0);
+            })
+            .catch(function (error) {
+              console.error('Pembayaran table fallback error:', error);
+            })
+            .finally(function () {
+              fallbackLoading = false;
+            });
+        }
+
+        function initFallbackTableScroll() {
+          const wrapper = document.getElementById('dataTableWrapper');
+          if (!wrapper) return;
+
+          wrapper.style.overflow = 'auto';
+          wrapper.style.maxHeight = '62vh';
+          loadFallbackRows(true);
+
+          wrapper.addEventListener('scroll', function () {
+            const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
+            if (distanceToBottom < 320) {
+              loadFallbackRows(false);
+            }
+          });
         }
 
         function initPembayaranDataTable() {
           const tableEl = document.getElementById('pembayaranDocumentTable');
-          if (!tableEl || !window.jQuery || !jQuery.fn.DataTable) return;
+          if (!tableEl) return;
 
-          pembayaranTable = jQuery(tableEl).DataTable({
+          const dataTableOptions = {
             processing: true,
             serverSide: true,
             deferRender: true,
@@ -3146,7 +3247,20 @@
               zeroRecords: 'Tidak ada dokumen ditemukan',
               emptyTable: 'Tidak ada dokumen ditemukan',
             },
-          });
+          };
+
+          try {
+            if (window.jQuery && jQuery.fn && jQuery.fn.DataTable) {
+              pembayaranTable = jQuery(tableEl).DataTable(dataTableOptions);
+            } else if (window.DataTable) {
+              pembayaranTable = new DataTable(tableEl, dataTableOptions);
+            } else {
+              initFallbackTableScroll();
+            }
+          } catch (error) {
+            console.error('Pembayaran DataTable init error:', error);
+            initFallbackTableScroll();
+          }
         }
 
         document.addEventListener('DOMContentLoaded', function () {
