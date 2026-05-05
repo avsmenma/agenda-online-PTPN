@@ -163,6 +163,10 @@ Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'index
     ->middleware('auth', 'role:admin,pembayaran')
     ->name('dashboard.pembayaran');
 
+Route::get('dashboard/pembayaran/data', [DashboardPembayaranController::class, 'datatable'])
+    ->middleware('auth', 'role:admin,pembayaran')
+    ->name('dashboard.pembayaran.data');
+
 
 
 

@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.4.3/css/scroller.dataTables.min.css">
+
   <style>
     /* ===== IMPORT GOOGLE FONTS ===== */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -713,11 +716,38 @@
     /* Data Table */
     .data-table-wrapper {
       position: relative;
-      overflow: auto;
-      max-height: calc(100vh - 320px);
+      overflow: hidden;
       min-height: 360px;
       scrollbar-color: rgba(8, 62, 64, 0.36) rgba(241, 245, 249, 0.9);
       scrollbar-width: thin;
+    }
+
+    .dataTables_wrapper,
+    .dt-container {
+      width: 100%;
+    }
+
+    .dt-container .dt-info,
+    .dt-container .dt-paging,
+    .dt-container .dt-length,
+    .dt-container .dt-search {
+      display: none !important;
+    }
+
+    .dt-scroll-body,
+    .dataTables_scrollBody {
+      min-height: 420px;
+      max-height: 62vh !important;
+      scrollbar-color: rgba(8, 62, 64, 0.36) rgba(241, 245, 249, 0.9);
+      scrollbar-width: thin;
+    }
+
+    .dt-processing {
+      border: none !important;
+      border-radius: var(--radius-lg) !important;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12) !important;
+      color: var(--brand-primary) !important;
+      font-weight: 700;
     }
 
     .data-table-wrapper::-webkit-scrollbar {
@@ -744,6 +774,7 @@
       min-width: 100%;
       border-collapse: separate;
       border-spacing: 0;
+      table-layout: fixed;
     }
 
     .data-table th {
@@ -1841,17 +1872,6 @@
           </div>
         </div>
         <div class="table-controls">
-          <div class="per-page-selector">
-            <label for="perPageSelect">Baris</label>
-            <select id="perPageSelect" onchange="changePerPage(this.value)">
-              <option value="10" {{ (isset($perPage) && $perPage == 10) ? 'selected' : '' }}>10</option>
-              <option value="15" {{ (!isset($perPage) || $perPage == 15) ? 'selected' : '' }}>15</option>
-              <option value="25" {{ (isset($perPage) && $perPage == 25) ? 'selected' : '' }}>25</option>
-              <option value="50" {{ (isset($perPage) && $perPage == 50) ? 'selected' : '' }}>50</option>
-              <option value="100" {{ (isset($perPage) && $perPage == 100) ? 'selected' : '' }}>100</option>
-              <option value="all" {{ (isset($perPage) && $perPage == 999999) ? 'selected' : '' }}>Semua</option>
-            </select>
-          </div>
           <div class="table-toggle">
             <button type="button" class="table-toggle-btn" onclick="openColumnModal()">
               <i class="fas fa-columns"></i> Atur Kolom
@@ -1868,7 +1888,7 @@
         </div>
       </div>
 
-      @if($dokumens->count() > 0)
+      @if($mode != 'rekapan_table' || $dokumens->count() > 0)
         @if($mode == 'rekapan_table' && $rekapanByVendor)
           <!-- Vendor Grouped View -->
           <div class="vendor-groups">
@@ -1949,7 +1969,7 @@
             </div>
           </div>
           <div class="data-table-wrapper" id="dataTableWrapper">
-            <table class="data-table">
+            <table class="data-table" id="pembayaranDocumentTable">
               <thead>
                 <tr>
                   @foreach($selectedColumns as $colKey)
@@ -1957,64 +1977,26 @@
                   @endforeach
                 </tr>
               </thead>
-              <tbody id="tableBody">
-                @foreach($dokumens as $dok)
-                  <tr>
-                    @foreach($selectedColumns as $colKey)
-                      @if($colKey == 'nomor_agenda')
-                        <td class="cell-primary cell-mono">{{ $dok->nomor_agenda }}</td>
-                      @elseif($colKey == 'nomor_spp')
-                        <td class="cell-mono">{{ $dok->nomor_spp ?? '-' }}</td>
-                      @elseif($colKey == 'dibayar_kepada')
-                        <td class="cell-vendor">{{ Str::limit($dok->dibayar_kepada ?? '-', 30) }}</td>
-                      @elseif($colKey == 'uraian_spp')
-                        <td class="cell-uraian">{{ Str::limit($dok->uraian_spp ?? '-', 40) }}</td>
-                      @elseif($colKey == 'nilai_rupiah')
-                        <td class="cell-rupiah text-end">{{ number_format($dok->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
-                      @elseif($colKey == 'status_pembayaran')
-                        <td>
-                          @if($dok->computed_status == 'siap_dibayar')
-                            <span class="status-pill status-pill--ready">
-                              <i class="fas fa-circle"></i> Siap Dibayar
-                            </span>
-                          @elseif($dok->computed_status == 'sudah_dibayar')
-                            <span class="status-pill status-pill--paid">
-                              <i class="fas fa-circle"></i> Sudah Dibayar
-                            </span>
-                          @else
-                            <span class="status-pill status-pill--pending">
-                              <i class="fas fa-circle"></i> Belum Siap
-                            </span>
-                          @endif
-                        </td>
-                      @elseif($colKey == 'tgl_jatuhtempo')
-                        <td>{{ $dok->tgl_jatuhtempo ? \Carbon\Carbon::parse($dok->tgl_jatuhtempo)->format('d/m/Y') : '-' }}</td>
-                      @elseif(in_array($colKey, ['dokumen_po', 'dokumen_pr', 'dokumen_gr']))
-                        <td class="cell-mono">{{ $dok->$colKey ?? '-' }}</td>
-                      @else
-                        <td>{{ $dok->$colKey ?? '-' }}</td>
-                      @endif
-                    @endforeach
-                  </tr>
-                @endforeach
-              </tbody>
+              <tbody id="tableBody"></tbody>
             </table>
           </div>
         @endif
 
         <!-- Pagination -->
-        <div class="pagination-wrapper" id="paginationWrapper" style="{{ $dokumens->hasPages() ? '' : 'display:none;' }}">
-          <div class="pagination-info" id="paginationInfo">
-            @if($dokumens->hasPages())
-              Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }}
-            @endif
+        @if($mode == 'rekapan_table')
+          <div class="pagination-wrapper" id="paginationWrapper" style="{{ $dokumens->hasPages() ? '' : 'display:none;' }}">
+            <div class="pagination-info" id="paginationInfo">
+              @if($dokumens->hasPages())
+                Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }}
+              @endif
+            </div>
+            <div id="paginationLinks">
+              @if($dokumens->hasPages())
+                {{ $dokumens->links('pagination::bootstrap-4') }}
+              @endif
+            </div>
           </div>
-          <div id="paginationLinks">
-            @if($dokumens->hasPages())
-              {{ $dokumens->links('pagination::bootstrap-4') }}
-            @endif
-          </div>
-        </div>
+        @endif
       @else
         <!-- Empty State -->
         <div class="empty-state">
@@ -3047,382 +3029,155 @@
     }
   </script>
 
-  {{-- ===== AJAX FILTER SYSTEM ===== --}}
-  <script>
-    (function () {
-      'use strict';
+  @if($mode != 'rekapan_table')
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/scroller/2.4.3/js/dataTables.scroller.min.js"></script>
+    <script>
+      (function () {
+        'use strict';
 
-      const AJAX_CONFIG = {
-        url: '{{ route("dashboard.pembayaran") }}',
-        debounceMs: 300,
-      };
+        const selectedColumns = @json($selectedColumns);
+        const columnClassMap = {
+          nomor_agenda: 'cell-primary cell-mono',
+          nomor_spp: 'cell-mono',
+          dibayar_kepada: 'cell-vendor',
+          uraian_spp: 'cell-uraian',
+          nilai_rupiah: 'cell-rupiah text-end',
+        };
+        const columnWidthMap = {
+          nomor_agenda: '170px',
+          nomor_spp: '230px',
+          dibayar_kepada: '280px',
+          uraian_spp: '360px',
+          nilai_rupiah: '150px',
+          status_pembayaran: '170px',
+          tanggal_spp: '170px',
+          tanggal_masuk: '170px',
+        };
+        let searchDebounceTimer = null;
+        let pembayaranTable = null;
 
-      let searchDebounceTimer = null;
-      let currentPage = {{ $dokumens->currentPage() }};
+        function currentFilterParams() {
+          const filterForm = document.getElementById('filterForm');
+          const params = new URLSearchParams();
 
-      // ==========================================
-      // INIT: Hook into forms and filters
-      // ==========================================
-      document.addEventListener('DOMContentLoaded', function () {
-        const filterForm = document.getElementById('filterForm');
-        if (!filterForm) return;
-
-        // Intercept form submission
-        filterForm.addEventListener('submit', function (e) {
-          e.preventDefault();
-          currentPage = 1;
-          fetchFilteredData();
-        });
-
-        // Auto-apply dropdown filters on change
-        filterForm.querySelectorAll('select').forEach(function (sel) {
-          sel.addEventListener('change', function () {
-            currentPage = 1;
-            fetchFilteredData();
-          });
-        });
-
-        // Debounced search on typing
-        const searchInput = filterForm.querySelector('input[name="search"]');
-        if (searchInput) {
-          searchInput.addEventListener('input', function () {
-            clearTimeout(searchDebounceTimer);
-            searchDebounceTimer = setTimeout(function () {
-              currentPage = 1;
-              fetchFilteredData();
-            }, AJAX_CONFIG.debounceMs);
-          });
-        }
-
-        const dateInput = filterForm.querySelector('input[name="date"]');
-        if (dateInput) {
-          dateInput.addEventListener('change', function () {
-            currentPage = 1;
-            fetchFilteredData();
-          });
-        }
-      });
-
-      // ==========================================
-      // CORE: Fetch filtered data via AJAX
-      // ==========================================
-      function fetchFilteredData() {
-        const filterForm = document.getElementById('filterForm');
-        if (!filterForm) return;
-
-        showLoading(true);
-
-        // Build query string from form
-        const formData = new FormData(filterForm);
-        const params = new URLSearchParams();
-
-        for (const [key, value] of formData.entries()) {
-          if (value) params.append(key, value);
-        }
-        params.set('page', currentPage);
-
-        // Carry over columns[] from URL or localStorage
-        const currentUrl = new URL(window.location.href);
-        let existingColumns = currentUrl.searchParams.getAll('columns[]');
-        if (existingColumns.length === 0) {
-          try {
-            const saved = localStorage.getItem('pembayaran_columns');
-            if (saved) {
-              const parsed = JSON.parse(saved);
-              if (Array.isArray(parsed) && parsed.length > 0) existingColumns = parsed;
-            }
-          } catch (e) { /* ignore */ }
-        }
-        if (existingColumns.length > 0) {
-          existingColumns.forEach(function (col) {
-            params.append('columns[]', col);
-          });
-        }
-        const existingMode = currentUrl.searchParams.get('mode');
-        if (existingMode) {
-          params.set('mode', existingMode);
-        }
-
-        fetch(AJAX_CONFIG.url + '?' + params.toString(), {
-          method: 'GET',
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-          },
-        })
-          .then(function (response) {
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.json();
-          })
-          .then(function (data) {
-            updateStatisticsCards(data.statistics);
-            updateDeadlineCards(data);
-            updateTable(data);
-            updatePagination(data.pagination);
-            updateUrlState(params);
-            showLoading(false);
-          })
-          .catch(function (error) {
-            console.error('AJAX filter error:', error);
-            showLoading(false);
-            // Fallback: submit form normally
-            filterForm.submit();
-          });
-      }
-
-      // ==========================================
-      // UPDATE: Statistics Cards
-      // ==========================================
-      function updateStatisticsCards(stats) {
-        if (!stats) return;
-
-        // Update stat card values
-        const statCards = document.querySelectorAll('.stat-card');
-        statCards.forEach(function (card) {
-          const valueEl = card.querySelector('.stat-value');
-          const subvalueEl = card.querySelector('.stat-subvalue');
-          if (!valueEl) return;
-
-          if (card.classList.contains('stat-card--total')) {
-            valueEl.textContent = formatNumber(stats.total_documents);
-            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai);
-          } else if (card.classList.contains('stat-card--pending')) {
-            valueEl.textContent = formatNumber(stats.by_status.belum_dibayar);
-            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.belum_dibayar);
-          } else if (card.classList.contains('stat-card--ready')) {
-            valueEl.textContent = formatNumber(stats.by_status.siap_dibayar);
-            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.siap_dibayar);
-          } else if (card.classList.contains('stat-card--paid')) {
-            valueEl.textContent = formatNumber(stats.by_status.sudah_dibayar);
-            if (subvalueEl) subvalueEl.textContent = 'Rp ' + formatNumber(stats.total_nilai_by_status.sudah_dibayar);
-          }
-        });
-      }
-
-      // ==========================================
-      // UPDATE: Deadline Cards
-      // ==========================================
-      function updateDeadlineCards(data) {
-        const deadlineCards = document.querySelectorAll('.deadline-card');
-        deadlineCards.forEach(function (card) {
-          const valueEl = card.querySelector('.deadline-value');
-          if (!valueEl) return;
-
-          if (card.classList.contains('deadline-card--aman')) {
-            valueEl.textContent = formatNumber(data.totalAman);
-          } else if (card.classList.contains('deadline-card--peringatan')) {
-            valueEl.textContent = formatNumber(data.totalPeringatan);
-          } else if (card.classList.contains('deadline-card--terlambat')) {
-            valueEl.textContent = formatNumber(data.totalTerlambat);
-          }
-        });
-      }
-
-      // ==========================================
-      // UPDATE: Table Body
-      // ==========================================
-      function updateTable(data) {
-        const tableCount = document.getElementById('tableCount');
-        const tableSection = document.getElementById('tableSection');
-        const wrapper = document.getElementById('dataTableWrapper');
-
-        if (tableCount) {
-          tableCount.textContent = data.pagination.total;
-        }
-
-        // If in rekapan_table mode, we can't easily update the grouped view via AJAX
-        // So we skip table body update for that mode
-        if (data.mode === 'rekapan_table') {
-          return;
-        }
-
-        const dokumens = data.dokumens || [];
-        const columns = data.selectedColumns || [];
-
-        if (dokumens.length === 0) {
-          // Hide the table wrapper (don't destroy it!)
-          if (wrapper) {
-            wrapper.style.display = 'none';
-          }
-          // Show empty state div if not already visible
-          let emptyState = tableSection.querySelector('.empty-state');
-          if (!emptyState) {
-            emptyState = document.createElement('div');
-            emptyState.className = 'empty-state';
-            emptyState.innerHTML = `
-                            <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
-                            <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
-                            <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
-                            <a href="${AJAX_CONFIG.url}" class="btn-empty">
-                              <i class="fas fa-redo"></i> Reset Filter
-                            </a>
-                          `;
-            tableSection.querySelector('.table-header').insertAdjacentElement('afterend', emptyState);
-          }
-          return;
-        }
-
-        // Remove empty state if it exists and show the table wrapper
-        const existingEmpty = tableSection.querySelector('.empty-state');
-        if (existingEmpty) existingEmpty.remove();
-        if (wrapper) {
-          wrapper.style.display = '';
-        }
-
-        // Re-acquire tableBody (it's preserved since we no longer destroy wrapper)
-        const tableBody = document.getElementById('tableBody');
-        if (!tableBody) return;
-
-        // Rebuild table rows
-        let html = '';
-        dokumens.forEach(function (dok) {
-          html += '<tr>';
-          columns.forEach(function (colKey) {
-            if (colKey === 'nomor_agenda') {
-              html += '<td class="cell-primary cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
-            } else if (colKey === 'nomor_spp') {
-              html += '<td class="cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
-            } else if (colKey === 'dibayar_kepada') {
-              html += '<td class="cell-vendor">' + escapeHtml(dok[colKey] || '-') + '</td>';
-            } else if (colKey === 'uraian_spp') {
-              html += '<td class="cell-uraian">' + escapeHtml(dok[colKey] || '-') + '</td>';
-            } else if (colKey === 'nilai_rupiah') {
-              html += '<td class="cell-rupiah text-end">' + escapeHtml(dok[colKey] || '0') + '</td>';
-            } else if (colKey === 'status_pembayaran') {
-              html += '<td>' + renderStatusPill(dok.computed_status) + '</td>';
-            } else if (colKey === 'tgl_jatuhtempo') {
-              html += '<td>' + escapeHtml(dok[colKey] || '-') + '</td>';
-            } else if (['dokumen_po', 'dokumen_pr', 'dokumen_gr'].indexOf(colKey) !== -1) {
-              html += '<td class="cell-mono">' + escapeHtml(dok[colKey] || '-') + '</td>';
-            } else {
-              html += '<td>' + escapeHtml(dok[colKey] || '-') + '</td>';
-            }
-          });
-          html += '</tr>';
-        });
-
-        tableBody.innerHTML = html;
-      }
-
-      // ==========================================
-      // UPDATE: Pagination
-      // ==========================================
-      function updatePagination(pagination) {
-        const wrapper = document.getElementById('paginationWrapper');
-        const info = document.getElementById('paginationInfo');
-        const links = document.getElementById('paginationLinks');
-
-        if (!wrapper) return;
-
-        if (pagination.last_page <= 1) {
-          wrapper.style.display = 'none';
-          return;
-        }
-
-        wrapper.style.display = '';
-
-        // Update info text
-        if (info) {
-          info.textContent = 'Menampilkan ' + pagination.first_item + ' - ' + pagination.last_item + ' dari ' + pagination.total;
-        }
-
-        // Build pagination links
-        if (links) {
-          let paginationHtml = '<nav><ul class="pagination">';
-
-          // Previous
-          if (pagination.current_page > 1) {
-            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + (pagination.current_page - 1) + '">&lsaquo;</a></li>';
-          } else {
-            paginationHtml += '<li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>';
-          }
-
-          // Page numbers
-          let startPage = Math.max(1, pagination.current_page - 2);
-          let endPage = Math.min(pagination.last_page, pagination.current_page + 2);
-
-          if (startPage > 1) {
-            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>';
-            if (startPage > 2) {
-              paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+          if (filterForm) {
+            const formData = new FormData(filterForm);
+            for (const [key, value] of formData.entries()) {
+              if (value) params.set(key, value);
             }
           }
 
-          for (let i = startPage; i <= endPage; i++) {
-            if (i === pagination.current_page) {
-              paginationHtml += '<li class="page-item active"><span class="page-link">' + i + '</span></li>';
-            } else {
-              paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>';
-            }
+          const currentUrl = new URL(window.location.href);
+          const currentMode = currentUrl.searchParams.get('mode');
+          if (currentMode) {
+            params.set('mode', currentMode);
           }
 
-          if (endPage < pagination.last_page) {
-            if (endPage < pagination.last_page - 1) {
-              paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
-            }
-            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + pagination.last_page + '">' + pagination.last_page + '</a></li>';
+          return params;
+        }
+
+        function updateUrlState() {
+          const params = currentFilterParams();
+          window.history.replaceState({}, '', '{{ route("dashboard.pembayaran") }}' + (params.toString() ? '?' + params.toString() : ''));
+        }
+
+        function reloadTable() {
+          updateUrlState();
+          if (pembayaranTable) {
+            pembayaranTable.ajax.reload(null, true);
+          }
+        }
+
+        function initPembayaranDataTable() {
+          const tableEl = document.getElementById('pembayaranDocumentTable');
+          if (!tableEl || !window.jQuery || !jQuery.fn.DataTable) return;
+
+          pembayaranTable = jQuery(tableEl).DataTable({
+            processing: true,
+            serverSide: true,
+            deferRender: true,
+            scrollX: true,
+            scrollY: '62vh',
+            scroller: {
+              loadingIndicator: true,
+              displayBuffer: 9,
+            },
+            pageLength: 50,
+            lengthChange: false,
+            searching: true,
+            ordering: true,
+            info: false,
+            paging: true,
+            dom: 'rt',
+            ajax: {
+              url: '{{ route("dashboard.pembayaran.data") }}',
+              type: 'GET',
+              data: function (d) {
+                const filterForm = document.getElementById('filterForm');
+                if (filterForm) {
+                  const formData = new FormData(filterForm);
+                  for (const [key, value] of formData.entries()) {
+                    d[key === 'search' ? 'filter_search' : key] = value || '';
+                  }
+                }
+                d.visible_columns = selectedColumns;
+              },
+            },
+            columns: selectedColumns.map(function (columnKey) {
+              return {
+                data: columnKey,
+                name: columnKey,
+                orderable: true,
+                searchable: true,
+                className: columnClassMap[columnKey] || '',
+                width: columnWidthMap[columnKey] || '170px',
+                defaultContent: '-',
+              };
+            }),
+            drawCallback: function (settings) {
+              const countEl = document.getElementById('tableCount');
+              if (countEl && settings && settings.json) {
+                countEl.textContent = Number(settings.json.recordsFiltered || 0).toLocaleString('id-ID');
+              }
+            },
+            language: {
+              processing: 'Memuat data...',
+              zeroRecords: 'Tidak ada dokumen ditemukan',
+              emptyTable: 'Tidak ada dokumen ditemukan',
+            },
+          });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+          initPembayaranDataTable();
+
+          const filterForm = document.getElementById('filterForm');
+          if (!filterForm) return;
+
+          filterForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            reloadTable();
+          });
+
+          filterForm.querySelectorAll('select').forEach(function (selectEl) {
+            selectEl.addEventListener('change', reloadTable);
+          });
+
+          const dateInput = filterForm.querySelector('input[name="date"]');
+          if (dateInput) {
+            dateInput.addEventListener('change', reloadTable);
           }
 
-          // Next
-          if (pagination.current_page < pagination.last_page) {
-            paginationHtml += '<li class="page-item"><a class="page-link" href="#" data-page="' + (pagination.current_page + 1) + '">&rsaquo;</a></li>';
-          } else {
-            paginationHtml += '<li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>';
-          }
-
-          paginationHtml += '</ul></nav>';
-          links.innerHTML = paginationHtml;
-
-          // Bind click handlers to pagination links
-          links.querySelectorAll('a.page-link[data-page]').forEach(function (link) {
-            link.addEventListener('click', function (e) {
-              e.preventDefault();
-              currentPage = parseInt(this.getAttribute('data-page'));
-              fetchFilteredData();
-              // Scroll to table
-              var tableSection = document.getElementById('tableSection');
-              if (tableSection) tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const searchInput = filterForm.querySelector('input[name="search"]');
+          if (searchInput) {
+            searchInput.addEventListener('input', function () {
+              clearTimeout(searchDebounceTimer);
+              searchDebounceTimer = setTimeout(reloadTable, 300);
             });
-          });
-        }
-      }
-
-      // ==========================================
-      // HELPERS
-      // ==========================================
-      function showLoading(show) {
-        const overlay = document.getElementById('ajaxLoadingOverlay');
-        if (overlay) {
-          overlay.style.display = show ? 'flex' : 'none';
-        }
-      }
-
-      function updateUrlState(params) {
-        const newUrl = AJAX_CONFIG.url + '?' + params.toString();
-        window.history.replaceState({}, '', newUrl);
-      }
-
-      function formatNumber(num) {
-        if (num === null || num === undefined) return '0';
-        return Number(num).toLocaleString('id-ID');
-      }
-
-      function escapeHtml(str) {
-        if (str === null || str === undefined) return '-';
-        const div = document.createElement('div');
-        div.textContent = String(str);
-        return div.innerHTML;
-      }
-
-      function renderStatusPill(status) {
-        if (status === 'siap_dibayar') {
-          return '<span class="status-pill status-pill--ready"><i class="fas fa-circle"></i> Siap Dibayar</span>';
-        } else if (status === 'sudah_dibayar') {
-          return '<span class="status-pill status-pill--paid"><i class="fas fa-circle"></i> Sudah Dibayar</span>';
-        } else {
-          return '<span class="status-pill status-pill--pending"><i class="fas fa-circle"></i> Belum Siap</span>';
-        }
-      }
-    })();
-  </script>
+          }
+        });
+      })();
+    </script>
+  @endif
 @endsection

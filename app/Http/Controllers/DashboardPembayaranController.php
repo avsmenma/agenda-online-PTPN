@@ -37,14 +37,7 @@ class DashboardPembayaranController extends Controller
         $dateFilter = $this->normalizeDateFilter($date);
         $search = request('search');
         $mode = request('mode', 'normal'); // normal or rekapan_table
-        $defaultColumns = [
-            'nomor_agenda',
-            'nomor_spp',
-            'dibayar_kepada',
-            'uraian_spp',
-            'nilai_rupiah',
-            'status_pembayaran'
-        ];
+        $defaultColumns = $this->getPembayaranDashboardDefaultColumns();
         $selectedColumns = request('columns', []); // Array of selected columns in order
         $selectedColumns = is_array($selectedColumns) ? array_values(array_filter($selectedColumns)) : [];
 
@@ -355,30 +348,37 @@ class DashboardPembayaranController extends Controller
             });
         }
 
-        // Get all results first (before pagination) to apply computed_status filter
-        $allDokumens = $query->orderBy('created_at', 'desc')->get();
-        $allDokumens->each(function ($doc) use ($getComputedStatus) {
-            $doc->computed_status = $getComputedStatus($doc);
-        });
+        $perPage = 50;
+        if ($mode === 'rekapan_table') {
+            // Get all results first (before pagination) to apply computed_status filter
+            $allDokumens = $query->orderBy('created_at', 'desc')->get();
+            $allDokumens->each(function ($doc) use ($getComputedStatus) {
+                $doc->computed_status = $getComputedStatus($doc);
+            });
 
-        // Only filter by status if a specific status is selected
-        if ($statusPembayaran && in_array($statusPembayaran, ['belum_siap_dibayar', 'siap_dibayar', 'sudah_dibayar'])) {
-            $allDokumens = $allDokumens->filter(function ($doc) use ($statusPembayaran) {
-                return $doc->computed_status === $statusPembayaran;
-            })->values();
-        }
+            // Only filter by status if a specific status is selected
+            if ($statusPembayaran && in_array($statusPembayaran, ['belum_siap_dibayar', 'siap_dibayar', 'sudah_dibayar'])) {
+                $allDokumens = $allDokumens->filter(function ($doc) use ($statusPembayaran) {
+                    return $doc->computed_status === $statusPembayaran;
+                })->values();
+            }
 
-        // Paginate manually
-        $currentPage = request()->get('page', 1);
-        $perPage = request()->get('per_page', session('pembayaran_per_page', 15));
-        if ($perPage === 'all') {
-            $perPage = 999999;
+            // Paginate manually
+            $currentPage = request()->get('page', 1);
+            $perPage = request()->get('per_page', session('pembayaran_per_page', 15));
+            if ($perPage === 'all') {
+                $perPage = 999999;
+            } else {
+                $perPage = in_array((int) $perPage, [10, 15, 25, 50, 100]) ? (int) $perPage : 15;
+            }
+            session(['pembayaran_per_page' => $perPage]);
+            $total = $allDokumens->count();
+            $currentItems = $allDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
         } else {
-            $perPage = in_array((int) $perPage, [10, 15, 25, 50, 100]) ? (int) $perPage : 15;
+            $currentPage = 1;
+            $total = (clone $query)->count();
+            $currentItems = collect();
         }
-        session(['pembayaran_per_page' => $perPage]);
-        $total = $allDokumens->count();
-        $currentItems = $allDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
 
         $dokumens = new LengthAwarePaginator(
             $currentItems,
@@ -464,56 +464,7 @@ class DashboardPembayaranController extends Controller
         $availableKebuns = $kebunFromKebun->merge($kebunFromNamaKebuns)->unique()->sortKeys();
 
         // Available columns for rekapan table
-        $availableColumns = [
-            'nomor_agenda' => 'Nomor Agenda',
-            'bulan' => 'Bulan',
-            'tahun' => 'Tahun',
-            'kategori' => 'Kriteria CF',
-            'jenis_dokumen' => 'Sub Kriteria',
-            'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
-            'jenis_pembayaran' => 'Jenis Pembayaran',
-            'nomor_spp' => 'No SPP',
-            'tanggal_spp' => 'TGL SPP',
-            'tanggal_masuk' => 'TGL Masuk',
-            'dibayar_kepada' => 'Nama Vendor/Dibayar Kepada',
-            'uraian_spp' => 'Uraian SPP',
-            'nilai_rupiah' => 'Nilai Rupiah',
-            // Backend later columns
-            'tanggal_paraf' => 'Tanggal Paraf',
-            'pemaraf' => 'Pemaraf',
-            'tanggal_selesai_diproses' => 'Tgl Selesai Diproses',
-            'tanggal_kembali_ke_bagian' => 'Tgl Kembali ke Bagian',
-            'tanggal_hasil_koreksi_bagian' => 'Tgl Hasil Koreksi Bagian',
-            'kepala_sub_bagian' => 'Kepala Sub Bagian',
-            'keterangan' => 'Keterangan',
-            'status_dokumen_custom' => 'Status Dokumen',
-            'status_pembayaran' => 'Status Pembayaran',
-            'tanggal_dibayar' => 'Tanggal Bayar',
-            'bagian' => 'Bagian',
-            'nama_pengirim' => 'Nama Pengirim',
-            'no_spk' => 'Nomor SPK',
-            'tanggal_spk' => 'TGL SPK',
-            'tanggal_berakhir_spk' => 'TGL Berakhir SPK',
-            'no_berita_acara' => 'Nomor BA',
-            'tanggal_berita_acara' => 'TGL BA',
-            'nomor_po' => 'No PO',
-            'nomor_mirror' => 'Nomor Miro',
-            'no_faktur' => 'No Faktur',
-            'tanggal_faktur' => 'Tanggal Faktur',
-            'tanggal_selesai_verifikasi_pajak' => 'Tgl Selesai Verifikasi Pajak',
-            'jenis_pph' => 'Jenis PPh',
-            'dpp_pph' => 'DPP PPh',
-            'ppn_terhutang' => 'PPH Terhutang',
-            // Role-specific columns
-            'tanggal_berakhir_ba' => 'TGL Akhir BA',
-            'kebun' => 'Kebun',
-            'umur_dokumen_tanggal_masuk' => 'Umur(tgl Msk)',
-            'umur_dokumen_tanggal_spp' => 'Umur(Tgl SPP)',
-            'umur_dokumen_tanggal_ba' => 'Umur(Tgl BA)',
-            // Perpajakan data (read-only view)
-            'npwp' => 'NPWP',
-            'link_dokumen_pajak' => 'Link Dokumen Pajak',
-        ];
+        $availableColumns = $this->getPembayaranDashboardAvailableColumns();
 
         $data = [
             'title' => 'Dashboard Pembayaran',
@@ -595,18 +546,312 @@ class DashboardPembayaranController extends Controller
         return view('pembayaranNEW.dashboardPembayaran', $data);
     }
 
+    public function datatable(Request $request)
+    {
+        $draw = (int) $request->get('draw', 1);
+        $start = max(0, (int) $request->get('start', 0));
+        $length = (int) $request->get('length', 50);
+        $length = $length > 0 ? min($length, 250) : 50;
+        $availableColumns = $this->getPembayaranDashboardAvailableColumns();
+        $selectedColumns = $request->get('visible_columns', []);
+        $selectedColumns = is_array($selectedColumns) ? array_values(array_filter($selectedColumns)) : [];
+
+        if (empty($selectedColumns)) {
+            $selectedColumns = $this->getSavedPembayaranDashboardColumns();
+        }
+
+        $selectedColumns = array_values(array_filter($selectedColumns, fn($col) => isset($availableColumns[$col])));
+        if (empty($selectedColumns)) {
+            $selectedColumns = $this->getPembayaranDashboardDefaultColumns();
+        }
+
+        $query = $this->buildPembayaranDashboardQuery($request, false);
+        $recordsTotal = (clone $query)->count();
+
+        $searchValue = trim((string) (data_get($request->input('search'), 'value') ?: $request->get('filter_search', '')));
+        if ($searchValue !== '') {
+            $this->applyPembayaranDashboardSearch($query, $searchValue);
+        }
+
+        $recordsFiltered = (clone $query)->count();
+
+        $orderColumnIndex = (int) data_get($request->input('order'), '0.column', 0);
+        $orderDirection = strtolower((string) data_get($request->input('order'), '0.dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+        $orderColumn = data_get($request->input('columns'), "{$orderColumnIndex}.data");
+
+        if ($orderColumn && isset($availableColumns[$orderColumn]) && Schema::hasColumn('dokumens', $orderColumn)) {
+            $query->orderBy($orderColumn, $orderDirection);
+        } else {
+            $query->orderBy('created_at', 'desc')->orderBy('id', 'desc');
+        }
+
+        $dokumens = $query
+            ->skip($start)
+            ->take($length)
+            ->get();
+
+        $data = $dokumens->map(function ($dokumen) use ($selectedColumns) {
+            $row = [];
+            foreach ($selectedColumns as $column) {
+                $row[$column] = $this->formatPembayaranDashboardCell($dokumen, $column);
+            }
+
+            return $row;
+        })->values();
+
+        return response()->json([
+            'draw' => $draw,
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $data,
+        ]);
+    }
+
+    private function buildPembayaranDashboardQuery(Request $request, bool $includeSearch = true)
+    {
+        $statusPembayaran = $request->get('status_pembayaran');
+        $year = $request->get('year');
+        $month = $request->get('month');
+        $dateFilter = $this->normalizeDateFilter($request->get('date'));
+        $search = $request->get('filter_search', $request->get('search'));
+        $search = is_array($search) ? '' : $search;
+        $query = Dokumen::whereNotNull('nomor_agenda');
+        $belumSiapHandlers = ['akutansi', 'perpajakan', 'operator', 'team_verifikasi', 'ibu_a', 'ibu_b'];
+
+        if ($statusPembayaran) {
+            if ($statusPembayaran === 'belum_siap_dibayar') {
+                $query->where(function ($q) use ($belumSiapHandlers) {
+                    $q->whereIn('current_handler', $belumSiapHandlers)
+                        ->whereNull('tanggal_dibayar')
+                        ->whereNull('link_bukti_pembayaran')
+                        ->where(function ($statusQ) {
+                            $statusQ->whereNull('status_pembayaran')
+                                ->orWhereNotIn('status_pembayaran', ['sudah_dibayar', 'SUDAH DIBAYAR', 'SUDAH_DIBAYAR']);
+                        });
+                });
+            } elseif ($statusPembayaran === 'siap_dibayar') {
+                $query->where(function ($q) {
+                    $q->where('current_handler', 'pembayaran')
+                        ->orWhere('status', 'sent_to_pembayaran');
+                })->whereNull('tanggal_dibayar')
+                    ->whereNull('link_bukti_pembayaran')
+                    ->where(function ($q) {
+                        $q->whereNull('status_pembayaran')
+                            ->orWhereNotIn('status_pembayaran', ['sudah_dibayar', 'SUDAH DIBAYAR', 'SUDAH_DIBAYAR']);
+                    });
+            } elseif ($statusPembayaran === 'sudah_dibayar') {
+                $query->where(function ($q) {
+                    $q->where('status_pembayaran', 'sudah_dibayar')
+                        ->orWhere('status_pembayaran', 'SUDAH DIBAYAR')
+                        ->orWhere('status_pembayaran', 'SUDAH_DIBAYAR')
+                        ->orWhereNotNull('tanggal_dibayar')
+                        ->orWhereNotNull('link_bukti_pembayaran');
+                });
+            }
+        }
+
+        if ($year) {
+            $query->whereYear('created_at', $year);
+        }
+        if ($month) {
+            $query->whereMonth('created_at', $month);
+        }
+        if ($dateFilter) {
+            $query->whereDate('tanggal_masuk', $dateFilter);
+        }
+
+        $filterVendor = $request->get('filter_vendor');
+        $filterKategori = $request->get('filter_kategori');
+        $filterJenisDokumen = $request->get('filter_jenis_dokumen');
+        $filterJenisSubPekerjaan = $request->get('filter_jenis_sub_pekerjaan');
+        $filterKebun = $request->get('filter_kebun');
+        $filterJenisPembayaran = $request->get('filter_jenis_pembayaran');
+
+        if ($filterVendor) {
+            $query->where('dibayar_kepada', $filterVendor);
+        }
+        if ($filterKategori) {
+            $query->where('kategori', $filterKategori);
+        }
+        if ($filterJenisDokumen) {
+            $query->where('jenis_dokumen', $filterJenisDokumen);
+        }
+        if ($filterJenisSubPekerjaan) {
+            $query->where('jenis_sub_pekerjaan', $filterJenisSubPekerjaan);
+        }
+        if ($filterKebun) {
+            $query->where(function ($q) use ($filterKebun) {
+                $q->where('kebun', $filterKebun)
+                    ->orWhere('nama_kebuns', $filterKebun);
+            });
+        }
+        if ($filterJenisPembayaran) {
+            $query->where('jenis_pembayaran', $filterJenisPembayaran);
+        }
+
+        if ($includeSearch && $search) {
+            $this->applyPembayaranDashboardSearch($query, $search);
+        }
+
+        return $query;
+    }
+
+    private function applyPembayaranDashboardSearch($query, string $search): void
+    {
+        $search = trim($search);
+        if ($search === '') {
+            return;
+        }
+
+        $query->where(function ($q) use ($search) {
+            $q->where('nomor_agenda', 'like', "%{$search}%")
+                ->orWhere('nomor_spp', 'like', "%{$search}%")
+                ->orWhere('uraian_spp', 'like', "%{$search}%")
+                ->orWhere('dibayar_kepada', 'like', "%{$search}%");
+        });
+    }
+
+    private function getPembayaranDashboardDefaultColumns(): array
+    {
+        return [
+            'nomor_agenda',
+            'nomor_spp',
+            'dibayar_kepada',
+            'uraian_spp',
+            'nilai_rupiah',
+            'status_pembayaran'
+        ];
+    }
+
+    private function getSavedPembayaranDashboardColumns(): array
+    {
+        $defaultColumns = $this->getPembayaranDashboardDefaultColumns();
+        $user = Auth::user();
+
+        if ($user && isset($user->table_columns_preferences['pembayaran_dashboard'])) {
+            $columns = $user->table_columns_preferences['pembayaran_dashboard'];
+        } else {
+            $columns = session('pembayaran_dashboard_table_columns', $defaultColumns);
+        }
+
+        $columns = is_array($columns) ? array_values(array_filter($columns)) : $defaultColumns;
+
+        return empty($columns) ? $defaultColumns : $columns;
+    }
+
+    private function getPembayaranDashboardAvailableColumns(): array
+    {
+        return [
+            'nomor_agenda' => 'Nomor Agenda',
+            'bulan' => 'Bulan',
+            'tahun' => 'Tahun',
+            'kategori' => 'Kriteria CF',
+            'jenis_dokumen' => 'Sub Kriteria',
+            'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
+            'jenis_pembayaran' => 'Jenis Pembayaran',
+            'nomor_spp' => 'No SPP',
+            'tanggal_spp' => 'TGL SPP',
+            'tanggal_masuk' => 'TGL Masuk',
+            'dibayar_kepada' => 'Nama Vendor/Dibayar Kepada',
+            'uraian_spp' => 'Uraian SPP',
+            'nilai_rupiah' => 'Nilai Rupiah',
+            'tanggal_paraf' => 'Tanggal Paraf',
+            'pemaraf' => 'Pemaraf',
+            'tanggal_selesai_diproses' => 'Tgl Selesai Diproses',
+            'tanggal_kembali_ke_bagian' => 'Tgl Kembali ke Bagian',
+            'tanggal_hasil_koreksi_bagian' => 'Tgl Hasil Koreksi Bagian',
+            'kepala_sub_bagian' => 'Kepala Sub Bagian',
+            'keterangan' => 'Keterangan',
+            'status_dokumen_custom' => 'Status Dokumen',
+            'status_pembayaran' => 'Status Pembayaran',
+            'tanggal_dibayar' => 'Tanggal Bayar',
+            'bagian' => 'Bagian',
+            'nama_pengirim' => 'Nama Pengirim',
+            'no_spk' => 'Nomor SPK',
+            'tanggal_spk' => 'TGL SPK',
+            'tanggal_berakhir_spk' => 'TGL Berakhir SPK',
+            'no_berita_acara' => 'Nomor BA',
+            'tanggal_berita_acara' => 'TGL BA',
+            'nomor_po' => 'No PO',
+            'nomor_mirror' => 'Nomor Miro',
+            'no_faktur' => 'No Faktur',
+            'tanggal_faktur' => 'Tanggal Faktur',
+            'tanggal_selesai_verifikasi_pajak' => 'Tgl Selesai Verifikasi Pajak',
+            'jenis_pph' => 'Jenis PPh',
+            'dpp_pph' => 'DPP PPh',
+            'ppn_terhutang' => 'PPH Terhutang',
+            'tanggal_berakhir_ba' => 'TGL Akhir BA',
+            'kebun' => 'Kebun',
+            'umur_dokumen_tanggal_masuk' => 'Umur(tgl Msk)',
+            'umur_dokumen_tanggal_spp' => 'Umur(Tgl SPP)',
+            'umur_dokumen_tanggal_ba' => 'Umur(Tgl BA)',
+            'npwp' => 'NPWP',
+            'link_dokumen_pajak' => 'Link Dokumen Pajak',
+        ];
+    }
+
+    private function formatPembayaranDashboardCell(Dokumen $dokumen, string $column): string
+    {
+        if ($column === 'status_pembayaran') {
+            return $this->renderPembayaranStatusPill($this->getPembayaranComputedStatus($dokumen));
+        }
+
+        if ($column === 'nilai_rupiah') {
+            return number_format((float) ($dokumen->nilai_rupiah ?? 0), 0, ',', '.');
+        }
+
+        $value = $dokumen->{$column} ?? '-';
+        if ($value instanceof Carbon) {
+            $value = $value->format('Y-m-d H:i:s');
+        }
+
+        return e((string) ($value === '' || $value === null ? '-' : $value));
+    }
+
+    private function getPembayaranComputedStatus(Dokumen $dokumen): string
+    {
+        if (
+            $dokumen->tanggal_dibayar ||
+            $dokumen->link_bukti_pembayaran ||
+            strtoupper(trim($dokumen->status_pembayaran ?? '')) === 'SUDAH_DIBAYAR' ||
+            strtoupper(trim($dokumen->status_pembayaran ?? '')) === 'SUDAH DIBAYAR' ||
+            $dokumen->status_pembayaran === 'sudah_dibayar'
+        ) {
+            return 'sudah_dibayar';
+        }
+
+        if ($dokumen->current_handler === 'pembayaran' || $dokumen->status === 'sent_to_pembayaran') {
+            return 'siap_dibayar';
+        }
+
+        return 'belum_siap_dibayar';
+    }
+
+    private function renderPembayaranStatusPill(string $status): string
+    {
+        if ($status === 'siap_dibayar') {
+            return '<span class="status-pill status-pill--ready"><i class="fas fa-circle"></i> Siap Dibayar</span>';
+        }
+
+        if ($status === 'sudah_dibayar') {
+            return '<span class="status-pill status-pill--paid"><i class="fas fa-circle"></i> Sudah Dibayar</span>';
+        }
+
+        return '<span class="status-pill status-pill--pending"><i class="fas fa-circle"></i> Belum Siap</span>';
+    }
+
     public function dokumens(Request $request)
     {
         // Get status filter and search from request
         $statusFilter = $request->get('status_filter');
         $search = $request->get('search');
-        $perPage = $request->get('per_page', 100); // Mode daftar utama memakai virtual scroll
-        if ($perPage === 'all') {
-            $perPage = 100; // Mode Semua memakai virtual scroll, bukan render seluruh DOM
+        $perPage = $request->get('per_page', 'all');
+        $showAllRows = $perPage === 'all';
+        if ($showAllRows) {
+            $perPage = 100;
         } else {
             $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10; // Validate per_page value
         }
-        session(['pembayaran_per_page' => $perPage]); // Save to session
 
         // Build query for pembayaran documents
         // Only show documents that belong to Pembayaran module:
@@ -820,6 +1065,10 @@ class DashboardPembayaranController extends Controller
         // Paginate manually using LengthAwarePaginator
         $currentPage = Paginator::resolveCurrentPage('page');
         $total = $allDokumens->count();
+        if ($showAllRows) {
+            $perPage = 100;
+        }
+        session(['pembayaran_per_page' => $showAllRows ? 'all' : $perPage]);
         $currentItems = $allDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
 
         // Get all query parameters except 'page' for pagination links
