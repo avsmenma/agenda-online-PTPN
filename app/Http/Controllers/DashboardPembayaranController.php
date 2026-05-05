@@ -37,18 +37,42 @@ class DashboardPembayaranController extends Controller
         $dateFilter = $this->normalizeDateFilter($date);
         $search = request('search');
         $mode = request('mode', 'normal'); // normal or rekapan_table
-        $selectedColumns = request('columns', null); // Array of selected columns in order
+        $defaultColumns = [
+            'nomor_agenda',
+            'nomor_spp',
+            'dibayar_kepada',
+            'uraian_spp',
+            'nilai_rupiah',
+            'status_pembayaran'
+        ];
+        $selectedColumns = request('columns', []); // Array of selected columns in order
+        $selectedColumns = is_array($selectedColumns) ? array_values(array_filter($selectedColumns)) : [];
 
-        // Default columns if none selected
-        if (empty($selectedColumns)) {
-            $selectedColumns = [
-                'nomor_agenda',
-                'nomor_spp',
-                'dibayar_kepada',
-                'uraian_spp',
-                'nilai_rupiah',
-                'status_pembayaran'
-            ];
+        if (request()->has('columns') && !empty($selectedColumns)) {
+            $user = Auth::user();
+            if ($user) {
+                $preferences = $user->table_columns_preferences ?? [];
+                $preferences['pembayaran_dashboard'] = $selectedColumns;
+                $user->table_columns_preferences = $preferences;
+                $user->save();
+            }
+
+            session(['pembayaran_dashboard_table_columns' => $selectedColumns]);
+        } else {
+            $user = Auth::user();
+            if ($user && isset($user->table_columns_preferences['pembayaran_dashboard'])) {
+                $selectedColumns = $user->table_columns_preferences['pembayaran_dashboard'];
+            } else {
+                $selectedColumns = session('pembayaran_dashboard_table_columns', $defaultColumns);
+            }
+
+            $selectedColumns = is_array($selectedColumns) ? array_values(array_filter($selectedColumns)) : $defaultColumns;
+
+            if (empty($selectedColumns)) {
+                $selectedColumns = $defaultColumns;
+            }
+
+            session(['pembayaran_dashboard_table_columns' => $selectedColumns]);
         }
 
         // Handler yang dianggap "belum siap dibayar"
