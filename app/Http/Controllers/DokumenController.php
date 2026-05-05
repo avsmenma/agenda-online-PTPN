@@ -1442,12 +1442,10 @@ class DokumenController extends Controller
         $isBagianUser = $userRole === 'bagian';
         $isBagianAllowed = $isBagianUser && in_array($docStatus, $bagianAllowedStatuses);
 
-        // For pembayaran: allow edit when handler is pembayaran or status is sent_to_pembayaran
+        // For pembayaran: dashboard pembayaran is allowed to correct payment document data
+        // regardless of the current handler/stage.
         $isPembayaranUser = $userRole === 'pembayaran';
-        $pembayaranAllowedHandlers = ['pembayaran'];
-        $pembayaranAllowedStatuses = ['sent_to_pembayaran', 'processed_by_pembayaran', 'processed_by_akutansi'];
-        $isPembayaranAllowed = $isPembayaranUser &&
-            (in_array($currentHandler, $pembayaranAllowedHandlers) || in_array($dokumen->status ?? '', $pembayaranAllowedStatuses));
+        $isPembayaranAllowed = $isPembayaranUser;
 
         // For team_verifikasi / verifikasi:
         //   Allow if handler matches OR if document status indicates it's at their stage

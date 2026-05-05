@@ -3054,6 +3054,38 @@
           tanggal_spp: '170px',
           tanggal_masuk: '170px',
         };
+        const editableColumns = new Set([
+          'nomor_agenda',
+          'nomor_spp',
+          'tanggal_spp',
+          'uraian_spp',
+          'nilai_rupiah',
+          'kategori',
+          'jenis_dokumen',
+          'jenis_sub_pekerjaan',
+          'jenis_pembayaran',
+          'kebun',
+          'bagian',
+          'nama_pengirim',
+          'dibayar_kepada',
+          'no_berita_acara',
+          'tanggal_berita_acara',
+          'no_spk',
+          'tanggal_spk',
+          'tanggal_berakhir_spk',
+          'no_faktur',
+          'tanggal_faktur',
+          'tanggal_paraf',
+          'pemaraf',
+          'bulan',
+          'tahun',
+          'jenis_pph',
+          'dpp_pph',
+          'ppn_terhutang',
+          'tanggal_selesai_verifikasi_pajak',
+          'npwp',
+          'link_dokumen_pajak',
+        ]);
         let searchDebounceTimer = null;
         let pembayaranTable = null;
         let fallbackStart = 0;
@@ -3084,6 +3116,40 @@
         function updateUrlState() {
           const params = currentFilterParams();
           window.history.replaceState({}, '', '{{ route("dashboard.pembayaran") }}' + (params.toString() ? '?' + params.toString() : ''));
+        }
+
+        function dispatchTableRefreshed() {
+          document.dispatchEvent(new CustomEvent('document-table-refreshed'));
+          window.dispatchEvent(new CustomEvent('document-table-refreshed'));
+        }
+
+        function isEditableColumn(columnKey) {
+          return editableColumns.has(columnKey);
+        }
+
+        function decorateRow(rowEl, rowData) {
+          if (!rowEl || !rowData) return;
+          rowEl.dataset.dokumenId = rowData.dokumen_id || '';
+          rowEl.dataset.editable = 'true';
+          rowEl.dataset.kategori = rowData.kategori_raw || '';
+          rowEl.dataset.jenisDokumen = rowData.jenis_dokumen_raw || '';
+          rowEl.dataset.jenisSubPekerjaan = rowData.jenis_sub_pekerjaan_raw || '';
+        }
+
+        function decorateEditableCell(cellEl, columnKey, rowData) {
+          if (!cellEl || !rowData || !isEditableColumn(columnKey)) return;
+          cellEl.classList.add('ie-cell');
+          cellEl.dataset.field = columnKey;
+          cellEl.dataset.raw = rowData._raw && rowData._raw[columnKey] !== undefined ? rowData._raw[columnKey] : '';
+          cellEl.title = 'Enter untuk edit, Arrow untuk pindah cell';
+        }
+
+        function escapeAttribute(value) {
+          return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
         }
 
         function reloadTable() {
@@ -3123,14 +3189,19 @@
           }
 
           const html = rows.map(function (row) {
-            return '<tr>' + selectedColumns.map(function (columnKey) {
-              const className = columnClassMap[columnKey] || '';
+            return '<tr data-dokumen-id="' + escapeAttribute(row.dokumen_id) + '" data-editable="true" data-kategori="' + escapeAttribute(row.kategori_raw) + '" data-jenis-dokumen="' + escapeAttribute(row.jenis_dokumen_raw) + '" data-jenis-sub-pekerjaan="' + escapeAttribute(row.jenis_sub_pekerjaan_raw) + '">' + selectedColumns.map(function (columnKey) {
+              const className = 'col-' + columnKey + ' ' + (columnClassMap[columnKey] || '') + (isEditableColumn(columnKey) ? ' ie-cell' : '');
               const value = row[columnKey] || '-';
-              return '<td class="' + className + '">' + value + '</td>';
+              const rawValue = row._raw && row._raw[columnKey] !== undefined ? row._raw[columnKey] : '';
+              const attrs = isEditableColumn(columnKey)
+                ? ' data-field="' + escapeAttribute(columnKey) + '" data-raw="' + escapeAttribute(rawValue) + '" title="Enter untuk edit, Arrow untuk pindah cell"'
+                : '';
+              return '<td class="' + className + '"' + attrs + '>' + value + '</td>';
             }).join('') + '</tr>';
           }).join('');
 
           tableBody.insertAdjacentHTML('beforeend', html);
+          dispatchTableRefreshed();
         }
 
         function loadFallbackRows(reset) {
@@ -3231,16 +3302,23 @@
                 name: columnKey,
                 orderable: true,
                 searchable: true,
-                className: columnClassMap[columnKey] || '',
+                className: 'col-' + columnKey + ' ' + (columnClassMap[columnKey] || ''),
                 width: columnWidthMap[columnKey] || '170px',
                 defaultContent: '-',
+                createdCell: function (cell, cellData, rowData) {
+                  decorateEditableCell(cell, columnKey, rowData);
+                },
               };
             }),
+            createdRow: function (row, data) {
+              decorateRow(row, data);
+            },
             drawCallback: function (settings) {
               const countEl = document.getElementById('tableCount');
               if (countEl && settings && settings.json) {
                 countEl.textContent = Number(settings.json.recordsFiltered || 0).toLocaleString('id-ID');
               }
+              dispatchTableRefreshed();
             },
             language: {
               processing: 'Memuat data...',
@@ -3294,4 +3372,7 @@
       })();
     </script>
   @endif
+
+  @include('partials._inlineEditEngine')
+  @include('partials._activeCellNav', ['tableSelector' => '#pembayaranDocumentTable'])
 @endsection

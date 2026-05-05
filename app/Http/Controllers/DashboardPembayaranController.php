@@ -211,7 +211,7 @@ class DashboardPembayaranController extends Controller
         // ============================================
         // DOKUMEN LIST WITH PAGINATION
         // ============================================
-        $query = Dokumen::whereNotNull('nomor_agenda');
+        $query = Dokumen::with('dibayarKepadas')->whereNotNull('nomor_agenda');
 
         // Apply status filter
         if ($statusPembayaran) {
@@ -465,6 +465,7 @@ class DashboardPembayaranController extends Controller
 
         // Available columns for rekapan table
         $availableColumns = $this->getPembayaranDashboardAvailableColumns();
+        [$ieKategoriList, $ieSubKriteriaList, $ieItemSubKriteriaList, $ieJenisPembayaranList] = $this->getPembayaranInlineEditOptions();
 
         $data = [
             'title' => 'Dashboard Pembayaran',
@@ -498,6 +499,10 @@ class DashboardPembayaranController extends Controller
             'availableJenisSubPekerjaan' => $availableJenisSubPekerjaan,
             'availableJenisPembayaran' => $availableJenisPembayaran,
             'availableKebuns' => $availableKebuns,
+            'ieKategoriList' => $ieKategoriList,
+            'ieSubKriteriaList' => $ieSubKriteriaList,
+            'ieItemSubKriteriaList' => $ieItemSubKriteriaList,
+            'ieJenisPembayaranList' => $ieJenisPembayaranList,
         ];
 
         // Return JSON for AJAX requests (no page refresh)
@@ -591,9 +596,17 @@ class DashboardPembayaranController extends Controller
             ->get();
 
         $data = $dokumens->map(function ($dokumen) use ($selectedColumns) {
-            $row = [];
+            $row = [
+                'DT_RowId' => 'dokumen_' . $dokumen->id,
+                'dokumen_id' => $dokumen->id,
+                'kategori_raw' => $dokumen->kategori ?? '',
+                'jenis_dokumen_raw' => $dokumen->jenis_dokumen ?? '',
+                'jenis_sub_pekerjaan_raw' => $dokumen->jenis_sub_pekerjaan ?? '',
+                '_raw' => [],
+            ];
             foreach ($selectedColumns as $column) {
                 $row[$column] = $this->formatPembayaranDashboardCell($dokumen, $column);
+                $row['_raw'][$column] = $this->getPembayaranDashboardRawValue($dokumen, $column);
             }
 
             return $row;
@@ -790,6 +803,77 @@ class DashboardPembayaranController extends Controller
         ];
     }
 
+    private function getPembayaranInlineEditOptions(): array
+    {
+        $ieKategoriList = $ieSubKriteriaList = $ieItemSubKriteriaList = $ieJenisPembayaranList = [];
+
+        try {
+            $ieKategoriList = \App\Models\KategoriKriteria::where('tipe', 'Keluar')
+                ->get(['id_kategori_kriteria as id', 'nama_kriteria'])
+                ->toArray();
+            $ieSubKriteriaList = \App\Models\SubKriteria::all(['id_sub_kriteria as id', 'nama_sub_kriteria', 'id_kategori_kriteria'])
+                ->toArray();
+            $ieItemSubKriteriaList = \App\Models\ItemSubKriteria::all(['id_item_sub_kriteria as id', 'nama_item_sub_kriteria', 'id_sub_kriteria'])
+                ->toArray();
+            $ieJenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')
+                ->get(['id_jenis_pembayaran', 'nama_jenis_pembayaran'])
+                ->toArray();
+        } catch (\Throwable $e) {
+            Log::warning('Pembayaran inline edit options fallback: ' . $e->getMessage());
+        }
+
+        if (empty($ieKategoriList)) {
+            $ieKategoriList = Dokumen::whereNotNull('kategori')
+                ->where('kategori', '!=', '')
+                ->distinct()
+                ->orderBy('kategori')
+                ->pluck('kategori')
+                ->map(fn($value) => ['id' => $value, 'nama_kriteria' => $value])
+                ->toArray();
+        }
+        if (empty($ieSubKriteriaList)) {
+            $ieSubKriteriaList = Dokumen::whereNotNull('jenis_dokumen')
+                ->where('jenis_dokumen', '!=', '')
+                ->distinct()
+                ->orderBy('jenis_dokumen')
+                ->get(['jenis_dokumen', 'kategori'])
+                ->unique('jenis_dokumen')
+                ->map(fn($dokumen) => [
+                    'id' => $dokumen->jenis_dokumen,
+                    'nama_sub_kriteria' => $dokumen->jenis_dokumen,
+                    'id_kategori_kriteria' => $dokumen->kategori,
+                ])
+                ->values()
+                ->toArray();
+        }
+        if (empty($ieItemSubKriteriaList)) {
+            $ieItemSubKriteriaList = Dokumen::whereNotNull('jenis_sub_pekerjaan')
+                ->where('jenis_sub_pekerjaan', '!=', '')
+                ->distinct()
+                ->orderBy('jenis_sub_pekerjaan')
+                ->get(['jenis_sub_pekerjaan', 'jenis_dokumen'])
+                ->unique('jenis_sub_pekerjaan')
+                ->map(fn($dokumen) => [
+                    'id' => $dokumen->jenis_sub_pekerjaan,
+                    'nama_item_sub_kriteria' => $dokumen->jenis_sub_pekerjaan,
+                    'id_sub_kriteria' => $dokumen->jenis_dokumen,
+                ])
+                ->values()
+                ->toArray();
+        }
+        if (empty($ieJenisPembayaranList)) {
+            $ieJenisPembayaranList = Dokumen::whereNotNull('jenis_pembayaran')
+                ->where('jenis_pembayaran', '!=', '')
+                ->distinct()
+                ->orderBy('jenis_pembayaran')
+                ->pluck('jenis_pembayaran')
+                ->map(fn($value) => ['id_jenis_pembayaran' => $value, 'nama_jenis_pembayaran' => $value])
+                ->toArray();
+        }
+
+        return [$ieKategoriList, $ieSubKriteriaList, $ieItemSubKriteriaList, $ieJenisPembayaranList];
+    }
+
     private function formatPembayaranDashboardCell(Dokumen $dokumen, string $column): string
     {
         if ($column === 'status_pembayaran') {
@@ -806,6 +890,44 @@ class DashboardPembayaranController extends Controller
         }
 
         return e((string) ($value === '' || $value === null ? '-' : $value));
+    }
+
+    private function getPembayaranDashboardRawValue(Dokumen $dokumen, string $column): string
+    {
+        if ($column === 'dibayar_kepada') {
+            $relationValue = $dokumen->relationLoaded('dibayarKepadas')
+                ? $dokumen->dibayarKepadas->pluck('nama_penerima')->implode(', ')
+                : $dokumen->dibayarKepadas()->pluck('nama_penerima')->implode(', ');
+
+            return $relationValue ?: (string) ($dokumen->dibayar_kepada ?? '');
+        }
+
+        if (in_array($column, $this->getPembayaranDateEditableColumns(), true)) {
+            $value = $dokumen->{$column} ?? null;
+            if (!$value) {
+                return '';
+            }
+
+            return $value instanceof Carbon
+                ? $value->format('Y-m-d')
+                : Carbon::parse($value)->format('Y-m-d');
+        }
+
+        return (string) ($dokumen->{$column} ?? '');
+    }
+
+    private function getPembayaranDateEditableColumns(): array
+    {
+        return [
+            'tanggal_spp',
+            'tanggal_berita_acara',
+            'tanggal_spk',
+            'tanggal_berakhir_spk',
+            'tanggal_faktur',
+            'tanggal_paraf',
+            'tanggal_miro',
+            'tanggal_selesai_verifikasi_pajak',
+        ];
     }
 
     private function getPembayaranComputedStatus(Dokumen $dokumen): string
