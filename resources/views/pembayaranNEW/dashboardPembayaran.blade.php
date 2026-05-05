@@ -497,9 +497,11 @@
       display: flex;
       gap: 0.75rem;
       align-items: center;
+      flex-wrap: wrap;
     }
 
-    .filter-select {
+    .filter-select,
+    .filter-date {
       height: 44px;
       padding: 0 2.5rem 0 1rem;
       border: 1px solid var(--border-light);
@@ -515,7 +517,15 @@
       min-width: 130px;
     }
 
-    .filter-select:focus {
+    .filter-date {
+      min-width: 150px;
+      padding-right: 1rem;
+      background: var(--bg-secondary);
+      appearance: auto;
+    }
+
+    .filter-select:focus,
+    .filter-date:focus {
       outline: none;
       border-color: var(--brand-primary);
       box-shadow: 0 0 0 3px var(--brand-primary-glow);
@@ -1054,7 +1064,8 @@
         flex-wrap: wrap;
       }
 
-      .filter-select {
+      .filter-select,
+      .filter-date {
         flex: 1;
         min-width: 120px;
       }
@@ -1395,6 +1406,7 @@
         <input type="hidden" name="status_pembayaran" value="{{ $selectedStatus ?? '' }}">
         <input type="hidden" name="year" value="{{ $selectedYear ?? '' }}">
         <input type="hidden" name="month" value="{{ $selectedMonth ?? '' }}">
+        <input type="hidden" name="date" value="{{ $selectedDate ?? '' }}">
         <input type="hidden" name="search" value="{{ $search ?? '' }}">
         <input type="hidden" name="mode" value="{{ $mode ?? 'normal' }}">
         <!-- Advanced filters for export -->
@@ -1411,7 +1423,7 @@
     <!-- Bento Grid Stats -->
     <div class="bento-grid">
       <!-- Main Stats Row -->
-      <a href="?status_pembayaran=&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
+      <a href="?status_pembayaran=&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}&date={{ $selectedDate ?? '' }}"
         class="stat-card stat-card--total animate-fade-in animate-delay-1 {{ !$selectedStatus ? 'active' : '' }}">
         <div class="stat-card-content">
           <div class="stat-label">Total Dokumen</div>
@@ -1423,7 +1435,7 @@
         </div>
       </a>
 
-      <a href="?status_pembayaran=belum_siap_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
+      <a href="?status_pembayaran=belum_siap_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}&date={{ $selectedDate ?? '' }}"
         class="stat-card stat-card--pending animate-fade-in animate-delay-2 {{ $selectedStatus == 'belum_siap_dibayar' ? 'active' : '' }}">
         <div class="stat-card-content">
           <div class="stat-label">Belum Siap Bayar</div>
@@ -1440,7 +1452,7 @@
         </div>
       </a>
 
-      <a href="?status_pembayaran=siap_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
+      <a href="?status_pembayaran=siap_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}&date={{ $selectedDate ?? '' }}"
         class="stat-card stat-card--ready animate-fade-in animate-delay-3 {{ $selectedStatus == 'siap_dibayar' ? 'active' : '' }}">
         <div class="stat-card-content">
           <div class="stat-label">Siap Dibayar</div>
@@ -1457,7 +1469,7 @@
         </div>
       </a>
 
-      <a href="?status_pembayaran=sudah_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}"
+      <a href="?status_pembayaran=sudah_dibayar&year={{ $selectedYear ?? '' }}&month={{ $selectedMonth ?? '' }}&date={{ $selectedDate ?? '' }}"
         class="stat-card stat-card--paid animate-fade-in animate-delay-4 {{ $selectedStatus == 'sudah_dibayar' ? 'active' : '' }}">
         <div class="stat-card-content">
           <div class="stat-label">Sudah Dibayar</div>
@@ -1549,6 +1561,9 @@
               <option value="{{ $i + 1 }}" {{ ($selectedMonth ?? '') == ($i + 1) ? 'selected' : '' }}>{{ $m }}</option>
             @endforeach
           </select>
+
+          <input type="date" name="date" class="filter-date" value="{{ $selectedDate ?? '' }}"
+            aria-label="Filter tanggal" title="Filter tanggal">
         </div>
 
         <div class="filter-actions">
@@ -2853,11 +2868,13 @@
         const statusVal = filterForm.querySelector('select[name="status_pembayaran"]');
         const yearVal = filterForm.querySelector('select[name="year"]');
         const monthVal = filterForm.querySelector('select[name="month"]');
+        const dateVal = filterForm.querySelector('input[name="date"]');
 
         form.querySelector('input[name="search"]').value = searchVal ? searchVal.value : '';
         form.querySelector('input[name="status_pembayaran"]').value = statusVal ? statusVal.value : '';
         form.querySelector('input[name="year"]').value = yearVal ? yearVal.value : '';
         form.querySelector('input[name="month"]').value = monthVal ? monthVal.value : '';
+        form.querySelector('input[name="date"]').value = dateVal ? dateVal.value : '';
 
         // Advanced filters
         const advancedFilters = ['filter_vendor', 'filter_kategori', 'filter_jenis_dokumen', 'filter_jenis_sub_pekerjaan', 'filter_kebun', 'filter_jenis_pembayaran'];
@@ -2941,6 +2958,14 @@
               currentPage = 1;
               fetchFilteredData();
             }, AJAX_CONFIG.debounceMs);
+          });
+        }
+
+        const dateInput = filterForm.querySelector('input[name="date"]');
+        if (dateInput) {
+          dateInput.addEventListener('change', function () {
+            currentPage = 1;
+            fetchFilteredData();
           });
         }
       });

@@ -33,6 +33,7 @@ class DashboardPembayaranController extends Controller
         $statusPembayaran = request('status_pembayaran');
         $year = request('year');
         $month = request('month');
+        $date = request('date');
         $search = request('search');
         $mode = request('mode', 'normal'); // normal or rekapan_table
         $selectedColumns = request('columns', null); // Array of selected columns in order
@@ -74,10 +75,11 @@ class DashboardPembayaranController extends Controller
         };
 
         // OPTIMIZED: Use aggregate DB queries instead of ->get() to prevent memory exhaustion
-        $baseStatsFilter = function() use ($year, $month) {
+        $baseStatsFilter = function() use ($year, $month, $date) {
             $q = Dokumen::whereNotNull('nomor_agenda');
             if ($year) { $q->whereYear('created_at', $year); }
             if ($month) { $q->whereMonth('created_at', $month); }
+            if ($date) { $q->whereDate('created_at', $date); }
             return $q;
         };
 
@@ -220,6 +222,9 @@ class DashboardPembayaranController extends Controller
         }
         if ($month) {
             $query->whereMonth('created_at', $month);
+        }
+        if ($date) {
+            $query->whereDate('created_at', $date);
         }
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -370,13 +375,16 @@ class DashboardPembayaranController extends Controller
             ->orderBy('year', 'desc')
             ->pluck('year');
 
-        $createFilteredQuery = function () use ($year, $month) {
+        $createFilteredQuery = function () use ($year, $month, $date) {
             $q = Dokumen::whereNotNull('nomor_agenda');
             if ($year) {
                 $q->whereYear('created_at', $year);
             }
             if ($month) {
                 $q->whereMonth('created_at', $month);
+            }
+            if ($date) {
+                $q->whereDate('created_at', $date);
             }
             return $q;
         };
@@ -500,6 +508,7 @@ class DashboardPembayaranController extends Controller
             'selectedStatus' => $statusPembayaran,
             'selectedYear' => $year,
             'selectedMonth' => $month,
+            'selectedDate' => $date,
             'search' => $search,
             'availableYears' => $availableYears,
             'mode' => $mode,
@@ -3249,6 +3258,7 @@ class DashboardPembayaranController extends Controller
         $statusPembayaran = $request->get('status_pembayaran');
         $year = $request->get('year');
         $month = $request->get('month');
+        $date = $request->get('date');
         $search = $request->get('search');
         $selectedColumns = $request->get('columns', []);
 
@@ -3289,6 +3299,10 @@ class DashboardPembayaranController extends Controller
 
         if ($month) {
             $query->whereMonth('created_at', $month);
+        }
+
+        if ($date) {
+            $query->whereDate('created_at', $date);
         }
 
         if ($search) {
