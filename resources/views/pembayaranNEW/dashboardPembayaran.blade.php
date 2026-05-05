@@ -576,10 +576,13 @@
 
     /* ===== TABLE SECTION ===== */
     .table-section {
-      background: var(--bg-tertiary);
+      position: relative;
+      background:
+        linear-gradient(180deg, rgba(8, 62, 64, 0.035) 0%, rgba(255, 255, 255, 0) 120px),
+        var(--bg-tertiary);
       border-radius: var(--radius-xl);
-      border: 1px solid var(--border-lighter);
-      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.07);
       overflow: hidden;
     }
 
@@ -587,13 +590,29 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1.25rem 1.5rem;
-      border-bottom: 1px solid var(--border-lighter);
+      gap: 1rem;
+      padding: 1.25rem 1.5rem 1rem;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.86);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(10px);
+    }
+
+    .table-heading {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      min-width: 0;
+    }
+
+    .table-title-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
     }
 
     .table-title {
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 1.0625rem;
+      font-weight: 700;
       color: var(--text-primary);
       display: flex;
       align-items: center;
@@ -601,17 +620,61 @@
     }
 
     .table-title i {
+      color: var(--brand-primary);
+    }
+
+    .table-subtitle {
+      font-size: 0.8125rem;
       color: var(--text-tertiary);
+      line-height: 1.35;
     }
 
     .table-count {
       font-size: 0.8125rem;
-      font-weight: 500;
-      color: var(--text-tertiary);
-      background: var(--bg-secondary);
+      font-weight: 700;
+      color: var(--brand-primary);
+      background: var(--brand-primary-soft);
       padding: 0.25rem 0.75rem;
       border-radius: 999px;
       margin-left: 0.5rem;
+    }
+
+    .table-controls {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.875rem;
+      flex-wrap: wrap;
+    }
+
+    .per-page-selector {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.375rem 0.5rem 0.375rem 0.75rem;
+      background: var(--bg-secondary);
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      border-radius: var(--radius-md);
+    }
+
+    .per-page-selector label {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .per-page-selector select {
+      height: 34px;
+      min-width: 74px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 0 2rem 0 0.75rem;
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+      font: inherit;
+      font-size: 0.8125rem;
+      outline: none;
+      cursor: pointer;
     }
 
     .table-toggle {
@@ -619,12 +682,14 @@
       background: var(--bg-secondary);
       border-radius: var(--radius-md);
       padding: 0.25rem;
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
     }
 
     .table-toggle-btn {
-      padding: 0.5rem 1rem;
+      padding: 0.55rem 0.95rem;
       font-size: 0.8125rem;
-      font-weight: 500;
+      font-weight: 650;
       font-family: inherit;
       color: var(--text-secondary);
       background: transparent;
@@ -637,38 +702,73 @@
     .table-toggle-btn.active {
       background: var(--bg-tertiary);
       color: var(--text-primary);
-      box-shadow: var(--shadow-sm);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
     }
 
     .table-toggle-btn:hover:not(.active) {
       color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.56);
     }
 
     /* Data Table */
     .data-table-wrapper {
-      overflow-x: auto;
+      position: relative;
+      overflow: auto;
+      max-height: calc(100vh - 320px);
+      min-height: 360px;
+      scrollbar-color: rgba(8, 62, 64, 0.36) rgba(241, 245, 249, 0.9);
+      scrollbar-width: thin;
+    }
+
+    .data-table-wrapper::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .data-table-wrapper::-webkit-scrollbar-track {
+      background: rgba(241, 245, 249, 0.9);
+    }
+
+    .data-table-wrapper::-webkit-scrollbar-thumb {
+      background: rgba(8, 62, 64, 0.32);
+      border-radius: 999px;
+      border: 2px solid rgba(241, 245, 249, 0.9);
+    }
+
+    .data-table-wrapper::-webkit-scrollbar-thumb:hover {
+      background: rgba(8, 62, 64, 0.52);
     }
 
     .data-table {
-      width: 100%;
-      border-collapse: collapse;
+      width: max-content;
+      min-width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
     }
 
     .data-table th {
-      padding: 0.875rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      min-width: 132px;
+      padding: 0.95rem 1rem;
       text-align: left;
       font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-tertiary);
+      font-weight: 750;
+      color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border-lighter);
+      letter-spacing: 0.04em;
+      background: #f8fafc;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.95);
       white-space: nowrap;
+      box-shadow: 0 1px 0 rgba(226, 232, 240, 0.7);
     }
 
     .data-table th:first-child {
       padding-left: 1.5rem;
+      left: 0;
+      z-index: 4;
+      min-width: 160px;
     }
 
     .data-table th:last-child {
@@ -676,15 +776,24 @@
     }
 
     .data-table td {
+      min-width: 132px;
       padding: 1rem;
       font-size: 0.875rem;
       color: var(--text-secondary);
-      border-bottom: 1px solid var(--border-lighter);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.78);
       vertical-align: middle;
+      line-height: 1.45;
+      background: rgba(255, 255, 255, 0.96);
     }
 
     .data-table td:first-child {
       padding-left: 1.5rem;
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      min-width: 160px;
+      background: #fff;
+      box-shadow: 1px 0 0 rgba(226, 232, 240, 0.9);
     }
 
     .data-table td:last-child {
@@ -692,11 +801,21 @@
     }
 
     .data-table tbody tr {
-      transition: var(--transition-fast);
+      position: relative;
+      transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
     }
 
-    .data-table tbody tr:hover {
-      background: var(--bg-secondary);
+    .data-table tbody tr:nth-child(even) td {
+      background: rgba(248, 250, 252, 0.72);
+    }
+
+    .data-table tbody tr:hover td {
+      background: #f0fdfa;
+      box-shadow: inset 0 1px 0 rgba(20, 184, 166, 0.08), inset 0 -1px 0 rgba(20, 184, 166, 0.08);
+    }
+
+    .data-table tbody tr:hover td:first-child {
+      box-shadow: inset 4px 0 0 var(--brand-primary), 1px 0 0 rgba(20, 184, 166, 0.18);
     }
 
     .data-table tbody tr:last-child td {
@@ -705,7 +824,7 @@
 
     /* Cell Styles */
     .cell-primary {
-      font-weight: 600;
+      font-weight: 800;
       color: var(--text-primary);
     }
 
@@ -715,23 +834,29 @@
     }
 
     .cell-rupiah {
-      font-weight: 600;
-      color: var(--text-primary);
+      font-weight: 800;
+      color: #0f766e;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
 
     .cell-vendor {
-      max-width: 180px;
+      min-width: 210px;
+      max-width: 240px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: var(--text-primary);
+      font-weight: 600;
     }
 
     .cell-uraian {
-      max-width: 220px;
+      min-width: 250px;
+      max-width: 310px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: #475569;
     }
 
     /* Status Pills */
@@ -739,11 +864,12 @@
       display: inline-flex;
       align-items: center;
       gap: 0.375rem;
-      padding: 0.375rem 0.75rem;
+      padding: 0.45rem 0.8rem;
       border-radius: 999px;
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 750;
       white-space: nowrap;
+      box-shadow: inset 0 0 0 1px currentColor;
     }
 
     .status-pill--ready {
@@ -1078,6 +1204,34 @@
       .filter-actions .btn-filter {
         flex: 1;
         justify-content: center;
+      }
+
+      .table-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .table-controls {
+        justify-content: stretch;
+      }
+
+      .per-page-selector,
+      .table-toggle {
+        width: 100%;
+      }
+
+      .table-toggle {
+        overflow-x: auto;
+      }
+
+      .table-toggle-btn {
+        flex: 1;
+        white-space: nowrap;
+      }
+
+      .data-table-wrapper {
+        max-height: none;
+        min-height: 320px;
       }
 
       .header-actions {
@@ -1676,45 +1830,41 @@
     <!-- Table Section -->
     <div class="table-section" id="tableSection">
       <div class="table-header">
-        <div class="table-title">
-          <i class="fas fa-list-alt"></i>
-          Daftar Dokumen
-          <span class="table-count" id="tableCount">{{ $dokumens->total() }}</span>
+        <div class="table-heading">
+          <div class="table-title-stack">
+            <div class="table-title">
+              <i class="fas fa-list-alt"></i>
+              Daftar Dokumen
+              <span class="table-count" id="tableCount">{{ $dokumens->total() }}</span>
+            </div>
+            <div class="table-subtitle">Nomor agenda, SPP, vendor, nilai, dan status pembayaran.</div>
+          </div>
         </div>
-        <div class="per-page-selector" style="display: flex; align-items: center; gap: 6px; margin-left: 16px;">
-          <label for="perPageSelect"
-            style="font-size: 13px; color: var(--text-secondary, #64748b); white-space: nowrap;">Baris per
-            halaman:</label>
-          <select id="perPageSelect" onchange="changePerPage(this.value)" style="
-                  background: var(--card-bg, #ffffff);
-                  color: var(--text-primary, #333333);
-                  border: 1px solid var(--border-color, #d1d5db);
-                  border-radius: 6px;
-                  padding: 4px 8px;
-                  font-size: 13px;
-                  cursor: pointer;
-                  outline: none;
-                ">
-            <option value="10" {{ (isset($perPage) && $perPage == 10) ? 'selected' : '' }}>10</option>
-            <option value="15" {{ (!isset($perPage) || $perPage == 15) ? 'selected' : '' }}>15</option>
-            <option value="25" {{ (isset($perPage) && $perPage == 25) ? 'selected' : '' }}>25</option>
-            <option value="50" {{ (isset($perPage) && $perPage == 50) ? 'selected' : '' }}>50</option>
-            <option value="100" {{ (isset($perPage) && $perPage == 100) ? 'selected' : '' }}>100</option>
-            <option value="all" {{ (isset($perPage) && $perPage == 999999) ? 'selected' : '' }}>Semua</option>
-          </select>
-        </div>
-        <div class="table-toggle">
-          <button type="button" class="table-toggle-btn" onclick="openColumnModal()">
-            <i class="fas fa-columns"></i> Atur Kolom
-          </button>
-          <button type="button" class="table-toggle-btn {{ $mode != 'rekapan_table' ? 'active' : '' }}"
-            onclick="setViewMode('normal')">
-            <i class="fas fa-th-list"></i> Normal
-          </button>
-          <button type="button" class="table-toggle-btn {{ $mode == 'rekapan_table' ? 'active' : '' }}"
-            onclick="setViewMode('rekapan_table')">
-            <i class="fas fa-object-group"></i> Group Vendor
-          </button>
+        <div class="table-controls">
+          <div class="per-page-selector">
+            <label for="perPageSelect">Baris</label>
+            <select id="perPageSelect" onchange="changePerPage(this.value)">
+              <option value="10" {{ (isset($perPage) && $perPage == 10) ? 'selected' : '' }}>10</option>
+              <option value="15" {{ (!isset($perPage) || $perPage == 15) ? 'selected' : '' }}>15</option>
+              <option value="25" {{ (isset($perPage) && $perPage == 25) ? 'selected' : '' }}>25</option>
+              <option value="50" {{ (isset($perPage) && $perPage == 50) ? 'selected' : '' }}>50</option>
+              <option value="100" {{ (isset($perPage) && $perPage == 100) ? 'selected' : '' }}>100</option>
+              <option value="all" {{ (isset($perPage) && $perPage == 999999) ? 'selected' : '' }}>Semua</option>
+            </select>
+          </div>
+          <div class="table-toggle">
+            <button type="button" class="table-toggle-btn" onclick="openColumnModal()">
+              <i class="fas fa-columns"></i> Atur Kolom
+            </button>
+            <button type="button" class="table-toggle-btn {{ $mode != 'rekapan_table' ? 'active' : '' }}"
+              onclick="setViewMode('normal')">
+              <i class="fas fa-th-list"></i> Normal
+            </button>
+            <button type="button" class="table-toggle-btn {{ $mode == 'rekapan_table' ? 'active' : '' }}"
+              onclick="setViewMode('rekapan_table')">
+              <i class="fas fa-object-group"></i> Group Vendor
+            </button>
+          </div>
         </div>
       </div>
 
