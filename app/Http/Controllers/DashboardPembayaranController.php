@@ -34,6 +34,7 @@ class DashboardPembayaranController extends Controller
         $year = request('year');
         $month = request('month');
         $date = request('date');
+        $dateFilter = $this->normalizeDateFilter($date);
         $search = request('search');
         $mode = request('mode', 'normal'); // normal or rekapan_table
         $selectedColumns = request('columns', null); // Array of selected columns in order
@@ -75,11 +76,11 @@ class DashboardPembayaranController extends Controller
         };
 
         // OPTIMIZED: Use aggregate DB queries instead of ->get() to prevent memory exhaustion
-        $baseStatsFilter = function() use ($year, $month, $date) {
+        $baseStatsFilter = function() use ($year, $month, $dateFilter) {
             $q = Dokumen::whereNotNull('nomor_agenda');
             if ($year) { $q->whereYear('created_at', $year); }
             if ($month) { $q->whereMonth('created_at', $month); }
-            if ($date) { $q->whereDate('created_at', $date); }
+            if ($dateFilter) { $q->whereDate('tanggal_masuk', $dateFilter); }
             return $q;
         };
 
@@ -223,8 +224,8 @@ class DashboardPembayaranController extends Controller
         if ($month) {
             $query->whereMonth('created_at', $month);
         }
-        if ($date) {
-            $query->whereDate('created_at', $date);
+        if ($dateFilter) {
+            $query->whereDate('tanggal_masuk', $dateFilter);
         }
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -375,7 +376,7 @@ class DashboardPembayaranController extends Controller
             ->orderBy('year', 'desc')
             ->pluck('year');
 
-        $createFilteredQuery = function () use ($year, $month, $date) {
+        $createFilteredQuery = function () use ($year, $month, $dateFilter) {
             $q = Dokumen::whereNotNull('nomor_agenda');
             if ($year) {
                 $q->whereYear('created_at', $year);
@@ -383,8 +384,8 @@ class DashboardPembayaranController extends Controller
             if ($month) {
                 $q->whereMonth('created_at', $month);
             }
-            if ($date) {
-                $q->whereDate('created_at', $date);
+            if ($dateFilter) {
+                $q->whereDate('tanggal_masuk', $dateFilter);
             }
             return $q;
         };
@@ -508,7 +509,7 @@ class DashboardPembayaranController extends Controller
             'selectedStatus' => $statusPembayaran,
             'selectedYear' => $year,
             'selectedMonth' => $month,
-            'selectedDate' => $date,
+            'selectedDate' => $dateFilter ?? $date,
             'search' => $search,
             'availableYears' => $availableYears,
             'mode' => $mode,
@@ -3259,6 +3260,7 @@ class DashboardPembayaranController extends Controller
         $year = $request->get('year');
         $month = $request->get('month');
         $date = $request->get('date');
+        $dateFilter = $this->normalizeDateFilter($date);
         $search = $request->get('search');
         $selectedColumns = $request->get('columns', []);
 
@@ -3301,8 +3303,8 @@ class DashboardPembayaranController extends Controller
             $query->whereMonth('created_at', $month);
         }
 
-        if ($date) {
-            $query->whereDate('created_at', $date);
+        if ($dateFilter) {
+            $query->whereDate('tanggal_masuk', $dateFilter);
         }
 
         if ($search) {
@@ -5328,6 +5330,33 @@ class DashboardPembayaranController extends Controller
             // Return error page or redirect with error message
             return redirect()->route('pembayaran.rekapan')
                 ->with('error', 'Terjadi kesalahan saat memuat halaman analitik: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Normalize date filter values from browser date input or localized URLs.
+     */
+    private function normalizeDateFilter($value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        $value = trim($value);
+        $formats = ['Y-m-d', 'd/m/Y', 'd-m-Y'];
+
+        foreach ($formats as $format) {
+            try {
+                return Carbon::createFromFormat($format, $value)->format('Y-m-d');
+            } catch (\Exception $e) {
+                // Try the next supported format.
+            }
+        }
+
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return null;
         }
     }
 
