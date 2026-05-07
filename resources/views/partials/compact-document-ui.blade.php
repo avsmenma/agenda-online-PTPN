@@ -196,9 +196,11 @@
   #documentTableContainer table thead tr th {
     padding: 0.65rem 0.65rem !important;
     font-size: 0.72rem !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-right: 2px solid rgba(255, 255, 255, 0.22) !important;
     border-bottom: 2px solid #0f766e !important;
-    box-shadow: inset 0 -1px 0 rgba(15, 23, 42, 0.2) !important;
+    box-shadow:
+      inset -2px 0 0 rgba(255, 255, 255, 0.18),
+      inset 0 -1px 0 rgba(15, 23, 42, 0.2) !important;
   }
 
   #documentTableContainer table thead th:last-child,
@@ -208,14 +210,17 @@
 
   #documentTableContainer table tbody td,
   #documentTableContainer .table-enhanced tbody td {
-    border-right: 1px solid #d7dee8 !important;
+    border-right: 2px solid #b8c4d2 !important;
     border-bottom: 1px solid #d7dee8 !important;
-    box-shadow: inset 0 -1px 0 rgba(15, 23, 42, 0.035) !important;
+    box-shadow:
+      inset -2px 0 0 #b8c4d2,
+      inset 0 -1px 0 rgba(15, 23, 42, 0.035) !important;
   }
 
   #documentTableContainer table tbody td:last-child,
   #documentTableContainer .table-enhanced tbody td:last-child {
     border-right: 0 !important;
+    box-shadow: inset 0 -1px 0 rgba(15, 23, 42, 0.035) !important;
   }
 
   #documentTableContainer table tbody tr:nth-child(even) td,
@@ -372,9 +377,9 @@
     background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
     background-clip: padding-box !important;
     border-left: 0 !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-right: 2px solid rgba(255, 255, 255, 0.22) !important;
     border-bottom: 2px solid #0f766e !important;
-    box-shadow: none !important;
+    box-shadow: inset -2px 0 0 rgba(255, 255, 255, 0.18) !important;
     transform: translateZ(0);
   }
 
@@ -419,12 +424,14 @@
   }
 
   body.document-table-only-fullscreen #documentTableContainer tbody td {
-    border-right: 1px solid #d7dee8 !important;
+    border-right: 2px solid #b8c4d2 !important;
     border-bottom: 1px solid #d7dee8 !important;
+    box-shadow: inset -2px 0 0 #b8c4d2 !important;
   }
 
   body.document-table-only-fullscreen #documentTableContainer tbody td:last-child {
     border-right: 0 !important;
+    box-shadow: none !important;
   }
 
   body.document-table-only-fullscreen #documentTableContainer tbody tr:nth-child(even) td {
