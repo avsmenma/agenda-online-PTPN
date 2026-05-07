@@ -372,6 +372,70 @@
       border-radius: 20px 0 0 20px;
     }
 
+    .sidebar .agenda-tree {
+      margin-top: 8px;
+    }
+
+    .sidebar .agenda-tree > .agenda-tree-toggle {
+      margin-top: 0;
+      cursor: pointer;
+    }
+
+    .sidebar .agenda-tree > .agenda-tree-toggle .right {
+      margin-left: auto;
+      font-size: 12px;
+      transition: transform 0.2s ease;
+    }
+
+    .sidebar .agenda-tree.menu-open > .agenda-tree-toggle .right {
+      transform: rotate(-90deg);
+    }
+
+    .sidebar .nav-treeview {
+      display: none;
+      margin-left: 20px;
+      padding: 2px 0 4px;
+    }
+
+    .sidebar .agenda-tree.menu-open > .nav-treeview {
+      display: block;
+    }
+
+    .sidebar .nav-treeview a {
+      margin-left: 12px;
+      margin-right: 12px;
+      margin-top: 5px;
+      padding: 9px 14px 9px 20px;
+      font-size: 13px;
+      border-radius: 8px;
+      line-height: 1.35;
+      font-weight: 500;
+    }
+
+    .sidebar .nav-treeview a i {
+      font-size: 13px;
+      width: 16px;
+      height: 16px;
+      margin-right: 10px;
+    }
+
+    .sidebar:not(:hover) .agenda-tree .nav-treeview {
+      display: none !important;
+    }
+
+    .sidebar:not(:hover) .agenda-tree > .agenda-tree-toggle .right {
+      display: none;
+    }
+
+    #sidebar-pembayaran {
+      display: none !important;
+    }
+
+    .content.with-secondary-sidebar,
+    .topbar.with-secondary-sidebar {
+      margin-left: 72px !important;
+    }
+
     .sidebar .dropdown-icon {
       transition: transform 0.2s ease;
     }
@@ -4423,10 +4487,30 @@
           {{-- Bagian-specific menu --}}
           @php
             $isBagianDocumentsActive = request()->is('*bagian/documents*') || request()->routeIs('bagian.documents.*');
+            $isBagianTambahActive = request()->routeIs('bagian.documents.create') || request()->is('*bagian/documents/create*');
+            $isBagianTrackingActive = request()->routeIs('bagian.tracking') || request()->is('*bagian/tracking*');
+            $isBagianTreeOpen = $isBagianDocumentsActive || $isBagianTambahActive || $isBagianTrackingActive;
           @endphp
-          <a href="{{ route('bagian.documents.index') }}" class="{{ $isBagianDocumentsActive ? 'active' : '' }}">
-            <i class="fa-solid fa-file-lines"></i> Dokumen
-          </a>
+          <div class="agenda-tree {{ $isBagianTreeOpen ? 'menu-open menu-is-opening' : '' }}">
+            <a href="#"
+              class="agenda-tree-toggle {{ $isBagianTreeOpen ? 'active' : '' }}"
+              aria-expanded="{{ $isBagianTreeOpen ? 'true' : 'false' }}">
+              <i class="fa-solid fa-file-lines"></i>
+              Dokumen
+              <i class="right fa-solid fa-angle-left"></i>
+            </a>
+            <div class="nav-treeview">
+              <a href="{{ route('bagian.documents.index') }}" class="{{ $isBagianDocumentsActive ? 'active' : '' }}">
+                <i class="fa-solid fa-list"></i> Daftar Dokumen
+              </a>
+              <a href="{{ route('bagian.documents.create') }}" class="{{ $isBagianTambahActive ? 'active' : '' }}">
+                <i class="fa-solid fa-plus"></i> Tambah Dokumen
+              </a>
+              <a href="{{ route('bagian.tracking') }}" class="{{ $isBagianTrackingActive ? 'active' : '' }}">
+                <i class="fa-solid fa-route"></i> Tracking Dokumen
+              </a>
+            </div>
+          </div>
         @else
           {{-- Regular Dokumen menu for other roles --}}
           @php
@@ -4461,25 +4545,135 @@
               request()->routeIs('reports.verifikasi.*') ||
               request()->routeIs('returns.verifikasi.*') ||
               request()->is('*documents/verifikasi*'),
-              default => false
+              default => request()->routeIs('documents.*') ||
+                request()->routeIs('reports.*') ||
+                request()->is('documents*') ||
+                request()->is('reports*')
+            };
+
+            $isDaftarDokumenActive = match ($module) {
+              'pembayaran' => request()->routeIs('documents.pembayaran.*') || request()->is('*documents/pembayaran*'),
+              'akutansi' => request()->routeIs('documents.akutansi.*') || request()->is('*documents/akutansi*'),
+              'perpajakan' => request()->routeIs('documents.perpajakan.*') || request()->is('*documents/perpajakan*'),
+              'team_verifikasi' => request()->routeIs('documents.verifikasi.*') || request()->is('*documents/verifikasi*'),
+              default => request()->routeIs('documents.index') || request()->routeIs('documents.create') || request()->routeIs('documents.edit') || request()->is('documents') || request()->is('documents/create') || request()->is('documents/*/edit')
+            };
+            $isImportActive = ($module === 'pembayaran')
+              ? (request()->routeIs('csv.import.*') || request()->is('*csv-import*'))
+              : request()->routeIs('documents.import.*') || request()->is('*documents/import*');
+            $isReportsActive = match ($module) {
+              'pembayaran' => request()->routeIs('reports.pembayaran.*') || request()->is('*reports/pembayaran*') || request()->is('*rekapan-keterlambatan*'),
+              'akutansi' => request()->routeIs('reports.akutansi.*') || request()->is('*rekapan-keterlambatan/akutansi*'),
+              'perpajakan' => request()->routeIs('reports.perpajakan.*') || request()->is('*rekapan-keterlambatan/perpajakan*'),
+              'team_verifikasi' => request()->routeIs('reports.verifikasi.*') || request()->is('*rekapan-keterlambatan*'),
+              default => request()->routeIs('reports.*') || request()->is('*reports*')
+            };
+            $isReturnsActive = match ($module) {
+              'pembayaran' => request()->routeIs('returns.pembayaran.*') || request()->is('*returns/pembayaran*'),
+              'akutansi' => request()->routeIs('returns.akutansi.*') || request()->is('*returns/akutansi*'),
+              'perpajakan' => request()->routeIs('returns.perpajakan.*') || request()->is('*returns/perpajakan*'),
+              'team_verifikasi' => request()->routeIs('returns.verifikasi.*') || request()->is('*returns/verifikasi*'),
+              default => request()->is('*pengembalian*')
             };
           @endphp
-          <a href="{{ $menuRoute }}"
-            class="{{ ($menuDokumen ?? '') . ($isModuleActive ? ' active' : '') }} sidebar-menu-trigger"
-            data-submenu="dokumen" id="btn-pembayaran" aria-expanded="{{ $isModuleActive ? 'true' : 'false' }}">
-            <i class="fa-solid fa-file-lines"></i>
-            @if($module === 'pembayaran')
-              Pembayaran
-            @elseif($module === 'akutansi')
-              Akutansi
-            @elseif($module === 'perpajakan')
-              Perpajakan
-            @elseif($module === 'team_verifikasi')
-              Dokumen
-            @else
-              Dokumen
-            @endif
-          </a>
+          <div class="agenda-tree {{ $isModuleActive ? 'menu-open menu-is-opening' : '' }}">
+            <a href="#"
+              class="{{ ($menuDokumen ?? '') . ($isModuleActive ? ' active' : '') }} agenda-tree-toggle sidebar-menu-trigger"
+              data-submenu="dokumen" id="btn-pembayaran" aria-expanded="{{ $isModuleActive ? 'true' : 'false' }}">
+              <i class="fa-solid fa-file-lines"></i>
+              @if($module === 'pembayaran')
+                Pembayaran
+              @elseif($module === 'akutansi')
+                Akutansi
+              @elseif($module === 'perpajakan')
+                Perpajakan
+              @elseif($module === 'team_verifikasi')
+                Dokumen
+              @else
+                Dokumen
+              @endif
+              <i class="right fa-solid fa-angle-left"></i>
+            </a>
+            <div class="nav-treeview">
+              @if($module === 'pembayaran')
+                <a href="{{ route('documents.pembayaran.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-list"></i> Daftar Pembayaran
+                </a>
+                <a href="{{ route('csv.import.index') }}" class="{{ $isImportActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-file-import"></i> Import Data
+                </a>
+                <a href="{{ route('reports.pembayaran.delays') }}" class="{{ $isReportsActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-clock-rotate-left"></i> Rekap Keterlambatan
+                </a>
+              @elseif($module === 'akutansi')
+                <a href="{{ route('documents.akutansi.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-list"></i> Daftar Akutansi
+                </a>
+                <a href="{{ route('returns.akutansi.index') }}" class="{{ $isReturnsActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-rotate-left"></i> Daftar Pengembalian Akutansi
+                </a>
+                <a href="{{ route('reports.akutansi.index') }}" class="{{ $isReportsActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-chart-bar"></i> Rekapan Akutansi
+                </a>
+                <a href="{{ route('owner.rekapan-keterlambatan.role', 'akutansi') }}"
+                  class="{{ request()->is('*rekapan-keterlambatan/akutansi*') ? 'active' : '' }}">
+                  <i class="fa-solid fa-clock-rotate-left"></i> Rekap Keterlambatan
+                </a>
+              @elseif($module === 'perpajakan')
+                <a href="{{ route('documents.perpajakan.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-list"></i> Daftar Perpajakan
+                </a>
+                <a href="{{ route('returns.perpajakan.index') }}" class="{{ $isReturnsActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-rotate-left"></i> Daftar Pengembalian Perpajakan
+                </a>
+                <a href="{{ route('reports.perpajakan.index') }}" class="{{ $isReportsActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-chart-bar"></i> Rekapan
+                </a>
+                <a href="{{ route('reports.perpajakan.export') }}"
+                  class="{{ request()->routeIs('reports.perpajakan.export*') ? 'active' : '' }}">
+                  <i class="fa-solid fa-file-export"></i> Export Data
+                </a>
+                <a href="{{ route('owner.rekapan-keterlambatan.role', 'perpajakan') }}"
+                  class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
+                  <i class="fa-solid fa-clock-rotate-left"></i> Rekap Keterlambatan
+                </a>
+              @elseif($module === 'team_verifikasi')
+                <a href="{{ route('documents.verifikasi.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-list"></i> Daftar Dokumen
+                </a>
+                <a href="{{ route('returns.verifikasi.bagian') }}"
+                  class="{{ request()->routeIs('returns.verifikasi.bagian') ? 'active' : '' }}">
+                  <i class="fa-solid fa-arrow-left"></i> Pengembalian Ke Bagian
+                </a>
+                <a href="{{ route('returns.verifikasi.index') }}"
+                  class="{{ request()->routeIs('returns.verifikasi.index') ? 'active' : '' }}">
+                  <i class="fa-solid fa-arrow-right"></i> Pengembalian Dari Bidang
+                </a>
+                <a href="{{ route('reports.verifikasi.index') }}" class="{{ $isReportsActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-chart-bar"></i> Rekapan
+                </a>
+                <a href="{{ route('owner.rekapan-keterlambatan.role', 'team_verifikasi') }}"
+                  class="{{ request()->is('*rekapan-keterlambatan/team_verifikasi*') ? 'active' : '' }}">
+                  <i class="fa-solid fa-clock-rotate-left"></i> Rekap Keterlambatan
+                </a>
+              @else
+                <a href="{{ route('documents.index') }}" class="{{ request()->routeIs('documents.index') ? 'active' : '' }}">
+                  <i class="fa-solid fa-list"></i> Daftar Dokumen
+                </a>
+                @if($tambahDokumenUrl)
+                  <a href="{{ route('documents.create') }}" class="{{ request()->routeIs('documents.create') ? 'active' : '' }}">
+                    <i class="fa-solid fa-plus"></i> Tambah Dokumen
+                  </a>
+                @endif
+                <a href="{{ route('documents.import.index') }}" class="{{ $isImportActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-file-import"></i> Import CSV
+                </a>
+                <a href="{{ route('reports.analytics') }}" class="{{ $isReportsActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-chart-pie"></i> Rekapan
+                </a>
+              @endif
+            </div>
+          </div>
         @endif
 
       @endunless
@@ -4897,6 +5091,20 @@
   <!-- Custom JS for Dropdown -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.agenda-tree-toggle').forEach(function(toggle) {
+        toggle.addEventListener('click', function(event) {
+          event.preventDefault();
+
+          const tree = toggle.closest('.agenda-tree');
+          if (!tree) return;
+
+          const isOpen = tree.classList.contains('menu-open');
+          tree.classList.toggle('menu-open', !isOpen);
+          tree.classList.toggle('menu-is-opening', !isOpen);
+          toggle.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+        });
+      });
+
       const dropdownToggle = document.getElementById('dokumenDropdown');
       const dropdownContent = document.getElementById('dokumenContent');
       const dropdownIcon = dropdownToggle ? dropdownToggle.querySelector('.dropdown-icon') : null;
@@ -7906,9 +8114,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
-
-
-
-
-
-

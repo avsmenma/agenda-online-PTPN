@@ -1,12 +1,13 @@
 @php
   $virtualTotal = method_exists($paginator, 'total') ? $paginator->total() : 0;
-  $virtualPerPage = (int) ($chunkSize ?? 100);
+  $configuredChunkSize = (int) ($chunkSize ?? 100);
+  $virtualPerPage = max(1, $configuredChunkSize);
   $virtualLastPage = max(1, (int) ceil(max(1, $virtualTotal) / max(1, $virtualPerPage)));
   $virtualContainer = $containerSelector ?? '#documentTableContainer';
-  $virtualEnabled = $enabled ?? request('per_page') === 'all';
+  $virtualEnabled = ($enabled ?? request('per_page') === 'all') && $virtualTotal > $virtualPerPage;
 @endphp
 
-@if($virtualEnabled && $virtualTotal > $virtualPerPage)
+@if($virtualEnabled)
   <style>
     {{ $virtualContainer }} .table-responsive.virtual-scroll-active {
       max-height: min(72vh, 760px);
@@ -39,6 +40,10 @@
       border: 0 !important;
       height: var(--virtual-spacer-height, 0px);
       background: transparent !important;
+    }
+
+    .virtual-scroll-spacer {
+      height: var(--virtual-spacer-height, 0px) !important;
     }
 
     .pagination-enhanced-right,
@@ -88,7 +93,7 @@
           .slice(0, 20);
         if (!rows.length) return config.rowHeight;
         const average = rows.reduce((sum, row) => sum + row.offsetHeight, 0) / rows.length;
-        return Math.max(48, Math.min(120, Math.round(average)));
+        return Math.max(56, Math.min(420, Math.round(average)));
       }
 
       function addStatus(container) {

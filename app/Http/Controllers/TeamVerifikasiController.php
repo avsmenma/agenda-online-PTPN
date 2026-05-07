@@ -448,13 +448,14 @@ class TeamVerifikasiController extends Controller
                 'dokumenPos',
                 'dokumenPrs'
             ]);
-        $perPage = $request->get('per_page', 100);
-        if ($perPage === 'all') {
+        $perPage = $request->get('per_page', 'all');
+        $showAllRows = $perPage === 'all';
+        if ($showAllRows) {
             $perPage = 100;
         } else {
             $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
         }
-        session(['verifikasi_per_page' => $perPage]);
+        session(['verifikasi_per_page' => $showAllRows ? 'all' : $perPage]);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Cast deadline_at from alias to Carbon if it's a string
@@ -3911,9 +3912,6 @@ class TeamVerifikasiController extends Controller
         }
     }
 }
-
-
-
 
 
 

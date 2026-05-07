@@ -297,13 +297,14 @@ class DashboardAkutansiController extends Controller
             END DESC");
         }
 
-        $perPage = $request->get('per_page', 100);
-        if ($perPage === 'all') {
+        $perPage = $request->get('per_page', 'all');
+        $showAllRows = $perPage === 'all';
+        if ($showAllRows) {
             $perPage = 100;
         } else {
             $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
         }
-        session(['akutansi_per_page' => $perPage]);
+        session(['akutansi_per_page' => $showAllRows ? 'all' : $perPage]);
         $dokumens = $dokumens->orderBy('dokumens.id', 'DESC')
             ->paginate($perPage)
             ->appends($request->query());
@@ -1970,8 +1971,5 @@ class DashboardAkutansiController extends Controller
         }
     }
 }
-
-
-
 
 

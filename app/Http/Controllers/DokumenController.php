@@ -123,13 +123,14 @@ class DokumenController extends Controller
         $sortColumn = session('operator_sort_column', 'nomor_agenda');
         $sortOrder  = session('operator_sort_order', 'desc');
 
-        $perPage = $request->get('per_page', 100);
-        if ($perPage === 'all') {
+        $perPage = $request->get('per_page', 'all');
+        $showAllRows = $perPage === 'all';
+        if ($showAllRows) {
             $perPage = 100;
         } else {
             $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
         }
-        session(['operator_per_page' => $perPage]);
+        session(['operator_per_page' => $showAllRows ? 'all' : $perPage]);
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Get suggestions if no results found
@@ -2124,7 +2125,3 @@ class DokumenController extends Controller
         }
     }
 }
-
-
-
-

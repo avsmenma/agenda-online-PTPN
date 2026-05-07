@@ -197,13 +197,14 @@ class DashboardPerpajakanController extends Controller
             $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
         }
 
-        $perPage = $request->get('per_page', 100);
-        if ($perPage === 'all') {
+        $perPage = $request->get('per_page', 'all');
+        $showAllRows = $perPage === 'all';
+        if ($showAllRows) {
             $perPage = 100;
         } else {
             $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
         }
-        session(['perpajakan_per_page' => $perPage]);
+        session(['perpajakan_per_page' => $showAllRows ? 'all' : $perPage]);
         $dokumens = $query
             ->leftJoin('dokumen_role_data as perpajakan_data', function ($join) {
                 $join->on('dokumens.id', '=', 'perpajakan_data.dokumen_id')
@@ -2688,8 +2689,5 @@ class DashboardPerpajakanController extends Controller
         return view('perpajakan.export.pdf', $data);
     }
 }
-
-
-
 
 
