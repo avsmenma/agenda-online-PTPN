@@ -62,7 +62,7 @@
 
     /* Expanded state on hover - Simple extend without animations */
     .sidebar:hover {
-      width: 240px;
+      width: 290px;
       box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
       z-index: 1001;
     }
@@ -78,7 +78,7 @@
 
     /* Expanded state on hover - Simple extend without animations */
     .sidebar:hover {
-      width: 240px;
+      width: 290px;
       box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
       z-index: 1001;
     }
@@ -393,7 +393,7 @@
 
     .sidebar .nav-treeview {
       display: none;
-      margin-left: 20px;
+      margin-left: 10px;
       padding: 2px 0 4px;
     }
 
@@ -402,14 +402,16 @@
     }
 
     .sidebar .nav-treeview a {
-      margin-left: 12px;
-      margin-right: 12px;
+      margin-left: 10px;
+      margin-right: 10px;
       margin-top: 5px;
-      padding: 9px 14px 9px 20px;
+      padding: 9px 12px 9px 14px;
       font-size: 13px;
       border-radius: 8px;
       line-height: 1.35;
       font-weight: 500;
+      width: auto;
+      max-width: 252px;
     }
 
     .sidebar .nav-treeview a i {
