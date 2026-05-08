@@ -479,13 +479,13 @@ class DokumenController extends Controller
             'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan ?? '-',
             'jenis_pembayaran' => $dokumen->jenis_pembayaran ?? '-',
             'nomor_spp' => $dokumen->nomor_spp ?? '-',
-            'tanggal_spp' => $this->formatDateValue($dokumen->tanggal_spp),
+            'tanggal_spp' => $this->formatDateInputValue($dokumen->tanggal_spp),
             'tanggal_masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d-m-Y H:i') : '-',
             'dibayar_kepada' => $dibayarKepada,
             'uraian_spp' => $dokumen->uraian_spp ?? '-',
             'nilai_rupiah' => (float) ($dokumen->nilai_rupiah ?? 0),
             'nilai_rupiah_fmt' => $dokumen->formatted_nilai_rupiah,
-            'tanggal_paraf' => $dokumen->tanggal_paraf ? $dokumen->tanggal_paraf->format('d/m/Y H:i') : '-',
+            'tanggal_paraf' => $this->formatDateInputValue($dokumen->tanggal_paraf),
             'pemaraf' => $dokumen->pemaraf ?? '-',
             'tanggal_selesai_diproses' => $dokumen->tanggal_selesai_diproses ? $dokumen->tanggal_selesai_diproses->format('d/m/Y H:i') : '-',
             'tanggal_kembali_ke_bagian' => $dokumen->tanggal_kembali_ke_bagian ?? '-',
@@ -496,18 +496,20 @@ class DokumenController extends Controller
             'bagian' => $dokumen->bagian ?? '-',
             'nama_pengirim' => $dokumen->nama_pengirim ?? '-',
             'no_spk' => $dokumen->no_spk ?? '-',
-            'tanggal_spk' => $this->formatDateValue($dokumen->tanggal_spk),
-            'tanggal_berakhir_spk' => $this->formatDateValue($dokumen->tanggal_berakhir_spk),
+            'tanggal_spk' => $this->formatDateInputValue($dokumen->tanggal_spk),
+            'tanggal_berakhir_spk' => $this->formatDateInputValue($dokumen->tanggal_berakhir_spk),
             'no_berita_acara' => $dokumen->no_berita_acara ?? '-',
-            'tanggal_berita_acara' => $this->formatDateValue($dokumen->tanggal_berita_acara),
+            'tanggal_berita_acara' => $this->formatDateInputValue($dokumen->tanggal_berita_acara),
             'nomor_po' => $dokumen->dokumenPos->pluck('nomor_po')->filter()->join(', ') ?: ($dokumen->NO_PO ?? '-'),
             'nomor_miro' => $dokumen->nomor_miro_display ?? '-',
             'no_faktur' => $dokumen->no_faktur ?? '-',
-            'tanggal_faktur' => $this->formatDateValue($dokumen->tanggal_faktur, 'd/m/Y'),
-            'tanggal_selesai_verifikasi_pajak' => $this->formatDateValue($dokumen->tanggal_selesai_verifikasi_pajak, 'd/m/Y'),
+            'tanggal_faktur' => $this->formatDateInputValue($dokumen->tanggal_faktur),
+            'tanggal_selesai_verifikasi_pajak' => $this->formatDateInputValue($dokumen->tanggal_selesai_verifikasi_pajak),
             'jenis_pph' => $dokumen->jenis_pph ?? '-',
-            'dpp_pph' => $dokumen->dpp_pph ? number_format((float) $dokumen->dpp_pph, 0, ',', '.') : '-',
-            'ppn_terhutang' => $dokumen->ppn_terhutang ? number_format((float) $dokumen->ppn_terhutang, 0, ',', '.') : '-',
+            'dpp_pph' => $dokumen->dpp_pph !== null ? (float) $dokumen->dpp_pph : null,
+            'dpp_pph_fmt' => $dokumen->dpp_pph !== null ? number_format((float) $dokumen->dpp_pph, 0, ',', '.') : '-',
+            'ppn_terhutang' => $dokumen->ppn_terhutang !== null ? (float) $dokumen->ppn_terhutang : null,
+            'ppn_terhutang_fmt' => $dokumen->ppn_terhutang !== null ? number_format((float) $dokumen->ppn_terhutang, 0, ',', '.') : '-',
             'status' => $state['status_label'],
             'status_key' => $state['status_key'],
             'status_badge' => $state['status_badge'],
@@ -516,6 +518,7 @@ class DokumenController extends Controller
             'link_dokumen_pajak' => $dokumen->link_dokumen_pajak ?? '',
             'can_send' => $state['can_send'],
             'can_edit' => $state['can_edit'],
+            'is_inline_editable' => $state['can_inline_edit'],
             'handler_selected' => $handler['selected'],
             'handler_disabled' => !$handler['can_change'],
             'handler_title' => $handler['can_change'] ? 'Ubah pengurus dokumen' : 'Hanya pengurus dokumen saat ini yang dapat mengubah',
@@ -583,6 +586,14 @@ class DokumenController extends Controller
             $canEdit = true;
         }
 
+        $canInlineEdit = ($currentHandlerOperator && in_array($statusLower, [
+            'draft',
+            'returned_to_operator',
+            'belum_dikirim',
+            'belum dikirim',
+            'menunggu_approval_keuangan',
+        ], true)) || ($isRejected && $currentHandlerOperator);
+
         $displayStatus = $dokumen->getDisplayStatusForRole('operator');
         if ($statusLower === 'returned_to_operator') {
             $displayStatus = 'dikembalikan';
@@ -624,6 +635,7 @@ class DokumenController extends Controller
         return [
             'can_send' => $canSend,
             'can_edit' => $canEdit,
+            'can_inline_edit' => $canInlineEdit,
             'status_key' => $displayStatus,
             'status_label' => $statusLabel,
             'status_badge' => $statusBadge,
@@ -678,6 +690,19 @@ class DokumenController extends Controller
         }
 
         return \Carbon\Carbon::parse($value)->format($format);
+    }
+
+    private function formatDateInputValue($value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        if ($value instanceof \Carbon\CarbonInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        return \Carbon\Carbon::parse($value)->format('Y-m-d');
     }
 
     public function create()

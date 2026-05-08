@@ -133,6 +133,34 @@
       flex: 0 0 auto;
     }
 
+    #dokumen-tabulator .tabulator-inline-editable-cell {
+      cursor: text;
+    }
+
+    #dokumen-tabulator .tabulator-inline-editable-cell:hover {
+      background: rgba(136, 151, 23, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(136, 151, 23, 0.22);
+    }
+
+    #dokumen-tabulator .tabulator-editing {
+      background: #fffdf0 !important;
+      box-shadow: inset 0 0 0 2px #889717 !important;
+    }
+
+    #dokumen-tabulator .tabulator-editing input,
+    #dokumen-tabulator .tabulator-editing textarea,
+    #dokumen-tabulator .tabulator-editing select {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid #889717;
+      border-radius: 6px;
+      padding: 7px 9px;
+      color: #0f172a;
+      font: inherit;
+      outline: none;
+      background: #fff;
+    }
+
     .tabulator-handler-select {
       width: 100%;
       min-width: 150px;
@@ -5965,6 +5993,67 @@
             const tabulatorCsrfToken = @json(csrf_token());
             const initialAvailableColumns = @json($availableColumns);
             const initialSelectedColumns = @json($tabulatorInitialColumns);
+            const tabulatorKategoriOptions = @json($ieKategoriList ?? []);
+            const tabulatorSubKriteriaOptions = @json($ieSubKriteriaList ?? []);
+            const tabulatorItemSubKriteriaOptions = @json($ieItemSubKriteriaList ?? []);
+            const tabulatorJenisPembayaranOptions = @json($ieJenisPembayaranList ?? []);
+            const tabulatorBulanOptions = ['Januari','Februari','Maret','April','May','Juni','July','Agustus','September','Oktober','November','Desember'];
+            const tabulatorDateFields = new Set([
+              'tanggal_spp',
+              'tanggal_berita_acara',
+              'tanggal_spk',
+              'tanggal_berakhir_spk',
+              'tanggal_faktur',
+              'tanggal_paraf',
+              'tanggal_miro',
+              'tanggal_selesai_verifikasi_pajak',
+            ]);
+            const tabulatorNumericFields = new Set(['nilai_rupiah', 'dpp_pph', 'ppn_terhutang']);
+            const tabulatorInlineFieldTypes = {
+              nomor_agenda: 'text',
+              nomor_spp: 'text',
+              uraian_spp: 'textarea',
+              nilai_rupiah: 'number',
+              tanggal_spp: 'date',
+              tanggal_berita_acara: 'date',
+              tanggal_spk: 'date',
+              tanggal_berakhir_spk: 'date',
+              tanggal_faktur: 'date',
+              tanggal_paraf: 'date',
+              tanggal_miro: 'date',
+              tanggal_selesai_verifikasi_pajak: 'date',
+              kebun: 'text',
+              bagian: 'text',
+              nama_pengirim: 'text',
+              no_berita_acara: 'text',
+              no_spk: 'text',
+              nomor_miro: 'text',
+              no_faktur: 'text',
+              pemaraf: 'text',
+              dibayar_kepada: 'text',
+              kategori: 'select_kategori',
+              jenis_dokumen: 'select_sub',
+              jenis_sub_pekerjaan: 'select_item',
+              jenis_pembayaran: 'select_jenis',
+              bulan: 'select_bulan',
+              tahun: 'text',
+              jenis_pph: 'text',
+              dpp_pph: 'number',
+              ppn_terhutang: 'number',
+            };
+            const tabulatorNonEditableFields = new Set([
+              'tanggal_masuk',
+              'status',
+              'status_dokumen_custom',
+              'tanggal_selesai_diproses',
+              'tanggal_kembali_ke_bagian',
+              'tanggal_hasil_koreksi_bagian',
+              'tanggal_dibayar',
+              'nomor_po',
+              'keterangan',
+              'npwp',
+              'link_dokumen_pajak',
+            ]);
             const tabulatorScriptSources = [
               'https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/js/tabulator.min.js',
               'https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js',
@@ -6054,6 +6143,29 @@
               return `<strong class="tabulator-cell-text">${escapeHtml(data.nilai_rupiah_fmt || '-')}</strong>`;
             }
 
+            function compactNumberFormatter(cell) {
+              const field = cell.getField();
+              const data = cell.getRow().getData();
+              const value = data[`${field}_fmt`] ?? cell.getValue();
+              if (value === null || value === undefined || value === '') return '-';
+              if (typeof value === 'number') return escapeHtml(value.toLocaleString('id-ID'));
+              return escapeHtml(value);
+            }
+
+            function formatDateForDisplay(value) {
+              if (!value || value === '-') return '-';
+              const raw = String(value).trim();
+              if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+                const [year, month, day] = raw.slice(0, 10).split('-');
+                return `${day}-${month}-${year}`;
+              }
+              return raw;
+            }
+
+            function dateCellFormatter(cell) {
+              return `<span class="tabulator-cell-text">${escapeHtml(formatDateForDisplay(cell.getValue()))}</span>`;
+            }
+
             function statusFormatter(cell) {
               const data = cell.getRow().getData();
               const badge = data.status_badge || 'sent';
@@ -6137,6 +6249,180 @@
               return widths[field] || 150;
             }
 
+            function selectValuesFrom(items, nameKey) {
+              const values = {};
+              (items || []).forEach(item => {
+                const value = item?.[nameKey];
+                if (value) values[value] = value;
+              });
+              return values;
+            }
+
+            function tabulatorEditorValues(field) {
+              if (field === 'kategori') return selectValuesFrom(tabulatorKategoriOptions, 'nama_kriteria');
+              if (field === 'jenis_dokumen') return selectValuesFrom(tabulatorSubKriteriaOptions, 'nama_sub_kriteria');
+              if (field === 'jenis_sub_pekerjaan') return selectValuesFrom(tabulatorItemSubKriteriaOptions, 'nama_item_sub_kriteria');
+              if (field === 'jenis_pembayaran') return selectValuesFrom(tabulatorJenisPembayaranOptions, 'nama_jenis_pembayaran');
+              if (field === 'bulan') {
+                return tabulatorBulanOptions.reduce((values, bulan) => {
+                  values[bulan] = bulan;
+                  return values;
+                }, {});
+              }
+              return {};
+            }
+
+            function isInlineEditableField(field) {
+              return Object.prototype.hasOwnProperty.call(tabulatorInlineFieldTypes, field)
+                && !tabulatorNonEditableFields.has(field);
+            }
+
+            function canEditTabulatorCell(cell) {
+              const data = cell.getRow().getData();
+              return Boolean(data.is_inline_editable) && isInlineEditableField(cell.getField());
+            }
+
+            function editorForTabulatorField(field) {
+              const type = tabulatorInlineFieldTypes[field] || 'text';
+              if (type === 'textarea') return 'textarea';
+              if (type === 'number') return 'number';
+              if (type === 'date') return 'input';
+              if (type.startsWith('select_')) return 'list';
+              return 'input';
+            }
+
+            function editorParamsForTabulatorField(field) {
+              const type = tabulatorInlineFieldTypes[field] || 'text';
+              if (type === 'number') {
+                return {
+                  min: 0,
+                  step: 1000,
+                  elementAttributes: { inputmode: 'numeric' },
+                };
+              }
+              if (type === 'date') {
+                return { elementAttributes: { type: 'date' } };
+              }
+              if (type === 'textarea') {
+                return { elementAttributes: { rows: 4, maxlength: '2000' } };
+              }
+              if (type.startsWith('select_')) {
+                return {
+                  values: tabulatorEditorValues(field),
+                  clearable: true,
+                  autocomplete: true,
+                };
+              }
+              return { elementAttributes: { maxlength: '255' } };
+            }
+
+            function restoreOldCellValue(cell, oldValue) {
+              if (typeof cell.restoreOldValue === 'function') {
+                cell.restoreOldValue();
+              } else {
+                cell.setValue(oldValue, true);
+              }
+            }
+
+            function flashTabulatorCell(cell, color, duration = 900) {
+              const element = cell.getElement();
+              if (!element) return;
+              element.style.backgroundColor = color;
+              setTimeout(() => {
+                element.style.backgroundColor = '';
+              }, duration);
+            }
+
+            function showTabulatorToast(type, message) {
+              const existing = document.getElementById('tabulator-inline-toast');
+              if (existing) existing.remove();
+
+              const toast = document.createElement('div');
+              toast.id = 'tabulator-inline-toast';
+              toast.style.cssText = `
+                position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+                background:${type === 'error' ? '#dc3545' : '#16a34a'};
+                color:#fff; padding:10px 20px; border-radius:8px;
+                font-size:13px; font-weight:700; z-index:99999;
+                box-shadow:0 4px 12px rgba(0,0,0,.2);
+              `;
+              toast.textContent = message;
+              document.body.appendChild(toast);
+              setTimeout(() => toast.remove(), 3500);
+            }
+
+            function normalizeInlineEditValue(field, value) {
+              if (value === '-' || value === undefined || value === null) return '';
+              if (tabulatorNumericFields.has(field)) {
+                const raw = String(value).trim();
+                const numeric = /^\d+(\.\d+)?$/.test(raw)
+                  ? String(Math.round(Number(raw)))
+                  : raw.replace(/[^0-9]/g, '');
+                return numeric === '' ? '' : numeric;
+              }
+              return value;
+            }
+
+            async function saveTabulatorInlineEdit(cell) {
+              const row = cell.getRow();
+              const rowData = row.getData();
+              const field = cell.getField();
+              const oldValue = cell.getOldValue();
+              const value = normalizeInlineEditValue(field, cell.getValue());
+
+              if (!isInlineEditableField(field) || !rowData.id) return;
+              if (String(value ?? '') === String(normalizeInlineEditValue(field, oldValue) ?? '')) return;
+
+              flashTabulatorCell(cell, '#fff3cd', 100000);
+
+              try {
+                const response = await fetch(`/documents/${encodeURIComponent(rowData.id)}/inline-update`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': tabulatorCsrfToken,
+                    'Accept': 'application/json',
+                  },
+                  body: JSON.stringify({ field, value }),
+                });
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok || !data.success) {
+                  restoreOldCellValue(cell, oldValue);
+                  flashTabulatorCell(cell, '#fee2e2', 1500);
+                  showTabulatorToast('error', data.message || 'Gagal menyimpan.');
+                  return;
+                }
+
+                const update = {};
+                const rawValue = data.raw_value ?? value ?? '';
+
+                update[field] = rawValue;
+                if (field === 'nilai_rupiah') {
+                  update.nilai_rupiah = rawValue ? Number(rawValue) : 0;
+                  update.nilai_rupiah_fmt = data.display_value || 'Rp. 0';
+                } else if (field === 'dpp_pph' || field === 'ppn_terhutang') {
+                  update[field] = rawValue ? Number(rawValue) : null;
+                  update[`${field}_fmt`] = data.display_value || '-';
+                } else if (field === 'tanggal_spp' && data.raw_value) {
+                  const date = new Date(`${data.raw_value}T00:00:00`);
+                  if (!Number.isNaN(date.getTime())) {
+                    const monthNames = ['Januari','Februari','Maret','April','May','Juni','July','Agustus','September','Oktober','November','Desember'];
+                    update.bulan = monthNames[date.getMonth()];
+                    update.tahun = String(date.getFullYear());
+                  }
+                }
+
+                row.update(update);
+                flashTabulatorCell(cell, '#d1fae5', 1000);
+              } catch (error) {
+                console.error('Error inline edit:', error);
+                restoreOldCellValue(cell, oldValue);
+                flashTabulatorCell(cell, '#fee2e2', 1500);
+                showTabulatorToast('error', 'Koneksi gagal. Coba lagi.');
+              }
+            }
+
             function buildTabulatorDataColumn(field, label) {
               const column = {
                 title: label || field,
@@ -6154,6 +6440,13 @@
                 column.sorter = 'number';
                 column.hozAlign = 'right';
                 column.formatter = moneyFormatter;
+              } else if (field === 'dpp_pph' || field === 'ppn_terhutang') {
+                column.sorter = 'number';
+                column.hozAlign = 'right';
+                column.formatter = compactNumberFormatter;
+              } else if (tabulatorDateFields.has(field)) {
+                column.formatter = dateCellFormatter;
+                column.hozAlign = 'center';
               } else if (field === 'status') {
                 column.formatter = statusFormatter;
                 column.hozAlign = 'center';
@@ -6171,6 +6464,21 @@
               } else if (field === 'link_dokumen_pajak') {
                 column.formatter = linkFormatter;
                 column.hozAlign = 'center';
+              }
+
+              if (isInlineEditableField(field)) {
+                column.editor = editorForTabulatorField(field);
+                column.editorParams = editorParamsForTabulatorField(field);
+                column.editable = canEditTabulatorCell;
+                column.cellEdited = saveTabulatorInlineEdit;
+                column.cssClass = [column.cssClass, 'tabulator-inline-editable-cell'].filter(Boolean).join(' ');
+                column.tooltip = function(e, cell) {
+                  cell = cell || e;
+                  if (!cell || typeof cell.getRow !== 'function') return '';
+                  return cell.getRow().getData().is_inline_editable
+                    ? 'Klik untuk edit langsung'
+                    : '';
+                };
               }
 
               return column;
