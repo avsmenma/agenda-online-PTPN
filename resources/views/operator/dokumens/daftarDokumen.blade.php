@@ -1,6 +1,6 @@
 @extends('layouts/app')
 @push('styles')
-  <link href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/css/tabulator.min.css" rel="stylesheet">
   <style>
     #documentTableContainer.table-dokumen {
       border-radius: 8px;
@@ -5955,16 +5955,66 @@
               return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);
             }));
           @endphp
-          <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
           <script>
             let tabelDokumen = null;
             let allDataCache = [];
             let tabulatorHandlerOptions = { base: [], bagian: [] };
+            let tabulatorLoadPromise = null;
 
             const tabulatorDataUrl = @json(route('documents.all-data'));
             const tabulatorCsrfToken = @json(csrf_token());
             const initialAvailableColumns = @json($availableColumns);
             const initialSelectedColumns = @json($tabulatorInitialColumns);
+            const tabulatorScriptSources = [
+              'https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/js/tabulator.min.js',
+              'https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js',
+            ];
+
+            function normalizeTabulatorGlobal() {
+              if (!window.Tabulator && window.TabulatorFull) {
+                window.Tabulator = window.TabulatorFull;
+              }
+              return window.Tabulator;
+            }
+
+            function loadTabulatorScript(src) {
+              return new Promise((resolve, reject) => {
+                const existing = document.querySelector(`script[data-tabulator-src="${src}"]`);
+                if (existing) {
+                  existing.addEventListener('load', () => resolve(), { once: true });
+                  existing.addEventListener('error', () => reject(new Error(`Gagal memuat ${src}`)), { once: true });
+                  return;
+                }
+
+                const script = document.createElement('script');
+                script.src = src;
+                script.async = true;
+                script.defer = true;
+                script.dataset.tabulatorSrc = src;
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error(`Gagal memuat ${src}`));
+                document.head.appendChild(script);
+              });
+            }
+
+            async function ensureTabulatorLoaded() {
+              if (normalizeTabulatorGlobal()) return window.Tabulator;
+              if (tabulatorLoadPromise) return tabulatorLoadPromise;
+
+              tabulatorLoadPromise = (async () => {
+                for (const src of tabulatorScriptSources) {
+                  try {
+                    await loadTabulatorScript(src);
+                    if (normalizeTabulatorGlobal()) return window.Tabulator;
+                  } catch (error) {
+                    console.warn(error.message);
+                  }
+                }
+                throw new Error('Tabulator.js belum termuat. Periksa akses browser ke CDN jsDelivr/unpkg.');
+              })();
+
+              return tabulatorLoadPromise;
+            }
 
             function escapeHtml(value) {
               return String(value ?? '')
@@ -6227,6 +6277,8 @@
               setTabulatorLoading(true);
               let loadFailed = false;
               try {
+                await ensureTabulatorLoaded();
+
                 const response = await fetch(getTabulatorRequestUrl(), {
                   headers: {
                     'Accept': 'application/json',
@@ -6244,10 +6296,6 @@
                 const availableColumns = Array.isArray(payload) ? initialAvailableColumns : (payload.availableColumns || initialAvailableColumns);
                 tabulatorHandlerOptions = Array.isArray(payload) ? tabulatorHandlerOptions : (payload.handlerOptions || tabulatorHandlerOptions);
                 allDataCache = rows;
-
-                if (!window.Tabulator) {
-                  throw new Error('Tabulator.js belum termuat.');
-                }
 
                 if (tabelDokumen) {
                   tabelDokumen.setColumns(buildTabulatorColumns(columns, availableColumns));
