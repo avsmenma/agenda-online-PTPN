@@ -2,30 +2,6 @@
 @section('content')
 
   <style>
-    /* CRITICAL FIX: Override all possible border styles for Nilai Rupiah column */
-    td.col-nilai, th.col-nilai,
-    .table-enhanced td.col-nilai, .table-enhanced th.col-nilai,
-    .table-dokumen td.col-nilai, .table-dokumen th.col-nilai,
-    .table tbody td.col-nilai, .table thead th.col-nilai,
-    [class*="col-nilai"], [class*="col-nilai"] td, [class*="col-nilai"] th {
-      border-right: none !important;
-      border-left: none !important;
-      border-image: none !important;
-      box-shadow: none !important;
-      outline: none !important;
-    }
-
-    /* Additional override for any element containing "Nilai Rupiah" */
-    td:has(strong:contains("Rp.")), th:contains("Nilai") {
-      border-right: none !important;
-    }
-
-    /* Force override inline styles */
-    td.col-nilai[style], th.col-nilai[style] {
-      border-right: none !important;
-      border-left: none !important;
-    }
-
     /* =============================================
        INLINE EDITING - Spreadsheet Style
        ============================================= */
@@ -747,12 +723,6 @@
       border-right: none;
     }
 
-    /* Fix for Nilai Rupiah column in preview table */
-    .preview-table td.col-nilai,
-    .preview-table th.col-nilai {
-      border-right: none !important;
-    }
-
     .empty-preview {
       text-align: center;
       padding: 60px 20px;
@@ -973,11 +943,9 @@
     .table-enhanced {
       border-collapse: separate;
       border-spacing: 0;
-      min-width: 1200px;
-      /* Minimum width for horizontal scroll */
-      width: 100%;
+      min-width: 100%;
+      width: max-content;
       table-layout: auto;
-      /* Allow table to expand beyond container */
     }
 
     .table-enhanced thead th {
@@ -989,11 +957,16 @@
       font-weight: 600;
       text-align: center;
       vertical-align: middle;
-      white-space: nowrap;
+      white-space: normal;
+      line-height: 1.25;
+      overflow-wrap: normal;
+      word-break: keep-all;
       border-bottom: 2px solid #083E40;
       border-right: none;
       padding: 16px 12px;
       font-size: 13px;
+      min-width: 132px;
+      max-width: 320px;
     }
 
 
@@ -1021,34 +994,49 @@
       min-width: 80px;
     }
 
-    .table-enhanced .col-agenda {
+    .table-enhanced .col-nomor_agenda {
       width: 120px;
       min-width: 120px;
     }
 
-    .table-enhanced .col-spp {
-      width: 140px;
-      min-width: 140px;
+    .table-enhanced .col-nomor_spp,
+    .table-enhanced .col-no_spk,
+    .table-enhanced .col-no_berita_acara,
+    .table-enhanced .col-nomor_po,
+    .table-enhanced .col-nomor_miro,
+    .table-enhanced .col-no_faktur {
+      width: 170px;
+      min-width: 170px;
+      max-width: 240px;
     }
 
-    .table-enhanced .col-tanggal {
-      width: 160px;
-      min-width: 140px;
+    .table-enhanced [class*="col-tanggal"] {
+      width: 150px;
+      min-width: 150px;
+      max-width: 180px;
     }
 
-    .table-enhanced .col-nilai {
+    .table-enhanced .col-nilai_rupiah,
+    .table-enhanced .col-dpp_pph,
+    .table-enhanced .col-ppn_terhutang {
       width: 120px;
       min-width: 120px;
-      border-right: none !important;
-      border-left: none !important;
     }
 
-    .table-enhanced .col-mirror {
-      width: 120px;
-      min-width: 120px;
+    .table-enhanced .col-kategori,
+    .table-enhanced .col-jenis_dokumen,
+    .table-enhanced .col-jenis_sub_pekerjaan,
+    .table-enhanced .col-jenis_pembayaran,
+    .table-enhanced .col-nama_pengirim,
+    .table-enhanced .col-kepala_sub_bagian,
+    .table-enhanced .col-handler {
+      width: 190px;
+      min-width: 190px;
+      max-width: 280px;
     }
 
-    .table-enhanced .col-status {
+    .table-enhanced .col-status,
+    .table-enhanced .col-status_dokumen_custom {
       width: 250px;
       min-width: 250px;
       max-width: 280px;
@@ -1124,79 +1112,6 @@
       box-shadow: none !important;
     }
 
-    /* Fix for Nilai Rupiah column vertical line issue */
-    .table-enhanced td.col-nilai,
-    .table-dokumen td.col-nilai {
-      border-right: none !important;
-      border-left: none !important;
-      border-image: none !important;
-      box-shadow: none !important;
-    }
-
-    /* Override any global table border styles for Nilai Rupiah column */
-    .table tbody td.col-nilai,
-    .table-enhanced tbody td.col-nilai {
-      border-right: none !important;
-      border-left: none !important;
-    }
-
-    /* Fix for Nilai Rupiah column header vertical line issue */
-    .table-enhanced th.col-nilai,
-    .table-dokumen th.col-nilai {
-      border-right: none !important;
-      border-left: none !important;
-      border-image: none !important;
-    }
-
-    /* Dark mode support for Nilai Rupiah column */
-    .dark .table-enhanced td.col-nilai,
-    .dark .table-dokumen td.col-nilai,
-    .dark .table tbody td.col-nilai {
-      border-right: none !important;
-      border-left: none !important;
-      border-color: transparent !important;
-    }
-
-    .dark .table-enhanced th.col-nilai,
-    .dark .table-dokumen th.col-nilai {
-      border-right: none !important;
-      border-left: none !important;
-      border-color: transparent !important;
-    }
-
-    /* Force override for any inline styles or Bootstrap defaults */
-    [class*="col-nilai"] {
-      border-right: none !important;
-      border-left: none !important;
-    }
-
-    /* Specific override for table cells that might have inline styles */
-    td.col-nilai[style],
-    th.col-nilai[style] {
-      border-right: none !important;
-      border-left: none !important;
-    }
-
-    /* FINAL OVERRIDE - This should be the last CSS rule loaded */
-    .table-dokumen td.col-nilai,
-    .table-dokumen th.col-nilai,
-    .table-enhanced td.col-nilai,
-    .table-enhanced th.col-nilai,
-    .preview-table td.col-nilai,
-    .preview-table th.col-nilai,
-    table td.col-nilai,
-    table th.col-nilai,
-    td.col-nilai,
-    th.col-nilai {
-      border-right: none !important;
-      border-left: none !important;
-      border-image: none !important;
-      box-shadow: none !important;
-      outline: none !important;
-      background-clip: padding-box !important;
-      visibility: visible !important;
-    }
-
     /* Responsive design improvements */
     @media (max-width: 768px) {
       .table-dokumen {
@@ -1224,29 +1139,22 @@
         min-width: 60px;
       }
 
-      .table-enhanced .col-agenda {
+      .table-enhanced .col-nomor_agenda {
         width: 100px;
         min-width: 100px;
       }
 
-      .table-enhanced .col-spp {
+      .table-enhanced .col-nomor_spp {
         width: 120px;
         min-width: 120px;
       }
 
-      .table-enhanced .col-tanggal {
+      .table-enhanced [class*="col-tanggal"] {
         width: 130px;
         min-width: 130px;
       }
 
-      .table-enhanced .col-nilai {
-        width: 100px;
-        min-width: 100px;
-        border-right: none !important;
-        border-left: none !important;
-      }
-
-      .table-enhanced .col-mirror {
+      .table-enhanced .col-nilai_rupiah {
         width: 100px;
         min-width: 100px;
       }
@@ -1307,29 +1215,22 @@
         min-width: 50px;
       }
 
-      .table-enhanced .col-agenda {
+      .table-enhanced .col-nomor_agenda {
         width: 90px;
         min-width: 90px;
       }
 
-      .table-enhanced .col-spp {
+      .table-enhanced .col-nomor_spp {
         width: 100px;
         min-width: 100px;
       }
 
-      .table-enhanced .col-tanggal {
+      .table-enhanced [class*="col-tanggal"] {
         width: 120px;
         min-width: 120px;
       }
 
-      .table-enhanced .col-nilai {
-        width: 80px;
-        min-width: 80px;
-        border-right: none !important;
-        border-left: none !important;
-      }
-
-      .table-enhanced .col-mirror {
+      .table-enhanced .col-nilai_rupiah {
         width: 80px;
         min-width: 80px;
       }
@@ -5876,75 +5777,9 @@
               setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3000);
             }
 
-            // Fix for Nilai Rupiah column vertical line - Force remove borders
-            function fixNilaiRupiahColumnBorders() {
-              // Target all possible selectors for Nilai Rupiah column
-              const selectors = [
-                'td.col-nilai',
-                'th.col-nilai',
-                '.table-enhanced td.col-nilai',
-                '.table-dokumen td.col-nilai',
-                '.table tbody td.col-nilai',
-                '[class*="col-nilai"]'
-              ];
-
-              selectors.forEach(selector => {
-                const elements = document.querySelectorAll(selector);
-                elements.forEach(element => {
-                  element.style.borderRight = 'none';
-                  element.style.borderLeft = 'none';
-                  element.style.borderImage = 'none';
-                  element.style.boxShadow = 'none';
-                });
-              });
-            }
-
-            // Apply fix when DOM is loaded
-            document.addEventListener('DOMContentLoaded', fixNilaiRupiahColumnBorders);
-            
-            // Apply fix after any AJAX calls or table updates
-            const originalFetch = window.fetch;
-            window.fetch = function(...args) {
-              return originalFetch.apply(this, args).then(response => {
-                setTimeout(fixNilaiRupiahColumnBorders, 100);
-                return response;
-              });
-            };
-
-            // Apply fix periodically to catch any dynamic changes
-            // [PERF FIX] setInterval dihapus ΓÇö border sudah di-override CSS !important di atas
-            // Cukup run sekali setelah AJAX load, tidak perlu polling setiap detik
-            // (setInterval(fixNilaiRupiahColumnBorders, 1000) menyebabkan lag saat "Semua" aktif)
-
-            // Additional CSS injection for maximum override + perf optimizations
+            // Additional CSS injection for inline-edit popup styles.
             const style = document.createElement('style');
             style.innerHTML = `
-              /* MAXIMUM PRIORITY OVERRIDE FOR NILAI RUPIAH COLUMN */
-              .table-dokumen thead th.col-nilai,
-              .table-dokumen tbody td.col-nilai,
-              .table-enhanced thead th.col-nilai,
-              .table-enhanced tbody td.col-nilai,
-              .preview-table thead th.col-nilai,
-              .preview-table tbody td.col-nilai,
-              table thead th.col-nilai,
-              table tbody td.col-nilai,
-              td.col-nilai, th.col-nilai {
-                border-right: none !important;
-                border-left: none !important;
-                border-image: none !important;
-                box-shadow: none !important;
-                outline: none !important;
-                background-clip: padding-box !important;
-              }
-
-              /* Override any inline styles */
-              [style].col-nilai,
-              td.col-nilai[style*="border"],
-              th.col-nilai[style*="border"] {
-                border-right: none !important;
-                border-left: none !important;
-              }
-
               /* =====================================================
                  CSS OVERLAY POPUP (uraian_spp → modal popup)
                  ===================================================== */
@@ -6875,6 +6710,3 @@
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
 @endsection
-
-
-

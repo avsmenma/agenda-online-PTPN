@@ -67,7 +67,7 @@
         perPage: {{ $virtualPerPage }},
         lastPage: {{ $virtualLastPage }},
         initialPage: {{ max(1, (int) request('page', 1)) }},
-        rowHeight: 64
+        rowHeight: 56
       };
 
       const cache = new Map();
@@ -93,7 +93,7 @@
           .slice(0, 20);
         if (!rows.length) return config.rowHeight;
         const average = rows.reduce((sum, row) => sum + row.offsetHeight, 0) / rows.length;
-        return Math.max(56, Math.min(420, Math.round(average)));
+        return Math.max(54, Math.min(72, Math.round(average)));
       }
 
       function addStatus(container) {
