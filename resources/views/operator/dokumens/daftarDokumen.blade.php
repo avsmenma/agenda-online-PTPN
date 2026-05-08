@@ -6705,7 +6705,6 @@
           </script>
 
 {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
-@include('partials.virtual-document-table', ['paginator' => $dokumens, 'chunkSize' => 100, 'enabled' => true])
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
 @endsection
