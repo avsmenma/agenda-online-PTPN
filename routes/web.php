@@ -320,6 +320,7 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
     Route::post('/bulk-send-to-verifikasi', [DokumenController::class, 'bulkSendToTeamVerifikasi'])->name('bulk-send-to-verifikasi');
     // AJAX table rows loader (for "Semua" per-page, no full reload)
     Route::get('/ajax-rows', [DokumenController::class, 'ajaxRows'])->name('ajax-rows');
+    Route::get('/all-data', [DokumenController::class, 'getAllData'])->name('all-data');
 
     // Routes with {dokumen} parameter - MUST be after static routes
     Route::get('/{dokumen}/edit', [DokumenController::class, 'edit'])->name('edit');

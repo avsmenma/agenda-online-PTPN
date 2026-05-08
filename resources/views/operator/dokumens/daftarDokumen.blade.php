@@ -1,4 +1,186 @@
 @extends('layouts/app')
+@push('styles')
+  <link href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator.min.css" rel="stylesheet">
+  <style>
+    #documentTableContainer.table-dokumen {
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    #dokumen-tabulator {
+      width: 100%;
+      min-height: 520px;
+      background: #f4f8fb;
+    }
+
+    #dokumen-tabulator .tabulator {
+      border: 0;
+      border-radius: 0;
+      background: #f4f8fb;
+      font-family: inherit;
+      font-size: 13px;
+    }
+
+    #dokumen-tabulator .tabulator-header,
+    #dokumen-tabulator .tabulator-header .tabulator-col {
+      background: #143f6b;
+      color: #fff;
+      border-color: #245d8f;
+      font-weight: 700;
+    }
+
+    #dokumen-tabulator .tabulator-header .tabulator-col:hover {
+      background: #184b7d;
+    }
+
+    #dokumen-tabulator .tabulator-row {
+      border-bottom: 1px solid #dbe3ea;
+      min-height: 54px;
+    }
+
+    #dokumen-tabulator .tabulator-row .tabulator-cell {
+      border-right: 1px solid #dbe3ea;
+      padding: 9px 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: normal;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #dokumen-tabulator .tabulator-row.tabulator-row-even {
+      background: #f8fbff;
+    }
+
+    #dokumen-tabulator .tabulator-row:hover {
+      background: #eef6f4 !important;
+    }
+
+    .tabulator-cell-text {
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tabulator-cell-wrap {
+      width: 100%;
+      white-space: normal;
+      line-height: 1.45;
+    }
+
+    .tabulator-agenda {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      line-height: 1.25;
+    }
+
+    .tabulator-agenda strong {
+      color: #111827;
+      font-weight: 800;
+    }
+
+    .tabulator-agenda small {
+      color: #6b7280;
+      font-size: 11px;
+    }
+
+    .tabulator-status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-width: 128px;
+      max-width: 100%;
+      padding: 8px 13px;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.15;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+    }
+
+    .tabulator-status-badge.is-sent {
+      background: linear-gradient(135deg, #064f52 0%, #07676b 100%);
+    }
+
+    .tabulator-status-badge.is-draft {
+      background: linear-gradient(135deg, #5f6872 0%, #4b5563 100%);
+    }
+
+    .tabulator-status-badge.is-pending {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .tabulator-status-badge.is-returned {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      cursor: pointer;
+    }
+
+    .tabulator-status-badge.is-done {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    }
+
+    .tabulator-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.7);
+      flex: 0 0 auto;
+    }
+
+    .tabulator-handler-select {
+      width: 100%;
+      min-width: 150px;
+      max-width: 220px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 7px 9px;
+      background: #fff;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .tabulator-handler-select:disabled {
+      background: #f1f5f9;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+
+    .tabulator-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+    }
+
+    .tabulator-loading-panel {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 180px;
+      color: #64748b;
+      font-weight: 700;
+    }
+
+    .tabulator-loading-panel.is-visible {
+      display: flex;
+    }
+
+    body.document-table-only-fullscreen #dokumen-tabulator,
+    body.is-fullscreen #dokumen-tabulator {
+      min-height: calc(100vh - 28px);
+    }
+  </style>
+@endpush
 @section('content')
 
   <style>
@@ -2636,571 +2818,14 @@
     </div>
   @endif
 
-  <!-- Enhanced Tabel Dokumen -->
+  <!-- Tabulator True Virtual DOM Table -->
   <div class="table-dokumen" id="documentTableContainer">
-    <div class="table-responsive table-container">
-      <table class="table table-enhanced mb-0">
-        <thead>
-          <tr>
-            <th class="col-checkbox">
-              <input type="checkbox" id="selectAllCheckbox" class="bulk-checkbox" title="Pilih Semua">
-            </th>
-            <th class="col-no">No</th>
-            @php
-              $filteredColumns = array_filter($selectedColumns, function ($col) use ($availableColumns) {
-                return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);
-              });
-            @endphp
-            @foreach($filteredColumns as $col)
-              @if($col === 'nomor_agenda')
-                <th class="col-{{ $col }}" onclick="toggleSort('{{ $col }}')" style="cursor:pointer; user-select:none; white-space:nowrap;">
-                  {{ $availableColumns[$col] }}
-                  <span style="display:inline-flex; flex-direction:column; line-height:0.5; margin-left:4px; font-size:10px; vertical-align:middle;">
-                    <i class="fas fa-caret-up" style="opacity:{{ (isset($sortColumn) && $sortColumn==$col && isset($sortOrder) && $sortOrder=='asc') ? '1' : '0.3' }}"></i>
-                    <i class="fas fa-caret-down" style="opacity:{{ (isset($sortColumn) && $sortColumn==$col && isset($sortOrder) && $sortOrder=='desc') ? '1' : '0.3' }}"></i>
-                  </span>
-                </th>
-              @else
-                <th class="col-{{ $col }}">{{ $availableColumns[$col] }}</th>
-              @endif
-            @endforeach
-            <th class="col-handler">Pengurus Dokumen</th>
-            <th class="col-action">Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="dokumenTableBody">
-          @forelse($dokumens as $index => $dokumen)
-            @php
-              // === Compute canSend early for checkbox ===
-              // Check if document has been sent to Team Verifikasi
-              $isSentToTeamVerifikasiForCheck = ($dokumen->status ?? '') == 'sent_to_team_verifikasi'
-                || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_operator');
-
-              // Check if approved by Team Verifikasi (use eager-loaded collection, no extra query)
-              $teamVerifikasiStatusForCheck = $dokumen->roleStatuses
-                ->where('role_code', 'team_verifikasi')
-                ->where('status', 'approved')
-                ->first();
-              $isApprovedByTeamVerifikasiForCheck = $teamVerifikasiStatusForCheck !== null;
-
-              // Check if rejected
-              $teamVerifikasiRejectedForCheck = $dokumen->roleStatuses
-                ->where('role_code', 'team_verifikasi')
-                ->where('status', 'rejected')
-                ->first();
-              $isRejectedForCheck = $teamVerifikasiRejectedForCheck !== null;
-
-              // Check if returned
-              if (!$isRejectedForCheck && strtolower($dokumen->status ?? '') === 'returned_to_operator') {
-                $hasAnyRejectionForCheck = $dokumen->roleStatuses->where('status', 'rejected')->isNotEmpty();
-                if ($hasAnyRejectionForCheck) {
-                  $isRejectedForCheck = true;
-                }
-              }
-
-              // Check if sent to other roles
-              $isSentToOtherRolesForCheck = in_array($dokumen->status ?? '', [
-                'sent_to_perpajakan',
-                'sent_to_akutansi',
-                'sent_to_pembayaran',
-                'pending_approval_perpajakan',
-                'pending_approval_akutansi',
-                'pending_approval_pembayaran'
-              ]);
-
-              // Final isSent check
-              $isSentForCheck = ($isSentToTeamVerifikasiForCheck || ($isApprovedByTeamVerifikasiForCheck && $isSentToOtherRolesForCheck)) && !$isRejectedForCheck;
-
-              // Compute canSend
-              $createdByOperatorForCheck = in_array(strtolower($dokumen->created_by ?? ''), ['operator']);
-              $currentHandlerOperatorForCheck = in_array(strtolower($dokumen->current_handler ?? ''), ['operator']);
-              $isReturnedForCheck = strtolower($dokumen->status ?? '') === 'returned_to_operator';
-              // Check if document is from Bagian (menunggu_approval_keuangan)
-              $isFromBagianForCheck = strtolower($dokumen->status ?? '') === 'menunggu_approval_keuangan' && $currentHandlerOperatorForCheck;
-
-              $canSendForBulk = false;
-              // PRIORITY 0: Documents from Bagian waiting for approval can be sent
-              if ($isFromBagianForCheck && !$isSentForCheck) {
-                $canSendForBulk = true;
-              }
-              // PRIORITY 1: Rejected documents with Operator
-              elseif ($isRejectedForCheck && $currentHandlerOperatorForCheck && !$isSentForCheck) {
-                $canSendForBulk = true;
-              }
-              // PRIORITY 2: Returned documents
-              elseif ($isReturnedForCheck && $currentHandlerOperatorForCheck && !$isSentForCheck) {
-                $canSendForBulk = true;
-              }
-              // PRIORITY 3: Normal documents (draft, sedang diproses)
-              elseif (in_array(strtolower($dokumen->status ?? ''), ['draft', 'sedang diproses']) && $currentHandlerOperatorForCheck && !$isSentForCheck) {
-                $canSendForBulk = true;
-              }
-            @endphp
-            @php
-              $canInlineEdit = $currentHandlerOperatorForCheck && in_array(strtolower($dokumen->status ?? ''), ['draft','returned_to_operator','belum_dikirim','belum dikirim','menunggu_approval_keuangan']) || ($isRejectedForCheck && $currentHandlerOperatorForCheck);
-            @endphp
-            <tr class="main-row clickable-row" data-id="{{ $dokumen->id }}"
-              data-nomor-agenda="{{ $dokumen->nomor_agenda }}"
-              data-nomor-spp="{{ $dokumen->nomor_spp }}"
-              data-nilai-rupiah="{{ $dokumen->formatted_nilai_rupiah }}"
-              data-can-send="{{ $canSendForBulk ? 'true' : 'false' }}"
-              data-editable="{{ $canInlineEdit ? 'true' : 'false' }}"
-              data-dokumen-id="{{ $dokumen->id }}"
-              ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
-              <td class="col-checkbox" onclick="event.stopPropagation()">
-                @if($canSendForBulk)
-                  <input type="checkbox" 
-                    class="bulk-checkbox doc-checkbox" 
-                    data-id="{{ $dokumen->id }}"
-                    data-nomor-agenda="{{ $dokumen->nomor_agenda }}"
-                    data-nomor-spp="{{ $dokumen->nomor_spp }}"
-                    data-nilai-rupiah="{{ $dokumen->formatted_nilai_rupiah }}"
-                    title="Pilih dokumen ini untuk bulk send">
-                @else
-                  <input type="checkbox" class="bulk-checkbox" disabled title="Dokumen ini tidak dapat dikirim">
-                @endif
-              </td>
-              <td class="col-no">{{ $dokumens->firstItem() + $index }}</td>
-              @php
-                $filteredColumns = array_filter($selectedColumns, function ($col) use ($availableColumns) {
-                  return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);
-                });
-              @endphp
-              @foreach($filteredColumns as $col)
-                @php
-                  $nonEditableCols = ['tanggal_masuk','status','nomor_mirror','keterangan','npwp','link_dokumen_pajak'];
-                  $isCellEditable = $canInlineEdit && !in_array($col, $nonEditableCols);
-                @endphp
-                @php
-                  $dateCols = ['tanggal_spp','tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf','tanggal_miro'];
-                  if ($isCellEditable) {
-                    if ($col === 'nilai_rupiah') {
-                      $ieRaw = $dokumen->nilai_rupiah ?? '';
-                    } elseif (in_array($col, $dateCols)) {
-                      $ieRaw = $dokumen->$col ? $dokumen->$col->format('Y-m-d') : '';
-                    } elseif ($col === 'dibayar_kepada') {
-                      // Gunakan separator koma agar cocok dengan input text (bukan textarea)
-                      $ieRaw = $dokumen->dibayarKepadas->pluck('nama_penerima')->implode(', ');
-                      // Fallback ke field langsung jika relasi kosong
-                      if (empty($ieRaw) && !empty($dokumen->dibayar_kepada)) {
-                        $ieRaw = $dokumen->dibayar_kepada;
-                      }
-                    } else {
-                      $ieRaw = $dokumen->$col ?? '';
-                    }
-                  }
-                @endphp
-                <td class="col-{{ $col }}{{ $isCellEditable ? ' ie-cell' : '' }}"
-                  @if($isCellEditable)
-                    data-field="{{ $col }}"
-                    data-raw="{{ $ieRaw }}"
-                  @endif
-                  >
-                  @if($col == 'nomor_agenda')
-                    <strong>{{ $dokumen->nomor_agenda }}</strong>
-                    <br>
-                    <small class="text-muted">{{ $dokumen->bulan }} {{ $dokumen->tahun }}</small>
-                  @elseif($col == 'nomor_spp')
-                    <span class="select-text">{{ $dokumen->nomor_spp }}</span>
-                  @elseif($col == 'tanggal_masuk')
-                    <span
-                      class="select-text">{{ $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d-m-Y H:i') : '-' }}</span>
-                  @elseif($col == 'nilai_rupiah')
-                    <strong class="select-text">{{ $dokumen->formatted_nilai_rupiah }}</strong>
-                  @elseif($col == 'status')
-                    @php
-                      // === CHECK PRIORITAS: Apakah dokumen ditolak oleh Team Verifikasi dari inbox? ===
-                      // Ini harus dicek PERTAMA karena rejection bisa terjadi setelah display_status diset
-                      $teamVerifikasiRejectedStatus = $dokumen->roleStatuses
-                        ->where('role_code', 'team_verifikasi')
-                        ->where('status', 'rejected')
-                        ->sortByDesc('status_changed_at')
-                        ->first();
-                      $isRejectedByTeamVerifikasi = $teamVerifikasiRejectedStatus !== null;
-                      $rejectionReasonVerifikasi = $isRejectedByTeamVerifikasi ? ($teamVerifikasiRejectedStatus->notes ?? null) : null;
-
-                      // === PERBAIKAN: Gunakan display_status dari dokumen_role_data untuk stabilitas ===
-                      // Operator ('operator') memiliki display_status tersendiri yang tidak terpengaruh downstream
-                      $OperatorDisplayStatus = $dokumen->getDisplayStatusForRole('operator');
-
-                      // OVERRIDE: Jika ditolak oleh team verifikasi, selalu tampilkan status ditolak
-                      // (override display_status yang mungkin masih menunjuk ke 'menunggu_approval_verifikasi')
-                      if (strtolower($dokumen->status ?? '') === 'returned_to_operator') {
-                        $OperatorDisplayStatus = 'dikembalikan';
-                      } elseif ($isRejectedByTeamVerifikasi) {
-                        $OperatorDisplayStatus = 'ditolak_verifikasi';
-                      }
-                      // Fallback logic jika display_status belum diset
-                      elseif (!$OperatorDisplayStatus) {
-                        $handlerLower = strtolower($dokumen->current_handler ?? '');
-                        $isWithOperator = in_array($handlerLower, ['operator', 'Operator', 'operator']);
-                        $statusLower = strtolower($dokumen->status ?? 'draft');
-
-                        // PRIORITY 0: Documents from Bagian waiting at Operator (draft for Operator)
-                        if ($statusLower === 'menunggu_approval_keuangan' && $isWithOperator) {
-                          $OperatorDisplayStatus = 'draft';
-                        } else {
-                          // Check team verifikasi statuses
-                          $isPendingInTeamVerifikasi = $dokumen->roleStatuses
-                            ->where('role_code', 'team_verifikasi')
-                            ->where('status', 'pending')
-                            ->isNotEmpty();
-
-                          $teamVerifikasiHasApproved = $dokumen->roleStatuses
-                            ->where('role_code', 'team_verifikasi')
-                            ->where('status', 'approved')
-                            ->isNotEmpty();
-
-                          $hasPerpajakanStatus = $dokumen->roleStatuses
-                            ->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran'])
-                            ->isNotEmpty();
-
-                          // === FIX: Pending di inbox Team Verifikasi = Menunggu Approval (regardless of current_handler) ===
-                          // When document is sent to Team Verifikasi inbox for approval,
-                          // current_handler might still be 'operator', so we can't check !$isWithOperator
-                          if ($isPendingInTeamVerifikasi) {
-                            $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
-                          } elseif ($statusLower === 'waiting_reviewer_approval' || str_contains($statusLower, 'pending_approval_team_verifikasi')) {
-                            $OperatorDisplayStatus = 'menunggu_approval_verifikasi';
-                          } elseif ($teamVerifikasiHasApproved || $hasPerpajakanStatus) {
-                            $OperatorDisplayStatus = 'terkirim';
-                          } elseif ($isWithOperator && in_array($statusLower, ['draft', 'returned_to_operator'])) {
-                            $OperatorDisplayStatus = 'draft';
-                          } else {
-                            if (in_array($handlerLower, ['team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran'])) {
-                              $OperatorDisplayStatus = 'terkirim';
-                            } else {
-                              $OperatorDisplayStatus = 'draft';
-                            }
-                          }
-                        }
-                      }
-
-                      // Map display status to badge
-                      $statusLabel = match ($OperatorDisplayStatus) {
-                        'draft' => 'Belum Dikirim',
-                        'menunggu_approval_verifikasi' => 'Menunggu Approve Team Verifikasi',
-                        'ditolak_verifikasi' => 'Dokumen Ditolak oleh Team Verifikasi',
-                        'dikembalikan' => 'Dikembalikan',
-                        'terkirim', 'terkirim_verifikasi', 'terkirim_perpajakan', 'terkirim_akutansi', 'terkirim_pembayaran' => 'Terkirim',
-                        'selesai', 'dibayar' => 'Selesai',
-                        default => 'Terkirim'
-                      };
-                    @endphp
-                    @if($OperatorDisplayStatus === 'draft')
-                      <span class="badge-status badge-draft">
-                        <i class="fa-solid fa-file-lines me-1"></i>
-                        <span>Belum Dikirim</span>
-                      </span>
-                    @elseif(in_array($OperatorDisplayStatus, ['ditolak_verifikasi', 'dikembalikan']))
-                      <span class="badge-status badge-dikembalikan"
-                        style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; cursor: pointer;"
-                        onclick="event.stopPropagation(); showRejectionModal({{ $dokumen->id }})">
-                        <i class="fa-solid fa-rotate-left me-1"></i>
-                        <span>{{ $OperatorDisplayStatus === 'dikembalikan' ? 'Dikembalikan' : 'Dokumen Ditolak' }},
-                          <span style="text-decoration: underline; font-weight: 700;">Alasan</span>
-                        </span>
-                      </span>
-                    @elseif($OperatorDisplayStatus === 'menunggu_approval_verifikasi')
-                      <span class="badge-status"
-                        style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
-                        <i class="fa-solid fa-clock me-1"></i>
-                        <span>Menunggu Approve Team Verifikasi</span>
-                      </span>
-                    @else
-                      <span class="badge-status badge-terkirim">
-                        <i class="fa-solid fa-check me-1"></i>
-                        <span>{{ $statusLabel }}</span>
-                      </span>
-                    @endif
-                  @elseif($col == 'tanggal_spp')
-                    {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d-m-Y') : '-' }}
-                  @elseif($col == 'uraian_spp')
-                    <span title="{{ $dokumen->uraian_spp ?? '-' }}"
-                      style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.5; width: 100%;">
-                      {{ $dokumen->uraian_spp ?? '-' }}
-                    </span>
-                  @elseif($col == 'kategori')
-                    {{ $dokumen->kategori ?? '-' }}
-                  @elseif($col == 'kebun')
-                    {{ $dokumen->kebun ?? '-' }}
-                  @elseif($col == 'bulan')
-                    {{ $dokumen->bulan ?? '-' }}
-                  @elseif($col == 'tahun')
-                    {{ $dokumen->tahun ?? '-' }}
-                  @elseif($col == 'nomor_miro')
-                    {{ $dokumen->nomor_miro_display ?? $dokumen->nomor_miro ?? '-' }}
-                  @elseif($col == 'jenis_dokumen')
-                    {{ $dokumen->jenis_dokumen ?? '-' }}
-                  @elseif($col == 'jenis_sub_pekerjaan')
-                    {{ $dokumen->jenis_sub_pekerjaan ?? '-' }}
-                  @elseif($col == 'jenis_pembayaran')
-                    {{ $dokumen->jenis_pembayaran ?? '-' }}
-                  @elseif($col == 'nama_pengirim')
-                    {{ $dokumen->nama_pengirim ?? '-' }}
-                  @elseif($col == 'dibayar_kepada')
-                    @if($dokumen->dibayarKepadas->count() > 0)
-                      {{ $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') }}
-                    @else
-                      {{ $dokumen->dibayar_kepada ?? '-' }}
-                    @endif
-                  @elseif($col == 'no_berita_acara')
-                    {{ $dokumen->no_berita_acara ?? '-' }}
-                  @elseif($col == 'tanggal_berita_acara')
-                    {{ $dokumen->tanggal_berita_acara ? $dokumen->tanggal_berita_acara->format('d-m-Y') : '-' }}
-                  @elseif($col == 'no_spk')
-                    {{ $dokumen->no_spk ?? '-' }}
-                  @elseif($col == 'tanggal_spk')
-                    {{ $dokumen->tanggal_spk ? $dokumen->tanggal_spk->format('d-m-Y') : '-' }}
-                  @elseif($col == 'tanggal_berakhir_spk')
-                    {{ $dokumen->tanggal_berakhir_spk ? $dokumen->tanggal_berakhir_spk->format('d-m-Y') : '-' }}
-                  @elseif($col == 'bagian')
-                    {{ $dokumen->bagian ?? '-' }}
-                  @elseif($col == 'tanggal_paraf')
-                    {{ $dokumen->tanggal_paraf ? $dokumen->tanggal_paraf->format('d/m/Y H:i') : '-' }}
-                  @elseif($col == 'pemaraf')
-                    @if($dokumen->pemaraf)
-                      <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);color:white;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;">
-                        <i class="fa-solid fa-check-circle"></i>
-                        {{ $dokumen->pemaraf }}
-                      </span>
-                    @else
-                      -
-                    @endif
-                  @elseif($col == 'tanggal_selesai_diproses')
-                    {{ $dokumen->tanggal_selesai_diproses ? $dokumen->tanggal_selesai_diproses->format('d/m/Y H:i') : '-' }}
-                  @elseif($col == 'kepala_sub_bagian')
-                    {{ $dokumen->kepala_sub_bagian ?? '-' }}
-                  @elseif($col == 'status_dokumen_custom')
-                    @if($dokumen->status_dokumen_csv)
-                      <span class="badge-status {{ $dokumen->status_dokumen_csv == 'Selesai Dibayar' ? 'badge-selesai' : ($dokumen->status_dokumen_csv == 'Dikembalikan' ? 'badge-dikembalikan' : 'badge-proses') }}" style="font-size: 10px; padding: 4px 8px;">
-                        {{ $dokumen->status_dokumen_csv }}
-                      </span>
-                    @else
-                      -
-                    @endif
-                  @elseif($col == 'tanggal_dibayar')
-                    {{ $dokumen->tanggal_dibayar ? \Carbon\Carbon::parse($dokumen->tanggal_dibayar)->format('d/m/Y') : '-' }}
-                  @elseif($col == 'no_faktur')
-                    {{ $dokumen->no_faktur ?? '-' }}
-                  @elseif($col == 'tanggal_faktur')
-                    {{ $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('d/m/Y') : '-' }}
-                  @elseif($col == 'tanggal_selesai_verifikasi_pajak')
-                    {{ $dokumen->tanggal_selesai_verifikasi_pajak ? $dokumen->tanggal_selesai_verifikasi_pajak->format('d/m/Y') : '-' }}
-                  @elseif($col == 'jenis_pph')
-                    {{ $dokumen->jenis_pph ?? '-' }}
-                  @elseif($col == 'dpp_pph')
-                    {{ $dokumen->dpp_pph ? number_format($dokumen->dpp_pph, 0, ',', '.') : '-' }}
-                  @elseif($col == 'ppn_terhutang')
-                  {{ $dokumen->ppn_terhutang ? number_format($dokumen->ppn_terhutang, 0, ',', '.') : '-' }}
-                  @elseif($col == 'npwp')
-                  {{ $dokumen->npwp ?? '-' }}
-                  @elseif($col == 'link_dokumen_pajak')
-                      @if($dokumen->link_dokumen_pajak)
-                          <a href="{{ $dokumen->link_dokumen_pajak }}" target="_blank" rel="noopener noreferrer"
-                            class="ie-link-anchor" onclick="event.stopPropagation();"
-                         title="{{ $dokumen->link_dokumen_pajak }}">
-                         <i class="fa-solid fa-link fa-sm"></i> Link Pajak
-                       </a>
-                     @else
-                       -
-                     @endif
-                   @else
-                     -
-                   @endif
-                 </td>
-               @endforeach
-               <td class="col-handler" onclick="event.stopPropagation()">
-                @include('partials.document-handler-select', ['dokumen' => $dokumen])
-               </td>
-               <td class="col-action" onclick="event.stopPropagation()">
-                <div class="action-buttons">
-                  @php
-                    // Check if document has been sent to Team Verifikasi
-                    $isSentToTeamVerifikasi = ($dokumen->status ?? '') == 'sent_to_team_verifikasi'
-                      || (($dokumen->current_handler ?? 'operator') == 'team_verifikasi' && ($dokumen->status ?? '') != 'returned_to_operator');
-
-                    // Check if document has been approved by Team Verifikasi (use eager-loaded collection)
-                    $teamVerifikasiStatus = $dokumen->roleStatuses
-                      ->whereIn('role_code', ['verifikasi', 'team_verifikasi'])
-                      ->first();
-                    $isApprovedByTeamVerifikasi = $teamVerifikasiStatus && $teamVerifikasiStatus->status === 'approved';
-
-                    // Check if document is rejected
-                    $isRejected = false;
-
-                    // Method 1: Check from eager-loaded collection
-                    if ($teamVerifikasiStatus && strtolower($teamVerifikasiStatus->status ?? '') === 'rejected') {
-                      $isRejected = true;
-                    }
-
-                    // Method 2: Fallback - check from dokumen_statuses directly (case-insensitive)
-                    if (!$isRejected) {
-                      $rejectedStatus = $dokumen->roleStatuses
-                        ->where('status', 'rejected')
-                        ->where('role_code', 'team_verifikasi')
-                        ->first();
-                      $isRejected = $rejectedStatus !== null;
-                    }
-
-                    // Method 3: Check if status is returned_to_operator AND has rejection in roleStatuses
-                    // This catches documents that were rejected but status might not be set correctly
-                    if (!$isRejected && strtolower($dokumen->status ?? '') === 'returned_to_operator') {
-                      // Check if there's any rejection status in roleStatuses relationship
-                      $hasAnyRejection = $dokumen->roleStatuses
-                        ->where('status', 'rejected')
-                        ->isNotEmpty();
-                      if ($hasAnyRejection) {
-                        $isRejected = true;
-                      }
-                    }
-
-                    // Check if document has been sent to Perpajakan/Akutansi/Pembayaran
-                    $isSentToOtherRoles = in_array($dokumen->status ?? '', [
-                      'sent_to_perpajakan',
-                      'sent_to_akutansi',
-                      'sent_to_pembayaran',
-                      'pending_approval_perpajakan',
-                      'pending_approval_akutansi',
-                      'pending_approval_pembayaran'
-                    ]);
-
-                    // Document is considered "sent" if sent to Team Verifikasi OR approved by Team Verifikasi and sent to other roles
-                    // BUT: rejected documents are NOT considered "sent" - they can be sent again
-                    $isSent = ($isSentToTeamVerifikasi || ($isApprovedByTeamVerifikasi && $isSentToOtherRoles)) && !$isRejected;
-
-                    // Can send only if document is draft/returned and still with Operator
-                    // Include rejected documents (returned_to_operator) so they can be sent again
-                    // IMPORTANT: Rejected documents should always be able to be sent again
-
-                    // Check if document is created by Operator (case-insensitive)
-                    $createdByOperator = in_array(strtolower($dokumen->created_by ?? ''), ['operator', 'Operator', 'operator']);
-
-                    // Check if document is currently with Operator (case-insensitive)
-                    $currentHandlerOperator = in_array(strtolower($dokumen->current_handler ?? ''), ['operator', 'Operator', 'operator']);
-
-                    // Check if document is returned (case-insensitive)
-                    $isReturned = strtolower($dokumen->status ?? '') === 'returned_to_operator';
-
-                    // Check if document is from Bagian
-                    // Documents from Bagian: current_handler = operator BUT created_by != operator
-                    // They can have status 'menunggu_approval_keuangan' OR 'sent_to_team_verifikasi' (if re-sent)
-                    $isFromBagian = $currentHandlerOperator && !$createdByOperator;
-
-                    // Override $isSent for Bagian documents that are still with Operator
-                    // These documents should be editable even if status is sent_to_team_verifikasi
-                    if ($isFromBagian) {
-                      $isSent = false;
-                    }
-
-                    // Initialize canSend
-                    $canSend = false;
-
-                    // PRIORITY 0: Documents from Bagian waiting for approval can be sent
-                    if ($isFromBagian && !$isSent) {
-                      $canSend = true;
-                    }
-                    // PRIORITY 1: Rejected documents can ALWAYS be sent again if they're with Operator
-                    elseif ($isRejected && $currentHandlerOperator && !$isSent) {
-                      $canSend = true;
-                    }
-                    // PRIORITY 2: Returned documents (returned_to_operator) can be sent
-                    elseif ($isReturned && $currentHandlerOperator && !$isSent) {
-                      $canSend = true;
-                    }
-                    // PRIORITY 3: Normal documents (draft, sedang diproses)
-                    elseif (
-                      in_array(strtolower($dokumen->status ?? ''), ['draft', 'sedang diproses'])
-                      && $currentHandlerOperator
-                      && !$isSent
-                    ) {
-                      $canSend = true;
-                    }
-
-                    // Can edit only if document is not sent and can be edited
-                    $canEdit = false;
-
-                    // PRIORITY 0: Documents from Bagian can be edited by Operator
-                    if ($isFromBagian && !$isSent) {
-                      $canEdit = true;
-                    }
-                    // PRIORITY 1: Rejected documents can ALWAYS be edited if they're with Operator
-                    elseif ($isRejected && $currentHandlerOperator && !$isSent) {
-                      $canEdit = true;
-                    }
-                    // PRIORITY 2: Returned documents (returned_to_operator) can be edited
-                    elseif ($isReturned && $currentHandlerOperator && !$isSent) {
-                      $canEdit = true;
-                    }
-                    // PRIORITY 3: Draft documents can be edited
-                    elseif (
-                      strtolower($dokumen->status ?? '') === 'draft'
-                      && $currentHandlerOperator
-                      && !$isSent
-                    ) {
-                      $canEdit = true;
-                    }
-                  @endphp
-                  @if($canEdit)
-                    <a href="{{ route('documents.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
-                      <i class="fa-solid fa-edit"></i>
-                      <span>Edit</span>
-                    </a>
-                  @endif
-                  @if($canSend)
-                    <form action="{{ route('documents.send-to-verifikasi', $dokumen->id) }}" method="POST"
-                      style="display: inline;">
-                      @csrf
-                      <button type="submit" class="btn-action btn-send" title="Kirim ke Team Verifikasi">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        <span>Kirim</span>
-                      </button>
-                    </form>
-                  @elseif($isSent)
-                    <button class="btn-action btn-send" disabled title="Dokumen sudah dikirim">
-                      <i class="fa-solid fa-paper-plane"></i>
-                      <span>Kirim</span>
-                    </button>
-                  @endif
-                </div>
-              </td>
-            </tr>
-            <tr class="detail-row" id="detail-{{ $dokumen->id }}" style="display: none;">
-              @php
-                $filteredColumns = array_filter($selectedColumns, function ($col) use ($availableColumns) {
-                  return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);
-                });
-              @endphp
-              <td colspan="{{ count($filteredColumns) + 3 }}">
-                <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
-                  <div class="loading-spinner">
-                    <i class="fa-solid fa-spinner fa-spin"></i>
-                    <span>Memuat detail dokumen...</span>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          @empty
-            @php
-              $filteredColumns = array_filter($selectedColumns, function ($col) use ($availableColumns) {
-                return $col !== 'nomor_mirror' && isset($availableColumns[$col]);
-              });
-            @endphp
-            <tr>
-              <td colspan="{{ count($filteredColumns) + 3 }}" class="text-center py-4">
-                <i class="fa-solid fa-inbox fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Tidak ada data dokumen yang tersedia.</p>
-                <a href="{{ route('documents.create') }}" class="btn btn-primary">
-                  <i class="fa-solid fa-plus me-2"></i>Tambah Dokumen
-                </a>
-              </td>
-            </tr>
-          @endforelse
-        </tbody>
-      </table>
+    <div id="tabulatorLoadingPanel" class="tabulator-loading-panel is-visible">
+      <span class="spinner-border spinner-border-sm text-success" role="status" aria-hidden="true"></span>
+      <span>Memuat data dokumen...</span>
     </div>
+    <div id="dokumen-tabulator"></div>
   </div>
-
   {{-- Modal untuk menampilkan alasan reject dari inbox --}}
   @if(isset($dokumens))
     @foreach($dokumens as $dokumen)
@@ -6325,12 +5950,469 @@
           </script>
 
 
-          @include('partials.virtual-document-table', [
-            'paginator' => $dokumens,
-            'chunkSize' => 100,
-            'enabled' => true,
-            'hidePaginationUi' => false,
-          ])
+          @php
+            $tabulatorInitialColumns = array_values(array_filter($selectedColumns, function ($col) use ($availableColumns) {
+              return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);
+            }));
+          @endphp
+          <script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+          <script>
+            let tabelDokumen = null;
+            let allDataCache = [];
+            let tabulatorHandlerOptions = { base: [], bagian: [] };
+
+            const tabulatorDataUrl = @json(route('documents.all-data'));
+            const tabulatorCsrfToken = @json(csrf_token());
+            const initialAvailableColumns = @json($availableColumns);
+            const initialSelectedColumns = @json($tabulatorInitialColumns);
+
+            function escapeHtml(value) {
+              return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+            }
+
+            function tabulatorHeight() {
+              return Math.max(520, window.innerHeight - 255);
+            }
+
+            function plainCellFormatter(cell) {
+              const value = cell.getValue() ?? '-';
+              return `<span class="tabulator-cell-text" title="${escapeHtml(value)}">${escapeHtml(value)}</span>`;
+            }
+
+            function wrappedCellFormatter(cell) {
+              const value = cell.getValue() ?? '-';
+              return `<span class="tabulator-cell-wrap" title="${escapeHtml(value)}">${escapeHtml(value)}</span>`;
+            }
+
+            function agendaFormatter(cell) {
+              const data = cell.getRow().getData();
+              return `
+                <span class="tabulator-agenda">
+                  <strong>${escapeHtml(data.nomor_agenda || '-')}</strong>
+                  <small>${escapeHtml([data.bulan, data.tahun].filter(Boolean).join(' ') || '')}</small>
+                </span>
+              `;
+            }
+
+            function moneyFormatter(cell) {
+              const data = cell.getRow().getData();
+              return `<strong class="tabulator-cell-text">${escapeHtml(data.nilai_rupiah_fmt || '-')}</strong>`;
+            }
+
+            function statusFormatter(cell) {
+              const data = cell.getRow().getData();
+              const badge = data.status_badge || 'sent';
+              const icon = badge === 'sent' ? 'fa-check'
+                : badge === 'draft' ? 'fa-file-lines'
+                : badge === 'pending' ? 'fa-clock'
+                : badge === 'returned' ? 'fa-rotate-left'
+                : 'fa-circle-check';
+              return `
+                <span class="tabulator-status-badge is-${escapeHtml(badge)}" data-status-action="${badge === 'returned' ? 'rejection' : ''}">
+                  <i class="fa-solid ${icon}"></i>
+                  <span>${escapeHtml(data.status || '-')}</span>
+                  <span class="tabulator-status-dot"></span>
+                </span>
+              `;
+            }
+
+            function linkFormatter(cell) {
+              const value = cell.getValue();
+              if (!value) return '-';
+              return `<a href="${escapeHtml(value)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()"><i class="fa-solid fa-link fa-sm"></i> Link Pajak</a>`;
+            }
+
+            function handlerFormatter(cell) {
+              const data = cell.getRow().getData();
+              const selected = data.handler_selected || 'operator';
+              const disabled = data.handler_disabled ? 'disabled' : '';
+              const title = escapeHtml(data.handler_title || '');
+              const baseOptions = (tabulatorHandlerOptions.base || []).map(option =>
+                `<option value="${escapeHtml(option.value)}" ${selected === option.value ? 'selected' : ''}>${escapeHtml(option.label)}</option>`
+              ).join('');
+              const bagianOptions = data.handler_show_bagian
+                ? `<optgroup label="Bagian">${(tabulatorHandlerOptions.bagian || []).map(option =>
+                    `<option value="${escapeHtml(option.value)}" ${selected === option.value ? 'selected' : ''}>${escapeHtml(option.label)}</option>`
+                  ).join('')}</optgroup>`
+                : '';
+
+              return `
+                <select class="tabulator-handler-select"
+                  data-document-id="${escapeHtml(data.id)}"
+                  data-original-value="${escapeHtml(selected)}"
+                  title="${title}"
+                  onclick="event.stopPropagation()"
+                  ${disabled}>
+                  ${baseOptions}${bagianOptions}
+                </select>
+              `;
+            }
+
+            function actionFormatter(cell) {
+              const row = cell.getRow().getData();
+              const editButton = row.can_edit
+                ? `<a href="/documents/${encodeURIComponent(row.id)}/edit" class="btn-action btn-edit" title="Edit Dokumen" onclick="event.stopPropagation()"><i class="fa-solid fa-edit"></i><span>Edit</span></a>`
+                : '';
+              const sendButton = row.can_send
+                ? `<button type="button" class="btn-action btn-send" title="Kirim ke Team Verifikasi" onclick="sendToTeamVerifikasi(${Number(row.id)})"><i class="fa-solid fa-paper-plane"></i><span>Kirim</span></button>`
+                : `<button type="button" class="btn-action btn-send" disabled title="Dokumen sudah dikirim" onclick="event.stopPropagation()"><i class="fa-solid fa-paper-plane"></i><span>Kirim</span></button>`;
+
+              return `<div class="tabulator-actions">${editButton}${sendButton}</div>`;
+            }
+
+            function tabulatorColumnWidth(field) {
+              const widths = {
+                nomor_agenda: 170,
+                nomor_spp: 220,
+                tanggal_masuk: 170,
+                tanggal_spp: 145,
+                nilai_rupiah: 170,
+                status: 230,
+                kategori: 260,
+                jenis_dokumen: 220,
+                jenis_sub_pekerjaan: 230,
+                jenis_pembayaran: 210,
+                dibayar_kepada: 240,
+                uraian_spp: 340,
+                nama_pengirim: 220,
+                no_spk: 180,
+                no_berita_acara: 230,
+                link_dokumen_pajak: 160,
+              };
+              return widths[field] || 150;
+            }
+
+            function buildTabulatorDataColumn(field, label) {
+              const column = {
+                title: label || field,
+                field,
+                minWidth: 110,
+                width: tabulatorColumnWidth(field),
+                headerSort: true,
+                formatter: plainCellFormatter,
+              };
+
+              if (field === 'nomor_agenda') {
+                column.formatter = agendaFormatter;
+                column.hozAlign = 'center';
+              } else if (field === 'nilai_rupiah') {
+                column.sorter = 'number';
+                column.hozAlign = 'right';
+                column.formatter = moneyFormatter;
+              } else if (field === 'status') {
+                column.formatter = statusFormatter;
+                column.hozAlign = 'center';
+                column.width = 260;
+                column.cellClick = function(e, cell) {
+                  const data = cell.getRow().getData();
+                  if (data.status_badge === 'returned' && typeof window.showRejectionModal === 'function') {
+                    e.stopPropagation();
+                    window.showRejectionModal(data.id);
+                  }
+                };
+              } else if (field === 'uraian_spp' || field === 'dibayar_kepada') {
+                column.formatter = wrappedCellFormatter;
+                column.vertAlign = 'middle';
+              } else if (field === 'link_dokumen_pajak') {
+                column.formatter = linkFormatter;
+                column.hozAlign = 'center';
+              }
+
+              return column;
+            }
+
+            function buildTabulatorColumns(selectedColumns, availableColumns) {
+              const columns = [
+                {
+                  title: '',
+                  formatter: 'rowSelection',
+                  titleFormatter: 'rowSelection',
+                  hozAlign: 'center',
+                  headerSort: false,
+                  width: 58,
+                  frozen: true,
+                  cellClick: function(e, cell) {
+                    e.stopPropagation();
+                    const row = cell.getRow();
+                    if (row.getData().can_send) row.toggleSelect();
+                  },
+                },
+                {
+                  title: 'No',
+                  field: 'no',
+                  width: 72,
+                  hozAlign: 'center',
+                  headerSort: false,
+                  frozen: true,
+                },
+              ];
+
+              (selectedColumns && selectedColumns.length ? selectedColumns : initialSelectedColumns).forEach(field => {
+                if (field === 'nomor_mirror' || field === 'keterangan') return;
+                if (!availableColumns[field]) return;
+                columns.push(buildTabulatorDataColumn(field, availableColumns[field]));
+              });
+
+              columns.push(
+                {
+                  title: 'Pengurus Dokumen',
+                  field: 'handler_selected',
+                  width: 220,
+                  headerSort: false,
+                  formatter: handlerFormatter,
+                  hozAlign: 'center',
+                },
+                {
+                  title: 'Aksi',
+                  field: 'id',
+                  width: 190,
+                  headerSort: false,
+                  formatter: actionFormatter,
+                  hozAlign: 'center',
+                  frozen: true,
+                }
+              );
+
+              return columns;
+            }
+
+            function addSelectedDocument(rowData) {
+              if (typeof selectedDocuments === 'undefined') return;
+              selectedDocuments.set(String(rowData.id), {
+                id: rowData.id,
+                nomor_agenda: rowData.nomor_agenda,
+                nomor_spp: rowData.nomor_spp,
+                nilai_rupiah: rowData.nilai_rupiah_fmt || rowData.nilai_rupiah || '-',
+              });
+              if (typeof updateBulkActionBar === 'function') updateBulkActionBar();
+            }
+
+            function removeSelectedDocument(rowData) {
+              if (typeof selectedDocuments === 'undefined') return;
+              selectedDocuments.delete(String(rowData.id));
+              if (typeof updateBulkActionBar === 'function') updateBulkActionBar();
+            }
+
+            function getTabulatorRequestUrl() {
+              const params = new URLSearchParams(window.location.search);
+              params.delete('page');
+              params.delete('per_page');
+              const queryString = params.toString();
+              return queryString ? `${tabulatorDataUrl}?${queryString}` : tabulatorDataUrl;
+            }
+
+            function setTabulatorLoading(isLoading) {
+              const loadingPanel = document.getElementById('tabulatorLoadingPanel');
+              const tableEl = document.getElementById('dokumen-tabulator');
+              if (loadingPanel) {
+                if (isLoading) {
+                  loadingPanel.innerHTML = '<span class="spinner-border spinner-border-sm text-success" role="status" aria-hidden="true"></span><span>Memuat data dokumen...</span>';
+                }
+                loadingPanel.classList.toggle('is-visible', isLoading);
+              }
+              if (tableEl) tableEl.style.display = isLoading ? 'none' : 'block';
+              const refreshButton = document.getElementById('btnRefreshTable');
+              if (refreshButton) {
+                refreshButton.disabled = isLoading;
+                refreshButton.classList.toggle('loading', isLoading);
+              }
+            }
+
+            async function loadTabulatorData(showToast = false) {
+              setTabulatorLoading(true);
+              let loadFailed = false;
+              try {
+                const response = await fetch(getTabulatorRequestUrl(), {
+                  headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                  },
+                });
+
+                if (!response.ok) {
+                  throw new Error('Gagal memuat data dokumen.');
+                }
+
+                const payload = await response.json();
+                const rows = Array.isArray(payload) ? payload : (payload.data || []);
+                const columns = Array.isArray(payload) ? initialSelectedColumns : (payload.columns || initialSelectedColumns);
+                const availableColumns = Array.isArray(payload) ? initialAvailableColumns : (payload.availableColumns || initialAvailableColumns);
+                tabulatorHandlerOptions = Array.isArray(payload) ? tabulatorHandlerOptions : (payload.handlerOptions || tabulatorHandlerOptions);
+                allDataCache = rows;
+
+                if (!window.Tabulator) {
+                  throw new Error('Tabulator.js belum termuat.');
+                }
+
+                if (tabelDokumen) {
+                  tabelDokumen.setColumns(buildTabulatorColumns(columns, availableColumns));
+                  await tabelDokumen.replaceData(rows);
+                } else {
+                  tabelDokumen = new Tabulator('#dokumen-tabulator', {
+                    data: rows,
+                    height: tabulatorHeight(),
+                    virtualDom: true,
+                    virtualDomBuffer: 400,
+                    layout: 'fitDataStretch',
+                    reactiveData: false,
+                    placeholder: 'Tidak ada data dokumen',
+                    selectableRows: true,
+                    selectableRowsCheck: function(row) {
+                      return row.getData().can_send === true;
+                    },
+                    initialSort: [
+                      { column: 'nomor_agenda', dir: 'desc' },
+                    ],
+                    columns: buildTabulatorColumns(columns, availableColumns),
+                    rowDblClick: function(e, row) {
+                      const target = e.target;
+                      if (target.closest('a, button, input, select, textarea, .btn, .btn-action')) return;
+                      if (typeof window.openViewDocumentModal === 'function') {
+                        window.openViewDocumentModal(row.getData().id);
+                      }
+                    },
+                    rowSelected: function(row) {
+                      addSelectedDocument(row.getData());
+                    },
+                    rowDeselected: function(row) {
+                      removeSelectedDocument(row.getData());
+                    },
+                  });
+                }
+
+                if (typeof selectedDocuments !== 'undefined') {
+                  selectedDocuments.clear();
+                  if (typeof updateBulkActionBar === 'function') updateBulkActionBar();
+                }
+
+                if (showToast && typeof showRefreshToast === 'function') {
+                  showRefreshToast('success', 'Data berhasil diperbarui!');
+                }
+              } catch (error) {
+                loadFailed = true;
+                console.error(error);
+                const loadingPanel = document.getElementById('tabulatorLoadingPanel');
+                if (loadingPanel) {
+                  loadingPanel.classList.add('is-visible');
+                  loadingPanel.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-danger"></i><span>Gagal memuat data dokumen. Klik Refresh untuk mencoba lagi.</span>';
+                }
+                const tableEl = document.getElementById('dokumen-tabulator');
+                if (tableEl) tableEl.style.display = 'none';
+                if (showToast && typeof showRefreshToast === 'function') {
+                  showRefreshToast('error', 'Gagal memperbarui data. Coba lagi.');
+                }
+              } finally {
+                if (!loadFailed) setTabulatorLoading(false);
+              }
+            }
+
+            window.refreshDocumentTable = function() {
+              return loadTabulatorData(true);
+            };
+
+            window.handleFilterSubmit = function(event) {
+              if (event) event.preventDefault();
+              const form = document.getElementById('filterForm');
+              if (!form) return false;
+
+              const params = new URLSearchParams();
+              const searchInput = form.querySelector('input[name="search"]');
+              const yearInput = form.querySelector('input[name="year"]');
+              const statusInput = form.querySelector('input[name="status_filter"]');
+
+              if (searchInput && searchInput.value.trim()) params.set('search', searchInput.value.trim());
+              if (yearInput && yearInput.value) params.set('year', yearInput.value);
+              if (statusInput && statusInput.value) params.set('status_filter', statusInput.value);
+              form.querySelectorAll('input[name="columns[]"]').forEach(input => {
+                if (input.value) params.append('columns[]', input.value);
+              });
+
+              const nextUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+              history.pushState({}, '', nextUrl);
+              loadTabulatorData(false);
+              return false;
+            };
+
+            document.addEventListener('submit', function(event) {
+              if (event.target && event.target.id === 'filterForm') {
+                window.handleFilterSubmit(event);
+              }
+            }, true);
+
+            document.addEventListener('change', async function(event) {
+              const select = event.target.closest('.tabulator-handler-select');
+              if (!select) return;
+              event.stopPropagation();
+
+              const previousValue = select.dataset.originalValue;
+              const nextValue = select.value;
+              if (!nextValue || nextValue === previousValue) {
+                select.value = previousValue;
+                return;
+              }
+
+              select.disabled = true;
+              select.classList.add('is-saving');
+
+              try {
+                const response = await fetch(`/documents/${select.dataset.documentId}/handler`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': tabulatorCsrfToken,
+                  },
+                  body: JSON.stringify({ target_handler: nextValue }),
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok || result.success !== true) {
+                  throw new Error(result.message || 'Gagal mengubah pengurus dokumen.');
+                }
+
+                select.dataset.originalValue = nextValue;
+                if (window.Swal) {
+                  await Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: result.message || 'Pengurus dokumen berhasil diubah.',
+                    timer: 1200,
+                    showConfirmButton: false,
+                  });
+                }
+                await loadTabulatorData(false);
+              } catch (error) {
+                select.value = previousValue;
+                alert(error.message || 'Gagal mengubah pengurus dokumen.');
+                select.disabled = false;
+                select.classList.remove('is-saving');
+              }
+            }, true);
+
+            document.addEventListener('DOMContentLoaded', function() {
+              const originalClearAllSelections = window.clearAllSelections;
+              window.clearAllSelections = function() {
+                if (typeof selectedDocuments !== 'undefined') selectedDocuments.clear();
+                if (tabelDokumen) tabelDokumen.deselectRow();
+                if (typeof originalClearAllSelections === 'function') {
+                  originalClearAllSelections();
+                } else if (typeof updateBulkActionBar === 'function') {
+                  updateBulkActionBar();
+                }
+              };
+
+              loadTabulatorData(false);
+            });
+
+            window.addEventListener('resize', function() {
+              if (tabelDokumen) tabelDokumen.setHeight(tabulatorHeight());
+            });
+          </script>
+
           {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
