@@ -952,7 +952,7 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      background: #0d3b6e;
       color: white;
       font-weight: 600;
       text-align: center;
@@ -961,10 +961,11 @@
       line-height: 1.25;
       overflow-wrap: normal;
       word-break: keep-all;
-      border-bottom: 2px solid #083E40;
-      border-right: none;
-      padding: 16px 12px;
-      font-size: 13px;
+      background-clip: padding-box;
+      border: 1px solid #1a5276;
+      box-shadow: 0 2px 0 #1a5276;
+      padding: 9px 8px;
+      font-size: 11.5px;
       min-width: 132px;
       max-width: 320px;
     }
@@ -1252,28 +1253,26 @@
     }
 
     .table-dokumen thead {
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
+      background: #0d3b6e;
       color: white;
       position: relative;
     }
 
     .table-dokumen thead::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent 0%, #889717 50%, transparent 100%);
+      content: none;
+      display: none;
     }
 
     .table-dokumen thead th {
-      padding: 16px 12px;
+      padding: 9px 8px;
       font-weight: 600;
-      font-size: 13px;
-      border: none;
+      font-size: 11.5px;
+      border: 1px solid #1a5276;
+      background: #0d3b6e;
+      background-clip: padding-box;
+      box-shadow: 0 2px 0 #1a5276;
       text-align: center;
-      letter-spacing: 0.5px;
+      letter-spacing: 0;
     }
 
     .table-dokumen tbody tr.main-row {

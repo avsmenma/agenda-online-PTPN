@@ -902,67 +902,6 @@
     box-shadow: none !important;
   }
 
-  #documentTableContainer .cashbank-sticky-head {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 10000 !important;
-    display: block !important;
-    min-width: 100% !important;
-    width: max-content !important;
-    overflow: hidden !important;
-    background: #0d3b6e !important;
-    flex: 0 0 auto !important;
-  }
-
-  #documentTableContainer .cashbank-sticky-table {
-    margin: 0 !important;
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
-    table-layout: fixed !important;
-    border: 1px solid #dee2e6 !important;
-    border-bottom: 0 !important;
-    background: #0d3b6e !important;
-  }
-
-  #documentTableContainer .cashbank-sticky-table thead,
-  #documentTableContainer .cashbank-sticky-table thead tr {
-    display: table-header-group !important;
-    position: static !important;
-    top: auto !important;
-    z-index: auto !important;
-    background: #0d3b6e !important;
-  }
-
-  #documentTableContainer .cashbank-sticky-table thead tr {
-    display: table-row !important;
-  }
-
-  #documentTableContainer .cashbank-sticky-table thead th,
-  #documentTableContainer .cashbank-sticky-table thead tr th {
-    position: static !important;
-    top: auto !important;
-    z-index: auto !important;
-    background: #0d3b6e !important;
-    background-clip: padding-box !important;
-    color: #ffffff !important;
-    border: 1px solid #1a5276 !important;
-    border-top: 0 !important;
-    box-shadow: 0 2px 0 #1a5276 !important;
-  }
-
-  #documentTableContainer table.cashbank-original-table > thead,
-  #documentTableContainer .table-enhanced.cashbank-original-table > thead,
-  body.document-table-only-fullscreen #documentTableContainer table.cashbank-original-table > thead,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced.cashbank-original-table > thead,
-  body.is-fullscreen #documentTableContainer table.cashbank-original-table > thead,
-  body.is-fullscreen #documentTableContainer .table-enhanced.cashbank-original-table > thead {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    max-height: 0 !important;
-    overflow: hidden !important;
-  }
-
   @media (max-width: 1400px) {
     .vstat-grid {
       gap: 0.55rem !important;
@@ -1066,128 +1005,6 @@
     const tableContainer = document.getElementById('documentTableContainer');
     if (!tableContainer) return;
 
-    let headerSyncFrame = null;
-
-    const getTableScrollBox = () => {
-      return tableContainer.querySelector('.table-responsive, .table-container, .virtual-table-viewport');
-    };
-
-    const getOriginalTable = (scrollBox) => {
-      if (!scrollBox) return null;
-      return Array.from(scrollBox.children).find((element) =>
-        element.matches && element.matches('table.table-enhanced:not(.cashbank-sticky-table)')
-      ) || scrollBox.querySelector('table.table-enhanced:not(.cashbank-sticky-table)');
-    };
-
-    const cleanClonedHeader = (clone) => {
-      clone.querySelectorAll('[id]').forEach((element) => {
-        element.dataset.cashbankOriginalId = element.id;
-        element.removeAttribute('id');
-      });
-    };
-
-    const syncCloneControls = (sourceHead, clonedHead) => {
-      const sourceInputs = Array.from(sourceHead.querySelectorAll('input, select, button'));
-      const clonedInputs = Array.from(clonedHead.querySelectorAll('input, select, button'));
-
-      clonedInputs.forEach((clonedInput, index) => {
-        const sourceInput = sourceInputs[index];
-        if (!sourceInput) return;
-
-        if (clonedInput.type === 'checkbox') {
-          clonedInput.checked = sourceInput.checked;
-          clonedInput.addEventListener('change', () => {
-            sourceInput.checked = clonedInput.checked;
-            sourceInput.dispatchEvent(new Event('change', { bubbles: true }));
-            sourceInput.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-          });
-        } else {
-          clonedInput.addEventListener('click', () => {
-            sourceInput.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-          });
-        }
-      });
-    };
-
-    const syncCashbankHeaderWidths = (scrollBox, table, clonedTable) => {
-      if (!scrollBox || !table || !clonedTable) return;
-
-      const clonedHeaders = Array.from(clonedTable.querySelectorAll('th'));
-      if (!clonedHeaders.length) return;
-
-      const bodyRows = Array.from(table.tBodies?.[0]?.rows || []);
-      const sourceRow = bodyRows.find((row) =>
-        !row.classList.contains('virtual-scroll-spacer') &&
-        !row.classList.contains('detail-row') &&
-        row.offsetHeight > 0 &&
-        row.cells.length >= clonedHeaders.length
-      );
-      const sourceCells = sourceRow ? Array.from(sourceRow.cells) : Array.from(table.querySelectorAll('thead th'));
-      const widths = clonedHeaders.map((_, index) => {
-        const cell = sourceCells[index];
-        return cell ? Math.ceil(cell.getBoundingClientRect().width) : 80;
-      });
-
-      const tableWidth = Math.max(
-        Math.ceil(table.getBoundingClientRect().width),
-        table.scrollWidth,
-        widths.reduce((total, width) => total + width, 0)
-      );
-
-      clonedTable.style.width = `${tableWidth}px`;
-      clonedTable.parentElement.style.width = `${tableWidth}px`;
-
-      clonedHeaders.forEach((header, index) => {
-        const width = widths[index] || 80;
-        header.style.width = `${width}px`;
-        header.style.minWidth = `${width}px`;
-        header.style.maxWidth = `${width}px`;
-      });
-    };
-
-    const installCashbankTableHeader = () => {
-      const scrollBox = getTableScrollBox();
-      const table = getOriginalTable(scrollBox);
-      const sourceHead = table ? table.querySelector('thead') : null;
-      if (!scrollBox || !table || !sourceHead) return;
-
-      let stickyHead = Array.from(scrollBox.children).find((element) =>
-        element.classList && element.classList.contains('cashbank-sticky-head')
-      );
-
-      if (!stickyHead) {
-        stickyHead = document.createElement('div');
-        stickyHead.className = 'cashbank-sticky-head';
-        const clonedTable = document.createElement('table');
-        clonedTable.className = 'cashbank-sticky-table';
-        stickyHead.appendChild(clonedTable);
-        scrollBox.insertBefore(stickyHead, table);
-      }
-
-      const clonedTable = stickyHead.querySelector('.cashbank-sticky-table');
-      const headerSignature = sourceHead.innerHTML;
-
-      if (stickyHead.dataset.headerSignature !== headerSignature) {
-        const clonedHead = sourceHead.cloneNode(true);
-        cleanClonedHeader(clonedHead);
-        clonedTable.replaceChildren(clonedHead);
-        syncCloneControls(sourceHead, clonedHead);
-        stickyHead.dataset.headerSignature = headerSignature;
-      }
-
-      table.classList.add('cashbank-original-table');
-
-      if (headerSyncFrame) cancelAnimationFrame(headerSyncFrame);
-      headerSyncFrame = requestAnimationFrame(() => {
-        syncCashbankHeaderWidths(scrollBox, table, clonedTable);
-      });
-    };
-
-    const scheduleCashbankHeaderSync = () => {
-      if (headerSyncFrame) cancelAnimationFrame(headerSyncFrame);
-      headerSyncFrame = requestAnimationFrame(installCashbankTableHeader);
-    };
-
     const fullscreenClassNames = [
       'fullscreen',
       'fullscreen-mode',
@@ -1228,10 +1045,7 @@
     };
 
     document.addEventListener('fullscreenchange', syncTableOnlyFullscreen);
-    window.addEventListener('resize', () => {
-      syncTableOnlyFullscreen();
-      scheduleCashbankHeaderSync();
-    });
+    window.addEventListener('resize', syncTableOnlyFullscreen);
 
     new MutationObserver(syncTableOnlyFullscreen).observe(document.body, {
       attributes: true,
@@ -1240,12 +1054,6 @@
       attributeFilter: ['class', 'style']
     });
 
-    new MutationObserver(scheduleCashbankHeaderSync).observe(tableContainer, {
-      childList: true,
-      subtree: false
-    });
-
     syncTableOnlyFullscreen();
-    installCashbankTableHeader();
   })();
 </script>
