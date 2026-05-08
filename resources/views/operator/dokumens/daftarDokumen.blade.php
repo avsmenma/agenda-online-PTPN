@@ -6325,6 +6325,12 @@
           </script>
 
 
+          @include('partials.virtual-document-table', [
+            'paginator' => $dokumens,
+            'chunkSize' => 100,
+            'enabled' => true,
+            'hidePaginationUi' => false,
+          ])
           {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 

@@ -5,6 +5,7 @@
   $virtualLastPage = max(1, (int) ceil(max(1, $virtualTotal) / max(1, $virtualPerPage)));
   $virtualContainer = $containerSelector ?? '#documentTableContainer';
   $virtualEnabled = ($enabled ?? request('per_page') === 'all') && $virtualTotal > $virtualPerPage;
+  $hidePaginationUi = $hidePaginationUi ?? true;
 @endphp
 
 @if($virtualEnabled)
@@ -46,17 +47,19 @@
       height: var(--virtual-spacer-height, 0px) !important;
     }
 
-    .pagination-enhanced-right,
-    .pagination-wrapper .pagination {
-      display: none !important;
-    }
+    @if($hidePaginationUi)
+      .pagination-enhanced-right,
+      .pagination-wrapper .pagination {
+        display: none !important;
+      }
 
-    .perpage-top-bar,
-    .pagination-enhanced-wrapper,
-    .pagination-wrapper,
-    {{ $virtualContainer }} .dtable-toolbar-right {
-      display: none !important;
-    }
+      .perpage-top-bar,
+      .pagination-enhanced-wrapper,
+      .pagination-wrapper,
+      {{ $virtualContainer }} .dtable-toolbar-right {
+        display: none !important;
+      }
+    @endif
   </style>
 
   <script>
