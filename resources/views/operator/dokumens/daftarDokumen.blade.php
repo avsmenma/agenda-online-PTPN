@@ -2014,37 +2014,6 @@
       transform: rotate(180deg);
     }
 
-    .pagination {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 24px;
-    }
-
-    .pagination button {
-      padding: 10px 16px;
-      border: 2px solid rgba(8, 62, 64, 0.1);
-      background-color: white;
-      cursor: pointer;
-      border-radius: 10px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      color: #083E40;
-    }
-
-    .pagination button:hover {
-      border-color: #889717;
-      background: linear-gradient(135deg, rgba(136, 151, 23, 0.1) 0%, transparent 100%);
-      transform: translateY(-2px);
-    }
-
-    .pagination button.active {
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
-      color: white;
-      border-color: transparent;
-      box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
-    }
-
     .btn-chevron {
       background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
       color: white;
@@ -2667,20 +2636,6 @@
     </div>
   @endif
 
-  <!-- Per-page dropdown at the top -->
-  @include('partials.pagination-perpage-top', ['paginator' => $dokumens])
-
-  <!-- AJAX All-rows progress bar -->
-  <div id="ajaxLoadBar" style="display:none; margin-bottom:10px;">
-    <div style="display:flex; align-items:center; gap:12px; padding:10px 14px; background:#fffdf0; border:1px solid #c8d000; border-radius:10px;">
-      <div style="flex:1; height:8px; background:#e9ecef; border-radius:4px; overflow:hidden;">
-        <div id="ajaxLoadBarFill" style="height:100%; width:0%; background:linear-gradient(90deg,#083E40,#889717); border-radius:4px; transition:width .3s ease;"></div>
-      </div>
-      <span id="ajaxLoadBarText" style="font-size:12px; color:#495057; white-space:nowrap; min-width:130px; text-align:right;">Memuat data...</span>
-      <button id="ajaxLoadCancel" onclick="cancelAjaxLoad()" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:12px;padding:0 4px;" title="Batalkan">&#10005;</button>
-    </div>
-  </div>
-
   <!-- Enhanced Tabel Dokumen -->
   <div class="table-dokumen" id="documentTableContainer">
     <div class="table-responsive table-container">
@@ -3245,9 +3200,6 @@
       </table>
     </div>
   </div>
-
-  <!-- Pagination -->
-  @include('partials.pagination-enhanced', ['paginator' => $dokumens])
 
   {{-- Modal untuk menampilkan alasan reject dari inbox --}}
   @if(isset($dokumens))
@@ -4461,12 +4413,6 @@
                               url.searchParams.delete('status_filter');
                           }
 
-                          // Preserve per_page
-                          const perPage = new URLSearchParams(window.location.search).get('per_page');
-                          if (perPage) {
-                              url.searchParams.set('per_page', perPage);
-                          }
-
                           // Preserve column customization params
                           const columnInputs = form.querySelectorAll('input[name="columns[]"]');
                           columnInputs.forEach(input => {
@@ -4585,12 +4531,6 @@
                               url.searchParams.append('columns[]', input.value);
                           });
 
-                          // Preserve per_page
-                          const perPage = new URLSearchParams(window.location.search).get('per_page');
-                          if (perPage) {
-                              url.searchParams.set('per_page', perPage);
-                          }
-
                           // Redirect to new URL
                           window.location.href = url.toString();
                       });
@@ -4640,12 +4580,6 @@
                       url.searchParams.set('status_filter', statusInput.value);
                   } else {
                       url.searchParams.delete('status_filter');
-                  }
-
-                  // Preserve per_page parameter
-                  const perPage = new URLSearchParams(window.location.search).get('per_page');
-                  if (perPage) {
-                      url.searchParams.set('per_page', perPage);
                   }
 
                   // Preserve column customization params
@@ -6391,320 +6325,7 @@
           </script>
 
 
-          {{-- ============================================================
-               AJAX "Semua" loader — no page reload, progressive loading
-               ============================================================ --}}
-          <script>
-          (function() {
-            'use strict';
-
-            // Base URL for ajax-rows endpoint
-            const AJAX_ROWS_URL = "{{ route('documents.ajax-rows') }}";
-            const CSRF_TOKEN    = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-            let _ajaxController = null; // AbortController for cancellation
-
-            /* ============================================================
-               AJAX Per-Page Changer ΓÇö no full-page reload
-               ============================================================ */
-
-            // ---- Loading Popup (singleton) ----
-            function showPerPageLoading(perPageValue) {
-              let overlay = document.getElementById('perpage-loading-overlay');
-              if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'perpage-loading-overlay';
-                overlay.innerHTML = `
-                  <div id="perpage-loading-card">
-                    <div class="perpage-spinner-ring">
-                      <div></div><div></div><div></div><div></div>
-                    </div>
-                    <div id="perpage-loading-title">Memuat Data</div>
-                    <div id="perpage-loading-sub">Menampilkan <strong id="perpage-loading-val">ΓÇö</strong> baris per halaman...</div>
-                    <div class="perpage-glimmer-bar"><div class="perpage-glimmer-fill"></div></div>
-                  </div>
-                  <style>
-                    #perpage-loading-overlay {
-                      position: fixed; inset: 0; z-index: 99998;
-                      background: rgba(8, 40, 42, 0.55);
-                      backdrop-filter: blur(4px);
-                      display: flex; align-items: center; justify-content: center;
-                      animation: ppFadeIn .2s ease;
-                    }
-                    @keyframes ppFadeIn { from { opacity:0 } to { opacity:1 } }
-                    #perpage-loading-card {
-                      background: #fff;
-                      border-radius: 20px;
-                      padding: 40px 48px;
-                      text-align: center;
-                      box-shadow: 0 24px 64px rgba(8,62,64,.35), 0 4px 16px rgba(0,0,0,.15);
-                      min-width: 300px;
-                      animation: ppSlideUp .25s cubic-bezier(.34,1.56,.64,1);
-                    }
-                    @keyframes ppSlideUp { from { transform:translateY(24px); opacity:0 } to { transform:translateY(0); opacity:1 } }
-                    .perpage-spinner-ring {
-                      display: inline-block; width: 56px; height: 56px;
-                      position: relative; margin-bottom: 20px;
-                    }
-                    .perpage-spinner-ring div {
-                      box-sizing: border-box; display: block; position: absolute;
-                      width: 56px; height: 56px; border: 5px solid transparent;
-                      border-top-color: #083E40; border-right-color: #889717;
-                      border-radius: 50%;
-                      animation: ppSpin 0.9s cubic-bezier(.5,0,.5,1) infinite;
-                    }
-                    .perpage-spinner-ring div:nth-child(1) { animation-delay: -0.3s; }
-                    .perpage-spinner-ring div:nth-child(2) { animation-delay: -0.2s; }
-                    .perpage-spinner-ring div:nth-child(3) { animation-delay: -0.1s; }
-                    @keyframes ppSpin { to { transform: rotate(360deg); } }
-                    #perpage-loading-title {
-                      font-size: 18px; font-weight: 700; color: #083E40; margin-bottom: 8px;
-                    }
-                    #perpage-loading-sub {
-                      font-size: 14px; color: #6c757d; margin-bottom: 20px;
-                    }
-                    .perpage-glimmer-bar {
-                      height: 5px; background: #e9ecef; border-radius: 99px; overflow: hidden;
-                    }
-                    .perpage-glimmer-fill {
-                      height: 100%;
-                      background: linear-gradient(90deg, #083E40 0%, #889717 50%, #083E40 100%);
-                      background-size: 200% 100%;
-                      border-radius: 99px;
-                      animation: ppGlimmer 1.4s linear infinite;
-                      width: 100%;
-                    }
-                    @keyframes ppGlimmer {
-                      0%   { background-position: 200% center; }
-                      100% { background-position: -200% center; }
-                    }
-                  </style>
-                `;
-                document.body.appendChild(overlay);
-              }
-              const labelEl = document.getElementById('perpage-loading-val');
-              if (labelEl) labelEl.textContent = (perPageValue === 'all') ? 'Semua' : perPageValue;
-              overlay.style.display = 'flex';
-            }
-
-            function hidePerPageLoading() {
-              const overlay = document.getElementById('perpage-loading-overlay');
-              if (overlay) {
-                overlay.style.animation = 'ppFadeIn .15s ease reverse forwards';
-                setTimeout(() => { overlay.style.display = 'none'; }, 150);
-              }
-            }
-
-            // ---- Core AJAX per-page loader ----
-            async function changePerPageAjax(value) {
-              if (value === 'all') {
-                const params = new URLSearchParams(window.location.search);
-                params.set('per_page', 'all');
-                params.set('page', '1');
-                window.location.href = window.location.pathname + '?' + params.toString();
-                return;
-              }
-
-              showPerPageLoading(value);
-
-              const params = new URLSearchParams(window.location.search);
-              params.set('per_page', value);
-              params.set('page', '1');
-              const newUrl = window.location.pathname + '?' + params.toString();
-
-              try {
-                const response = await fetch(newUrl, {
-                  headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'text/html',
-                  }
-                });
-                if (!response.ok) throw new Error('Server error ' + response.status);
-                const html = response.text ? await response.text() : '';
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-
-                // Update table body
-                const newTbody = doc.getElementById('dokumenTableBody');
-                const localTbody = document.getElementById('dokumenTableBody');
-                if (newTbody && localTbody) localTbody.innerHTML = newTbody.innerHTML;
-
-                // Update per-page top bar
-                const newPerpageBar = doc.querySelector('.perpage-top-bar');
-                const localPerpageBar = document.querySelector('.perpage-top-bar');
-                if (newPerpageBar && localPerpageBar) localPerpageBar.outerHTML = newPerpageBar.outerHTML;
-
-                // Update pagination bottom
-                const newPaginationWrapper = doc.querySelector('.pagination-enhanced-wrapper');
-                const localPaginationWrapper = document.querySelector('.pagination-enhanced-wrapper');
-                if (newPaginationWrapper && localPaginationWrapper) {
-                  localPaginationWrapper.outerHTML = newPaginationWrapper.outerHTML;
-                }
-
-                // Update browser URL without reload
-                window.history.pushState({}, '', newUrl);
-
-                // Sync selects to chosen value
-                document.querySelectorAll('.perpage-top-select, .pagination-enhanced-select')
-                  .forEach(s => { s.value = value; });
-
-              } catch (err) {
-                console.error('Per-page AJAX failed:', err);
-                // Fallback: redirect
-                window.location.href = newUrl;
-              } finally {
-                hidePerPageLoading();
-              }
-            }
-
-            /* ---- Override per-page selectors ---- */
-            window.changePerPageTop = function(value) {
-              changePerPageAjax(value);
-            };
-            window.changePerPageEnhanced = function(value) {
-              changePerPageAjax(value);
-            };
-
-            /* ---- Cancel button ---- */
-            window.cancelAjaxLoad = function() {
-              if (_ajaxController) { _ajaxController.abort(); }
-              hideBar();
-              // Restore select to previous value
-              document.querySelectorAll('.perpage-top-select, .pagination-enhanced-select')
-                .forEach(s => { s.value = '{{ $dokumens->perPage() >= $dokumens->total() ? "all" : $dokumens->perPage() }}'; });
-            };
-
-            /* ---- Main loader ---- */
-            async function startAjaxLoad() {
-              const tbody    = document.getElementById('dokumenTableBody');
-              const bar      = document.getElementById('ajaxLoadBar');
-              const fill     = document.getElementById('ajaxLoadBarFill');
-              const txt      = document.getElementById('ajaxLoadBarText');
-              if (!tbody || !bar) return;
-
-              // Save scroll position
-              const scrollY = window.scrollY;
-
-              // Show bar, clear table
-              bar.style.display = 'block';
-              fill.style.width  = '0%';
-              txt.textContent   = 'Memuat data...';
-
-              // Empty tbody but keep header spacer
-              tbody.innerHTML = '<tr><td colspan="50" style="text-align:center;padding:20px;color:#6c757d;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat semua dokumen...</td></tr>';
-
-              // Hide existing pagination while loading
-              const paginationWrapper = document.querySelector('.pagination-enhanced-wrapper');
-              if (paginationWrapper) paginationWrapper.style.display = 'none';
-
-              // Build base params from current URL (preserve filters)
-              const baseParams = new URLSearchParams(window.location.search);
-              baseParams.delete('per_page');
-              baseParams.delete('page');
-              baseParams.set('chunk_size', '200');
-
-              _ajaxController = new AbortController();
-              const signal = _ajaxController.signal;
-
-              let total   = 0;
-              let loaded  = 0;
-              let allHtml = '';
-
-              try {
-                // First request to get total
-                const firstParams = new URLSearchParams(baseParams);
-                firstParams.set('chunk_page', '1');
-                const firstRes  = await fetch(AJAX_ROWS_URL + '?' + firstParams.toString(), {
-                  signal,
-                  headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF_TOKEN }
-                });
-                if (!firstRes.ok) throw new Error('Server error: ' + firstRes.status);
-                const firstData = await firstRes.json();
-
-                total    = firstData.total;
-                loaded   = firstData.to ?? 0;
-                allHtml  = firstData.html;
-                const lastPage = firstData.last_page;
-
-                // Update progress
-                updateBar(fill, txt, loaded, total);
-
-                // Load remaining chunks sequentially
-                for (let p = 2; p <= lastPage; p++) {
-                  if (signal.aborted) return;
-                  const params = new URLSearchParams(baseParams);
-                  params.set('chunk_page', String(p));
-                  const res  = await fetch(AJAX_ROWS_URL + '?' + params.toString(), {
-                    signal,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF_TOKEN }
-                  });
-                  if (!res.ok) throw new Error('Server error: ' + res.status);
-                  const data = await res.json();
-                  allHtml += data.html;
-                  loaded   = data.to ?? loaded;
-                  updateBar(fill, txt, loaded, total);
-                }
-
-                // Inject all rows at once
-                tbody.innerHTML = allHtml;
-
-                // Show "viewing all" summary, hide pagination
-                fill.style.width = '100%';
-                txt.textContent  = 'Menampilkan semua ' + total.toLocaleString('id-ID') + ' dokumen';
-                setTimeout(hideBar, 1500);
-
-                // Update summary texts in per-page bars
-                document.querySelectorAll('.pagination-enhanced-summary, .perpage-top-bar span').forEach(el => {
-                  el.textContent = 'Menampilkan 1 - ' + total.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' hasil';
-                });
-
-                // Mark selects as "all"
-                document.querySelectorAll('.perpage-top-select, .pagination-enhanced-select').forEach(s => { s.value = 'all'; });
-
-                // Update browser URL without reload
-                const newUrl = new URL(window.location.href);
-                newUrl.searchParams.set('per_page', 'all');
-                newUrl.searchParams.delete('page');
-                history.replaceState(null, '', newUrl.toString());
-
-                // Restore scroll
-                window.scrollTo({ top: scrollY, behavior: 'instant' });
-
-              } catch(err) {
-                if (err.name === 'AbortError') return;
-                console.error('AJAX load failed:', err);
-                tbody.innerHTML = '<tr><td colspan="50" class="text-center py-4 text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Gagal memuat data. <a href="?per_page=all">Coba reload</a></td></tr>';
-                fill.style.width = '0%';
-                txt.textContent  = 'Gagal memuat';
-                setTimeout(hideBar, 3000);
-                // Restore pagination
-                if (paginationWrapper) paginationWrapper.style.display = '';
-              }
-            }
-
-            function updateBar(fill, txt, loaded, total) {
-              const pct = total > 0 ? Math.min(100, Math.round(loaded / total * 100)) : 0;
-              fill.style.width = pct + '%';
-              txt.textContent  = 'Memuat ' + loaded.toLocaleString('id-ID') + ' / ' + total.toLocaleString('id-ID') + ' dokumen (' + pct + '%)';
-            }
-
-            function hideBar() {
-              const bar = document.getElementById('ajaxLoadBar');
-              if (bar) bar.style.display = 'none';
-            }
-
-            // Auto-trigger if current URL already has per_page=all
-            document.addEventListener('DOMContentLoaded', function() {
-              const currentPerPage = new URLSearchParams(window.location.search).get('per_page');
-              @if($dokumens->perPage() >= $dokumens->total() && $dokumens->total() > 0)
-              // Page was loaded server-side with all rows already present ΓÇö just mark selects
-              document.querySelectorAll('.perpage-top-select, .pagination-enhanced-select').forEach(s => { s.value = 'all'; });
-              @endif
-            });
-          })();
-          </script>
-
-{{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
+          {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
 @endsection
