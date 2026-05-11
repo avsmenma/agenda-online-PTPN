@@ -3165,14 +3165,10 @@ class OwnerDashboardController extends Controller
      */
     public function rekapanKeterlambatan(Request $request)
     {
-        // SLA default per tim (hari kerja)
-        $slaByRole = [
-            'team_verifikasi' => 5,
-            'perpajakan'      => 5,
-            'akutansi'        => 5,
-            'pembayaran'      => 7,
-            'operator'        => 3,
-        ];
+        // Deadline rekapan dihitung dari umur dokumen berjalan:
+        // 0-24 jam = tepat waktu, 24-48 jam = peringatan, 48+ jam = terlambat.
+        $warningAfterHours = 24;
+        $lateAfterHours = 48;
 
         $teamLabels = [
             'team_verifikasi' => 'Tim Verifikasi',
@@ -3193,7 +3189,7 @@ class OwnerDashboardController extends Controller
         $filterBagian = $request->get('bagian');
 
         /* â”€â”€ Base query â”€â”€ */
-        $baseQuery = Dokumen::select(
+        $baseQuery = Dokumen::with('dibayarKepadas')->select(
             'id', 'nomor_spp', 'uraian_spp', 'bagian', 'dibayar_kepada',
             'nilai_rupiah', 'current_handler', 'status_pembayaran',
             'tanggal_masuk', 'tanggal_dibayar', 'created_at', 'updated_at',
@@ -3215,15 +3211,12 @@ class OwnerDashboardController extends Controller
         /* â”€â”€ Classify each document â”€â”€ */
         $now = Carbon::now();
 
-        $classified = $allDocs->map(function ($doc) use ($now, $slaByRole) {
+        $classified = $allDocs->map(function ($doc) use ($now, $warningAfterHours, $lateAfterHours) {
             $handler   = $doc->current_handler ?? 'operator';
-            $sla       = $slaByRole[$handler] ?? 7;
 
-            $startDate = $doc->tanggal_masuk
-                ? Carbon::parse($doc->tanggal_masuk)
-                : Carbon::parse($doc->created_at);
-
-            $deadline = $startDate->copy()->addWeekdays($sla);
+            $startDate = $doc->created_at
+                ? Carbon::parse($doc->created_at)
+                : Carbon::parse($doc->tanggal_masuk);
 
             $isSelesai = !empty($doc->tanggal_dibayar)
                          || $doc->status_pembayaran === 'sudah_dibayar'
@@ -3234,35 +3227,38 @@ class OwnerDashboardController extends Controller
                 : null;
 
             $compareDate = $isSelesai && $selesaiDate ? $selesaiDate : $now;
-            $sisaHari    = (int) $deadline->diffInDays($compareDate, false);
+            $elapsedSeconds = max(0, $startDate->diffInSeconds($compareDate, false));
+            $elapsedHours = $elapsedSeconds / 3600;
 
-            if ($isSelesai) {
-                $statusClass = $sisaHari <= 0 ? 'aman' : 'late';
-            } elseif ($sisaHari >= 0) {
+            if ($elapsedHours >= $lateAfterHours) {
                 $statusClass = 'late';
-            } elseif ($sisaHari >= -3) {
+            } elseif ($elapsedHours >= $warningAfterHours) {
                 $statusClass = 'warn';
             } else {
                 $statusClass = 'aman';
             }
 
-            $hariBadge = $isSelesai
-                ? ($sisaHari <= 0 ? abs($sisaHari) : -$sisaHari)
-                : $sisaHari;
+            $vendor = $doc->dibayarKepadas && $doc->dibayarKepadas->count() > 0
+                ? $doc->dibayarKepadas->pluck('nama_penerima')->filter()->join(', ')
+                : ($doc->dibayar_kepada ?? '-');
 
             return [
                 'id'              => $doc->id,
                 'nomor_spp'       => $doc->nomor_spp ?? '-',
                 'uraian_spp'      => $doc->uraian_spp ?? '-',
                 'bagian'          => $doc->bagian ?? '-',
-                'vendor'          => $doc->dibayar_kepada ?? '-',
+                'vendor'          => $vendor ?: '-',
                 'nilai_rupiah'    => $doc->nilai_rupiah ?? 0,
                 'tim'             => $this->handlerToTeamLabel($handler),
                 'tim_code'        => $handler,
-                'tanggal_masuk'   => $startDate->format('d M Y'),
+                'created_at'      => $startDate->toIso8601String(),
+                'tanggal_masuk'   => $doc->tanggal_masuk
+                    ? Carbon::parse($doc->tanggal_masuk)->format('d M Y')
+                    : $startDate->format('d M Y'),
                 'tanggal_selesai' => $selesaiDate ? $selesaiDate->format('d M Y') : null,
-                'deadline'        => $deadline->format('d M Y'),
-                'hari'            => $hariBadge,
+                'deadline'        => null,
+                'hari'            => (int) floor($elapsedSeconds / 86400),
+                'elapsed_seconds' => $elapsedSeconds,
                 'status'          => $statusClass,
                 'is_selesai'      => $isSelesai,
             ];

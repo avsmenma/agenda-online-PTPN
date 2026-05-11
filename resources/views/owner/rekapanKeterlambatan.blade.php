@@ -116,31 +116,31 @@
 
 /* ── TABLE ── */
 table{width:100%;border-collapse:collapse}
-thead th{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:11px 12px;text-align:left;background:#fafbfd;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+thead th{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:11px 12px;text-align:center;background:#fafbfd;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
 thead th:hover{color:var(--primary)}
 thead th.sort-asc::after{content:' ↑'}
 thead th.sort-desc::after{content:' ↓'}
 tbody tr{transition:background .1s;border-bottom:1px solid var(--border)}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#fafbfd}
-tbody td{padding:10px 12px;font-size:12px;vertical-align:middle}
+tbody td{padding:10px 12px;font-size:12px;vertical-align:middle;text-align:center}
 .cb{width:14px;height:14px;accent-color:var(--accent);cursor:pointer}
 
 /* No. Dokumen cell */
 .doc-no{font-weight:700;color:var(--primary);font-size:11.5px;line-height:1.2}
-.doc-title{font-size:11px;color:var(--muted);margin-top:2px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help}
+.doc-title{font-size:11px;color:var(--muted);margin-top:4px;max-width:280px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35;cursor:default}
 
 /* Bagian tag */
 .bagian-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700}
 
 /* Vendor */
-.vendor-cell{font-size:11.5px;color:var(--primary);max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vendor-cell{font-size:11.5px;color:var(--primary);max-width:180px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35;display:inline-block}
 
 /* Tim */
 .team-name{font-size:11.5px;color:var(--primary);font-weight:500}
 
 /* Amount */
-.amount{font-weight:600;font-size:11.5px;text-align:right;white-space:nowrap}
+.amount{font-weight:600;font-size:11.5px;text-align:center;white-space:nowrap}
 
 /* Date */
 .date-cell{font-size:11.5px;color:var(--muted);white-space:nowrap}
@@ -375,7 +375,7 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle}
               <th onclick="sortTable('tim')">Tim</th>
               <th onclick="sortTable('tanggal_masuk')">Tgl Masuk</th>
               <th onclick="sortTable('tanggal_selesai')">Tgl Selesai</th>
-              <th onclick="sortTable('hari')">Hari</th>
+              <th onclick="sortTable('elapsed_seconds')">Umur Dok</th>
               <th>Status</th>
               <th></th>
             </tr>
@@ -413,6 +413,31 @@ const BAGIAN_COLOR = @json($bagianColors);
 
 /* ─── HELPERS ─── */
 function fmtNum(n){ return new Intl.NumberFormat('id-ID').format(n||0); }
+function esc(str){
+  return String(str ?? '-')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+function formatDuration(totalSeconds) {
+  totalSeconds = Math.max(0, Math.floor(totalSeconds || 0));
+  const d = Math.floor(totalSeconds / 86400);
+  const h = Math.floor((totalSeconds % 86400) / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (d > 0) return `${d}h ${String(h).padStart(2,'0')}j ${String(m).padStart(2,'0')}m`;
+  if (h > 0) return `${h}j ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}d`;
+  if (m > 0) return `${m}m ${String(s).padStart(2,'0')}d`;
+  return `${s}d`;
+}
+function statusFromSeconds(totalSeconds){
+  const hours = Math.max(0, totalSeconds || 0) / 3600;
+  if(hours >= 48) return 'late';
+  if(hours >= 24) return 'warn';
+  return 'aman';
+}
 function truncate(str,len){ if(!str||str==='-') return '-'; return str.length>len?str.substring(0,len)+'…':str; }
 
 /* ─── STATE ─── */
@@ -563,10 +588,10 @@ function updateStatusTabCounts(){
 
 /* ─── HARI LABEL ─── */
 function hariLabel(d){
-  const h = d.hari;
-  if(d.status==='aman') return `<span class="hari-badge hari-ok">+${Math.abs(h)} hari</span>`;
-  if(d.status==='warn') return `<span class="hari-badge hari-warn">+${Math.abs(h)} hari</span>`;
-  return `<span class="hari-badge hari-late">-${Math.abs(h)} hari</span>`;
+  const secs = d.created_at ? Math.floor((Date.now() - new Date(d.created_at).getTime()) / 1000) : (d.elapsed_seconds || 0);
+  const status = statusFromSeconds(secs);
+  const cls = status === 'aman' ? 'hari-ok' : (status === 'warn' ? 'hari-warn' : 'hari-late');
+  return `<span class="hari-badge ${cls} timer-age" data-created="${esc(d.created_at || '')}">${formatDuration(secs)}</span>`;
 }
 
 /* ─── STATUS PILL ─── */
@@ -602,25 +627,21 @@ function renderTable(){
     } else {
       tbody.innerHTML = paged.map(d=>{
         const bColor = BAGIAN_COLOR[d.bagian]||'#94a3b8';
-        const uraianShort = truncate(d.uraian_spp, 32);
-        const uraianFull  = (d.uraian_spp||'-').replace(/"/g,'&quot;');
         const selesaiDisplay = d.tanggal_selesai || '<span style="color:#94a3b8">—</span>';
-        const vendorShort = truncate(d.vendor, 20);
-        const vendorFull  = (d.vendor||'-').replace(/"/g,'&quot;');
-        return `<tr>
+        return `<tr data-doc-id="${d.id}">
           <td><input type="checkbox" class="cb"></td>
           <td>
-            <div class="doc-no">${d.nomor_spp||'-'}</div>
-            <div class="doc-title" title="${uraianFull}">${uraianShort}</div>
+            <div class="doc-no">${esc(d.nomor_spp||'-')}</div>
+            <div class="doc-title">${esc(d.uraian_spp||'-')}</div>
           </td>
           <td><span class="bagian-tag" style="color:${bColor}">● ${d.bagian||'-'}</span></td>
-          <td><span class="vendor-cell" title="${vendorFull}">${vendorShort}</span></td>
+          <td><span class="vendor-cell">${esc(d.vendor||'-')}</span></td>
           <td class="amount">Rp ${fmtNum(d.nilai_rupiah)}</td>
-          <td><span class="team-name">${d.tim||'-'}</span></td>
-          <td class="date-cell">${d.tanggal_masuk||'-'}</td>
+          <td><span class="team-name">${esc(d.tim||'-')}</span></td>
+          <td class="date-cell">${esc(d.tanggal_masuk||'-')}</td>
           <td class="date-cell ${d.tanggal_selesai?'highlight':''}">${selesaiDisplay}</td>
           <td>${hariLabel(d)}</td>
-          <td>${statusPill(d.status)}</td>
+          <td class="status-cell">${statusPill(d.status)}</td>
           <td>
             <a href="/owner/workflow/${d.id}" class="action-btn" title="Lihat Detail">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -653,7 +674,7 @@ function renderTable(){
             <div class="dc-row"><span class="dc-key">Tim</span><span class="dc-val">${d.tim||'-'}</span></div>
             <div class="dc-row"><span class="dc-key">Tgl Masuk</span><span class="dc-val">${d.tanggal_masuk||'-'}</span></div>
             <div class="dc-row"><span class="dc-key">Tgl Selesai</span><span class="dc-val">${selesaiDisplay}</span></div>
-            <div class="dc-row"><span class="dc-key">Hari</span>${hariLabel(d)}</div>
+            <div class="dc-row"><span class="dc-key">Umur Dok</span>${hariLabel(d)}</div>
           </div>
         </div>`;
       }).join('');
@@ -686,10 +707,10 @@ function renderTable(){
 /* ─── EXPORT EXCEL ─── */
 function exportExcel(){
   const filtered = getFiltered();
-  const ws_data=[['No. Dokumen','Uraian SPP','Bagian','Dibayar Kepada/Vendor','Nilai (Rp)','Tim','Tgl Masuk','Tgl Selesai','Hari','Status']];
+  const ws_data=[['No. Dokumen','Uraian SPP','Bagian','Dibayar Kepada/Vendor','Nilai (Rp)','Tim','Tgl Masuk','Tgl Selesai','Umur Dok','Status']];
   filtered.forEach(d=>ws_data.push([
     d.nomor_spp, d.uraian_spp, d.bagian, d.vendor,
-    d.nilai_rupiah, d.tim, d.tanggal_masuk, d.tanggal_selesai||'-', d.hari,
+    d.nilai_rupiah, d.tim, d.tanggal_masuk, d.tanggal_selesai||'-', formatDuration(d.elapsed_seconds || 0),
     d.status==='aman'?'Tepat Waktu':d.status==='warn'?'Peringatan':'Terlambat'
   ]));
   const wb=XLSX.utils.book_new();
@@ -714,8 +735,43 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 
+function refreshLiveDurations(){
+  let changed = false;
+  const now = Date.now();
+
+  DOCS_RAW.forEach(d => {
+    if(!d.created_at) return;
+    const seconds = Math.max(0, Math.floor((now - new Date(d.created_at).getTime()) / 1000));
+    const nextStatus = statusFromSeconds(seconds);
+    d.elapsed_seconds = seconds;
+    d.hari = Math.floor(seconds / 86400);
+    if(d.status !== nextStatus){
+      d.status = nextStatus;
+      changed = true;
+    }
+  });
+
+  if(changed){
+    renderTable();
+    return;
+  }
+
+  document.querySelectorAll('.timer-age[data-created]').forEach(el => {
+    const created = el.dataset.created ? new Date(el.dataset.created).getTime() : null;
+    if(!created) return;
+    const seconds = Math.max(0, Math.floor((now - created) / 1000));
+    const status = statusFromSeconds(seconds);
+    el.textContent = formatDuration(seconds);
+    el.classList.toggle('hari-ok', status === 'aman');
+    el.classList.toggle('hari-warn', status === 'warn');
+    el.classList.toggle('hari-late', status === 'late');
+  });
+}
+
 // Init
 renderTable();
+refreshLiveDurations();
+setInterval(refreshLiveDurations, 1000);
 </script>
 
 @endsection
