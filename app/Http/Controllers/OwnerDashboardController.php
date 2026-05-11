@@ -3257,6 +3257,10 @@ class OwnerDashboardController extends Controller
         });
 
         /* â”€â”€ Count per status â”€â”€ */
+        $classified = $classified
+            ->whereIn('tim_code', array_keys($teamLabels))
+            ->values();
+
         $countAman = $classified->where('status', 'aman')->count();
         $countWarn = $classified->where('status', 'warn')->count();
         $countLate = $classified->where('status', 'late')->count();

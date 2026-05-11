@@ -496,20 +496,10 @@ function rupiahFull(float $n): string {
 </div>
 
 @push('scripts')
-@php
-  $cashbankJsonFlags = JSON_HEX_TAG
-    | JSON_HEX_APOS
-    | JSON_HEX_AMP
-    | JSON_HEX_QUOT
-    | JSON_INVALID_UTF8_SUBSTITUTE;
-
-  $trenBulananJson = json_encode($trenBulanan ?? [], $cashbankJsonFlags);
-  $penerimaanKategoriJson = json_encode($penerimaanKategori ?? [], $cashbankJsonFlags);
-@endphp
 <script>
 // ── DATA DARI CONTROLLER ──
-const trenData = {!! $trenBulananJson !== false ? $trenBulananJson : '[]' !!};
-const penerimaanData = {!! $penerimaanKategoriJson !== false ? $penerimaanKategoriJson : '[]' !!};
+const trenData = {!! json_encode($trenBulanan ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE) ?: '[]' !!};
+const penerimaanData = {!! json_encode($penerimaanKategori ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE) ?: '[]' !!};
 
 console.log('🔍 Script loaded, data:', {
   trenData: trenData?.length || 0,
@@ -632,10 +622,6 @@ if (typeof Chart === 'undefined') {
     // Calculate total
     const totalPenerimaan = penerimaanData.reduce((sum, d) => sum + parseFloat(d.total), 0);
     console.log('Total penerimaan:', totalPenerimaan);
-
-    if (!Number.isFinite(totalPenerimaan) || totalPenerimaan <= 0) {
-      throw new Error('Data penerimaan bernilai nol atau tidak valid.');
-    }
 
     // Prepare data dengan persentase
     const chartData = penerimaanData.map((d, i) => ({
