@@ -389,7 +389,7 @@ class OwnerDashboardController extends Controller
         $maxBagian = collect($bagianStats)->max('count') ?: 1;
 
         // === RECENT DOCUMENTS (5 terbaru) ===
-        $recentDocuments = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'current_handler', 'created_at')
+        $recentDocuments = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'dibayar_kepada', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'current_handler', 'created_at')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
@@ -400,6 +400,7 @@ class OwnerDashboardController extends Controller
                     'uraian_spp' => $doc->uraian_spp ?? '-',
                     'nomor_spp' => $doc->nomor_spp ?? '-',
                     'bagian' => $doc->bagian ?? '-',
+                    'dibayar_kepada' => $doc->dibayar_kepada ?? '-',
                     'nilai_rupiah' => $doc->nilai_rupiah ?? 0,
                     'status_label' => $statusLabel,
                     'status_class' => $statusClass,
@@ -491,7 +492,7 @@ class OwnerDashboardController extends Controller
      */
     public function getRecentDocuments(): JsonResponse
     {
-        $docs = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'current_handler', 'created_at')
+        $docs = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'dibayar_kepada', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'current_handler', 'created_at')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
@@ -502,6 +503,7 @@ class OwnerDashboardController extends Controller
                     'uraian_spp' => $doc->uraian_spp ?? '-',
                     'nomor_spp' => $doc->nomor_spp ?? '-',
                     'bagian' => $doc->bagian ?? '-',
+                    'dibayar_kepada' => $doc->dibayar_kepada ?? '-',
                     'nilai_rupiah' => $doc->nilai_rupiah ?? 0,
                     'status_label' => $statusLabel,
                     'status_class' => $statusClass,

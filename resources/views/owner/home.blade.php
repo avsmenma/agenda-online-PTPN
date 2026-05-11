@@ -211,10 +211,15 @@
   .doc-table tr:last-child td { border-bottom: none; }
   .doc-name {
     font-weight: 600; color: var(--text-primary);
-    max-width: 160px; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis;
+    max-width: none; white-space: normal;
+    overflow: visible; text-overflow: clip;
+    line-height: 1.35;
   }
   .doc-no { font-size: 10.5px; color: var(--text-muted); }
+  .doc-payee {
+    font-size: 12px; color: var(--text-primary);
+    line-height: 1.35; white-space: normal;
+  }
   .status-pill {
     display: inline-flex; align-items: center; gap: 4px;
     padding: 3px 9px; border-radius: 20px;
@@ -488,6 +493,7 @@
           <thead>
             <tr>
               <th>Dokumen</th>
+              <th>Dibayar Kepada</th>
               <th>Bagian</th>
               <th>Status</th>
               <th style="text-align:right">Nilai</th>
@@ -509,9 +515,12 @@
                   data-handler-since="{{ $doc['updated_at'] ?? '' }}">
                 <td>
                   <div class="doc-name" title="{{ $doc['uraian_spp'] ?? '-' }}">
-                    {{ Str::limit($doc['uraian_spp'] ?? '-', 28) }}
+                    {{ $doc['uraian_spp'] ?? '-' }}
                   </div>
                   <div class="doc-no">{{ $doc['nomor_spp'] ?? '-' }}</div>
+                </td>
+                <td>
+                  <div class="doc-payee">{{ $doc['dibayar_kepada'] ?? '-' }}</div>
                 </td>
                 <td>
                   @php $bColor = $bagianColors[$doc['bagian'] ?? ''] ?? '#94a3b8'; @endphp
@@ -545,7 +554,7 @@
               </tr>
             @empty
               <tr>
-                <td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px 0">
+                <td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px 0">
                   Belum ada dokumen
                 </td>
               </tr>
@@ -712,9 +721,10 @@ function buildDocRow(doc) {
         data-created="${doc.created_at || ''}"
         data-handler-since="${doc.updated_at || ''}">
       <td>
-        <div class="doc-name" title="${(doc.uraian_spp || '-').replace(/"/g,'&quot;')}">${truncate(doc.uraian_spp, 28)}</div>
+        <div class="doc-name" title="${(doc.uraian_spp || '-').replace(/"/g,'&quot;')}">${doc.uraian_spp || '-'}</div>
         <div class="doc-no">${doc.nomor_spp || '-'}</div>
       </td>
+      <td><div class="doc-payee">${doc.dibayar_kepada || '-'}</div></td>
       <td><span style="font-size:11.5px;font-weight:600;color:${color}">${doc.bagian || '-'}</span></td>
       <td><span class="status-pill ${doc.status_class || 'status-belum'}">${doc.status_label || 'Menunggu'}</span></td>
       <td class="doc-amount">${formatCurrency(doc.nilai_rupiah)}</td>
