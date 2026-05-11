@@ -278,7 +278,7 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle}
     {{-- Per Tim --}}
     @php $donutIdx = 1; $badgeClasses = ['team_verifikasi'=>'badge-verif','perpajakan'=>'badge-pajak','akutansi'=>'badge-akun','pembayaran'=>'badge-bayar']; @endphp
     @foreach($teamScores as $code => $ts)
-    <div class="score-card" data-team="{{ $ts['label'] }}" onclick="filterByTeam(this,'{{ $ts['label'] }}','{{ $ts['label'] }}')">
+    <div class="score-card" data-team="{{ $code }}" onclick="filterByTeam(this,'{{ $code }}','{{ $ts['label'] }}')">
       <div class="sc-header">
         <div class="sc-title">{{ $ts['label'] }}</div>
         <span class="sc-badge {{ $badgeClasses[$code] ?? 'badge-recap' }}">{{ $ts['score'] }}</span>
@@ -422,7 +422,7 @@ let rowsPerPage   = 25;
 let currentPage   = 1;
 let sortKey       = null;
 let sortDir       = 1;
-let activeTeam    = '';   // '' = semua tim
+let activeTeam    = '';   // '' = semua tim, otherwise tim_code
 
 /* ─── DONUT CHARTS ─── */
 const donutDatas = [
@@ -538,10 +538,27 @@ function getFiltered(){
   const q = (document.getElementById('searchInput')?.value||'').toLowerCase();
   return DOCS_RAW.filter(d=>{
     if(d.status!==currentTab) return false;
-    if(activeTeam && d.tim !== activeTeam) return false;
+    if(activeTeam && d.tim_code !== activeTeam) return false;
     if(q && !d.nomor_spp?.toLowerCase().includes(q) && !d.uraian_spp?.toLowerCase().includes(q)) return false;
     return true;
   });
+}
+
+function getActiveTeamDocs(){
+  return DOCS_RAW.filter(d => !activeTeam || d.tim_code === activeTeam);
+}
+
+function updateStatusTabCounts(){
+  const docs = getActiveTeamDocs();
+  const counts = {
+    aman: docs.filter(d => d.status === 'aman').length,
+    warn: docs.filter(d => d.status === 'warn').length,
+    late: docs.filter(d => d.status === 'late').length,
+  };
+
+  document.getElementById('cnt-aman').textContent = counts.aman;
+  document.getElementById('cnt-warn').textContent = counts.warn;
+  document.getElementById('cnt-late').textContent = counts.late;
 }
 
 /* ─── HARI LABEL ─── */
@@ -561,6 +578,7 @@ function statusPill(s){
 
 /* ─── RENDER ─── */
 function renderTable(){
+  updateStatusTabCounts();
   let filtered = getFiltered();
   if(sortKey){
     filtered.sort((a,b)=>{
