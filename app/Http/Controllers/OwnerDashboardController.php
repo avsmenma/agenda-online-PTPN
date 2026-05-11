@@ -389,18 +389,23 @@ class OwnerDashboardController extends Controller
         $maxBagian = collect($bagianStats)->max('count') ?: 1;
 
         // === RECENT DOCUMENTS (5 terbaru) ===
-        $recentDocuments = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'dibayar_kepada', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'current_handler', 'created_at')
+        $recentDocuments = Dokumen::with('dibayarKepadas')
+            ->select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'dibayar_kepada', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'current_handler', 'created_at')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
             ->map(function ($doc) {
                 [$statusLabel, $statusClass] = $this->resolveDocStatus($doc->status_pembayaran, $doc->tanggal_dibayar, $doc->current_handler);
+                $dibayarKepada = $doc->dibayarKepadas->count() > 0
+                    ? $doc->dibayarKepadas->pluck('nama_penerima')->join(', ')
+                    : ($doc->dibayar_kepada ?? '-');
+
                 return [
                     'id' => $doc->id,
                     'uraian_spp' => $doc->uraian_spp ?? '-',
                     'nomor_spp' => $doc->nomor_spp ?? '-',
                     'bagian' => $doc->bagian ?? '-',
-                    'dibayar_kepada' => $doc->dibayar_kepada ?? '-',
+                    'dibayar_kepada' => $dibayarKepada,
                     'nilai_rupiah' => $doc->nilai_rupiah ?? 0,
                     'status_label' => $statusLabel,
                     'status_class' => $statusClass,
@@ -492,18 +497,23 @@ class OwnerDashboardController extends Controller
      */
     public function getRecentDocuments(): JsonResponse
     {
-        $docs = Dokumen::select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'dibayar_kepada', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'current_handler', 'created_at')
+        $docs = Dokumen::with('dibayarKepadas')
+            ->select('id', 'uraian_spp', 'nomor_spp', 'bagian', 'dibayar_kepada', 'status_pembayaran', 'nilai_rupiah', 'tanggal_dibayar', 'status', 'current_handler', 'created_at')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
             ->map(function ($doc) {
                 [$statusLabel, $statusClass] = $this->resolveDocStatus($doc->status_pembayaran, $doc->tanggal_dibayar, $doc->current_handler);
+                $dibayarKepada = $doc->dibayarKepadas->count() > 0
+                    ? $doc->dibayarKepadas->pluck('nama_penerima')->join(', ')
+                    : ($doc->dibayar_kepada ?? '-');
+
                 return [
                     'id' => $doc->id,
                     'uraian_spp' => $doc->uraian_spp ?? '-',
                     'nomor_spp' => $doc->nomor_spp ?? '-',
                     'bagian' => $doc->bagian ?? '-',
-                    'dibayar_kepada' => $doc->dibayar_kepada ?? '-',
+                    'dibayar_kepada' => $dibayarKepada,
                     'nilai_rupiah' => $doc->nilai_rupiah ?? 0,
                     'status_label' => $statusLabel,
                     'status_class' => $statusClass,

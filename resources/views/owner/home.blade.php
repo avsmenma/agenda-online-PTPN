@@ -197,17 +197,18 @@
   @media (max-width: 768px)  { .bottom-row { grid-template-columns: 1fr; } }
 
   /* Recent Docs Table */
-  .doc-table { width: 100%; border-collapse: collapse; }
+  .doc-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   .doc-table th {
     font-size: 10.5px; font-weight: 600; text-transform: uppercase;
     letter-spacing: .06em; color: var(--text-muted);
-    padding-bottom: 10px; text-align: left;
+    padding: 0 14px 10px 0; text-align: left;
     border-bottom: 1px solid var(--border);
   }
   .doc-table td {
     padding: 10px 0; font-size: 12px;
     border-bottom: 1px solid var(--border); vertical-align: middle;
   }
+  .doc-table td:not(:last-child) { padding-right: 14px; }
   .doc-table tr:last-child td { border-bottom: none; }
   .doc-name {
     font-weight: 600; color: var(--text-primary);
@@ -219,6 +220,7 @@
   .doc-payee {
     font-size: 12px; color: var(--text-primary);
     line-height: 1.35; white-space: normal;
+    overflow-wrap: anywhere;
   }
   .status-pill {
     display: inline-flex; align-items: center; gap: 4px;
@@ -490,6 +492,15 @@
           <a class="see-all" href="{{ url('/owner/dokumen') }}">Lihat Semua -></a>
         </div>
         <table class="doc-table" id="recentDocsTable">
+          <colgroup>
+            <col style="width:38%">
+            <col style="width:18%">
+            <col style="width:7%">
+            <col style="width:8%">
+            <col style="width:10%">
+            <col style="width:9%">
+            <col style="width:10%">
+          </colgroup>
           <thead>
             <tr>
               <th>Dokumen</th>
