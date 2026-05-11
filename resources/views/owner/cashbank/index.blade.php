@@ -634,54 +634,59 @@ if (typeof Chart === 'undefined') {
 
     // Center Label Plugin
     const centerLabelPlugin = {
-    id: 'centerLabel',
-    beforeDraw(chart) {
-      const { ctx, chartArea: { width, height } } = chart;
-      ctx.save();
+      id: 'centerLabel',
+      beforeDraw(chart) {
+        const ctx = chart.ctx;
+        const chartArea = chart.chartArea;
+        if (!chartArea) return;
 
-      const centerX = width / 2;
-      const centerY = height / 2;
+        const width = chartArea.width;
+        const height = chartArea.height;
+        ctx.save();
 
-      // Data yang akan ditampilkan di center
-      let displayText = '';
-      let displayValue = '';
-      let displayPct = '';
+        const centerX = width / 2;
+        const centerY = height / 2;
 
-      if (selectedIndex !== null && chartData[selectedIndex]) {
-        const item = chartData[selectedIndex];
-        displayText = item.label;
-        displayValue = formatRupiah(item.value);
-        displayPct = item.pct + '%';
-      } else {
-        // Default: tampilkan total
-        displayText = 'Total';
-        displayValue = formatRupiah(totalPenerimaan);
-        displayPct = '100%';
+        // Data yang akan ditampilkan di center
+        let displayText = '';
+        let displayValue = '';
+        let displayPct = '';
+
+        if (selectedIndex !== null && chartData[selectedIndex]) {
+          const item = chartData[selectedIndex];
+          displayText = item.label;
+          displayValue = formatRupiah(item.value);
+          displayPct = item.pct + '%';
+        } else {
+          // Default: tampilkan total
+          displayText = 'Total';
+          displayValue = formatRupiah(totalPenerimaan);
+          displayPct = '100%';
+        }
+
+        // Draw text di center
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Persentase (besar)
+        ctx.font = 'bold 32px Sora, sans-serif';
+        ctx.fillStyle = '#1a2340';
+        ctx.fillText(displayPct, centerX, centerY - 20);
+
+        // Label komoditas
+        ctx.font = '600 13px Plus Jakarta Sans, sans-serif';
+        ctx.fillStyle = '#8492a6';
+        const maxWidth = 120;
+        const truncatedText = displayText.length > 18 ? displayText.substring(0, 18) + '...' : displayText;
+        ctx.fillText(truncatedText, centerX, centerY + 8);
+
+        // Nilai Rupiah
+        ctx.font = '500 11px Plus Jakarta Sans, sans-serif';
+        ctx.fillStyle = '#8492a6';
+        ctx.fillText(displayValue, centerX, centerY + 26);
+
+        ctx.restore();
       }
-
-      // Draw text di center
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-
-      // Persentase (besar)
-      ctx.font = 'bold 32px Sora, sans-serif';
-      ctx.fillStyle = '#1a2340';
-      ctx.fillText(displayPct, centerX, centerY - 20);
-
-      // Label komoditas
-      ctx.font = '600 13px Plus Jakarta Sans, sans-serif';
-      ctx.fillStyle = '#8492a6';
-      const maxWidth = 120;
-      const truncatedText = displayText.length > 18 ? displayText.substring(0, 18) + '...' : displayText;
-      ctx.fillText(truncatedText, centerX, centerY + 8);
-
-      // Nilai Rupiah
-      ctx.font = '500 11px Plus Jakarta Sans, sans-serif';
-      ctx.fillStyle = '#8492a6';
-      ctx.fillText(displayValue, centerX, centerY + 26);
-
-      ctx.restore();
-    }
     };
 
     // Create chart
