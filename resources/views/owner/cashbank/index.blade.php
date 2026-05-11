@@ -632,8 +632,8 @@ if (typeof Chart === 'undefined') {
     }));
     console.log('Chart data prepared:', chartData.length, 'items');
 
-  // Center Label Plugin
-  const centerLabelPlugin = {
+    // Center Label Plugin
+    const centerLabelPlugin = {
     id: 'centerLabel',
     beforeDraw(chart) {
       const { ctx, chartArea: { width, height } } = chart;
@@ -682,10 +682,10 @@ if (typeof Chart === 'undefined') {
 
       ctx.restore();
     }
-  };
+    };
 
-  // Create chart
-  chartInstance = new Chart(ctxPen, {
+    // Create chart
+    chartInstance = new Chart(ctxPen, {
     type: 'doughnut',
     data: {
       labels: chartData.map(d => d.label),
@@ -745,63 +745,63 @@ if (typeof Chart === 'undefined') {
       }
     },
     plugins: [centerLabelPlugin]
-  });
+    });
 
-  // Generate Custom Legend
-  function generateCustomLegend() {
-    const legendContainer = document.getElementById('customLegend');
-    if (!legendContainer) return;
+    // Generate Custom Legend
+    function generateCustomLegend() {
+      const legendContainer = document.getElementById('customLegend');
+      if (!legendContainer) return;
 
-    let html = '<div style="display:grid;grid-template-columns:1fr;gap:8px">';
+      let html = '<div style="display:grid;grid-template-columns:1fr;gap:8px">';
 
-    chartData.forEach((item, index) => {
-      html += `
-        <div class="legend-item" data-index="${index}"
-             style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;transition:all 0.2s;background:#fafbfd;border:2px solid transparent"
-             onmouseover="this.style.background='#f1f5f9';this.style.borderColor='${item.color}'"
-             onmouseout="if(!this.classList.contains('active')){this.style.background='#fafbfd';this.style.borderColor='transparent'}"
-             onclick="handleLegendClick(${index})">
-          <div style="width:12px;height:12px;border-radius:3px;background:${item.color};flex-shrink:0"></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:600;color:#1a2340;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.label}</div>
-            <div style="font-size:10px;color:#8492a6;margin-top:2px">${formatRupiah(item.value)}</div>
+      chartData.forEach((item, index) => {
+        html += `
+          <div class="legend-item" data-index="${index}"
+               style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;transition:all 0.2s;background:#fafbfd;border:2px solid transparent"
+               onmouseover="this.style.background='#f1f5f9';this.style.borderColor='${item.color}'"
+               onmouseout="if(!this.classList.contains('active')){this.style.background='#fafbfd';this.style.borderColor='transparent'}"
+               onclick="handleLegendClick(${index})">
+            <div style="width:12px;height:12px;border-radius:3px;background:${item.color};flex-shrink:0"></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;color:#1a2340;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.label}</div>
+              <div style="font-size:10px;color:#8492a6;margin-top:2px">${formatRupiah(item.value)}</div>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:${item.color};font-family:Sora,sans-serif">${item.pct}%</div>
           </div>
-          <div style="font-size:13px;font-weight:700;color:${item.color};font-family:Sora,sans-serif">${item.pct}%</div>
-        </div>
-      `;
-    });
+        `;
+      });
 
-    html += '</div>';
-    legendContainer.innerHTML = html;
-  }
+      html += '</div>';
+      legendContainer.innerHTML = html;
+    }
 
-  // Handle legend click
-  window.handleLegendClick = function(index) {
-    selectedIndex = selectedIndex === index ? null : index;
+    // Handle legend click
+    window.handleLegendClick = function(index) {
+      selectedIndex = selectedIndex === index ? null : index;
 
-    // Update chart
-    chartInstance.data.datasets[0].offset = chartData.map((_, i) => selectedIndex === i ? 12 : 0);
-    chartInstance.update();
+      // Update chart
+      chartInstance.data.datasets[0].offset = chartData.map((_, i) => selectedIndex === i ? 12 : 0);
+      chartInstance.update();
 
-    // Update legend selection
-    updateLegendSelection(index);
-  };
+      // Update legend selection
+      updateLegendSelection(index);
+    };
 
-  // Update legend selection visual
-  function updateLegendSelection(index) {
-    const items = document.querySelectorAll('.legend-item');
-    items.forEach((item, i) => {
-      if (i === selectedIndex) {
-        item.classList.add('active');
-        item.style.background = '#eff6ff';
-        item.style.borderColor = chartData[i].color;
-      } else {
-        item.classList.remove('active');
-        item.style.background = '#fafbfd';
-        item.style.borderColor = 'transparent';
-      }
-    });
-  }
+    // Update legend selection visual
+    function updateLegendSelection(index) {
+      const items = document.querySelectorAll('.legend-item');
+      items.forEach((item, i) => {
+        if (i === selectedIndex) {
+          item.classList.add('active');
+          item.style.background = '#eff6ff';
+          item.style.borderColor = chartData[i].color;
+        } else {
+          item.classList.remove('active');
+          item.style.background = '#fafbfd';
+          item.style.borderColor = 'transparent';
+        }
+      });
+    }
 
     // Generate legend on load
     generateCustomLegend();
