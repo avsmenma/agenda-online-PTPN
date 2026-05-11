@@ -344,10 +344,14 @@ function rupiahFull(float $n): string {
         {{-- Chart + Legend Container --}}
         <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;justify-content:center">
           {{-- Donut Chart --}}
-          <div style="flex:0 0 280px;height:280px;position:relative">
-            <canvas id="chartPenerimaan" aria-label="Komposisi penerimaan per komoditas dalam bentuk donut chart">
+          <div style="flex:0 0 280px;height:280px;position:relative;border:2px dashed #0d9488;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#fafbfd">
+            <canvas id="chartPenerimaan" aria-label="Komposisi penerimaan per komoditas dalam bentuk donut chart" style="max-width:100%;max-height:100%">
               Grafik menampilkan komposisi penerimaan dari berbagai komoditas
             </canvas>
+            <div id="chartLoadingIndicator" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:12px;color:#8492a6;text-align:center;font-weight:600">
+              <div style="margin-bottom:8px;font-size:24px">📊</div>
+              Loading chart...
+            </div>
           </div>
 
           {{-- Custom Legend --}}
@@ -489,6 +493,16 @@ function rupiahFull(float $n): string {
 const trenData = @json($trenBulanan);
 const penerimaanData = @json($penerimaanKategori);
 
+console.log('🔍 Script loaded, data:', {
+  trenData: trenData?.length || 0,
+  penerimaanData: penerimaanData?.length || 0,
+  chartJsLoaded: typeof Chart !== 'undefined'
+});
+
+// Wrap semua dalam DOMContentLoaded untuk memastikan DOM ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('✅ DOM Content Loaded - Initializing charts...');
+
 // ── WARNA CHART ──
 const COLORS_PIE = ['#0d9488','#16a34a','#2563eb','#7c3aed','#ea580c','#dc2626','#0891b2','#d97706'];
 const COLOR_RENCANA = 'rgba(124,58,237,.8)';
@@ -544,6 +558,7 @@ if (ctxTren && trenData.length) {
 }
 
 // ── DONUT CHART INTERAKTIF: Komposisi Penerimaan ──────────────────────────
+console.log('🍩 Initializing donut chart...');
 
 // Color palette sesuai spesifikasi
 const CHART_COLORS = ['#1D9E75', '#378ADD', '#7F77DD', '#EF9F27', '#D4537E', '#888780', '#85B7EB', '#C0DD97'];
@@ -556,12 +571,31 @@ function formatRupiah(value) {
   return 'Rp ' + value.toLocaleString('id-ID');
 }
 
+// Check Canvas element
+const canvasEl = document.getElementById('chartPenerimaan');
+console.log('🔍 Canvas element:', {
+  exists: !!canvasEl,
+  width: canvasEl?.width || 0,
+  height: canvasEl?.height || 0,
+  offsetWidth: canvasEl?.offsetWidth || 0,
+  offsetHeight: canvasEl?.offsetHeight || 0,
+  parentHeight: canvasEl?.parentElement?.offsetHeight || 0
+});
+
 // Initialize chart
-const ctxPen = document.getElementById('chartPenerimaan')?.getContext('2d');
+const ctxPen = canvasEl?.getContext('2d');
 let chartInstance = null;
 let selectedIndex = null;
 
+console.log('🔍 Chart context:', {
+  hasContext: !!ctxPen,
+  hasData: !!(penerimaanData && penerimaanData.length > 0),
+  dataLength: penerimaanData?.length || 0,
+  chartJsAvailable: typeof Chart !== 'undefined'
+});
+
 if (ctxPen && penerimaanData && penerimaanData.length > 0) {
+  console.log('✅ Creating donut chart with data:', penerimaanData);
   // Calculate total
   const totalPenerimaan = penerimaanData.reduce((sum, d) => sum + parseFloat(d.total), 0);
 
@@ -747,22 +781,49 @@ if (ctxPen && penerimaanData && penerimaanData.length > 0) {
   // Generate legend on load
   generateCustomLegend();
 
+  // Hide loading indicator
+  const loadingIndicator = document.getElementById('chartLoadingIndicator');
+  if (loadingIndicator) {
+    loadingIndicator.style.display = 'none';
+  }
+
   console.log('✅ Donut chart created successfully with', chartData.length, 'items');
 
 } else {
   console.error('❌ Chart initialization failed:', {
-    hasCanvas: !!document.getElementById('chartPenerimaan'),
+    hasCanvas: !!canvasEl,
     hasContext: !!ctxPen,
     hasData: penerimaanData && penerimaanData.length > 0,
     dataLength: penerimaanData?.length || 0
   });
 
+  // Update loading indicator to show error
+  const loadingIndicator = document.getElementById('chartLoadingIndicator');
+  if (loadingIndicator) {
+    loadingIndicator.innerHTML = `
+      <div style="color:#dc2626;text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">⚠️</div>
+        <div style="font-weight:600;margin-bottom:4px">Chart Error</div>
+        <div style="font-size:10px;color:#8492a6">
+          ${!canvasEl ? 'Canvas not found' :
+            !ctxPen ? 'Context unavailable' :
+            !penerimaanData ? 'No data' :
+            'Check console for details'}
+        </div>
+      </div>
+    `;
+  }
+
   // Show error in legend area
   const legendContainer = document.getElementById('customLegend');
   if (legendContainer) {
-    legendContainer.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:20px;text-align:center;background:#fef2f2;border-radius:8px">⚠️ Tidak ada data untuk ditampilkan</div>';
+    legendContainer.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:20px;text-align:center;background:#fef2f2;border-radius:8px;border:1px solid #fecaca">⚠️ Tidak ada data untuk ditampilkan</div>';
   }
 }
+
+}); // End DOMContentLoaded
+
+console.log('📊 Chart script fully loaded');
 </script>
 @endpush
 
