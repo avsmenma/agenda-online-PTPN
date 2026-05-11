@@ -2,7 +2,15 @@
 @section('content')
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js?v={{ time() }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+// Verify Chart.js loaded immediately
+if (typeof Chart !== 'undefined') {
+  console.log('✅ Chart.js loaded successfully, version:', Chart.version || 'unknown');
+} else {
+  console.error('❌ Chart.js failed to load from CDN');
+}
+</script>
 
 <style>
 *,*::before,*::after{box-sizing:border-box}
@@ -594,18 +602,35 @@ console.log('🔍 Chart context:', {
   chartJsAvailable: typeof Chart !== 'undefined'
 });
 
-if (ctxPen && penerimaanData && penerimaanData.length > 0) {
+// Check if Chart.js is available
+if (typeof Chart === 'undefined') {
+  console.error('❌ Chart.js library not loaded!');
+  const loadingIndicator = document.getElementById('chartLoadingIndicator');
+  if (loadingIndicator) {
+    loadingIndicator.innerHTML = `
+      <div style="color:#dc2626;text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">⚠️</div>
+        <div style="font-weight:600;margin-bottom:4px">Chart.js Not Loaded</div>
+        <div style="font-size:10px;color:#8492a6">CDN script failed to load</div>
+      </div>
+    `;
+  }
+} else if (ctxPen && penerimaanData && penerimaanData.length > 0) {
   console.log('✅ Creating donut chart with data:', penerimaanData);
-  // Calculate total
-  const totalPenerimaan = penerimaanData.reduce((sum, d) => sum + parseFloat(d.total), 0);
 
-  // Prepare data dengan persentase
-  const chartData = penerimaanData.map((d, i) => ({
-    label: d.nama_kriteria,
-    value: parseFloat(d.total),
-    pct: ((parseFloat(d.total) / totalPenerimaan) * 100).toFixed(1),
-    color: CHART_COLORS[i % CHART_COLORS.length]
-  }));
+  try {
+    // Calculate total
+    const totalPenerimaan = penerimaanData.reduce((sum, d) => sum + parseFloat(d.total), 0);
+    console.log('Total penerimaan:', totalPenerimaan);
+
+    // Prepare data dengan persentase
+    const chartData = penerimaanData.map((d, i) => ({
+      label: d.nama_kriteria,
+      value: parseFloat(d.total),
+      pct: ((parseFloat(d.total) / totalPenerimaan) * 100).toFixed(1),
+      color: CHART_COLORS[i % CHART_COLORS.length]
+    }));
+    console.log('Chart data prepared:', chartData.length, 'items');
 
   // Center Label Plugin
   const centerLabelPlugin = {
@@ -778,16 +803,40 @@ if (ctxPen && penerimaanData && penerimaanData.length > 0) {
     });
   }
 
-  // Generate legend on load
-  generateCustomLegend();
+    // Generate legend on load
+    generateCustomLegend();
 
-  // Hide loading indicator
-  const loadingIndicator = document.getElementById('chartLoadingIndicator');
-  if (loadingIndicator) {
-    loadingIndicator.style.display = 'none';
+    // Hide loading indicator
+    const loadingIndicator = document.getElementById('chartLoadingIndicator');
+    if (loadingIndicator) {
+      loadingIndicator.style.display = 'none';
+    }
+
+    console.log('✅ Donut chart created successfully with', chartData.length, 'items');
+
+  } catch (error) {
+    // Catch any error during chart creation
+    console.error('❌ Error creating chart:', error);
+    console.error('Error stack:', error.stack);
+
+    // Update loading indicator to show error
+    const loadingIndicator = document.getElementById('chartLoadingIndicator');
+    if (loadingIndicator) {
+      loadingIndicator.innerHTML = `
+        <div style="color:#dc2626;text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">⚠️</div>
+          <div style="font-weight:600;margin-bottom:4px">Chart Creation Error</div>
+          <div style="font-size:10px;color:#8492a6">${error.message || 'Unknown error'}</div>
+        </div>
+      `;
+    }
+
+    // Show error in legend area
+    const legendContainer = document.getElementById('customLegend');
+    if (legendContainer) {
+      legendContainer.innerHTML = `<div style="color:#dc2626;font-size:12px;padding:20px;text-align:center;background:#fef2f2;border-radius:8px;border:1px solid #fecaca">⚠️ Error: ${error.message}</div>`;
+    }
   }
-
-  console.log('✅ Donut chart created successfully with', chartData.length, 'items');
 
 } else {
   console.error('❌ Chart initialization failed:', {
