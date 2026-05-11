@@ -434,7 +434,7 @@
             <div class="dash-card-title">Top Bagian</div>
             <div class="dash-card-sub">Volume & keterlambatan</div>
           </div>
-          <a class="see-all" href="{{ url('/owner/analytics') }}">Lihat Semua â†’</a>
+          <a class="see-all" href="{{ url('/owner/analytics') }}">Lihat Semua -></a>
         </div>
         <table class="top-table">
           <thead>
@@ -458,7 +458,7 @@
                 </td>
                 <td>{{ number_format($b['count']) }}</td>
                 <td class="return-val {{ ($b['terlambat'] ?? 0) > 0 ? 'val-down' : 'val-up' }}">
-                  {{ ($b['terlambat'] ?? 0) > 0 ? 'â†“ '.$b['terlambat'] : 'âœ“ 0' }}
+                  {{ ($b['terlambat'] ?? 0) > 0 ? $b['terlambat'] : '0' }}
                 </td>
               </tr>
             @endforeach
@@ -471,18 +471,18 @@
     {{-- BOTTOM ROW --}}
     <div class="bottom-row" style="grid-template-columns: 1fr 300px;">
 
-      {{-- Dokumen Terbaru (Real-time) â€” Extended --}}
+      {{-- Dokumen Terbaru (Real-time) - Extended --}}
       <div class="dash-card">
         <div class="dash-card-header">
           <div>
             <div class="dash-card-title">Dokumen Terbaru</div>
             <div class="dash-card-sub">
               <span class="realtime-badge">
-                <span class="realtime-dot"></span> Live â€” update otomatis
+                <span class="realtime-dot"></span> Live update otomatis
               </span>
             </div>
           </div>
-          <a class="see-all" href="{{ url('/owner/dokumen') }}">Lihat Semua â†’</a>
+          <a class="see-all" href="{{ url('/owner/dokumen') }}">Lihat Semua -></a>
         </div>
         <table class="doc-table" id="recentDocsTable">
           <thead>
@@ -534,12 +534,12 @@
                 </td>
                 <td style="text-align:center">
                   <span class="timer-cell timer-age" style="font-size:11px;font-family:'Sora',monospace;color:#475569;white-space:nowrap">
-                    â€”
+                    -
                   </span>
                 </td>
                 <td style="text-align:center">
                   <span class="timer-cell timer-role" style="font-size:11px;font-family:'Sora',monospace;color:#0f766e;white-space:nowrap">
-                    â€”
+                    -
                   </span>
                 </td>
               </tr>
@@ -719,10 +719,10 @@ function buildDocRow(doc) {
       <td><span class="status-pill ${doc.status_class || 'status-belum'}">${doc.status_label || 'Menunggu'}</span></td>
       <td class="doc-amount">${formatCurrency(doc.nilai_rupiah)}</td>
       <td style="text-align:center">
-        <span class="timer-cell timer-age" style="font-size:11px;font-family:'Sora',monospace;color:#475569;white-space:nowrap">â€”</span>
+        <span class="timer-cell timer-age" style="font-size:11px;font-family:'Sora',monospace;color:#475569;white-space:nowrap">-</span>
       </td>
       <td style="text-align:center">
-        <span class="timer-cell timer-role" style="font-size:11px;font-family:'Sora',monospace;color:#0f766e;white-space:nowrap">â€”</span>
+        <span class="timer-cell timer-role" style="font-size:11px;font-family:'Sora',monospace;color:#0f766e;white-space:nowrap">-</span>
       </td>
     </tr>`;
 }
