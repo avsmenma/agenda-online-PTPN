@@ -322,7 +322,10 @@ function rupiahFull(float $n): string {
         </div>
       </div>
       <div class="cb-card-body" style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
-        <div style="flex:0 0 280px;min-height:280px;position:relative"><canvas id="chartPenerimaan"></canvas></div>
+        <div style="flex:0 0 280px;min-height:280px;position:relative;border:2px dashed #0d9488;display:flex;align-items:center;justify-content:center">
+          <canvas id="chartPenerimaan"></canvas>
+          <div id="chartDebug" style="position:absolute;top:10px;left:10px;font-size:10px;background:yellow;padding:4px;z-index:999">Chart Loading...</div>
+        </div>
         <div style="flex:1;min-width:160px">
           @foreach($penerimaanKategori as $pk)
             @php $pct = $ringkasan['total_penerimaan'] > 0
@@ -534,9 +537,23 @@ if (ctxTren && trenData.length) {
 
 // ── CHART PIE PENERIMAAN dengan Leader Lines ──────────────────────────
 const ctxPen = document.getElementById('chartPenerimaan')?.getContext('2d');
+const debugEl = document.getElementById('chartDebug');
+
+console.log('Chart Initialization:', {
+  canvas: !!document.getElementById('chartPenerimaan'),
+  context: !!ctxPen,
+  dataLength: penerimaanData?.length || 0,
+  data: penerimaanData
+});
+
 if (ctxPen && penerimaanData.length) {
   // Calculate total for percentage
   const totalPenerimaan = penerimaanData.reduce((sum, d) => sum + parseFloat(d.total), 0);
+
+  if (debugEl) {
+    debugEl.textContent = 'Creating chart...';
+    debugEl.style.background = 'lightblue';
+  }
 
   new Chart(ctxPen, {
     type: 'pie',
@@ -656,6 +673,24 @@ if (ctxPen && penerimaanData.length) {
       }
     }]
   });
+
+  // Remove debug element after chart is created
+  if (debugEl) {
+    setTimeout(() => debugEl.remove(), 1000);
+  }
+  console.log('Chart created successfully');
+
+} else {
+  console.error('Chart cannot be created:', {
+    hasCanvas: !!document.getElementById('chartPenerimaan'),
+    hasContext: !!ctxPen,
+    hasData: penerimaanData?.length > 0
+  });
+  if (debugEl) {
+    debugEl.textContent = 'Chart Error: ' + (!ctxPen ? 'No canvas context' : 'No data');
+    debugEl.style.background = 'red';
+    debugEl.style.color = 'white';
+  }
 }
 </script>
 @endpush
