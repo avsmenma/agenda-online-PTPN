@@ -158,6 +158,7 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle;text-align:cente
 .hari-ok{background:var(--green-bg);color:var(--green)}
 .hari-warn{background:var(--yellow-bg);color:var(--yellow)}
 .hari-late{background:var(--red-bg);color:var(--red)}
+.hari-done{background:#f1f5f9;color:#64748b}
 
 /* Action btn */
 .action-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);transition:.15s;text-decoration:none}
@@ -592,7 +593,7 @@ function hariLabel(d){
   const end = d.processed_at ? new Date(d.processed_at).getTime() : Date.now();
   const secs = start ? Math.floor((end - start) / 1000) : (d.elapsed_seconds || 0);
   const status = statusFromSeconds(secs);
-  const cls = status === 'aman' ? 'hari-ok' : (status === 'warn' ? 'hari-warn' : 'hari-late');
+  const cls = d.processed_at ? 'hari-done' : (status === 'aman' ? 'hari-ok' : (status === 'warn' ? 'hari-warn' : 'hari-late'));
   return `<span class="hari-badge ${cls} timer-age" data-created="${esc(d.created_at || '')}" data-processed="${esc(d.processed_at || '')}">${formatDuration(secs)}</span>`;
 }
 
@@ -766,9 +767,10 @@ function refreshLiveDurations(){
     const seconds = Math.max(0, Math.floor(((processed || now) - created) / 1000));
     const status = statusFromSeconds(seconds);
     el.textContent = formatDuration(seconds);
-    el.classList.toggle('hari-ok', status === 'aman');
-    el.classList.toggle('hari-warn', status === 'warn');
-    el.classList.toggle('hari-late', status === 'late');
+    el.classList.toggle('hari-done', !!processed);
+    el.classList.toggle('hari-ok', !processed && status === 'aman');
+    el.classList.toggle('hari-warn', !processed && status === 'warn');
+    el.classList.toggle('hari-late', !processed && status === 'late');
   });
 }
 
