@@ -57,7 +57,9 @@ final class CashBankPimpinanController extends Controller
             'bulanDari',
             'bulanSampai',
             'bulanList',
-        ));
+        ))
+            ->with('module', 'owner')
+            ->with('title', 'Laporan Cash Bank');
     }
 
     /**
