@@ -3,6 +3,7 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
 <style>
 *,*::before,*::after{box-sizing:border-box}
@@ -321,7 +322,7 @@ function rupiahFull(float $n): string {
         </div>
       </div>
       <div class="cb-card-body" style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
-        <div style="flex:0 0 180px"><canvas id="chartPenerimaan" height="180"></canvas></div>
+        <div style="flex:0 0 280px;min-height:280px;position:relative"><canvas id="chartPenerimaan"></canvas></div>
         <div style="flex:1;min-width:160px">
           @foreach($penerimaanKategori as $pk)
             @php $pct = $ringkasan['total_penerimaan'] > 0
@@ -531,32 +532,129 @@ if (ctxTren && trenData.length) {
   });
 }
 
-// ── CHART DONUT PENERIMAAN ──────────────────────────
+// ── CHART PIE PENERIMAAN dengan Leader Lines ──────────────────────────
 const ctxPen = document.getElementById('chartPenerimaan')?.getContext('2d');
 if (ctxPen && penerimaanData.length) {
+  // Calculate total for percentage
+  const totalPenerimaan = penerimaanData.reduce((sum, d) => sum + parseFloat(d.total), 0);
+
   new Chart(ctxPen, {
-    type: 'doughnut',
+    type: 'pie',
     data: {
       labels: penerimaanData.map(d => d.nama_kriteria),
       datasets: [{
         data: penerimaanData.map(d => parseFloat(d.total)),
         backgroundColor: COLORS_PIE,
-        borderWidth: 2,
+        borderWidth: 3,
         borderColor: '#fff',
+        hoverBorderWidth: 4,
+        hoverBorderColor: '#f8fafc',
       }]
     },
     options: {
       responsive: true,
-      cutout: '68%',
+      maintainAspectRatio: true,
+      layout: {
+        padding: {
+          top: 20,
+          right: 80,
+          bottom: 20,
+          left: 80
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
+          enabled: true,
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          padding: 12,
+          bodyFont: { size: 12, family: 'Plus Jakarta Sans' },
           callbacks: {
-            label: ctx => ' Rp ' + ctx.raw.toLocaleString('id-ID')
+            title: (ctx) => ctx[0].label,
+            label: (ctx) => {
+              const pct = ((ctx.raw / totalPenerimaan) * 100).toFixed(1);
+              return ' ' + pct + '% • Rp ' + ctx.raw.toLocaleString('id-ID');
+            }
           }
+        },
+        datalabels: {
+          color: '#1a2340',
+          font: {
+            size: 11,
+            weight: '600',
+            family: 'Plus Jakarta Sans'
+          },
+          formatter: (value, ctx) => {
+            const pct = ((value / totalPenerimaan) * 100).toFixed(1);
+            const label = ctx.chart.data.labels[ctx.dataIndex];
+            // Only show label if percentage > 0.5%
+            return pct > 0.5 ? label + '\n' + pct + '%' : '';
+          },
+          anchor: 'end',
+          align: 'end',
+          offset: 8,
+          clamp: false,
+          clip: false,
+          textAlign: 'center',
+          backgroundColor: 'rgba(255,255,255,0.95)',
+          borderColor: (ctx) => COLORS_PIE[ctx.dataIndex] || '#999',
+          borderWidth: 2,
+          borderRadius: 6,
+          padding: 6,
+          display: true,
         }
+      },
+      interaction: {
+        mode: 'nearest',
+        intersect: true
+      },
+      animation: {
+        animateRotate: true,
+        animateScale: true,
+        duration: 800,
+        easing: 'easeInOutQuart'
       }
-    }
+    },
+    plugins: [{
+      // Custom plugin to draw leader lines
+      id: 'leaderLines',
+      afterDatasetDraw(chart) {
+        const ctx = chart.ctx;
+        const meta = chart.getDatasetMeta(0);
+
+        meta.data.forEach((element, index) => {
+          const model = element;
+          const pct = ((chart.data.datasets[0].data[index] / totalPenerimaan) * 100);
+
+          // Only draw lines for segments > 0.5%
+          if (pct <= 0.5) return;
+
+          // Get center and outer points
+          const centerX = model.x;
+          const centerY = model.y;
+          const startAngle = model.startAngle;
+          const endAngle = model.endAngle;
+          const midAngle = startAngle + (endAngle - startAngle) / 2;
+          const radius = model.outerRadius;
+
+          // Calculate points for leader line
+          const x1 = centerX + Math.cos(midAngle) * (radius - 5);
+          const y1 = centerY + Math.sin(midAngle) * (radius - 5);
+          const x2 = centerX + Math.cos(midAngle) * (radius + 12);
+          const y2 = centerY + Math.sin(midAngle) * (radius + 12);
+
+          // Draw leader line
+          ctx.save();
+          ctx.strokeStyle = COLORS_PIE[index] || '#999';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+          ctx.restore();
+        });
+      }
+    }]
   });
 }
 </script>
