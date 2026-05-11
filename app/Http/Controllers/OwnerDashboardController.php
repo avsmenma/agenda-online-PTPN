@@ -3189,7 +3189,7 @@ class OwnerDashboardController extends Controller
         $filterBagian = $request->get('bagian');
 
         /* â”€â”€ Base query â”€â”€ */
-        $baseQuery = Dokumen::with('dibayarKepadas')->select(
+        $baseQuery = Dokumen::with(['dibayarKepadas', 'roleData'])->select(
             'id', 'nomor_spp', 'uraian_spp', 'bagian', 'dibayar_kepada',
             'nilai_rupiah', 'current_handler', 'status_pembayaran',
             'tanggal_masuk', 'tanggal_dibayar', 'created_at', 'updated_at',
@@ -3214,9 +3214,12 @@ class OwnerDashboardController extends Controller
         $classified = $allDocs->map(function ($doc) use ($now, $warningAfterHours, $lateAfterHours) {
             $handler   = $doc->current_handler ?? 'operator';
 
-            $startDate = $doc->created_at
-                ? Carbon::parse($doc->created_at)
-                : Carbon::parse($doc->tanggal_masuk);
+            $roleData = $doc->getDataForRole($handler);
+            $startDate = $roleData?->received_at
+                ? Carbon::parse($roleData->received_at)
+                : ($handler === 'operator'
+                    ? Carbon::parse($doc->created_at ?? $doc->tanggal_masuk)
+                    : Carbon::parse($doc->updated_at ?? $doc->created_at ?? $doc->tanggal_masuk));
 
             $isSelesai = !empty($doc->tanggal_dibayar)
                          || $doc->status_pembayaran === 'sudah_dibayar'
@@ -3226,7 +3229,9 @@ class OwnerDashboardController extends Controller
                 ? Carbon::parse($doc->tanggal_dibayar)
                 : null;
 
-            $compareDate = $isSelesai && $selesaiDate ? $selesaiDate : $now;
+            $compareDate = $roleData?->processed_at
+                ? Carbon::parse($roleData->processed_at)
+                : ($isSelesai && $selesaiDate ? $selesaiDate : $now);
             $elapsedSeconds = max(0, $startDate->diffInSeconds($compareDate, false));
             $elapsedHours = $elapsedSeconds / 3600;
 
@@ -3252,6 +3257,7 @@ class OwnerDashboardController extends Controller
                 'tim'             => $this->handlerToTeamLabel($handler),
                 'tim_code'        => $handler,
                 'created_at'      => $startDate->toIso8601String(),
+                'processed_at'    => $roleData?->processed_at ? Carbon::parse($roleData->processed_at)->toIso8601String() : null,
                 'tanggal_masuk'   => $doc->tanggal_masuk
                     ? Carbon::parse($doc->tanggal_masuk)->format('d M Y')
                     : $startDate->format('d M Y'),

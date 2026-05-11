@@ -375,7 +375,7 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle;text-align:cente
               <th onclick="sortTable('tim')">Tim</th>
               <th onclick="sortTable('tanggal_masuk')">Tgl Masuk</th>
               <th onclick="sortTable('tanggal_selesai')">Tgl Selesai</th>
-              <th onclick="sortTable('elapsed_seconds')">Umur Dok</th>
+              <th onclick="sortTable('elapsed_seconds')">Waktu Pengerjaan</th>
               <th>Status</th>
               <th></th>
             </tr>
@@ -588,10 +588,12 @@ function updateStatusTabCounts(){
 
 /* ─── HARI LABEL ─── */
 function hariLabel(d){
-  const secs = d.created_at ? Math.floor((Date.now() - new Date(d.created_at).getTime()) / 1000) : (d.elapsed_seconds || 0);
+  const start = d.created_at ? new Date(d.created_at).getTime() : null;
+  const end = d.processed_at ? new Date(d.processed_at).getTime() : Date.now();
+  const secs = start ? Math.floor((end - start) / 1000) : (d.elapsed_seconds || 0);
   const status = statusFromSeconds(secs);
   const cls = status === 'aman' ? 'hari-ok' : (status === 'warn' ? 'hari-warn' : 'hari-late');
-  return `<span class="hari-badge ${cls} timer-age" data-created="${esc(d.created_at || '')}">${formatDuration(secs)}</span>`;
+  return `<span class="hari-badge ${cls} timer-age" data-created="${esc(d.created_at || '')}" data-processed="${esc(d.processed_at || '')}">${formatDuration(secs)}</span>`;
 }
 
 /* ─── STATUS PILL ─── */
@@ -674,7 +676,7 @@ function renderTable(){
             <div class="dc-row"><span class="dc-key">Tim</span><span class="dc-val">${d.tim||'-'}</span></div>
             <div class="dc-row"><span class="dc-key">Tgl Masuk</span><span class="dc-val">${d.tanggal_masuk||'-'}</span></div>
             <div class="dc-row"><span class="dc-key">Tgl Selesai</span><span class="dc-val">${selesaiDisplay}</span></div>
-            <div class="dc-row"><span class="dc-key">Umur Dok</span>${hariLabel(d)}</div>
+            <div class="dc-row"><span class="dc-key">Waktu Pengerjaan</span>${hariLabel(d)}</div>
           </div>
         </div>`;
       }).join('');
@@ -707,7 +709,7 @@ function renderTable(){
 /* ─── EXPORT EXCEL ─── */
 function exportExcel(){
   const filtered = getFiltered();
-  const ws_data=[['No. Dokumen','Uraian SPP','Bagian','Dibayar Kepada/Vendor','Nilai (Rp)','Tim','Tgl Masuk','Tgl Selesai','Umur Dok','Status']];
+  const ws_data=[['No. Dokumen','Uraian SPP','Bagian','Dibayar Kepada/Vendor','Nilai (Rp)','Tim','Tgl Masuk','Tgl Selesai','Waktu Pengerjaan','Status']];
   filtered.forEach(d=>ws_data.push([
     d.nomor_spp, d.uraian_spp, d.bagian, d.vendor,
     d.nilai_rupiah, d.tim, d.tanggal_masuk, d.tanggal_selesai||'-', formatDuration(d.elapsed_seconds || 0),
@@ -741,7 +743,8 @@ function refreshLiveDurations(){
 
   DOCS_RAW.forEach(d => {
     if(!d.created_at) return;
-    const seconds = Math.max(0, Math.floor((now - new Date(d.created_at).getTime()) / 1000));
+    const end = d.processed_at ? new Date(d.processed_at).getTime() : now;
+    const seconds = Math.max(0, Math.floor((end - new Date(d.created_at).getTime()) / 1000));
     const nextStatus = statusFromSeconds(seconds);
     d.elapsed_seconds = seconds;
     d.hari = Math.floor(seconds / 86400);
@@ -759,7 +762,8 @@ function refreshLiveDurations(){
   document.querySelectorAll('.timer-age[data-created]').forEach(el => {
     const created = el.dataset.created ? new Date(el.dataset.created).getTime() : null;
     if(!created) return;
-    const seconds = Math.max(0, Math.floor((now - created) / 1000));
+    const processed = el.dataset.processed ? new Date(el.dataset.processed).getTime() : null;
+    const seconds = Math.max(0, Math.floor(((processed || now) - created) / 1000));
     const status = statusFromSeconds(seconds);
     el.textContent = formatDuration(seconds);
     el.classList.toggle('hari-ok', status === 'aman');
