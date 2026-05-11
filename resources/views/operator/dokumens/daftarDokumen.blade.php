@@ -161,6 +161,95 @@
       background: #fff;
     }
 
+    #dokumen-tabulator .tabulator-cell.tabulator-acn-active {
+      outline: 3px solid #083E40 !important;
+      outline-offset: -2px !important;
+      background-color: rgba(8, 62, 64, 0.08) !important;
+      position: relative;
+      z-index: 4;
+    }
+
+    #dokumen-tabulator .tabulator-cell.tabulator-acn-active::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 8px 8px 0 0;
+      border-color: #083E40 transparent transparent transparent;
+      pointer-events: none;
+    }
+
+    #dokumen-tabulator .tabulator-row.tabulator-acn-active-row .tabulator-cell {
+      background-color: rgba(136, 151, 23, 0.04);
+    }
+
+    #dokumen-tabulator .tabulator-col.tabulator-acn-active-col {
+      background: linear-gradient(135deg, #0a5f52 0%, #083E40 100%) !important;
+      box-shadow: inset 0 -3px 0 #889717;
+    }
+
+    #dokumen-tabulator .tabulator-cell.tabulator-acn-pulse {
+      animation: tabulator-acn-pulse 0.4s ease-out;
+    }
+
+    @keyframes tabulator-acn-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(8, 62, 64, 0.5); }
+      70% { box-shadow: 0 0 0 6px rgba(8, 62, 64, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(8, 62, 64, 0); }
+    }
+
+    .tabulator-acn-indicator {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 16px;
+      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 0 0 8px 8px;
+      user-select: none;
+    }
+
+    .tabulator-acn-indicator.visible {
+      display: flex;
+    }
+
+    .tabulator-acn-cell-ref {
+      background: rgba(255,255,255,0.15);
+      border-radius: 4px;
+      padding: 2px 10px;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.5px;
+      font-size: 13px;
+    }
+
+    .tabulator-acn-col-name {
+      opacity: 0.85;
+      font-size: 11px;
+    }
+
+    .tabulator-acn-hint {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+      opacity: 0.75;
+      font-size: 11px;
+    }
+
+    .tabulator-acn-key {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-family: monospace;
+      font-size: 11px;
+    }
+
     .tabulator-handler-select {
       width: 100%;
       min-width: 150px;
@@ -6539,6 +6628,306 @@
               return columns;
             }
 
+            const tabulatorActiveCellState = {
+              cell: null,
+              rowIndex: 0,
+              colIndex: 2,
+              rowId: null,
+              field: null,
+              indicator: null,
+              keyboardBound: false,
+              boundTable: null,
+            };
+
+            function getTabulatorRows() {
+              if (!tabelDokumen || typeof tabelDokumen.getRows !== 'function') return [];
+              try {
+                const activeRows = tabelDokumen.getRows('active');
+                if (Array.isArray(activeRows)) return activeRows;
+              } catch (error) {
+                // Older Tabulator builds may not support the "active" argument.
+              }
+              return tabelDokumen.getRows() || [];
+            }
+
+            function getTabulatorCells(row) {
+              if (!row || typeof row.getCells !== 'function') return [];
+              return row.getCells().filter(cell => {
+                const column = cell.getColumn();
+                const definition = column?.getDefinition?.() || {};
+                return definition.visible !== false;
+              });
+            }
+
+            function tabulatorColumnTitle(cell) {
+              const column = cell?.getColumn?.();
+              const definition = column?.getDefinition?.() || {};
+              const rawTitle = definition.title || definition.field || '';
+              return String(rawTitle).replace(/<[^>]*>/g, '').trim();
+            }
+
+            function tabulatorColumnIndexToLetter(index) {
+              let label = '';
+              let n = Math.max(0, index);
+              do {
+                label = String.fromCharCode(65 + (n % 26)) + label;
+                n = Math.floor(n / 26) - 1;
+              } while (n >= 0);
+              return label;
+            }
+
+            function ensureTabulatorActiveCellIndicator() {
+              if (tabulatorActiveCellState.indicator) return tabulatorActiveCellState.indicator;
+
+              let indicator = document.getElementById('tabulatorAcnIndicator');
+              if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'tabulatorAcnIndicator';
+                indicator.className = 'tabulator-acn-indicator';
+                indicator.innerHTML = `
+                  <i class="fa-solid fa-table-cells" style="font-size:13px; opacity:0.8;"></i>
+                  <span class="tabulator-acn-cell-ref" id="tabulatorAcnCellRef">-</span>
+                  <span class="tabulator-acn-col-name" id="tabulatorAcnColName"></span>
+                  <span class="tabulator-acn-hint">
+                    <span class="tabulator-acn-key">Arrow</span> navigasi &nbsp;
+                    <span class="tabulator-acn-key">Enter</span> edit
+                  </span>`;
+              }
+
+              const container = document.getElementById('documentTableContainer');
+              if (container && indicator.parentElement !== container) {
+                container.appendChild(indicator);
+              }
+
+              tabulatorActiveCellState.indicator = indicator;
+              return indicator;
+            }
+
+            function clearTabulatorActiveCellHighlight() {
+              const tableElement = document.getElementById('dokumen-tabulator');
+              if (tableElement) {
+                tableElement.querySelectorAll('.tabulator-acn-active').forEach(el => el.classList.remove('tabulator-acn-active'));
+                tableElement.querySelectorAll('.tabulator-acn-pulse').forEach(el => el.classList.remove('tabulator-acn-pulse'));
+                tableElement.querySelectorAll('.tabulator-acn-active-row').forEach(el => el.classList.remove('tabulator-acn-active-row'));
+                tableElement.querySelectorAll('.tabulator-acn-active-col').forEach(el => el.classList.remove('tabulator-acn-active-col'));
+              }
+              tabulatorActiveCellState.cell = null;
+            }
+
+            function updateTabulatorActiveCellIndicator(rowIndex, colIndex, cell) {
+              const indicator = ensureTabulatorActiveCellIndicator();
+              const ref = document.getElementById('tabulatorAcnCellRef');
+              const title = document.getElementById('tabulatorAcnColName');
+
+              if (ref) ref.textContent = `${tabulatorColumnIndexToLetter(colIndex)}${rowIndex + 1}`;
+              if (title) title.textContent = tabulatorColumnTitle(cell);
+              indicator.classList.add('visible');
+            }
+
+            function setTabulatorActiveCell(rowIndex, colIndex, options = {}) {
+              const rows = getTabulatorRows();
+              if (rows.length === 0) {
+                clearTabulatorActiveCellHighlight();
+                return false;
+              }
+
+              const nextRowIndex = Math.max(0, Math.min(rowIndex, rows.length - 1));
+              const row = rows[nextRowIndex];
+              const cells = getTabulatorCells(row);
+              if (cells.length === 0) return false;
+
+              const nextColIndex = Math.max(0, Math.min(colIndex, cells.length - 1));
+              const cell = cells[nextColIndex];
+              const rowElement = row.getElement?.();
+              const cellElement = cell.getElement?.();
+
+              if ((!cellElement || !document.body.contains(cellElement)) && !options.afterScroll) {
+                if (typeof row.scrollTo === 'function') {
+                  row.scrollTo('center', false).then(() => {
+                    setTabulatorActiveCell(nextRowIndex, nextColIndex, Object.assign({}, options, { afterScroll: true }));
+                  });
+                }
+                return false;
+              }
+
+              clearTabulatorActiveCellHighlight();
+
+              tabulatorActiveCellState.cell = cell;
+              tabulatorActiveCellState.rowIndex = nextRowIndex;
+              tabulatorActiveCellState.colIndex = nextColIndex;
+              tabulatorActiveCellState.rowId = row.getData?.()?.id ?? null;
+              tabulatorActiveCellState.field = cell.getField?.() || null;
+
+              if (rowElement) rowElement.classList.add('tabulator-acn-active-row');
+              if (cellElement) {
+                cellElement.classList.add('tabulator-acn-active');
+                if (!options.noPulse) {
+                  cellElement.classList.add('tabulator-acn-pulse');
+                  cellElement.addEventListener('animationend', () => {
+                    cellElement.classList.remove('tabulator-acn-pulse');
+                  }, { once: true });
+                }
+              }
+
+              const columnElement = cell.getColumn?.()?.getElement?.();
+              if (columnElement) columnElement.classList.add('tabulator-acn-active-col');
+
+              updateTabulatorActiveCellIndicator(nextRowIndex, nextColIndex, cell);
+
+              if (cellElement && !options.preventScroll) {
+                cellElement.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+              }
+
+              return true;
+            }
+
+            function firstTabulatorDataColumnIndex(cells) {
+              const preferredIndex = cells.findIndex(cell => cell.getField?.() === 'nomor_agenda');
+              if (preferredIndex >= 0) return preferredIndex;
+              const noIndex = cells.findIndex(cell => cell.getField?.() === 'no');
+              return noIndex >= 0 ? noIndex : 0;
+            }
+
+            function autoSelectFirstTabulatorCell(options = {}) {
+              const rows = getTabulatorRows();
+              if (rows.length === 0) return false;
+              const cells = getTabulatorCells(rows[0]);
+              return setTabulatorActiveCell(0, firstTabulatorDataColumnIndex(cells), options);
+            }
+
+            function restoreTabulatorActiveCell(options = {}) {
+              const rows = getTabulatorRows();
+              if (rows.length === 0) {
+                clearTabulatorActiveCellHighlight();
+                return false;
+              }
+
+              let rowIndex = tabulatorActiveCellState.rowIndex;
+              if (tabulatorActiveCellState.rowId !== null) {
+                const foundIndex = rows.findIndex(row => String(row.getData?.()?.id) === String(tabulatorActiveCellState.rowId));
+                if (foundIndex >= 0) rowIndex = foundIndex;
+              }
+
+              rowIndex = Math.max(0, Math.min(rowIndex, rows.length - 1));
+              const cells = getTabulatorCells(rows[rowIndex]);
+              let colIndex = tabulatorActiveCellState.colIndex;
+              if (tabulatorActiveCellState.field) {
+                const foundColIndex = cells.findIndex(cell => cell.getField?.() === tabulatorActiveCellState.field);
+                if (foundColIndex >= 0) colIndex = foundColIndex;
+              }
+
+              return setTabulatorActiveCell(rowIndex, colIndex, options);
+            }
+
+            function moveTabulatorActiveCell(deltaRow, deltaCol) {
+              if (!tabulatorActiveCellState.cell) {
+                autoSelectFirstTabulatorCell();
+                return;
+              }
+
+              const rows = getTabulatorRows();
+              if (rows.length === 0) return;
+
+              const nextRowIndex = Math.max(0, Math.min(tabulatorActiveCellState.rowIndex + deltaRow, rows.length - 1));
+              const nextCells = getTabulatorCells(rows[nextRowIndex]);
+              const nextColIndex = Math.max(0, Math.min(tabulatorActiveCellState.colIndex + deltaCol, nextCells.length - 1));
+              setTabulatorActiveCell(nextRowIndex, nextColIndex);
+            }
+
+            function shouldIgnoreTabulatorActiveCellKey(event) {
+              const activeTag = document.activeElement?.tagName?.toLowerCase();
+              if (['input', 'textarea', 'select'].includes(activeTag)) return true;
+              if (document.activeElement?.isContentEditable) return true;
+              if (document.querySelector('.modal.show, .modal-overlay.show, .swal2-container.swal2-shown, #dokumen-tabulator .tabulator-editing')) return true;
+
+              const target = event.target instanceof Element ? event.target : null;
+              if (!tabulatorActiveCellState.cell && target && !target.closest('#dokumen-tabulator')) {
+                return true;
+              }
+
+              return false;
+            }
+
+            function bindTabulatorActiveCellKeyboard() {
+              if (tabulatorActiveCellState.keyboardBound) return;
+
+              document.addEventListener('keydown', function(event) {
+                const navigationKeys = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Tab', 'Enter', 'Escape'];
+                if (!navigationKeys.includes(event.key)) return;
+                if (shouldIgnoreTabulatorActiveCellKey(event)) return;
+
+                const activeElement = tabulatorActiveCellState.cell?.getElement?.();
+                if (!tabulatorActiveCellState.cell || !activeElement || !document.body.contains(activeElement)) {
+                  restoreTabulatorActiveCell({ noPulse: true, preventScroll: true });
+                }
+
+                switch (event.key) {
+                  case 'ArrowRight':
+                    event.preventDefault();
+                    moveTabulatorActiveCell(0, 1);
+                    break;
+                  case 'ArrowLeft':
+                    event.preventDefault();
+                    moveTabulatorActiveCell(0, -1);
+                    break;
+                  case 'ArrowDown':
+                    event.preventDefault();
+                    moveTabulatorActiveCell(1, 0);
+                    break;
+                  case 'ArrowUp':
+                    event.preventDefault();
+                    moveTabulatorActiveCell(-1, 0);
+                    break;
+                  case 'Tab':
+                    event.preventDefault();
+                    moveTabulatorActiveCell(0, event.shiftKey ? -1 : 1);
+                    break;
+                  case 'Enter':
+                    if (tabulatorActiveCellState.cell && canEditTabulatorCell(tabulatorActiveCellState.cell)) {
+                      event.preventDefault();
+                      tabulatorActiveCellState.cell.edit();
+                    }
+                    break;
+                  case 'Escape':
+                    event.preventDefault();
+                    restoreTabulatorActiveCell({ noPulse: true, preventScroll: true });
+                    break;
+                  default:
+                    break;
+                }
+              });
+
+              tabulatorActiveCellState.keyboardBound = true;
+            }
+
+            function bindTabulatorActiveCell() {
+              if (!tabelDokumen) return;
+              ensureTabulatorActiveCellIndicator();
+              bindTabulatorActiveCellKeyboard();
+
+              if (tabulatorActiveCellState.boundTable === tabelDokumen) return;
+              tabelDokumen.on('cellClick', function(event, cell) {
+                const target = event.target instanceof Element ? event.target : null;
+                if (target && target.closest('a, button, input, select, textarea, .btn, .btn-action')) return;
+                const row = cell.getRow();
+                const rows = getTabulatorRows();
+                const cells = getTabulatorCells(row);
+                const rowIndex = rows.indexOf(row);
+                const colIndex = cells.indexOf(cell);
+                if (rowIndex >= 0 && colIndex >= 0) {
+                  setTabulatorActiveCell(rowIndex, colIndex);
+                }
+              });
+
+              tabelDokumen.on('renderComplete', function() {
+                if (tabulatorActiveCellState.rowId !== null || tabulatorActiveCellState.cell) {
+                  restoreTabulatorActiveCell({ noPulse: true, preventScroll: true });
+                }
+              });
+
+              tabulatorActiveCellState.boundTable = tabelDokumen;
+            }
+
             function addSelectedDocument(rowData) {
               if (typeof selectedDocuments === 'undefined') return;
               selectedDocuments.set(String(rowData.id), {
@@ -6608,6 +6997,7 @@
                 if (tabelDokumen) {
                   tabelDokumen.setColumns(buildTabulatorColumns(columns, availableColumns));
                   await tabelDokumen.replaceData(rows);
+                  bindTabulatorActiveCell();
                 } else {
                   tabelDokumen = new Tabulator('#dokumen-tabulator', {
                     data: rows,
@@ -6639,6 +7029,7 @@
                       removeSelectedDocument(row.getData());
                     },
                   });
+                  bindTabulatorActiveCell();
                 }
 
                 if (typeof selectedDocuments !== 'undefined') {
@@ -6663,7 +7054,14 @@
                   showRefreshToast('error', 'Gagal memperbarui data. Coba lagi.');
                 }
               } finally {
-                if (!loadFailed) setTabulatorLoading(false);
+                if (!loadFailed) {
+                  setTabulatorLoading(false);
+                  requestAnimationFrame(() => {
+                    if (!restoreTabulatorActiveCell({ noPulse: true, preventScroll: true })) {
+                      autoSelectFirstTabulatorCell({ noPulse: true, preventScroll: true });
+                    }
+                  });
+                }
               }
             }
 
@@ -6768,8 +7166,4 @@
               if (tabelDokumen) tabelDokumen.setHeight(tabulatorHeight());
             });
           </script>
-
-          {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
-@include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
-
 @endsection
