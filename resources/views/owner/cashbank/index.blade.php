@@ -3,7 +3,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js?v={{ time() }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js?v={{ time() }}"></script>
 
 <style>
 *,*::before,*::after{box-sizing:border-box}
@@ -308,10 +307,10 @@ function rupiahFull(float $n): string {
     </div>
   </div>
 
-  {{-- ── ROW 3: PENERIMAAN per KOMODITAS + Donut ── --}}
+  {{-- ── ROW 3: PENERIMAAN per KOMODITAS (Donut Chart Interaktif) ── --}}
   <div class="cb-grid-2" style="margin-bottom:18px">
 
-    {{-- Chart Donut: Komposisi Penerimaan --}}
+    {{-- Donut Chart Interaktif: Komposisi Penerimaan --}}
     <div class="cb-card" style="animation-delay:.36s">
       <div class="cb-card-header">
         <div class="cb-card-title" style="color:var(--green)">
@@ -321,31 +320,40 @@ function rupiahFull(float $n): string {
           Komposisi Penerimaan per Komoditas
         </div>
       </div>
-      <div class="cb-card-body" style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
-        <div style="flex:0 0 280px;min-height:280px;position:relative;border:2px dashed #0d9488;display:flex;align-items:center;justify-content:center">
-          <canvas id="chartPenerimaan"></canvas>
-          <div id="chartDebug" style="position:absolute;top:10px;left:10px;font-size:10px;background:yellow;padding:4px;z-index:999">Chart Loading...</div>
+      <div class="cb-card-body" style="padding:24px">
+        {{-- Metric Cards --}}
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
+          @php
+            $topKomoditas = collect($penerimaanKategori)->sortByDesc('total')->first();
+            $jumlahKomoditas = count($penerimaanKategori);
+          @endphp
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px">
+            <div style="font-size:10px;color:#15803d;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Total Penerimaan</div>
+            <div style="font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:#15803d">{{ rupiah((float)$ringkasan['total_penerimaan']) }}</div>
+          </div>
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px">
+            <div style="font-size:10px;color:#1e40af;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Komoditas Utama</div>
+            <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:#1e40af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ $topKomoditas ? $topKomoditas->nama_kriteria : '-' }}">{{ $topKomoditas ? $topKomoditas->nama_kriteria : '-' }}</div>
+          </div>
+          <div style="background:#fef3c7;border:1px solid #fde047;border-radius:8px;padding:12px">
+            <div style="font-size:10px;color:#a16207;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Jumlah Komoditas</div>
+            <div style="font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:#a16207">{{ $jumlahKomoditas }} item</div>
+          </div>
         </div>
-        <div style="flex:1;min-width:160px">
-          @foreach($penerimaanKategori as $pk)
-            @php $pct = $ringkasan['total_penerimaan'] > 0
-              ? round($pk->total / $ringkasan['total_penerimaan'] * 100, 1) : 0; @endphp
-            <div style="margin-bottom:8px">
-              <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px">
-                <span style="font-weight:600;color:var(--primary)">{{ $pk->nama_kriteria }}</span>
-                <span style="color:var(--muted)">{{ $pct }}%</span>
-              </div>
-              <div style="background:#f1f5f9;border-radius:4px;height:6px;overflow:hidden">
-                <div style="height:6px;border-radius:4px;background:linear-gradient(90deg,#16a34a,#0d9488);width:{{ $pct }}%"></div>
-              </div>
-              <div style="font-size:10.5px;color:var(--muted);margin-top:1px">
-                {{ rupiahFull((float)$pk->total) }}
-              </div>
-            </div>
-          @endforeach
-          @if(empty($penerimaanKategori))
-            <div class="cb-empty">Belum ada data penerimaan</div>
-          @endif
+
+        {{-- Chart + Legend Container --}}
+        <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;justify-content:center">
+          {{-- Donut Chart --}}
+          <div style="flex:0 0 280px;height:280px;position:relative">
+            <canvas id="chartPenerimaan" aria-label="Komposisi penerimaan per komoditas dalam bentuk donut chart">
+              Grafik menampilkan komposisi penerimaan dari berbagai komoditas
+            </canvas>
+          </div>
+
+          {{-- Custom Legend --}}
+          <div id="customLegend" style="flex:1;min-width:200px;max-width:360px">
+            <!-- Legend will be generated by JavaScript -->
+          </div>
         </div>
       </div>
     </div>
@@ -535,161 +543,224 @@ if (ctxTren && trenData.length) {
   });
 }
 
-// ── CHART PIE PENERIMAAN dengan Leader Lines ──────────────────────────
+// ── DONUT CHART INTERAKTIF: Komposisi Penerimaan ──────────────────────────
+
+// Color palette sesuai spesifikasi
+const CHART_COLORS = ['#1D9E75', '#378ADD', '#7F77DD', '#EF9F27', '#D4537E', '#888780', '#85B7EB', '#C0DD97'];
+
+// Format Rupiah Indonesia
+function formatRupiah(value) {
+  if (value >= 1_000_000_000_000) return 'Rp ' + (value / 1_000_000_000_000).toFixed(2) + ' T';
+  if (value >= 1_000_000_000) return 'Rp ' + (value / 1_000_000_000).toFixed(2) + ' M';
+  if (value >= 1_000_000) return 'Rp ' + (value / 1_000_000).toFixed(2) + ' Jt';
+  return 'Rp ' + value.toLocaleString('id-ID');
+}
+
+// Initialize chart
 const ctxPen = document.getElementById('chartPenerimaan')?.getContext('2d');
-const debugEl = document.getElementById('chartDebug');
+let chartInstance = null;
+let selectedIndex = null;
 
-console.log('Chart Initialization:', {
-  canvas: !!document.getElementById('chartPenerimaan'),
-  context: !!ctxPen,
-  dataLength: penerimaanData?.length || 0,
-  data: penerimaanData
-});
-
-if (ctxPen && penerimaanData.length) {
-  // Calculate total for percentage
+if (ctxPen && penerimaanData && penerimaanData.length > 0) {
+  // Calculate total
   const totalPenerimaan = penerimaanData.reduce((sum, d) => sum + parseFloat(d.total), 0);
 
-  if (debugEl) {
-    debugEl.textContent = 'Creating chart...';
-    debugEl.style.background = 'lightblue';
-  }
+  // Prepare data dengan persentase
+  const chartData = penerimaanData.map((d, i) => ({
+    label: d.nama_kriteria,
+    value: parseFloat(d.total),
+    pct: ((parseFloat(d.total) / totalPenerimaan) * 100).toFixed(1),
+    color: CHART_COLORS[i % CHART_COLORS.length]
+  }));
 
-  new Chart(ctxPen, {
-    type: 'pie',
+  // Center Label Plugin
+  const centerLabelPlugin = {
+    id: 'centerLabel',
+    beforeDraw(chart) {
+      const { ctx, chartArea: { width, height } } = chart;
+      ctx.save();
+
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      // Data yang akan ditampilkan di center
+      let displayText = '';
+      let displayValue = '';
+      let displayPct = '';
+
+      if (selectedIndex !== null && chartData[selectedIndex]) {
+        const item = chartData[selectedIndex];
+        displayText = item.label;
+        displayValue = formatRupiah(item.value);
+        displayPct = item.pct + '%';
+      } else {
+        // Default: tampilkan total
+        displayText = 'Total';
+        displayValue = formatRupiah(totalPenerimaan);
+        displayPct = '100%';
+      }
+
+      // Draw text di center
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Persentase (besar)
+      ctx.font = 'bold 32px Sora, sans-serif';
+      ctx.fillStyle = '#1a2340';
+      ctx.fillText(displayPct, centerX, centerY - 20);
+
+      // Label komoditas
+      ctx.font = '600 13px Plus Jakarta Sans, sans-serif';
+      ctx.fillStyle = '#8492a6';
+      const maxWidth = 120;
+      const truncatedText = displayText.length > 18 ? displayText.substring(0, 18) + '...' : displayText;
+      ctx.fillText(truncatedText, centerX, centerY + 8);
+
+      // Nilai Rupiah
+      ctx.font = '500 11px Plus Jakarta Sans, sans-serif';
+      ctx.fillStyle = '#8492a6';
+      ctx.fillText(displayValue, centerX, centerY + 26);
+
+      ctx.restore();
+    }
+  };
+
+  // Create chart
+  chartInstance = new Chart(ctxPen, {
+    type: 'doughnut',
     data: {
-      labels: penerimaanData.map(d => d.nama_kriteria),
+      labels: chartData.map(d => d.label),
       datasets: [{
-        data: penerimaanData.map(d => parseFloat(d.total)),
-        backgroundColor: COLORS_PIE,
+        data: chartData.map(d => d.value),
+        backgroundColor: chartData.map(d => d.color),
         borderWidth: 3,
         borderColor: '#fff',
         hoverBorderWidth: 4,
         hoverBorderColor: '#f8fafc',
+        hoverOffset: 12, // Slice keluar saat hover/klik
+        offset: chartData.map((_, i) => selectedIndex === i ? 12 : 0)
       }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
-      layout: {
-        padding: {
-          top: 20,
-          right: 80,
-          bottom: 20,
-          left: 80
-        }
-      },
+      maintainAspectRatio: false,
+      cutout: '62%', // Donut hole size
       plugins: {
-        legend: { display: false },
+        legend: { display: false }, // Pakai custom legend
         tooltip: {
           enabled: true,
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          padding: 12,
-          bodyFont: { size: 12, family: 'Plus Jakarta Sans' },
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          padding: 14,
+          bodyFont: { size: 13, family: 'Plus Jakarta Sans' },
+          titleFont: { size: 14, family: 'Plus Jakarta Sans', weight: '600' },
           callbacks: {
             title: (ctx) => ctx[0].label,
             label: (ctx) => {
               const pct = ((ctx.raw / totalPenerimaan) * 100).toFixed(1);
-              return ' ' + pct + '% • Rp ' + ctx.raw.toLocaleString('id-ID');
+              return [
+                ' Nilai: ' + formatRupiah(ctx.raw),
+                ' Persentase: ' + pct + '%'
+              ];
             }
           }
-        },
-        datalabels: {
-          color: '#1a2340',
-          font: {
-            size: 11,
-            weight: '600',
-            family: 'Plus Jakarta Sans'
-          },
-          formatter: (value, ctx) => {
-            const pct = ((value / totalPenerimaan) * 100).toFixed(1);
-            const label = ctx.chart.data.labels[ctx.dataIndex];
-            // Only show label if percentage > 0.5%
-            return pct > 0.5 ? label + '\n' + pct + '%' : '';
-          },
-          anchor: 'end',
-          align: 'end',
-          offset: 8,
-          clamp: false,
-          clip: false,
-          textAlign: 'center',
-          backgroundColor: 'rgba(255,255,255,0.95)',
-          borderColor: (ctx) => COLORS_PIE[ctx.dataIndex] || '#999',
-          borderWidth: 2,
-          borderRadius: 6,
-          padding: 6,
-          display: true,
         }
       },
-      interaction: {
-        mode: 'nearest',
-        intersect: true
+      onClick: (event, activeElements) => {
+        if (activeElements.length > 0) {
+          const index = activeElements[0].index;
+          selectedIndex = selectedIndex === index ? null : index; // Toggle selection
+
+          // Update offset untuk highlight
+          chartInstance.data.datasets[0].offset = chartData.map((_, i) => selectedIndex === i ? 12 : 0);
+          chartInstance.update();
+
+          // Update custom legend
+          updateLegendSelection(index);
+        }
       },
       animation: {
         animateRotate: true,
         animateScale: true,
-        duration: 800,
+        duration: 600,
         easing: 'easeInOutQuart'
       }
     },
-    plugins: [{
-      // Custom plugin to draw leader lines
-      id: 'leaderLines',
-      afterDatasetDraw(chart) {
-        const ctx = chart.ctx;
-        const meta = chart.getDatasetMeta(0);
-
-        meta.data.forEach((element, index) => {
-          const model = element;
-          const pct = ((chart.data.datasets[0].data[index] / totalPenerimaan) * 100);
-
-          // Only draw lines for segments > 0.5%
-          if (pct <= 0.5) return;
-
-          // Get center and outer points
-          const centerX = model.x;
-          const centerY = model.y;
-          const startAngle = model.startAngle;
-          const endAngle = model.endAngle;
-          const midAngle = startAngle + (endAngle - startAngle) / 2;
-          const radius = model.outerRadius;
-
-          // Calculate points for leader line
-          const x1 = centerX + Math.cos(midAngle) * (radius - 5);
-          const y1 = centerY + Math.sin(midAngle) * (radius - 5);
-          const x2 = centerX + Math.cos(midAngle) * (radius + 12);
-          const y2 = centerY + Math.sin(midAngle) * (radius + 12);
-
-          // Draw leader line
-          ctx.save();
-          ctx.strokeStyle = COLORS_PIE[index] || '#999';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.stroke();
-          ctx.restore();
-        });
-      }
-    }]
+    plugins: [centerLabelPlugin]
   });
 
-  // Remove debug element after chart is created
-  if (debugEl) {
-    setTimeout(() => debugEl.remove(), 1000);
+  // Generate Custom Legend
+  function generateCustomLegend() {
+    const legendContainer = document.getElementById('customLegend');
+    if (!legendContainer) return;
+
+    let html = '<div style="display:grid;grid-template-columns:1fr;gap:8px">';
+
+    chartData.forEach((item, index) => {
+      html += `
+        <div class="legend-item" data-index="${index}"
+             style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;transition:all 0.2s;background:#fafbfd;border:2px solid transparent"
+             onmouseover="this.style.background='#f1f5f9';this.style.borderColor='${item.color}'"
+             onmouseout="if(!this.classList.contains('active')){this.style.background='#fafbfd';this.style.borderColor='transparent'}"
+             onclick="handleLegendClick(${index})">
+          <div style="width:12px;height:12px;border-radius:3px;background:${item.color};flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:#1a2340;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.label}</div>
+            <div style="font-size:10px;color:#8492a6;margin-top:2px">${formatRupiah(item.value)}</div>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:${item.color};font-family:Sora,sans-serif">${item.pct}%</div>
+        </div>
+      `;
+    });
+
+    html += '</div>';
+    legendContainer.innerHTML = html;
   }
-  console.log('Chart created successfully');
+
+  // Handle legend click
+  window.handleLegendClick = function(index) {
+    selectedIndex = selectedIndex === index ? null : index;
+
+    // Update chart
+    chartInstance.data.datasets[0].offset = chartData.map((_, i) => selectedIndex === i ? 12 : 0);
+    chartInstance.update();
+
+    // Update legend selection
+    updateLegendSelection(index);
+  };
+
+  // Update legend selection visual
+  function updateLegendSelection(index) {
+    const items = document.querySelectorAll('.legend-item');
+    items.forEach((item, i) => {
+      if (i === selectedIndex) {
+        item.classList.add('active');
+        item.style.background = '#eff6ff';
+        item.style.borderColor = chartData[i].color;
+      } else {
+        item.classList.remove('active');
+        item.style.background = '#fafbfd';
+        item.style.borderColor = 'transparent';
+      }
+    });
+  }
+
+  // Generate legend on load
+  generateCustomLegend();
+
+  console.log('✅ Donut chart created successfully with', chartData.length, 'items');
 
 } else {
-  console.error('Chart cannot be created:', {
+  console.error('❌ Chart initialization failed:', {
     hasCanvas: !!document.getElementById('chartPenerimaan'),
     hasContext: !!ctxPen,
-    hasData: penerimaanData?.length > 0
+    hasData: penerimaanData && penerimaanData.length > 0,
+    dataLength: penerimaanData?.length || 0
   });
-  if (debugEl) {
-    debugEl.textContent = 'Chart Error: ' + (!ctxPen ? 'No canvas context' : 'No data');
-    debugEl.style.background = 'red';
-    debugEl.style.color = 'white';
+
+  // Show error in legend area
+  const legendContainer = document.getElementById('customLegend');
+  if (legendContainer) {
+    legendContainer.innerHTML = '<div style="color:#dc2626;font-size:12px;padding:20px;text-align:center;background:#fef2f2;border-radius:8px">⚠️ Tidak ada data untuk ditampilkan</div>';
   }
 }
 </script>
