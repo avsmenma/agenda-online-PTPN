@@ -7140,6 +7140,65 @@
               indicator.classList.add('visible');
             }
 
+            function visibleFrozenBoundary(holderRect, side) {
+              const tableElement = document.getElementById('dokumen-tabulator');
+              if (!tableElement) return null;
+
+              const midpoint = holderRect.left + (holderRect.width / 2);
+              const frozenElements = Array.from(tableElement.querySelectorAll('.tabulator-frozen'));
+              const boundaries = frozenElements
+                .map(el => el.getBoundingClientRect())
+                .filter(rect => rect.width > 0 && rect.height > 0)
+                .filter(rect => rect.bottom > holderRect.top && rect.top < holderRect.bottom);
+
+              if (side === 'left') {
+                const leftFrozen = boundaries.filter(rect => rect.left <= midpoint && rect.left < holderRect.left + 40);
+                if (!leftFrozen.length) return null;
+                return Math.max(...leftFrozen.map(rect => rect.right));
+              }
+
+              const rightFrozen = boundaries.filter(rect => rect.left >= midpoint && rect.right > holderRect.right - 80);
+              if (!rightFrozen.length) return null;
+              return Math.min(...rightFrozen.map(rect => rect.left));
+            }
+
+            function ensureTabulatorCellFullyVisible(cell) {
+              const cellElement = cell?.getElement?.();
+              const tableElement = document.getElementById('dokumen-tabulator');
+              const holder = tableElement?.querySelector?.('.tabulator-tableholder');
+              if (!cellElement || !holder) return;
+
+              const columnDefinition = cell.getColumn?.()?.getDefinition?.() || {};
+              const isFrozenCell = columnDefinition.frozen || cellElement.classList.contains('tabulator-frozen');
+              const margin = 8;
+
+              try {
+                cellElement.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+              } catch (error) {
+                cellElement.scrollIntoView(false);
+              }
+
+              if (isFrozenCell) return;
+
+              requestAnimationFrame(() => {
+                const holderRect = holder.getBoundingClientRect();
+                const cellRect = cellElement.getBoundingClientRect();
+                const leftBoundary = Math.max(holderRect.left, visibleFrozenBoundary(holderRect, 'left') ?? holderRect.left);
+                const rightBoundary = Math.min(holderRect.right, visibleFrozenBoundary(holderRect, 'right') ?? holderRect.right);
+                let nextScrollLeft = holder.scrollLeft;
+
+                if (cellRect.right > rightBoundary - margin) {
+                  nextScrollLeft += cellRect.right - (rightBoundary - margin);
+                } else if (cellRect.left < leftBoundary + margin) {
+                  nextScrollLeft -= (leftBoundary + margin) - cellRect.left;
+                }
+
+                if (Math.abs(nextScrollLeft - holder.scrollLeft) > 1) {
+                  holder.scrollLeft = Math.max(0, nextScrollLeft);
+                }
+              });
+            }
+
             function setTabulatorActiveCell(rowIndex, colIndex, options = {}) {
               const rows = getTabulatorRows();
               if (rows.length === 0) {
@@ -7191,7 +7250,7 @@
               updateTabulatorActiveCellIndicator(nextRowIndex, nextColIndex, cell);
 
               if (cellElement && !options.preventScroll) {
-                cellElement.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+                ensureTabulatorCellFullyVisible(cell);
               }
 
               return true;
