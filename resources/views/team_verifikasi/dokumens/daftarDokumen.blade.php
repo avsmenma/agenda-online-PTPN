@@ -1294,13 +1294,75 @@
       min-width: 120px;
     }
 
-    /* Ensure checkbox and No columns are NOT sticky */
+    /* Sticky columns for checkbox, No, and Nomor Agenda at left */
     .table-enhanced .col-checkbox,
+    .table-enhanced .col-no,
+    .table-enhanced .col-nomor_agenda {
+      position: sticky !important;
+      background-clip: padding-box;
+    }
+
+    .table-enhanced thead .col-checkbox,
+    .table-enhanced thead .col-no,
+    .table-enhanced thead .col-nomor_agenda {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
+      z-index: 40 !important;
+    }
+
+    .table-enhanced tbody .col-checkbox,
+    .table-enhanced tbody .col-no,
+    .table-enhanced tbody .col-nomor_agenda {
+      background: #ffffff !important;
+      z-index: 25 !important;
+    }
+
+    .table-enhanced tbody tr:nth-child(even) .col-checkbox,
+    .table-enhanced tbody tr:nth-child(even) .col-no,
+    .table-enhanced tbody tr:nth-child(even) .col-nomor_agenda {
+      background: #f8f9fa !important;
+    }
+
+    .table-enhanced tbody tr:hover .col-checkbox,
+    .table-enhanced tbody tr:hover .col-no,
+    .table-enhanced tbody tr:hover .col-nomor_agenda {
+      background: #e8f5f3 !important;
+    }
+
+    .table-enhanced .col-checkbox {
+      left: 0 !important;
+    }
+
     .table-enhanced .col-no {
-      position: static !important;
-      left: auto !important;
-      z-index: auto !important;
-      box-shadow: none !important;
+      left: 50px !important;
+    }
+
+    .table-enhanced .col-nomor_agenda {
+      left: 130px !important;
+    }
+
+    /* Sticky column for Pengurus Dokumen at right */
+    .table-enhanced .col-handler {
+      position: sticky !important;
+      right: 0 !important;
+      background-clip: padding-box;
+    }
+
+    .table-enhanced thead .col-handler {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
+      z-index: 40 !important;
+    }
+
+    .table-enhanced tbody .col-handler {
+      background: #ffffff !important;
+      z-index: 25 !important;
+    }
+
+    .table-enhanced tbody tr:nth-child(even) .col-handler {
+      background: #f8f9fa !important;
+    }
+
+    .table-enhanced tbody tr:hover .col-handler {
+      background: #e8f5f3 !important;
     }
 
     /* Mobile optimization */
@@ -4212,6 +4274,7 @@
     #documentTableContainer .table-enhanced thead .col-no,
     #documentTableContainer .table-enhanced thead .col-nomor_agenda,
     #documentTableContainer .table-enhanced thead .col-handler {
+      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
       z-index: 40 !important;
     }
 
@@ -4219,8 +4282,22 @@
     #documentTableContainer .table-enhanced tbody .col-no,
     #documentTableContainer .table-enhanced tbody .col-nomor_agenda,
     #documentTableContainer .table-enhanced tbody .col-handler {
-      background: inherit !important;
+      background: #ffffff !important;
       z-index: 25 !important;
+    }
+
+    #documentTableContainer .table-enhanced tbody tr:nth-child(even) .col-checkbox,
+    #documentTableContainer .table-enhanced tbody tr:nth-child(even) .col-no,
+    #documentTableContainer .table-enhanced tbody tr:nth-child(even) .col-nomor_agenda,
+    #documentTableContainer .table-enhanced tbody tr:nth-child(even) .col-handler {
+      background: #f8f9fa !important;
+    }
+
+    #documentTableContainer .table-enhanced tbody tr:hover .col-checkbox,
+    #documentTableContainer .table-enhanced tbody tr:hover .col-no,
+    #documentTableContainer .table-enhanced tbody tr:hover .col-nomor_agenda,
+    #documentTableContainer .table-enhanced tbody tr:hover .col-handler {
+      background: #e8f5f3 !important;
     }
 
     #documentTableContainer .table-enhanced .col-checkbox {
