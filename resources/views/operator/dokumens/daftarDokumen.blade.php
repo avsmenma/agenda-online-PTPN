@@ -6723,6 +6723,71 @@
               };
             }
 
+            function createTabulatorInputEditor(field, type) {
+              return function(cell, onRendered, success, cancel) {
+                const input = document.createElement(type === 'textarea' ? 'textarea' : 'input');
+                const currentValue = normalizeInlineEditValue(field, cell.getValue());
+
+                input.className = 'tabulator-inline-input-editor';
+                input.value = currentValue ?? '';
+
+                if (type === 'date') {
+                  input.type = 'date';
+                } else if (type === 'number') {
+                  input.type = 'text';
+                  input.inputMode = 'numeric';
+                } else if (type === 'textarea') {
+                  input.rows = 4;
+                  input.maxLength = 2000;
+                } else {
+                  input.type = 'text';
+                  input.maxLength = 255;
+                }
+
+                function finish(action, value) {
+                  action(value);
+                }
+
+                input.addEventListener('keydown', event => {
+                  if (event.key === 'Escape') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    finish(cancel);
+                    return;
+                  }
+
+                  if (event.key === 'Enter' && type !== 'textarea') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    finish(success, input.value);
+                    return;
+                  }
+
+                  if (event.key === 'Enter' && type === 'textarea' && (event.ctrlKey || event.metaKey)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    finish(success, input.value);
+                    return;
+                  }
+
+                  if (event.key === 'Tab') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const shift = event.shiftKey;
+                    finish(success, input.value);
+                    setTimeout(() => moveTabulatorActiveCell(0, shift ? -1 : 1), 0);
+                  }
+                });
+
+                onRendered(function() {
+                  input.focus({ preventScroll: true });
+                  if (type !== 'date' && typeof input.select === 'function') input.select();
+                });
+
+                return input;
+              };
+            }
+
             function isInlineEditableField(field) {
               return Object.prototype.hasOwnProperty.call(tabulatorInlineFieldTypes, field)
                 && !tabulatorNonEditableFields.has(field);
@@ -6735,11 +6800,11 @@
 
             function editorForTabulatorField(field) {
               const type = tabulatorInlineFieldTypes[field] || 'text';
-              if (type === 'textarea') return 'textarea';
-              if (type === 'number') return 'number';
-              if (type === 'date') return 'input';
+              if (type === 'textarea') return createTabulatorInputEditor(field, 'textarea');
+              if (type === 'number') return createTabulatorInputEditor(field, 'number');
+              if (type === 'date') return createTabulatorInputEditor(field, 'date');
               if (type.startsWith('select_')) return createDropdownEditor(field);
-              return 'input';
+              return createTabulatorInputEditor(field, 'text');
             }
 
             function editorParamsForTabulatorField(field) {
