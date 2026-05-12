@@ -4205,7 +4205,6 @@
     #documentTableContainer .table-enhanced .col-nomor_agenda,
     #documentTableContainer .table-enhanced .col-handler {
       position: sticky !important;
-      background: #ffffff;
       background-clip: padding-box;
     }
 
@@ -4213,7 +4212,6 @@
     #documentTableContainer .table-enhanced thead .col-no,
     #documentTableContainer .table-enhanced thead .col-nomor_agenda,
     #documentTableContainer .table-enhanced thead .col-handler {
-      background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
       z-index: 40 !important;
     }
 
@@ -4221,54 +4219,24 @@
     #documentTableContainer .table-enhanced tbody .col-no,
     #documentTableContainer .table-enhanced tbody .col-nomor_agenda,
     #documentTableContainer .table-enhanced tbody .col-handler {
+      background: inherit !important;
       z-index: 25 !important;
     }
 
-    #documentTableContainer .table-enhanced tbody tr:nth-child(even) .col-checkbox,
-    #documentTableContainer .table-enhanced tbody tr:nth-child(even) .col-no,
-    #documentTableContainer .table-enhanced tbody tr:nth-child(even) .col-nomor_agenda,
-    #documentTableContainer .table-enhanced tbody tr:nth-child(even) .col-handler {
-      background: #f8fafc;
-    }
-
-    #documentTableContainer .table-enhanced tbody tr:nth-child(odd) .col-checkbox,
-    #documentTableContainer .table-enhanced tbody tr:nth-child(odd) .col-no,
-    #documentTableContainer .table-enhanced tbody tr:nth-child(odd) .col-nomor_agenda,
-    #documentTableContainer .table-enhanced tbody tr:nth-child(odd) .col-handler {
-      background: #ffffff;
-    }
-
-    #documentTableContainer .table-enhanced tbody tr:hover .col-checkbox,
-    #documentTableContainer .table-enhanced tbody tr:hover .col-no,
-    #documentTableContainer .table-enhanced tbody tr:hover .col-nomor_agenda,
-    #documentTableContainer .table-enhanced tbody tr:hover .col-handler {
-      background: #f3faf9 !important;
-    }
-
     #documentTableContainer .table-enhanced .col-checkbox {
-      width: 64px !important;
-      min-width: 64px !important;
       left: 0 !important;
     }
 
     #documentTableContainer .table-enhanced .col-no {
-      width: 88px !important;
-      min-width: 88px !important;
-      left: 64px !important;
+      left: var(--verif-sticky-no-left, 64px) !important;
     }
 
     #documentTableContainer .table-enhanced .col-nomor_agenda {
-      width: 210px !important;
-      min-width: 210px !important;
-      left: 152px !important;
-      box-shadow: 3px 0 0 rgba(15, 23, 42, 0.12);
+      left: var(--verif-sticky-agenda-left, 152px) !important;
     }
 
     #documentTableContainer .table-enhanced .col-handler {
-      width: 240px !important;
-      min-width: 240px !important;
       right: 0 !important;
-      box-shadow: -3px 0 0 rgba(15, 23, 42, 0.12);
     }
 
     #documentTableContainer .table-enhanced tbody .col-handler select,
@@ -9265,13 +9233,13 @@
   #documentTableContainer .table-enhanced .col-no,
   body.is-fullscreen #documentTableContainer .table-enhanced .col-no,
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-no {
-    left: 64px !important;
+    left: var(--verif-sticky-no-left, 64px) !important;
   }
 
   #documentTableContainer .table-enhanced .col-nomor_agenda,
   body.is-fullscreen #documentTableContainer .table-enhanced .col-nomor_agenda,
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-nomor_agenda {
-    left: 152px !important;
+    left: var(--verif-sticky-agenda-left, 152px) !important;
   }
 
   #documentTableContainer .table-enhanced .col-handler,
@@ -9280,6 +9248,35 @@
     right: 0 !important;
   }
 </style>
+<script>
+  (function () {
+    function syncVerificationStickyOffsets() {
+      const container = document.getElementById('documentTableContainer');
+      const table = container ? container.querySelector('.table-enhanced') : null;
+      if (!container || !table) return;
+
+      const checkboxCol = table.querySelector('thead .col-checkbox') || table.querySelector('tbody .col-checkbox');
+      const noCol = table.querySelector('thead .col-no') || table.querySelector('tbody .col-no');
+      const checkboxWidth = checkboxCol ? checkboxCol.getBoundingClientRect().width : 0;
+      const noWidth = noCol ? noCol.getBoundingClientRect().width : 0;
+
+      if (checkboxWidth > 0) {
+        container.style.setProperty('--verif-sticky-no-left', `${Math.round(checkboxWidth)}px`);
+        container.style.setProperty('--verif-sticky-agenda-left', `${Math.round(checkboxWidth + noWidth)}px`);
+      }
+    }
+
+    window.syncVerificationStickyOffsets = syncVerificationStickyOffsets;
+    window.addEventListener('resize', () => requestAnimationFrame(syncVerificationStickyOffsets));
+    window.addEventListener('document-table-refreshed', () => requestAnimationFrame(syncVerificationStickyOffsets));
+    document.addEventListener('fullscreenchange', () => setTimeout(syncVerificationStickyOffsets, 100));
+    document.addEventListener('DOMContentLoaded', () => {
+      syncVerificationStickyOffsets();
+      setTimeout(syncVerificationStickyOffsets, 250);
+    });
+    requestAnimationFrame(syncVerificationStickyOffsets);
+  })();
+</script>
 @include('partials.auto-refresh-documents')
 
 @endsection
