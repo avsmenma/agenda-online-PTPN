@@ -9145,9 +9145,8 @@
   #documentTableContainer .table-enhanced thead th.acn-active-col,
   body.is-fullscreen #documentTableContainer .table-enhanced thead th.acn-active-col,
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead th.acn-active-col {
-    background: linear-gradient(135deg, #0b5f55 0%, #083E40 100%) !important;
-    box-shadow:
-      inset 0 -3px 0 #f59e0b !important;
+    background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
+    box-shadow: none !important;
   }
 </style>
 @include('partials.auto-refresh-documents')
