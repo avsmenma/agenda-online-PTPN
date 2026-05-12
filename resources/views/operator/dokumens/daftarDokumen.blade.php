@@ -4,7 +4,7 @@
   <style>
     #documentTableContainer.table-dokumen {
       border-radius: 8px;
-      overflow: hidden;
+      overflow: visible;
     }
 
     #dokumen-tabulator {
@@ -183,6 +183,76 @@
       font: inherit;
       outline: none;
       background: #fff;
+    }
+
+    .tabulator-dropdown-editor {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid #889717;
+      border-radius: 6px;
+      padding: 7px 32px 7px 9px;
+      color: #0f172a;
+      font: inherit;
+      text-align: left;
+      outline: none;
+      background: #fff;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tabulator-dropdown-editor::after {
+      content: '\f107';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+      pointer-events: none;
+    }
+
+    .tabulator-dropdown-panel {
+      position: fixed;
+      background: #ffffff;
+      border: 2px solid #889717;
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2);
+      padding: 4px;
+      z-index: 100000;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .tabulator-dropdown-option {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-radius: 6px;
+      color: #0f172a;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: normal;
+      line-height: 1.35;
+    }
+
+    .tabulator-dropdown-option:hover,
+    .tabulator-dropdown-option.is-active {
+      background: #889717;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .tabulator-dropdown-option.is-empty {
+      color: #64748b;
+      font-style: italic;
+    }
+
+    .tabulator-dropdown-option.is-empty.is-active,
+    .tabulator-dropdown-option.is-empty:hover {
+      color: #ffffff;
     }
 
     /* Autocomplete dropdown styling */
@@ -6442,6 +6512,217 @@
               return {};
             }
 
+            function normalizeDropdownEditorOptions(values) {
+              const options = [{ value: null, label: '(Kosong)', empty: true }];
+              const seen = new Set(['__null__']);
+
+              function addOption(value, label) {
+                const normalizedValue = value === undefined ? '' : value;
+                const key = normalizedValue === null ? '__null__' : String(normalizedValue);
+                if (seen.has(key)) return;
+                seen.add(key);
+                options.push({
+                  value: normalizedValue,
+                  label: String(label ?? normalizedValue ?? ''),
+                  empty: normalizedValue === null || normalizedValue === '',
+                });
+              }
+
+              if (Array.isArray(values)) {
+                values.forEach(item => {
+                  if (item && typeof item === 'object') {
+                    addOption(item.value ?? item.label ?? '', item.label ?? item.value ?? '');
+                  } else {
+                    addOption(item, item);
+                  }
+                });
+              } else {
+                Object.entries(values || {}).forEach(([value, label]) => addOption(value, label));
+              }
+
+              return options;
+            }
+
+            function dropdownValuesMatch(a, b) {
+              return String(a ?? '') === String(b ?? '');
+            }
+
+            function createDropdownEditor(field) {
+              return function(cell, onRendered, success, cancel) {
+                const options = normalizeDropdownEditorOptions(tabulatorEditorValues(field));
+                const initialValue = cell.getValue();
+                let activeIndex = Math.max(0, options.findIndex(option => dropdownValuesMatch(option.value, initialValue)));
+                let closed = false;
+                let typeahead = '';
+                let typeaheadTimer = null;
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'tabulator-dropdown-editor';
+                button.setAttribute('aria-haspopup', 'listbox');
+                button.setAttribute('aria-expanded', 'true');
+
+                const panel = document.createElement('div');
+                panel.className = 'tabulator-dropdown-panel';
+                panel.setAttribute('role', 'listbox');
+
+                function activeOption() {
+                  return options[activeIndex] || options[0] || { value: null, label: '' };
+                }
+
+                function updateButtonLabel() {
+                  button.textContent = activeOption().label || '(Kosong)';
+                }
+
+                function positionPanel() {
+                  const cellElement = cell.getElement();
+                  if (!cellElement || !document.body.contains(cellElement) || !panel.parentElement) return;
+
+                  const rect = cellElement.getBoundingClientRect();
+                  const margin = 8;
+                  const width = Math.max(rect.width, 220);
+                  const maxHeight = Math.min(300, Math.max(160, window.innerHeight - margin * 2));
+                  const below = window.innerHeight - rect.bottom - margin;
+                  const above = rect.top - margin;
+                  const openAbove = below < 180 && above > below;
+                  const height = Math.min(maxHeight, Math.max(160, openAbove ? above : below));
+                  const left = Math.max(margin, Math.min(rect.left, window.innerWidth - width - margin));
+                  const top = openAbove
+                    ? Math.max(margin, rect.top - height - 4)
+                    : Math.min(rect.bottom + 4, window.innerHeight - height - margin);
+
+                  panel.style.left = `${left}px`;
+                  panel.style.top = `${top}px`;
+                  panel.style.width = `${width}px`;
+                  panel.style.maxHeight = `${height}px`;
+                }
+
+                function renderOptions() {
+                  panel.innerHTML = '';
+                  options.forEach((option, index) => {
+                    const item = document.createElement('div');
+                    item.className = [
+                      'tabulator-dropdown-option',
+                      index === activeIndex ? 'is-active' : '',
+                      option.empty ? 'is-empty' : '',
+                    ].filter(Boolean).join(' ');
+                    item.setAttribute('role', 'option');
+                    item.setAttribute('aria-selected', index === activeIndex ? 'true' : 'false');
+                    item.textContent = option.label || '(Kosong)';
+                    item.addEventListener('mouseenter', () => {
+                      activeIndex = index;
+                      renderOptions();
+                    });
+                    item.addEventListener('mousedown', event => event.preventDefault());
+                    item.addEventListener('click', event => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      activeIndex = index;
+                      finish(success, activeOption().value);
+                    });
+                    panel.appendChild(item);
+                  });
+
+                  const activeItem = panel.children[activeIndex];
+                  if (activeItem) activeItem.scrollIntoView({ block: 'nearest' });
+                  updateButtonLabel();
+                }
+
+                function moveActive(delta) {
+                  if (!options.length) return;
+                  activeIndex = (activeIndex + delta + options.length) % options.length;
+                  renderOptions();
+                }
+
+                function searchOption(key) {
+                  clearTimeout(typeaheadTimer);
+                  typeahead += key.toLowerCase();
+                  typeaheadTimer = setTimeout(() => { typeahead = ''; }, 700);
+
+                  const foundIndex = options.findIndex(option =>
+                    String(option.label || '').toLowerCase().includes(typeahead)
+                  );
+                  if (foundIndex >= 0) {
+                    activeIndex = foundIndex;
+                    renderOptions();
+                  }
+                }
+
+                function cleanup() {
+                  clearTimeout(typeaheadTimer);
+                  window.removeEventListener('resize', positionPanel);
+                  window.removeEventListener('scroll', positionPanel, true);
+                  document.removeEventListener('mousedown', handleOutsideMouseDown, true);
+                  panel.remove();
+                }
+
+                function finish(action, value) {
+                  if (closed) return;
+                  closed = true;
+                  cleanup();
+                  action(value);
+                }
+
+                function handleOutsideMouseDown(event) {
+                  if (button.contains(event.target) || panel.contains(event.target)) return;
+                  finish(cancel);
+                }
+
+                button.addEventListener('keydown', event => {
+                  if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    moveActive(1);
+                  } else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    moveActive(-1);
+                  } else if (event.key === 'Home') {
+                    event.preventDefault();
+                    activeIndex = 0;
+                    renderOptions();
+                  } else if (event.key === 'End') {
+                    event.preventDefault();
+                    activeIndex = Math.max(0, options.length - 1);
+                    renderOptions();
+                  } else if (event.key === 'Enter') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    finish(success, activeOption().value);
+                  } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    finish(cancel);
+                  } else if (event.key === 'Tab') {
+                    event.preventDefault();
+                    const shift = event.shiftKey;
+                    finish(success, activeOption().value);
+                    setTimeout(() => moveTabulatorActiveCell(0, shift ? -1 : 1), 0);
+                  } else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                    event.preventDefault();
+                    searchOption(event.key);
+                  }
+                });
+
+                button.addEventListener('click', event => {
+                  event.preventDefault();
+                  button.focus();
+                });
+
+                onRendered(function() {
+                  document.body.appendChild(panel);
+                  renderOptions();
+                  positionPanel();
+                  button.focus({ preventScroll: true });
+                  window.addEventListener('resize', positionPanel);
+                  window.addEventListener('scroll', positionPanel, true);
+                  document.addEventListener('mousedown', handleOutsideMouseDown, true);
+                });
+
+                return button;
+              };
+            }
+
             function isInlineEditableField(field) {
               return Object.prototype.hasOwnProperty.call(tabulatorInlineFieldTypes, field)
                 && !tabulatorNonEditableFields.has(field);
@@ -6457,7 +6738,7 @@
               if (type === 'textarea') return 'textarea';
               if (type === 'number') return 'number';
               if (type === 'date') return 'input';
-              if (type.startsWith('select_')) return 'autocomplete';
+              if (type.startsWith('select_')) return createDropdownEditor(field);
               return 'input';
             }
 
@@ -6477,24 +6758,7 @@
                 return { elementAttributes: { rows: 4, maxlength: '2000' } };
               }
               if (type.startsWith('select_')) {
-                return {
-                  values: tabulatorEditorValues(field),
-                  clearable: true,
-                  allowEmpty: true,
-                  showListOnEmpty: true,
-                  freetext: false,
-                  listOnEmpty: true,
-                  verticalNavigation: "editor",
-                  emptyValue: null,
-                  searchFunc: function(term, values) {
-                    const searchTerm = String(term || '').toLowerCase();
-                    if (!searchTerm) return values;
-                    return values.filter(item => {
-                      const label = String(item || '').toLowerCase();
-                      return label.includes(searchTerm);
-                    });
-                  },
-                };
+                return {};
               }
               return { elementAttributes: { maxlength: '255' } };
             }
