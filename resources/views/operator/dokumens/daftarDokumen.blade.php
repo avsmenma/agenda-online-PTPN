@@ -7155,12 +7155,20 @@
                 .filter(rect => rect.bottom > holderRect.top && rect.top < holderRect.bottom);
 
               if (side === 'left') {
-                const leftFrozen = boundaries.filter(rect => rect.left <= midpoint && rect.left < holderRect.left + 40);
+                const leftFrozen = boundaries.filter(rect =>
+                  rect.left < midpoint &&
+                  rect.right > holderRect.left &&
+                  rect.left < holderRect.right
+                );
                 if (!leftFrozen.length) return null;
                 return Math.max(...leftFrozen.map(rect => rect.right));
               }
 
-              const rightFrozen = boundaries.filter(rect => rect.left >= midpoint && rect.right > holderRect.right - 80);
+              const rightFrozen = boundaries.filter(rect =>
+                rect.left >= midpoint &&
+                rect.left < holderRect.right &&
+                rect.right > holderRect.left
+              );
               if (!rightFrozen.length) return null;
               return Math.min(...rightFrozen.map(rect => rect.left));
             }
@@ -7183,7 +7191,7 @@
 
               if (isFrozenCell) return;
 
-              requestAnimationFrame(() => {
+              function adjustHorizontalVisibility(attempt = 0) {
                 const holderRect = holder.getBoundingClientRect();
                 const cellRect = cellElement.getBoundingClientRect();
                 const leftBoundary = Math.max(holderRect.left, visibleFrozenBoundary(holderRect, 'left') ?? holderRect.left);
@@ -7198,8 +7206,13 @@
 
                 if (Math.abs(nextScrollLeft - holder.scrollLeft) > 1) {
                   holder.scrollLeft = Math.max(0, nextScrollLeft);
+                  if (attempt < 2) {
+                    requestAnimationFrame(() => adjustHorizontalVisibility(attempt + 1));
+                  }
                 }
-              });
+              }
+
+              requestAnimationFrame(() => adjustHorizontalVisibility());
             }
 
             function hasValidTabulatorActiveCell() {
