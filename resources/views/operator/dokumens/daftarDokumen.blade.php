@@ -7052,7 +7052,10 @@
               field: null,
               indicator: null,
               keyboardBound: false,
+              visibilityBound: false,
+              visibilityTimer: null,
               boundTable: null,
+              boundHolder: null,
             };
 
             function getTabulatorRows() {
@@ -7199,6 +7202,35 @@
               });
             }
 
+            function hasValidTabulatorActiveCell() {
+              const element = tabulatorActiveCellState.cell?.getElement?.();
+              return Boolean(tabulatorActiveCellState.cell && element && document.body.contains(element));
+            }
+
+            function ensureCurrentTabulatorActiveCellVisible(options = {}) {
+              if (!tabelDokumen) return false;
+
+              if (!hasValidTabulatorActiveCell()) {
+                const restored = restoreTabulatorActiveCell({ noPulse: true });
+                if (!restored && options.selectFirst !== false) {
+                  return autoSelectFirstTabulatorCell({ noPulse: true });
+                }
+                return restored;
+              }
+
+              ensureTabulatorCellFullyVisible(tabulatorActiveCellState.cell);
+              return true;
+            }
+
+            function scheduleTabulatorActiveCellVisibility(delay = 0, options = {}) {
+              clearTimeout(tabulatorActiveCellState.visibilityTimer);
+              tabulatorActiveCellState.visibilityTimer = setTimeout(() => {
+                requestAnimationFrame(() => {
+                  ensureCurrentTabulatorActiveCellVisible(options);
+                });
+              }, delay);
+            }
+
             function setTabulatorActiveCell(rowIndex, colIndex, options = {}) {
               const rows = getTabulatorRows();
               if (rows.length === 0) {
@@ -7333,7 +7365,7 @@
 
                 const activeElement = tabulatorActiveCellState.cell?.getElement?.();
                 if (!tabulatorActiveCellState.cell || !activeElement || !document.body.contains(activeElement)) {
-                  restoreTabulatorActiveCell({ noPulse: true, preventScroll: true });
+                  restoreTabulatorActiveCell({ noPulse: true });
                 }
 
                 switch (event.key) {
@@ -7365,7 +7397,7 @@
                     break;
                   case 'Escape':
                     event.preventDefault();
-                    restoreTabulatorActiveCell({ noPulse: true, preventScroll: true });
+                    restoreTabulatorActiveCell({ noPulse: true });
                     break;
                   default:
                     break;
@@ -7375,10 +7407,36 @@
               tabulatorActiveCellState.keyboardBound = true;
             }
 
+            function bindTabulatorActiveCellVisibilityHandlers() {
+              if (!tabulatorActiveCellState.visibilityBound) {
+                const scheduleAfterViewportChange = () => scheduleTabulatorActiveCellVisibility(80);
+                window.addEventListener('resize', scheduleAfterViewportChange);
+                window.addEventListener('focus', scheduleAfterViewportChange);
+                window.addEventListener('pageshow', scheduleAfterViewportChange);
+                document.addEventListener('fullscreenchange', scheduleAfterViewportChange);
+                document.addEventListener('visibilitychange', function() {
+                  if (!document.hidden) scheduleTabulatorActiveCellVisibility(80);
+                });
+                tabulatorActiveCellState.visibilityBound = true;
+              }
+
+              const holder = document.querySelector('#dokumen-tabulator .tabulator-tableholder');
+              if (holder && tabulatorActiveCellState.boundHolder !== holder) {
+                if (tabulatorActiveCellState.boundHolder) {
+                  tabulatorActiveCellState.boundHolder.removeEventListener('scroll', tabulatorActiveCellState.onHolderScroll);
+                }
+
+                tabulatorActiveCellState.onHolderScroll = () => scheduleTabulatorActiveCellVisibility(120, { selectFirst: false });
+                holder.addEventListener('scroll', tabulatorActiveCellState.onHolderScroll, { passive: true });
+                tabulatorActiveCellState.boundHolder = holder;
+              }
+            }
+
             function bindTabulatorActiveCell() {
               if (!tabelDokumen) return;
               ensureTabulatorActiveCellIndicator();
               bindTabulatorActiveCellKeyboard();
+              bindTabulatorActiveCellVisibilityHandlers();
 
               if (tabulatorActiveCellState.boundTable === tabelDokumen) return;
               tabelDokumen.on('cellClick', function(event, cell) {
@@ -7395,9 +7453,26 @@
               });
 
               tabelDokumen.on('renderComplete', function() {
+                bindTabulatorActiveCellVisibilityHandlers();
                 if (tabulatorActiveCellState.rowId !== null || tabulatorActiveCellState.cell) {
-                  restoreTabulatorActiveCell({ noPulse: true, preventScroll: true });
+                  restoreTabulatorActiveCell({ noPulse: true });
                 }
+                scheduleTabulatorActiveCellVisibility(40);
+              });
+
+              tabelDokumen.on('cellEdited', function(cell) {
+                if (cell) {
+                  const rows = getTabulatorRows();
+                  const row = cell.getRow();
+                  const cells = getTabulatorCells(row);
+                  const rowIndex = rows.indexOf(row);
+                  const colIndex = cells.indexOf(cell);
+                  if (rowIndex >= 0 && colIndex >= 0) {
+                    setTabulatorActiveCell(rowIndex, colIndex, { noPulse: true });
+                    return;
+                  }
+                }
+                scheduleTabulatorActiveCellVisibility(40);
               });
 
               tabulatorActiveCellState.boundTable = tabelDokumen;
@@ -7473,6 +7548,7 @@
                   tabelDokumen.setColumns(buildTabulatorColumns(columns, availableColumns));
                   await tabelDokumen.replaceData(rows);
                   bindTabulatorActiveCell();
+                  scheduleTabulatorActiveCellVisibility(60);
                 } else {
                   tabelDokumen = new Tabulator('#dokumen-tabulator', {
                     data: rows,
@@ -7505,6 +7581,7 @@
                     },
                   });
                   bindTabulatorActiveCell();
+                  scheduleTabulatorActiveCellVisibility(60);
                 }
 
                 if (typeof selectedDocuments !== 'undefined') {
@@ -7532,9 +7609,10 @@
                 if (!loadFailed) {
                   setTabulatorLoading(false);
                   requestAnimationFrame(() => {
-                    if (!restoreTabulatorActiveCell({ noPulse: true, preventScroll: true })) {
-                      autoSelectFirstTabulatorCell({ noPulse: true, preventScroll: true });
+                    if (!restoreTabulatorActiveCell({ noPulse: true })) {
+                      autoSelectFirstTabulatorCell({ noPulse: true });
                     }
+                    scheduleTabulatorActiveCellVisibility(80);
                   });
                 }
               }
@@ -7639,6 +7717,7 @@
 
             window.addEventListener('resize', function() {
               if (tabelDokumen) tabelDokumen.setHeight(tabulatorHeight());
+              scheduleTabulatorActiveCellVisibility(120);
             });
           </script>
 @endsection
