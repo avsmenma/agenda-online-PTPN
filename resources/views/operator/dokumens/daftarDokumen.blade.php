@@ -33,6 +33,16 @@
       background: #184b7d;
     }
 
+    /* Frozen header columns with solid background */
+    #dokumen-tabulator .tabulator-header .tabulator-frozen {
+      background: #143f6b !important;
+      z-index: 15;
+    }
+
+    #dokumen-tabulator .tabulator-header .tabulator-frozen:hover {
+      background: #184b7d !important;
+    }
+
     #dokumen-tabulator .tabulator-row {
       border-bottom: 1px solid #dbe3ea;
       min-height: 54px;
@@ -54,6 +64,20 @@
     }
 
     #dokumen-tabulator .tabulator-row:hover {
+      background: #eef6f4 !important;
+    }
+
+    /* Frozen columns with solid background */
+    #dokumen-tabulator .tabulator-frozen {
+      background: #ffffff !important;
+      z-index: 10;
+    }
+
+    #dokumen-tabulator .tabulator-row.tabulator-row-even .tabulator-frozen {
+      background: #f8fbff !important;
+    }
+
+    #dokumen-tabulator .tabulator-row:hover .tabulator-frozen {
       background: #eef6f4 !important;
     }
 
@@ -6304,15 +6328,6 @@
               `;
             }
 
-            function actionFormatter(cell) {
-              const row = cell.getRow().getData();
-              const editButton = row.can_edit
-                ? `<a href="/documents/${encodeURIComponent(row.id)}/edit" class="btn-action btn-edit" title="Edit Dokumen" onclick="event.stopPropagation()"><i class="fa-solid fa-edit"></i><span>Edit</span></a>`
-                : '';
-
-              return `<div class="tabulator-actions">${editButton}</div>`;
-            }
-
             function tabulatorColumnWidth(field) {
               const widths = {
                 nomor_agenda: 170,
@@ -6522,6 +6537,7 @@
               if (field === 'nomor_agenda') {
                 column.formatter = agendaFormatter;
                 column.hozAlign = 'center';
+                column.frozen = true;
               } else if (field === 'nilai_rupiah') {
                 column.sorter = 'number';
                 column.hozAlign = 'right';
@@ -6603,14 +6619,6 @@
               });
 
               columns.push(
-                {
-                  title: 'Aksi',
-                  field: 'id',
-                  width: 120,
-                  headerSort: false,
-                  formatter: actionFormatter,
-                  hozAlign: 'center',
-                },
                 {
                   title: 'Pengurus Dokumen',
                   field: 'handler_selected',
