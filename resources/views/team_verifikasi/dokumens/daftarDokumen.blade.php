@@ -9126,21 +9126,18 @@
   body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active,
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active {
     position: relative !important;
-    z-index: 20 !important;
-    outline: 4px solid #083E40 !important;
-    outline-offset: -4px !important;
-    background-color: #f0fdfa !important;
+    z-index: 5 !important;
+    outline: 3px solid #083E40 !important;
+    outline-offset: -3px !important;
+    background-color: rgba(8, 62, 64, 0.08) !important;
     box-shadow:
-      inset 0 0 0 2px #f59e0b,
-      inset 0 0 0 6px rgba(8, 62, 64, 0.22),
-      0 0 0 2px rgba(245, 158, 11, 0.75),
-      0 0 18px rgba(8, 62, 64, 0.45) !important;
+      inset 0 0 0 1px rgba(245, 158, 11, 0.55) !important;
   }
 
   #documentTableContainer .table-enhanced tbody td.acn-active::before,
   body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active::before,
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active::before {
-    border-width: 14px 14px 0 0 !important;
+    border-width: 8px 8px 0 0 !important;
     border-color: #f59e0b transparent transparent transparent !important;
     z-index: 2 !important;
   }
@@ -9150,8 +9147,7 @@
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead th.acn-active-col {
     background: linear-gradient(135deg, #0b5f55 0%, #083E40 100%) !important;
     box-shadow:
-      inset 0 -5px 0 #f59e0b,
-      inset 0 0 0 2px rgba(245, 158, 11, 0.45) !important;
+      inset 0 -3px 0 #f59e0b !important;
   }
 </style>
 @include('partials.auto-refresh-documents')
