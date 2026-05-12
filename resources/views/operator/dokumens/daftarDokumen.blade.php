@@ -6309,11 +6309,8 @@
               const editButton = row.can_edit
                 ? `<a href="/documents/${encodeURIComponent(row.id)}/edit" class="btn-action btn-edit" title="Edit Dokumen" onclick="event.stopPropagation()"><i class="fa-solid fa-edit"></i><span>Edit</span></a>`
                 : '';
-              const sendButton = row.can_send
-                ? `<button type="button" class="btn-action btn-send" title="Kirim ke Team Verifikasi" onclick="sendToTeamVerifikasi(${Number(row.id)})"><i class="fa-solid fa-paper-plane"></i><span>Kirim</span></button>`
-                : `<button type="button" class="btn-action btn-send" disabled title="Dokumen sudah dikirim" onclick="event.stopPropagation()"><i class="fa-solid fa-paper-plane"></i><span>Kirim</span></button>`;
 
-              return `<div class="tabulator-actions">${editButton}${sendButton}</div>`;
+              return `<div class="tabulator-actions">${editButton}</div>`;
             }
 
             function tabulatorColumnWidth(field) {
@@ -6607,19 +6604,19 @@
 
               columns.push(
                 {
+                  title: 'Aksi',
+                  field: 'id',
+                  width: 120,
+                  headerSort: false,
+                  formatter: actionFormatter,
+                  hozAlign: 'center',
+                },
+                {
                   title: 'Pengurus Dokumen',
                   field: 'handler_selected',
                   width: 220,
                   headerSort: false,
                   formatter: handlerFormatter,
-                  hozAlign: 'center',
-                },
-                {
-                  title: 'Aksi',
-                  field: 'id',
-                  width: 190,
-                  headerSort: false,
-                  formatter: actionFormatter,
                   hozAlign: 'center',
                   frozen: true,
                 }
