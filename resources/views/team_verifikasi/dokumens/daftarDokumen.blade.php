@@ -1294,77 +1294,6 @@
       min-width: 120px;
     }
 
-    /* Sticky columns for checkbox, No, and Nomor Agenda at left */
-    .table-enhanced .col-checkbox,
-    .table-enhanced .col-no,
-    .table-enhanced .col-nomor_agenda {
-      position: sticky !important;
-      background-clip: padding-box;
-    }
-
-    .table-enhanced thead .col-checkbox,
-    .table-enhanced thead .col-no,
-    .table-enhanced thead .col-nomor_agenda {
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
-      z-index: 40 !important;
-    }
-
-    .table-enhanced tbody .col-checkbox,
-    .table-enhanced tbody .col-no,
-    .table-enhanced tbody .col-nomor_agenda {
-      background: #ffffff !important;
-      z-index: 25 !important;
-    }
-
-    .table-enhanced tbody tr:nth-child(even) .col-checkbox,
-    .table-enhanced tbody tr:nth-child(even) .col-no,
-    .table-enhanced tbody tr:nth-child(even) .col-nomor_agenda {
-      background: #f8f9fa !important;
-    }
-
-    .table-enhanced tbody tr:hover .col-checkbox,
-    .table-enhanced tbody tr:hover .col-no,
-    .table-enhanced tbody tr:hover .col-nomor_agenda {
-      background: #e8f5f3 !important;
-    }
-
-    .table-enhanced .col-checkbox {
-      left: 0 !important;
-    }
-
-    .table-enhanced .col-no {
-      left: 50px !important;
-    }
-
-    .table-enhanced .col-nomor_agenda {
-      left: 130px !important;
-    }
-
-    /* Sticky column for Pengurus Dokumen at right */
-    .table-enhanced .col-handler {
-      position: sticky !important;
-      right: 0 !important;
-      background-clip: padding-box;
-    }
-
-    .table-enhanced thead .col-handler {
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
-      z-index: 40 !important;
-    }
-
-    .table-enhanced tbody .col-handler {
-      background: #ffffff !important;
-      z-index: 25 !important;
-    }
-
-    .table-enhanced tbody tr:nth-child(even) .col-handler {
-      background: #f8f9fa !important;
-    }
-
-    .table-enhanced tbody tr:hover .col-handler {
-      background: #e8f5f3 !important;
-    }
-
     /* Mobile optimization */
     @media (max-width: 768px) {
       .table-dokumen {
@@ -4274,30 +4203,17 @@
     #documentTableContainer .table-enhanced thead .col-no,
     #documentTableContainer .table-enhanced thead .col-nomor_agenda,
     #documentTableContainer .table-enhanced thead .col-handler {
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%) !important;
-      z-index: 40 !important;
+      background: #0d3b6e !important;
+      box-shadow: 0 2px 0 #1a5276 !important;
+      z-index: 560 !important;
     }
 
     #documentTableContainer .table-enhanced tbody .col-checkbox,
     #documentTableContainer .table-enhanced tbody .col-no,
     #documentTableContainer .table-enhanced tbody .col-nomor_agenda,
     #documentTableContainer .table-enhanced tbody .col-handler {
-      background: #ffffff !important;
-      z-index: 25 !important;
-    }
-
-    #documentTableContainer .table-enhanced tbody tr:nth-child(even) .col-checkbox,
-    #documentTableContainer .table-enhanced tbody tr:nth-child(even) .col-no,
-    #documentTableContainer .table-enhanced tbody tr:nth-child(even) .col-nomor_agenda,
-    #documentTableContainer .table-enhanced tbody tr:nth-child(even) .col-handler {
-      background: #f8f9fa !important;
-    }
-
-    #documentTableContainer .table-enhanced tbody tr:hover .col-checkbox,
-    #documentTableContainer .table-enhanced tbody tr:hover .col-no,
-    #documentTableContainer .table-enhanced tbody tr:hover .col-nomor_agenda,
-    #documentTableContainer .table-enhanced tbody tr:hover .col-handler {
-      background: #e8f5f3 !important;
+      background: inherit !important;
+      z-index: 30 !important;
     }
 
     #documentTableContainer .table-enhanced .col-checkbox {
@@ -4314,6 +4230,19 @@
 
     #documentTableContainer .table-enhanced .col-handler {
       right: 0 !important;
+    }
+
+    #documentTableContainer .table-enhanced thead .col-handler {
+      z-index: 570 !important;
+    }
+
+    #documentTableContainer .table-enhanced tbody td.acn-active.col-checkbox,
+    #documentTableContainer .table-enhanced tbody td.acn-active.col-no,
+    #documentTableContainer .table-enhanced tbody td.acn-active.col-nomor_agenda,
+    #documentTableContainer .table-enhanced tbody td.acn-active.col-handler {
+      position: sticky !important;
+      background-color: rgba(8, 62, 64, 0.08) !important;
+      z-index: 80 !important;
     }
 
     #documentTableContainer .table-enhanced tbody .col-handler select,
@@ -9282,8 +9211,8 @@
   #documentTableContainer .table-enhanced thead th.acn-active-col,
   body.is-fullscreen #documentTableContainer .table-enhanced thead th.acn-active-col,
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead th.acn-active-col {
-    background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
-    box-shadow: none !important;
+    background: #0d3b6e !important;
+    box-shadow: 0 2px 0 #1a5276 !important;
   }
 
   #documentTableContainer .table-enhanced .col-checkbox,
@@ -9299,6 +9228,45 @@
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-nomor_agenda,
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-handler {
     position: sticky !important;
+  }
+
+  #documentTableContainer .table-enhanced thead .col-checkbox,
+  #documentTableContainer .table-enhanced thead .col-no,
+  #documentTableContainer .table-enhanced thead .col-nomor_agenda,
+  #documentTableContainer .table-enhanced thead .col-handler,
+  body.is-fullscreen #documentTableContainer .table-enhanced thead .col-checkbox,
+  body.is-fullscreen #documentTableContainer .table-enhanced thead .col-no,
+  body.is-fullscreen #documentTableContainer .table-enhanced thead .col-nomor_agenda,
+  body.is-fullscreen #documentTableContainer .table-enhanced thead .col-handler,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead .col-checkbox,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead .col-no,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead .col-nomor_agenda,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead .col-handler {
+    background: #0d3b6e !important;
+    box-shadow: 0 2px 0 #1a5276 !important;
+    z-index: 560 !important;
+  }
+
+  #documentTableContainer .table-enhanced thead .col-handler,
+  body.is-fullscreen #documentTableContainer .table-enhanced thead .col-handler,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead .col-handler {
+    z-index: 570 !important;
+  }
+
+  #documentTableContainer .table-enhanced tbody .col-checkbox,
+  #documentTableContainer .table-enhanced tbody .col-no,
+  #documentTableContainer .table-enhanced tbody .col-nomor_agenda,
+  #documentTableContainer .table-enhanced tbody .col-handler,
+  body.is-fullscreen #documentTableContainer .table-enhanced tbody .col-checkbox,
+  body.is-fullscreen #documentTableContainer .table-enhanced tbody .col-no,
+  body.is-fullscreen #documentTableContainer .table-enhanced tbody .col-nomor_agenda,
+  body.is-fullscreen #documentTableContainer .table-enhanced tbody .col-handler,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody .col-checkbox,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody .col-no,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody .col-nomor_agenda,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody .col-handler {
+    background: inherit !important;
+    z-index: 30 !important;
   }
 
   #documentTableContainer .table-enhanced .col-checkbox,
@@ -9323,6 +9291,23 @@
   body.is-fullscreen #documentTableContainer .table-enhanced .col-handler,
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-handler {
     right: 0 !important;
+  }
+
+  #documentTableContainer .table-enhanced tbody td.acn-active.col-checkbox,
+  #documentTableContainer .table-enhanced tbody td.acn-active.col-no,
+  #documentTableContainer .table-enhanced tbody td.acn-active.col-nomor_agenda,
+  #documentTableContainer .table-enhanced tbody td.acn-active.col-handler,
+  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-checkbox,
+  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-no,
+  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-nomor_agenda,
+  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-handler,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-checkbox,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-no,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-nomor_agenda,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-handler {
+    position: sticky !important;
+    background-color: rgba(8, 62, 64, 0.08) !important;
+    z-index: 80 !important;
   }
 </style>
 <script>
