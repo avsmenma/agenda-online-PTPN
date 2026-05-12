@@ -185,6 +185,75 @@
       background: #fff;
     }
 
+    /* Autocomplete dropdown styling */
+    .tabulator-edit-list {
+      max-height: 300px !important;
+      overflow-y: auto !important;
+      background: #ffffff !important;
+      border: 2px solid #889717 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+      padding: 4px !important;
+      z-index: 10000 !important;
+      margin-top: 4px !important;
+    }
+
+    .tabulator-edit-list-item {
+      padding: 10px 12px !important;
+      cursor: pointer !important;
+      border-radius: 6px !important;
+      color: #0f172a !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      transition: all 0.15s ease !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .tabulator-edit-list-item:hover {
+      background: #f0f9ff !important;
+      color: #0369a1 !important;
+    }
+
+    .tabulator-edit-list-item.active,
+    .tabulator-edit-list-item.focus {
+      background: #889717 !important;
+      color: #ffffff !important;
+      font-weight: 600 !important;
+    }
+
+    .tabulator-edit-list-group {
+      padding: 8px 12px !important;
+      font-weight: 700 !important;
+      color: #64748b !important;
+      font-size: 11px !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+    }
+
+    .tabulator-edit-list-group-item {
+      padding-left: 24px !important;
+    }
+
+    .tabulator-edit-list::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .tabulator-edit-list::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+
+    .tabulator-edit-list::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    .tabulator-edit-list::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
     #dokumen-tabulator .tabulator-cell.tabulator-acn-active {
       outline: 3px solid #083E40 !important;
       outline-offset: -2px !important;
@@ -6388,7 +6457,7 @@
               if (type === 'textarea') return 'textarea';
               if (type === 'number') return 'number';
               if (type === 'date') return 'input';
-              if (type.startsWith('select_')) return 'list';
+              if (type.startsWith('select_')) return 'autocomplete';
               return 'input';
             }
 
@@ -6411,7 +6480,20 @@
                 return {
                   values: tabulatorEditorValues(field),
                   clearable: true,
-                  autocomplete: true,
+                  allowEmpty: true,
+                  showListOnEmpty: true,
+                  freetext: false,
+                  listOnEmpty: true,
+                  verticalNavigation: "editor",
+                  emptyValue: null,
+                  searchFunc: function(term, values) {
+                    const searchTerm = String(term || '').toLowerCase();
+                    if (!searchTerm) return values;
+                    return values.filter(item => {
+                      const label = String(item || '').toLowerCase();
+                      return label.includes(searchTerm);
+                    });
+                  },
                 };
               }
               return { elementAttributes: { maxlength: '255' } };
