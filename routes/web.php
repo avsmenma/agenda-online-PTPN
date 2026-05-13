@@ -249,9 +249,34 @@ Route::get('owner/workflow/{id}', [OwnerDashboardController::class, 'showWorkflo
     ->middleware('auth')
     ->name('owner.workflow');
 
-Route::get('owner/rekapan-keterlambatan', [OwnerDashboardController::class, 'rekapanKeterlambatan'])
+Route::get('owner/rekapan-keterlambatan', fn () => redirect()->route('rekapan-keterlambatan.index'))
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.rekapan-keterlambatan');
+
+Route::get('rekapan-keterlambatan/{roleCode}', [OwnerDashboardController::class, 'rekapanKeterlambatanByRole'])
+    ->middleware('auth')
+    ->where('roleCode', 'operator|team_verifikasi|perpajakan|akutansi|pembayaran')
+    ->name('rekapan-keterlambatan.role');
+
+Route::get('rekapan-keterlambatan', function () {
+    $role = strtolower(str_replace(' ', '_', trim((string) (auth()->user()?->role ?? ''))));
+    $roleCode = match ($role) {
+        'verifikasi', 'tim_verifikasi', 'team_verifikasi' => 'team_verifikasi',
+        'tim_perpajakan', 'team_perpajakan', 'perpajakan' => 'perpajakan',
+        'akuntansi', 'tim_akuntansi', 'team_akuntansi', 'tim_akutansi', 'team_akutansi', 'akutansi' => 'akutansi',
+        'tim_pembayaran', 'team_pembayaran', 'pembayaran' => 'pembayaran',
+        default => 'team_verifikasi',
+    };
+
+    return redirect()->route('rekapan-keterlambatan.role', $roleCode);
+})
+    ->middleware('auth')
+    ->name('rekapan-keterlambatan.index');
+
+Route::get('rekapan-keterlambatan-export/{roleCode}', [OwnerDashboardController::class, 'exportRekapanKeterlambatan'])
+    ->middleware('auth')
+    ->where('roleCode', 'team_verifikasi|perpajakan|akutansi|pembayaran')
+    ->name('rekapan-keterlambatan.export');
 
 // Rekapan keterlambatan per role
 Route::get('owner/rekapan-keterlambatan/{roleCode}', [OwnerDashboardController::class, 'rekapanKeterlambatanByRole'])

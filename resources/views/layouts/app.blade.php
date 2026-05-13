@@ -3989,6 +3989,7 @@
     // Only show secondary sidebar header offset for per-role sub-pages
     $isOwnerRekapanKeterlambatan = $isOwner && (
       request()->routeIs('owner.rekapan-keterlambatan.role') ||
+      request()->routeIs('rekapan-keterlambatan.role') ||
       (request()->is('*rekapan-keterlambatan/*') && request()->route('roleCode'))
     );
 
@@ -4324,10 +4325,11 @@
         @php
           $isRekapanKeterlambatanActive = request()->is('*rekapan-keterlambatan*') ||
             request()->routeIs('owner.rekapan-keterlambatan*') ||
+            request()->routeIs('rekapan-keterlambatan.*') ||
             request()->is('*owner/analytics*') ||
             request()->routeIs('analytics.index');
         @endphp
-        <a href="{{ url('/owner/rekapan-keterlambatan') }}"
+        <a href="{{ route('rekapan-keterlambatan.index') }}"
           class="owner-nav-item {{ $menuRekapanKeterlambatan ?? '' }} {{ $isRekapanKeterlambatanActive ? 'active' : '' }}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
@@ -4617,7 +4619,7 @@
                 <a href="{{ route('reports.akutansi.index') }}" class="{{ $isReportsActive ? 'active' : '' }}">
                   <i class="fa-solid fa-chart-bar"></i> Rekapan Akutansi
                 </a>
-                <a href="{{ route('owner.rekapan-keterlambatan.role', 'akutansi') }}"
+                <a href="{{ route('rekapan-keterlambatan.role', 'akutansi') }}"
                   class="{{ request()->is('*rekapan-keterlambatan/akutansi*') ? 'active' : '' }}">
                   <i class="fa-solid fa-clock-rotate-left"></i> Rekap Keterlambatan
                 </a>
@@ -4635,7 +4637,7 @@
                   class="{{ request()->routeIs('reports.perpajakan.export*') ? 'active' : '' }}">
                   <i class="fa-solid fa-file-export"></i> Export Data
                 </a>
-                <a href="{{ route('owner.rekapan-keterlambatan.role', 'perpajakan') }}"
+                <a href="{{ route('rekapan-keterlambatan.role', 'perpajakan') }}"
                   class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
                   <i class="fa-solid fa-clock-rotate-left"></i> Rekap Keterlambatan
                 </a>
@@ -4654,7 +4656,7 @@
                 <a href="{{ route('reports.verifikasi.index') }}" class="{{ $isReportsActive ? 'active' : '' }}">
                   <i class="fa-solid fa-chart-bar"></i> Rekapan
                 </a>
-                <a href="{{ route('owner.rekapan-keterlambatan.role', 'team_verifikasi') }}"
+                <a href="{{ route('rekapan-keterlambatan.role', 'team_verifikasi') }}"
                   class="{{ request()->is('*rekapan-keterlambatan/team_verifikasi*') ? 'active' : '' }}">
                   <i class="fa-solid fa-clock-rotate-left"></i> Rekap Keterlambatan
                 </a>
@@ -4720,6 +4722,7 @@
     @php
       // Secondary sidebar only shows on per-role sub-pages (with roleCode), NOT on main unified page
       $isRekapanByRolePage = request()->routeIs('owner.rekapan-keterlambatan.role') ||
+        request()->routeIs('rekapan-keterlambatan.role') ||
         (request()->is('*rekapan-keterlambatan/*') && request()->route('roleCode'));
       $shouldShowSecondarySidebarOwner = $isRekapanByRolePage;
     @endphp
@@ -4732,19 +4735,19 @@
         @php
           $currentRole = strtolower(request()->route('roleCode') ?? '');
         @endphp
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'team_verifikasi') }}"
+        <a href="{{ route('rekapan-keterlambatan.role', 'team_verifikasi') }}"
           class="{{ $currentRole === 'team_verifikasi' ? 'active' : '' }}">
           <i class="fa-solid fa-users me-2"></i> Team Verifikasi
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'perpajakan') }}"
+        <a href="{{ route('rekapan-keterlambatan.role', 'perpajakan') }}"
           class="{{ $currentRole === 'perpajakan' ? 'active' : '' }}">
           <i class="fa-solid fa-file-invoice-dollar me-2"></i> Team Perpajakan
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'akutansi') }}"
+        <a href="{{ route('rekapan-keterlambatan.role', 'akutansi') }}"
           class="{{ $currentRole === 'akutansi' ? 'active' : '' }}">
           <i class="fa-solid fa-calculator me-2"></i> Team Akutansi
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'pembayaran') }}"
+        <a href="{{ route('rekapan-keterlambatan.role', 'pembayaran') }}"
           class="{{ $currentRole === 'pembayaran' ? 'active' : '' }}">
           <i class="fa-solid fa-money-bill-wave me-2"></i> Pembayaran
         </a>
@@ -4850,7 +4853,7 @@
         <a href="{{ route('reports.akutansi.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Akutansi
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'akutansi') }}"
+        <a href="{{ route('rekapan-keterlambatan.role', 'akutansi') }}"
           class="{{ request()->is('*rekapan-keterlambatan/akutansi*') ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
@@ -4870,7 +4873,7 @@
           class="{{ request()->routeIs('reports.perpajakan.export*') ? 'active' : '' }}">
           <i class="fa-solid fa-file-export me-2"></i> Export Data
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'perpajakan') }}"
+        <a href="{{ route('rekapan-keterlambatan.role', 'perpajakan') }}"
           class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
@@ -4892,8 +4895,8 @@
         <a href="{{ route('reports.verifikasi.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', 'team_verifikasi') }}"
-          class="{{ request()->is('*rekapan-keterlambatan/Team Verifikasi*') ? 'active' : '' }}">
+        <a href="{{ route('rekapan-keterlambatan.role', 'team_verifikasi') }}"
+          class="{{ request()->is('*rekapan-keterlambatan/team_verifikasi*') ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
         </a>
       @elseif($isBagianUser)

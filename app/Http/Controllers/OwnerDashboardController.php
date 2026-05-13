@@ -3335,6 +3335,30 @@ class OwnerDashboardController extends Controller
             abort(404, 'Role tidak ditemukan');
         }
 
+        $userRole = strtolower(str_replace(' ', '_', trim((string) (auth()->user()?->role ?? ''))));
+        $isAdminOrOwner = in_array($userRole, ['admin', 'owner']);
+        $userRoleMapping = [
+            'verifikasi' => 'team_verifikasi',
+            'tim_verifikasi' => 'team_verifikasi',
+            'team_verifikasi' => 'team_verifikasi',
+            'tim_perpajakan' => 'perpajakan',
+            'team_perpajakan' => 'perpajakan',
+            'perpajakan' => 'perpajakan',
+            'akuntansi' => 'akutansi',
+            'tim_akuntansi' => 'akutansi',
+            'team_akuntansi' => 'akutansi',
+            'tim_akutansi' => 'akutansi',
+            'team_akutansi' => 'akutansi',
+            'akutansi' => 'akutansi',
+            'tim_pembayaran' => 'pembayaran',
+            'team_pembayaran' => 'pembayaran',
+            'pembayaran' => 'pembayaran',
+        ];
+
+        if (!$isAdminOrOwner && ($userRoleMapping[$userRole] ?? null) !== $roleCode) {
+            abort(403, 'Anda tidak memiliki akses ke export rekapan role tersebut.');
+        }
+
         $year = $request->get('year');
         $month = $request->get('month');
         $statusFilter = $request->get('status'); // aman, peringatan, terlambat, or empty for all
@@ -4225,15 +4249,22 @@ class OwnerDashboardController extends Controller
 
         if (!$isAdminOrOwner) {
             // Map user role to roleCode format
+            $normalizedUserRole = str_replace(' ', '_', trim($userRole));
             $userRoleMapping = [
                 'operator' => 'operator',
+                'verifikasi' => 'team_verifikasi',
                 'team_verifikasi' => 'team_verifikasi',
-                'team_verifikasi' => 'team_verifikasi',
+                'tim_verifikasi' => 'team_verifikasi',
                 'perpajakan' => 'perpajakan',
+                'tim_perpajakan' => 'perpajakan',
                 'akutansi' => 'akutansi',
+                'akuntansi' => 'akutansi',
+                'tim_akutansi' => 'akutansi',
+                'tim_akuntansi' => 'akutansi',
                 'pembayaran' => 'pembayaran',
+                'tim_pembayaran' => 'pembayaran',
             ];
-            $userRoleCode = $userRoleMapping[$userRole] ?? null;
+            $userRoleCode = $userRoleMapping[$normalizedUserRole] ?? null;
 
             // Check if user is trying to access their own role's recap
             if ($userRoleCode !== $roleCode) {

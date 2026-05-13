@@ -1309,7 +1309,7 @@
         @endphp
 
         <!-- Card AMAN (< 1 Hari - Green) -->
-        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard1Active ? '' : '1']))) }}"
+        <a href="{{ route('rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard1Active ? '' : '1']))) }}"
           class="deadline-card-link">
           <div class="deadline-card deadline-aman {{ $isCard1Active ? 'active' : '' }}">
             <div class="deadline-card-header">
@@ -1329,7 +1329,7 @@
         </a>
 
         <!-- Card PERINGATAN (1-3 Hari - Yellow) -->
-        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard2Active ? '' : '2']))) }}"
+        <a href="{{ route('rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard2Active ? '' : '2']))) }}"
           class="deadline-card-link">
           <div class="deadline-card deadline-peringatan {{ $isCard2Active ? 'active' : '' }}">
             <div class="deadline-card-header">
@@ -1350,7 +1350,7 @@
         </a>
 
         <!-- Card TERLAMBAT (> 3 Hari - Red) -->
-        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard3Active ? '' : '3+']))) }}"
+        <a href="{{ route('rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard3Active ? '' : '3+']))) }}"
           class="deadline-card-link">
           <div class="deadline-card deadline-terlambat {{ $isCard3Active ? 'active' : '' }}">
             <div class="deadline-card-header">
@@ -1381,7 +1381,7 @@
         @endphp
 
         <!-- Card AMAN (< 1 Minggu - Green) -->
-        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard1Active ? '' : '1']))) }}"
+        <a href="{{ route('rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard1Active ? '' : '1']))) }}"
           class="deadline-card-link">
           <div class="deadline-card deadline-aman {{ $isCard1Active ? 'active' : '' }}">
             <div class="deadline-card-header">
@@ -1401,7 +1401,7 @@
         </a>
 
         <!-- Card PERINGATAN (1-3 Minggu - Yellow) -->
-        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard2Active ? '' : '2']))) }}"
+        <a href="{{ route('rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard2Active ? '' : '2']))) }}"
           class="deadline-card-link">
           <div class="deadline-card deadline-peringatan {{ $isCard2Active ? 'active' : '' }}">
             <div class="deadline-card-header">
@@ -1422,7 +1422,7 @@
         </a>
 
         <!-- Card TERLAMBAT (> 3 Minggu - Red) -->
-        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard3Active ? '' : '3+']))) }}"
+        <a href="{{ route('rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['filter_age', 'page']), ['filter_age' => $isCard3Active ? '' : '3+']))) }}"
           class="deadline-card-link">
           <div class="deadline-card deadline-terlambat {{ $isCard3Active ? 'active' : '' }}">
             <div class="deadline-card-header">
@@ -1451,15 +1451,15 @@
         $currentStatusFilter = request('status_filter', 'all');
       @endphp
       <div class="rk-status-tabs">
-        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'all']))) }}"
+        <a href="{{ route('rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'all']))) }}"
           class="rk-status-tab {{ $currentStatusFilter === 'all' ? 'active-all' : '' }}">
           <i class="fas fa-list"></i> Semua
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'active']))) }}"
+        <a href="{{ route('rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'active']))) }}"
           class="rk-status-tab {{ $currentStatusFilter === 'active' ? 'active-active' : '' }}">
           <i class="fas fa-spinner"></i> Aktif (Sedang Diproses)
         </a>
-        <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'completed']))) }}"
+        <a href="{{ route('rekapan-keterlambatan.role', array_merge([$roleCode], array_merge(request()->except(['status_filter', 'page']), ['status_filter' => 'completed']))) }}"
           class="rk-status-tab {{ $currentStatusFilter === 'completed' ? 'active-completed' : '' }}">
           <i class="fas fa-check-circle"></i> Selesai (Sudah Dikirim)
         </a>
@@ -1488,7 +1488,7 @@
 
     <!-- Quick Search Box -->
     <div class="rk-search-container">
-      <form method="GET" action="{{ route('owner.rekapan-keterlambatan.role', $roleCode) }}" id="quickSearchForm"
+      <form method="GET" action="{{ route('rekapan-keterlambatan.role', $roleCode) }}" id="quickSearchForm"
         class="rk-search-form">
         @if(request('year'))
           <input type="hidden" name="year" value="{{ request('year') }}">
@@ -1531,7 +1531,7 @@
         </button>
 
         @if(request('search'))
-          <a href="{{ route('owner.rekapan-keterlambatan.role', array_merge([$roleCode], request()->except(['search', 'page']))) }}"
+          <a href="{{ route('rekapan-keterlambatan.role', array_merge([$roleCode], request()->except(['search', 'page']))) }}"
             class="rk-search-reset">
             <i class="fas fa-times"></i>
             <span>Reset</span>
@@ -1570,7 +1570,7 @@
 
       <!-- Filter Panel (Collapsible) -->
       <div class="filter-panel" id="filterPanel" style="display: none;">
-        <form method="GET" action="{{ route('owner.rekapan-keterlambatan.role', $roleCode) }}" id="filterForm"
+        <form method="GET" action="{{ route('rekapan-keterlambatan.role', $roleCode) }}" id="filterForm"
           class="filter-form">
           <input type="hidden" name="filter_age" value="{{ request('filter_age') }}">
           <input type="hidden" name="status_filter" value="{{ request('status_filter', 'all') }}">
@@ -2454,7 +2454,7 @@
       const month = document.getElementById('exportMonth').value;
       const status = document.getElementById('exportStatus').value;
 
-      let exportUrl = '{{ route('owner.rekapan-keterlambatan.export', $roleCode) }}';
+      let exportUrl = '{{ route('rekapan-keterlambatan.export', $roleCode) }}';
       const params = new URLSearchParams();
 
       if (year) {
