@@ -385,6 +385,66 @@
 
   function scrollCellIntoView(cell) {
     if (!cell) return;
+
+    const wrapper = cell.closest('.table-wrapper, .table-responsive, .table-dokumen') || wrapperEl;
+    if (!wrapper) return;
+
+    // Use setTimeout to ensure DOM has updated before calculating positions
+    setTimeout(function() {
+      const cellRect = cell.getBoundingClientRect();
+      const wrapperRect = wrapper.getBoundingClientRect();
+
+      // Calculate sticky column widths (left and right)
+      const table = cell.closest('table');
+      let leftStickyWidth = 0;
+      let rightStickyWidth = 0;
+
+      if (table) {
+        // Get all sticky columns on the left
+        const leftStickyCols = table.querySelectorAll('.col-checkbox, .col-no, .col-nomor_agenda');
+        leftStickyCols.forEach(function(col) {
+          const colRect = col.getBoundingClientRect();
+          leftStickyWidth = Math.max(leftStickyWidth, colRect.right - wrapperRect.left);
+        });
+
+        // Get sticky column on the right
+        const rightStickyCol = table.querySelector('.col-handler');
+        if (rightStickyCol) {
+          const colRect = rightStickyCol.getBoundingClientRect();
+          rightStickyWidth = wrapperRect.right - colRect.left;
+        }
+      }
+
+      // Add padding for better visibility
+      const padding = 20;
+
+      // Calculate visible area (excluding sticky columns)
+      const visibleLeft = wrapperRect.left + leftStickyWidth + padding;
+      const visibleRight = wrapperRect.right - rightStickyWidth - padding;
+
+      // Check if cell is hidden or partially visible
+      const cellLeft = cellRect.left;
+      const cellRight = cellRect.right;
+
+      let scrollAmount = 0;
+
+      if (cellRight > visibleRight) {
+        // Cell is cut off on the right
+        scrollAmount = cellRight - visibleRight;
+      } else if (cellLeft < visibleLeft) {
+        // Cell is cut off on the left
+        scrollAmount = cellLeft - visibleLeft;
+      }
+
+      if (scrollAmount !== 0) {
+        wrapper.scrollBy({
+          left: scrollAmount,
+          behavior: 'smooth'
+        });
+      }
+    }, 10);
+
+    // Vertical scroll (standard behavior)
     cell.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
   }
 
