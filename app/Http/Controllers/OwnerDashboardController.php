@@ -4282,6 +4282,9 @@ class OwnerDashboardController extends Controller
             'pembayaran' => ['name' => 'Pembayaran', 'code' => 'pembayaran'],
         ];
 
+        $yearFilter = $request->get('year', $request->get('tahun'));
+        $monthFilter = $request->get('month', $request->get('bulan'));
+        $bagianFilter = $request->get('filter_bagian', $request->get('bagian'));
 
         // Query dokumen berdasarkan role dengan umur dokumen sejak received_at
         // Untuk pembayaran, gunakan sama seperti role lainnya dengan dokumen_role_data
@@ -4358,18 +4361,18 @@ class OwnerDashboardController extends Controller
         }
 
         // Filter by year
-        if ($request->has('year') && $request->year) {
-            $query->where('dokumens.tahun', $request->year);
+        if ($yearFilter) {
+            $query->where('dokumens.tahun', $yearFilter);
         }
 
         // Filter by month from received_at
-        if ($request->has('month') && $request->month) {
-            $query->whereMonth('dokumen_role_data.received_at', $request->month);
+        if ($monthFilter) {
+            $query->whereMonth('dokumen_role_data.received_at', $monthFilter);
         }
 
         // Apply advanced filters (similar to owner dashboard)
-        if ($request->has('filter_bagian') && $request->filter_bagian) {
-            $query->where('dokumens.bagian', $request->filter_bagian);
+        if ($bagianFilter) {
+            $query->where('dokumens.bagian', $bagianFilter);
         }
 
         if ($request->has('filter_vendor') && $request->filter_vendor) {
@@ -4601,13 +4604,13 @@ class OwnerDashboardController extends Controller
                 ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id');
 
             // Apply year filter to card stats if present
-            if ($request->has('year') && $request->year) {
-                $allRoleDocsQuery->where('dokumens.tahun', $request->year);
+            if ($yearFilter) {
+                $allRoleDocsQuery->where('dokumens.tahun', $yearFilter);
             }
 
             // Apply month filter to card stats if present
-            if ($request->has('month') && $request->month) {
-                $allRoleDocsQuery->whereMonth('dokumen_role_data.received_at', $request->month);
+            if ($monthFilter) {
+                $allRoleDocsQuery->whereMonth('dokumen_role_data.received_at', $monthFilter);
             }
 
             $allRoleDocs = $allRoleDocsQuery->select('dokumen_role_data.*')->get();
@@ -4643,13 +4646,13 @@ class OwnerDashboardController extends Controller
                 ->join('dokumens', 'dokumen_role_data.dokumen_id', '=', 'dokumens.id');
 
             // Apply year filter to card stats if present
-            if ($request->has('year') && $request->year) {
-                $allRoleDocsQuery->where('dokumens.tahun', $request->year);
+            if ($yearFilter) {
+                $allRoleDocsQuery->where('dokumens.tahun', $yearFilter);
             }
 
             // Apply month filter to card stats if present
-            if ($request->has('month') && $request->month) {
-                $allRoleDocsQuery->whereMonth('dokumen_role_data.received_at', $request->month);
+            if ($monthFilter) {
+                $allRoleDocsQuery->whereMonth('dokumen_role_data.received_at', $monthFilter);
             }
 
             $allRoleDocs = $allRoleDocsQuery->select('dokumen_role_data.*', 'dokumens.status_pembayaran')->get();
@@ -4784,17 +4787,107 @@ class OwnerDashboardController extends Controller
         // Get filter data for dropdowns
         $filterData = $this->getFilterData();
 
-        return view('owner.rekapanKeterlambatanByRole', compact(
-            'dokumens',
-            'cardStats',
-            'totalDocuments',
-            'availableYears',
-            'availableMonths',
-            'roleConfig',
-            'roleCode',
-            'filterData'
-        ))
-            ->with('title', 'Rekapan Keterlambatan - ' . $roleConfig[$roleCode]['name'])
+        $teamLabels = [
+            'operator' => 'Operator',
+            'team_verifikasi' => 'Tim Verifikasi',
+            'perpajakan' => 'Tim Perpajakan',
+            'akutansi' => 'Tim Akuntansi',
+            'pembayaran' => 'Tim Pembayaran',
+        ];
+
+        $bagianColors = [
+            'AKN' => '#7C3AED', 'DPM' => '#22c55e', 'KPL' => '#f59e0b',
+            'PMO' => '#06b6d4', 'SDM' => '#8b5cf6', 'SKH' => '#ec4899',
+            'TAN' => '#10b981', 'TEP' => '#6366f1', 'PTI' => '#3B82F6',
+        ];
+
+        $warningAfterHours = $roleCode === 'pembayaran' ? 168 : 24;
+        $lateAfterHours = $roleCode === 'pembayaran' ? 504 : 72;
+        $roleLabel = $teamLabels[$roleCode] ?? ($roleConfig[$roleCode]['name'] ?? ucfirst($roleCode));
+
+        $classified = $filteredDokumens->map(function ($doc) use ($roleCode, $roleLabel, $warningAfterHours, $lateAfterHours) {
+            $startDate = $doc->effective_received_at ? Carbon::parse($doc->effective_received_at) : null;
+            $endDate = $doc->effective_processed_at ? Carbon::parse($doc->effective_processed_at) : null;
+            $elapsedSeconds = $startDate
+                ? max(0, $startDate->diffInSeconds($endDate ?: Carbon::now(), false))
+                : (int) (($doc->age_hours ?? 0) * 3600);
+            $elapsedHours = $elapsedSeconds / 3600;
+
+            if ($elapsedHours >= $lateAfterHours) {
+                $statusClass = 'late';
+            } elseif ($elapsedHours >= $warningAfterHours) {
+                $statusClass = 'warn';
+            } else {
+                $statusClass = 'aman';
+            }
+
+            $vendor = $doc->dibayarKepadas && $doc->dibayarKepadas->count() > 0
+                ? $doc->dibayarKepadas->pluck('nama_penerima')->filter()->join(', ')
+                : ($doc->dibayar_kepada ?? '-');
+
+            return [
+                'id' => $doc->id,
+                'nomor_spp' => $doc->nomor_agenda ?: ($doc->nomor_spp ?? '-'),
+                'uraian_spp' => $doc->uraian_spp ?? '-',
+                'bagian' => $doc->bagian ?? '-',
+                'vendor' => $vendor ?: '-',
+                'nilai_rupiah' => $doc->nilai_rupiah ?? 0,
+                'tim' => $roleLabel,
+                'tim_code' => $roleCode,
+                'created_at' => $startDate ? $startDate->toIso8601String() : null,
+                'processed_at' => $endDate ? $endDate->toIso8601String() : null,
+                'tanggal_masuk' => $startDate ? $startDate->format('d M Y H:i') : ($doc->tanggal_masuk ?? '-'),
+                'tanggal_selesai' => $endDate ? $endDate->format('d M Y H:i') : null,
+                'deadline' => null,
+                'hari' => (int) floor($elapsedSeconds / 86400),
+                'elapsed_seconds' => $elapsedSeconds,
+                'status' => $statusClass,
+                'is_selesai' => (bool) ($doc->is_completed ?? false),
+            ];
+        })->values();
+
+        $countAman = $classified->where('status', 'aman')->count();
+        $countWarn = $classified->where('status', 'warn')->count();
+        $countLate = $classified->where('status', 'late')->count();
+        $teamScores = $this->calcTeamScores($classified, [$roleCode => $roleLabel]);
+        $totalAll = $classified->count() ?: 1;
+        $scoreAll = max(0, min(100, round(100 - (($countLate * 2 + $countWarn * 0.5) / $totalAll * 100) / 10 * 10, 1)));
+
+        $keseluruhan = [
+            'label' => $roleLabel,
+            'score' => $scoreAll,
+            'aman' => $countAman,
+            'warn' => $countWarn,
+            'late' => $countLate,
+        ];
+
+        $bagianList = Dokumen::select('bagian')->distinct()->orderBy('bagian')
+            ->pluck('bagian')->filter()->values();
+        $tahunList = collect($availableYears)->filter()->values();
+        if ($tahunList->isEmpty()) {
+            $tahunList = collect([now()->year]);
+        }
+
+        return view('owner.rekapanKeterlambatan', [
+            'classified' => $classified,
+            'countAman' => $countAman,
+            'countWarn' => $countWarn,
+            'countLate' => $countLate,
+            'keseluruhan' => $keseluruhan,
+            'teamScores' => $teamScores,
+            'bagianList' => $bagianList,
+            'tahunList' => $tahunList,
+            'bagianColors' => $bagianColors,
+            'filterBulan' => $monthFilter,
+            'filterTahun' => $yearFilter ?: now()->year,
+            'filterBagian' => $bagianFilter,
+            'isRoleScoped' => true,
+            'roleCode' => $roleCode,
+            'roleScopedLabel' => $roleLabel,
+            'rekapanFilterUrl' => route('rekapan-keterlambatan.role', $roleCode),
+            'rekapanExportUrl' => route('rekapan-keterlambatan.export', $roleCode),
+        ])
+            ->with('title', 'Rekapan Keterlambatan - ' . $roleLabel)
             ->with('module', $isAdminOrOwner ? 'owner' : ($roleCode === 'team_verifikasi' ? 'team_verifikasi' : ($roleCode === 'operator' ? 'operator' : $roleCode)))
             ->with('menuDashboard', '')
             ->with('menuRekapan', '')

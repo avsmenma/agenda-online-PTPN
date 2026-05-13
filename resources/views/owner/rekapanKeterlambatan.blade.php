@@ -205,6 +205,13 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle;text-align:cente
 </style>
 
 <div class="rk-wrap">
+  @php
+    $isRoleScoped = $isRoleScoped ?? false;
+    $roleCode = $roleCode ?? null;
+    $roleScopedLabel = $roleScopedLabel ?? null;
+    $rekapanFilterUrl = $rekapanFilterUrl ?? route('owner.rekapan-keterlambatan');
+    $rekapanExportUrl = $rekapanExportUrl ?? null;
+  @endphp
 
   {{-- FILTER BAR --}}
   <div class="filter-bar">
@@ -257,6 +264,7 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle;text-align:cente
   <div class="cards-row">
 
     {{-- Keseluruhan --}}
+    @unless($isRoleScoped)
     <div class="score-card card-active" data-team="" onclick="filterByTeam(this,'','Semua Tim')">
       <div class="sc-header">
         <div class="sc-title">Rekapan Semua Tim</div>
@@ -275,11 +283,12 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle;text-align:cente
         <div class="sc-stat-row"><div class="sc-stat-left"><div class="sc-dot" style="background:#dc2626"></div><span class="sc-stat-name">Terlambat</span></div><span class="sc-stat-val" style="color:#dc2626">{{ $keseluruhan['late'] }}</span></div>
       </div>
     </div>
+    @endunless
 
     {{-- Per Tim --}}
-    @php $donutIdx = 1; $badgeClasses = ['team_verifikasi'=>'badge-verif','perpajakan'=>'badge-pajak','akutansi'=>'badge-akun','pembayaran'=>'badge-bayar']; @endphp
+    @php $donutIdx = $isRoleScoped ? 0 : 1; $badgeClasses = ['team_verifikasi'=>'badge-verif','perpajakan'=>'badge-pajak','akutansi'=>'badge-akun','pembayaran'=>'badge-bayar']; @endphp
     @foreach($teamScores as $code => $ts)
-    <div class="score-card" data-team="{{ $code }}" onclick="filterByTeam(this,'{{ $code }}','{{ $ts['label'] }}')">
+    <div class="score-card {{ $isRoleScoped ? 'card-active' : '' }}" data-team="{{ $code }}" onclick="filterByTeam(this,'{{ $code }}','{{ $ts['label'] }}')">
       <div class="sc-header">
         <div class="sc-title">{{ $ts['label'] }}</div>
         <span class="sc-badge {{ $badgeClasses[$code] ?? 'badge-recap' }}">{{ $ts['score'] }}</span>
@@ -320,7 +329,9 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle;text-align:cente
   <div class="active-filter-bar" id="activeFilterBar" style="display:none">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
     <span>Menampilkan keterlambatan: <strong id="activeFilterLabel"></strong></span>
+    @unless($isRoleScoped)
     <span class="clear-filter" onclick="filterByTeam(document.querySelector('.score-card'),'','Semua Tim')">✕ Tampilkan semua tim</span>
+    @endunless
   </div>
 
   {{-- TABLE WRAPPER --}}
@@ -411,6 +422,12 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle;text-align:cente
 const DOCS_RAW = @json($classified->values()->all());
 
 const BAGIAN_COLOR = @json($bagianColors);
+const IS_ROLE_SCOPED = @json($isRoleScoped);
+const ROLE_SCOPED_CODE = @json($roleCode);
+const REKAPAN_FILTER_URL = @json($rekapanFilterUrl);
+const REKAPAN_EXPORT_URL = @json($rekapanExportUrl);
+const WARNING_AFTER_SECONDS = @json(($roleCode ?? '') === 'pembayaran' ? 168 * 3600 : 24 * 3600);
+const LATE_AFTER_SECONDS = @json(($roleCode ?? '') === 'pembayaran' ? 504 * 3600 : (($isRoleScoped ?? false) ? 72 * 3600 : 48 * 3600));
 
 /* ─── HELPERS ─── */
 function fmtNum(n){ return new Intl.NumberFormat('id-ID').format(n||0); }
@@ -434,9 +451,9 @@ function formatDuration(totalSeconds) {
   return `${s}d`;
 }
 function statusFromSeconds(totalSeconds){
-  const hours = Math.max(0, totalSeconds || 0) / 3600;
-  if(hours >= 48) return 'late';
-  if(hours >= 24) return 'warn';
+  const seconds = Math.max(0, totalSeconds || 0);
+  if(seconds >= LATE_AFTER_SECONDS) return 'late';
+  if(seconds >= WARNING_AFTER_SECONDS) return 'warn';
   return 'aman';
 }
 function truncate(str,len){ if(!str||str==='-') return '-'; return str.length>len?str.substring(0,len)+'…':str; }
@@ -448,17 +465,21 @@ let rowsPerPage   = 25;
 let currentPage   = 1;
 let sortKey       = null;
 let sortDir       = 1;
-let activeTeam    = '';   // '' = semua tim, otherwise tim_code
+let activeTeam    = IS_ROLE_SCOPED ? ROLE_SCOPED_CODE : '';   // '' = semua tim, otherwise tim_code
 
 /* ─── DONUT CHARTS ─── */
 const donutDatas = [
+  @unless($isRoleScoped)
   [{{ $keseluruhan['aman'] }}, {{ $keseluruhan['warn'] }}, {{ $keseluruhan['late'] }}],
+  @endunless
   @foreach($teamScores as $ts)
   [{{ $ts['aman'] }},{{ $ts['warn'] }},{{ $ts['late'] }}],
   @endforeach
 ];
 const donutScores = [
+  @unless($isRoleScoped)
   {{ $keseluruhan['score'] }},
+  @endunless
   @foreach($teamScores as $ts)
   {{ $ts['score'] }},
   @endforeach
@@ -495,7 +516,7 @@ function applyFilter(){
   const b = document.getElementById('filterBulan').value;
   const g = document.getElementById('filterBagian').value;
   const t = document.getElementById('filterTahun').value;
-  let url = '/owner/rekapan-keterlambatan?';
+  let url = REKAPAN_FILTER_URL + '?';
   if(b) url+='bulan='+b+'&';
   if(g) url+='bagian='+g+'&';
   if(t) url+='tahun='+t+'&';
