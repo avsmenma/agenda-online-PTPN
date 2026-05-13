@@ -4212,7 +4212,7 @@
     #documentTableContainer .table-enhanced tbody .col-no,
     #documentTableContainer .table-enhanced tbody .col-nomor_agenda,
     #documentTableContainer .table-enhanced tbody .col-handler {
-      background: inherit !important;
+      background: #ffffff !important;
       z-index: 30 !important;
     }
 
@@ -9265,7 +9265,7 @@
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody .col-no,
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody .col-nomor_agenda,
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody .col-handler {
-    background: inherit !important;
+    background: #ffffff !important;
     z-index: 30 !important;
   }
 
