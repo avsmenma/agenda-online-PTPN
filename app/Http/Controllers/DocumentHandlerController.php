@@ -39,6 +39,9 @@ class DocumentHandlerController extends Controller
 
         $currentHandler = $this->normalizeRole((string) ($dokumen->current_handler ?? 'operator'));
         $targetHandler = $this->normalizeRole($validated['target_handler']);
+        $canReceiveReturnedBagian = $userRole === 'team_verifikasi'
+            && $targetHandler === 'team_verifikasi'
+            && $dokumen->status === 'returned_to_bidang';
 
         if (!$this->isValidTarget($targetHandler)) {
             throw ValidationException::withMessages([
@@ -46,7 +49,7 @@ class DocumentHandlerController extends Controller
             ]);
         }
 
-        if ($userRole !== $currentHandler) {
+        if (!$canReceiveReturnedBagian && $userRole !== $currentHandler) {
             return response()->json([
                 'success' => false,
                 'message' => 'Hanya pengurus dokumen saat ini yang boleh mengubah kolom Pengurus Dokumen.',
@@ -58,6 +61,36 @@ class DocumentHandlerController extends Controller
                 'success' => false,
                 'message' => 'Dokumen sedang menunggu approval. Pengurus tidak dapat diubah sampai approval diproses.',
             ], 422);
+        }
+
+        if ($canReceiveReturnedBagian) {
+            try {
+                DB::beginTransaction();
+
+                $this->receiveBackFromBagian($dokumen);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Dokumen sudah kembali ke Tim Verifikasi.',
+                    'handler' => $targetHandler,
+                ]);
+            } catch (\Throwable $e) {
+                DB::rollBack();
+
+                Log::error('Failed to receive document back from bagian', [
+                    'document_id' => $dokumen->id,
+                    'current_handler' => $currentHandler,
+                    'target_handler' => $targetHandler,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mengembalikan dokumen ke Tim Verifikasi: ' . $e->getMessage(),
+                ], 500);
+            }
         }
 
         if ($targetHandler === $currentHandler) {
@@ -177,7 +210,7 @@ class DocumentHandlerController extends Controller
         $bagianCode = strtoupper(substr($targetHandler, strlen('bagian_')));
 
         $dokumen->update([
-            'current_handler' => $targetHandler,
+            'current_handler' => $sourceRole === 'team_verifikasi' ? 'team_verifikasi' : $targetHandler,
             'status' => 'returned_to_bidang',
             'return_source' => $bagianCode,
             'return_reason' => 'Dikembalikan melalui perubahan Pengurus Dokumen.',
@@ -187,6 +220,44 @@ class DocumentHandlerController extends Controller
 
         $dokumen->setDisplayStatusForRole($sourceRole, 'dikembalikan');
         ActivityLogHelper::logReturned($dokumen, $bagianCode, 'Dikembalikan melalui perubahan Pengurus Dokumen.', $sourceRole);
+    }
+
+    private function receiveBackFromBagian(Dokumen $dokumen): void
+    {
+        $previousReturnSource = $dokumen->return_source;
+        $teamVerifikasiData = $dokumen->getDataForRole('team_verifikasi');
+
+        if ($teamVerifikasiData && $teamVerifikasiData->received_at && $teamVerifikasiData->processed_at) {
+            $pausedSeconds = $teamVerifikasiData->processed_at->diffInSeconds(now());
+            $teamVerifikasiData->received_at = $teamVerifikasiData->received_at->copy()->addSeconds($pausedSeconds);
+            $teamVerifikasiData->processed_at = null;
+            $teamVerifikasiData->save();
+        } else {
+            $dokumen->setDataForRole('team_verifikasi', [
+                'received_at' => $teamVerifikasiData?->received_at ?? now(),
+                'processed_at' => null,
+            ]);
+        }
+
+        $dokumen->update([
+            'current_handler' => 'team_verifikasi',
+            'status' => 'sedang diproses',
+            'current_stage' => 'reviewer',
+            'return_source' => null,
+            'return_reason' => null,
+            'returned_at' => null,
+            'last_action_status' => 'returned_from_bidang',
+        ]);
+
+        $dokumen->setDisplayStatusForRole('team_verifikasi', 'sedang_diproses');
+        ActivityLogHelper::log(
+            $dokumen,
+            'returned_from_bidang',
+            'Dokumen kembali dari bagian ke Tim Verifikasi',
+            'reviewer',
+            'team_verifikasi',
+            ['from' => $previousReturnSource]
+        );
     }
 
     private function sendToApprovalInbox(Dokumen $dokumen, string $sourceRole, string $targetRole): void

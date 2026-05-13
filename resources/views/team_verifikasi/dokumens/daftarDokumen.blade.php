@@ -4842,6 +4842,10 @@
                     {{ $dokumen->status == 'approved_Team Verifikasi' ? 'Approved' : 'Selesai' }}</span>
                 @elseif($dokumen->status == 'rejected_Team Verifikasi')
                   <span class="badge-status badge-dikembalikan">Rejected</span>
+                @elseif($dokumen->status == 'returned_to_bidang')
+                  <span class="badge-status badge-dikembalikan">
+                    Dikembalikan ke {{ $dokumen->return_source ? strtoupper($dokumen->return_source) : 'Bagian' }}
+                  </span>
                 @elseif($displayStatusLabel)
                   {{-- NEW: Use display_status from dokumen_role_data (FINAL/frozen status) --}}
                   @if(str_starts_with($displayStatus, 'terkirim'))

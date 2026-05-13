@@ -27,7 +27,11 @@
   }
 
   $isOperationalRole = !in_array($currentUserRole, ['admin', 'programmer'], true);
-  $canChangeHandler = $isOperationalRole && !$pendingStatus && $currentUserRole === $currentHandler;
+  $isTeamVerifikasiReturnedToBagian = $currentUserRole === 'team_verifikasi'
+      && ($dokumen->status ?? null) === 'returned_to_bidang';
+  $canChangeHandler = $isOperationalRole
+      && !$pendingStatus
+      && ($currentUserRole === $currentHandler || $isTeamVerifikasiReturnedToBagian);
   $isReturnedDocument = \Illuminate\Support\Str::startsWith((string) ($dokumen->status ?? ''), 'returned_');
   $showBagianOptions = $currentUserRole === 'team_verifikasi'
       || $isReturnedDocument

@@ -37,10 +37,10 @@ class TeamVerifikasiController extends Controller
     {
         // Team Verifikasi sees ALL documents (cross-role visibility)
         // Action buttons are disabled for documents not yet at this role (controlled in blade view)
-        // Exclude documents that are returned to bidang (they should appear in pengembalian ke bidang page)
-        // Base query - akan dimodifikasi oleh filter status jika ada
-        $query = Dokumen::with('activityLogs')
-            ->where('status', '!=', 'returned_to_bidang');
+        // Base query - akan dimodifikasi oleh filter status jika ada.
+        // Dokumen yang dikembalikan ke bagian tetap ditampilkan di daftar ini;
+        // dropdown Pengurus Dokumen menunjukkan bagian tujuan sampai fisiknya kembali.
+        $query = Dokumen::with('activityLogs');
 
         // Exclude CSV imported documents - they are exclusive to Pembayaran module
         $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
@@ -286,26 +286,29 @@ class TeamVerifikasiController extends Controller
                 case 'sedang_proses':
                     // Dokumen yang sedang diproses oleh Team Verifikasi (Team Verifikasi atau verifikasi)
                     $query->where(function ($q) {
-                        $q->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
-                            // Exclude dokumen yang sudah terkirim ke role lain
-                            ->whereNotIn('status', [
-                                'sent_to_perpajakan',
-                                'sent_to_akutansi',
-                                'sent_to_pembayaran',
-                                'returned_to_department',
-                                'returned_to_verifikasi',
-                                'returned_to_bidang',
-                                'selesai',
-                                'completed'
-                            ])
-                            // Exclude dokumen yang pending approval
-                            ->whereDoesntHave('roleStatuses', function ($rq) {
-                                $rq->where('status', DokumenStatus::STATUS_PENDING);
-                            })
-                            // Exclude dokumen yang ditolak
-                            ->whereDoesntHave('roleStatuses', function ($rq) {
-                                $rq->where('role_code', 'team_verifikasi')->where('status', 'rejected');
-                            });
+                        $q->where(function ($activeQ) {
+                            $activeQ->whereIn('current_handler', ['team_verifikasi', 'team_verifikasi'])
+                                // Exclude dokumen yang sudah terkirim ke role lain
+                                ->whereNotIn('status', [
+                                    'sent_to_perpajakan',
+                                    'sent_to_akutansi',
+                                    'sent_to_pembayaran',
+                                    'returned_to_department',
+                                    'returned_to_verifikasi',
+                                    'selesai',
+                                    'completed'
+                                ])
+                                // Exclude dokumen yang pending approval
+                                ->whereDoesntHave('roleStatuses', function ($rq) {
+                                    $rq->where('status', DokumenStatus::STATUS_PENDING);
+                                })
+                                // Exclude dokumen yang ditolak
+                                ->whereDoesntHave('roleStatuses', function ($rq) {
+                                    $rq->where('role_code', 'team_verifikasi')->where('status', 'rejected');
+                                });
+                        })
+                            // Keep documents returned to bagian visible in the active verification list.
+                            ->orWhere('status', 'returned_to_bidang');
                     });
                     break;
                 case 'terkirim_perpajakan':
@@ -384,9 +387,9 @@ class TeamVerifikasiController extends Controller
             $keterlambatanFilter = $request->keterlambatan;
             $now = Carbon::now();
 
-            // Get all relevant dokumen IDs with their roleData received_at
-            $allDokumenWithRoleData = Dokumen::where('status', '!=', 'returned_to_bidang')
-                ->when($hasImportedFromCsvColumn, function ($q) {
+            // Get all relevant dokumen IDs with their roleData received_at.
+            // Documents returned to bagian stay visible for Team Verifikasi, with the timer paused.
+            $allDokumenWithRoleData = Dokumen::when($hasImportedFromCsvColumn, function ($q) {
                     $q->where(function ($sq) {
                         $sq->where('imported_from_csv', false)->orWhereNull('imported_from_csv');
                     });
@@ -404,7 +407,8 @@ class TeamVerifikasiController extends Controller
                     $isSent = in_array($doc->status, [
                         'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran',
                         'waiting_approval_perpajakan', 'waiting_approval_akuntansi',
-                        'waiting_approval_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi'
+                        'waiting_approval_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi',
+                        'returned_to_bidang'
                     ]);
                     $hoursDiff = ($isSent && $roleData->processed_at)
                         ? $receivedAt->diffInHours(Carbon::parse($roleData->processed_at))
@@ -524,7 +528,6 @@ class TeamVerifikasiController extends Controller
                     'menunggu_di_approve'
                 ]);
         })
-            ->where('status', '!=', 'returned_to_bidang')
             ->when($hasImportedFromCsvColumn, function ($query) {
                 $query->where(function ($q) {
                     $q->where('imported_from_csv', false)
@@ -535,7 +538,7 @@ class TeamVerifikasiController extends Controller
 
         // 3. Dokumen Diproses - dokumen yang sedang diproses oleh Team Verifikasi
         $totalDokumenDiproses = Dokumen::whereIn('current_handler', ['team_verifikasi'])
-            ->whereIn('status', ['sent_to_team_verifikasi', 'sedang diproses', 'sedang_diproses'])
+            ->whereIn('status', ['sent_to_team_verifikasi', 'sedang diproses', 'sedang_diproses', 'returned_to_bidang'])
             ->when($hasImportedFromCsvColumn, function ($query) {
                 $query->where(function ($q) {
                     $q->where('imported_from_csv', false)
@@ -572,7 +575,6 @@ class TeamVerifikasiController extends Controller
                     'menunggu_di_approve'
                 ]);
         })
-            ->where('status', '!=', 'returned_to_bidang')
             ->when($hasImportedFromCsvColumn, function ($query) {
                 $query->where(function ($q) {
                     $q->where('imported_from_csv', false)
@@ -595,7 +597,8 @@ class TeamVerifikasiController extends Controller
                 $isSent = in_array($doc->status, [
                     'sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran',
                     'waiting_approval_perpajakan', 'waiting_approval_akuntansi',
-                    'waiting_approval_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi'
+                    'waiting_approval_pembayaran', 'pending_approval_perpajakan', 'pending_approval_akutansi',
+                    'returned_to_bidang'
                 ]);
                 if ($isSent && $roleData->processed_at) {
                     $hoursDiff = $receivedAt->diffInHours(Carbon::parse($roleData->processed_at));
@@ -624,7 +627,6 @@ class TeamVerifikasiController extends Controller
                     'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve'
                 ]);
         })
-            ->where('status', '!=', 'returned_to_bidang')
             ->when($hasImportedFromCsvColumn, function ($query) {
                 $query->where(function ($q) {
                     $q->where('imported_from_csv', false)->orWhereNull('imported_from_csv');
@@ -2252,9 +2254,9 @@ class TeamVerifikasiController extends Controller
      */
     public function pengembalianKeBidang(Request $request)
     {
-        // Get documents with status = 'returned_to_bidang' and current_handler = 'team_verifikasi'
-        $query = Dokumen::where('current_handler', 'team_verifikasi')
-            ->where('status', 'returned_to_bidang')
+        // Get documents returned to bidang. Older records may have current_handler = bagian_xxx,
+        // so the page should key from the return status/source instead of hiding those rows.
+        $query = Dokumen::where('status', 'returned_to_bidang')
             ->latest('returned_at');
 
         // Filter by specific bidang if provided
@@ -2298,8 +2300,7 @@ class TeamVerifikasiController extends Controller
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Get statistics
-        $totalReturned = Dokumen::where('current_handler', 'team_verifikasi')
-            ->where('status', 'returned_to_bidang')
+        $totalReturned = Dokumen::where('status', 'returned_to_bidang')
             ->count();
 
         // Map bidang codes to names (hardcoded)
@@ -2317,8 +2318,7 @@ class TeamVerifikasiController extends Controller
 
         $bidangStats = [];
         foreach ($bidangList as $kode => $nama) {
-            $count = Dokumen::where('current_handler', 'team_verifikasi')
-                ->where('status', 'returned_to_bidang')
+            $count = Dokumen::where('status', 'returned_to_bidang')
                 ->where('return_source', $kode)
                 ->count();
 
@@ -3912,7 +3912,3 @@ class TeamVerifikasiController extends Controller
         }
     }
 }
-
-
-
-
