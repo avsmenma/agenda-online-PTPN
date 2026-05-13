@@ -9200,6 +9200,14 @@
       inset 0 0 0 1px rgba(245, 158, 11, 0.55) !important;
   }
 
+  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active {
+    outline-color: #052f31 !important;
+    box-shadow:
+      inset 0 0 0 1px #f59e0b,
+      0 0 0 2px rgba(255, 255, 255, 0.9) !important;
+  }
+
   #documentTableContainer .table-enhanced tbody td.acn-active::before,
   body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active::before,
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active::before {

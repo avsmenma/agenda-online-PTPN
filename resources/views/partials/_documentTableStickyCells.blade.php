@@ -3,6 +3,106 @@
     position: relative;
   }
 
+  #documentTableContainer .table-enhanced {
+    table-layout: fixed;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  #documentTableContainer .table-enhanced th,
+  #documentTableContainer .table-enhanced td {
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: clip;
+  }
+
+  #documentTableContainer .table-enhanced tbody td {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.45;
+  }
+
+  #documentTableContainer .table-enhanced thead th,
+  body.is-fullscreen #documentTableContainer .table-enhanced thead th,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead th {
+    background: #0d3b6e !important;
+    box-shadow: 0 2px 0 #1a5276 !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+  }
+
+  #documentTableContainer .table-enhanced .col-checkbox {
+    width: 64px;
+    min-width: 64px;
+  }
+
+  #documentTableContainer .table-enhanced .col-no,
+  #documentTableContainer .table-enhanced .col-number {
+    width: 88px;
+    min-width: 88px;
+  }
+
+  #documentTableContainer .table-enhanced .col-nomor_agenda {
+    width: 210px;
+    min-width: 210px;
+  }
+
+  #documentTableContainer .table-enhanced .col-bulan {
+    width: 110px;
+    min-width: 110px;
+  }
+
+  #documentTableContainer .table-enhanced .col-tahun {
+    width: 100px;
+    min-width: 100px;
+  }
+
+  #documentTableContainer .table-enhanced .col-kategori,
+  #documentTableContainer .table-enhanced .col-jenis_dokumen,
+  #documentTableContainer .table-enhanced .col-jenis_sub_pekerjaan {
+    width: 300px;
+    min-width: 300px;
+  }
+
+  #documentTableContainer .table-enhanced .col-jenis_pembayaran {
+    width: 190px;
+    min-width: 190px;
+  }
+
+  #documentTableContainer .table-enhanced .col-nomor_spp {
+    width: 230px;
+    min-width: 230px;
+  }
+
+  #documentTableContainer .table-enhanced .col-tanggal_masuk,
+  #documentTableContainer .table-enhanced .col-tanggal_spp,
+  #documentTableContainer .table-enhanced .col-tanggal_berita_acara,
+  #documentTableContainer .table-enhanced .col-tanggal_spk,
+  #documentTableContainer .table-enhanced .col-tanggal_berakhir_spk,
+  #documentTableContainer .table-enhanced .col-tanggal_faktur,
+  #documentTableContainer .table-enhanced .col-tanggal_paraf,
+  #documentTableContainer .table-enhanced .col-tanggal_miro,
+  #documentTableContainer .table-enhanced .col-tanggal_selesai_verifikasi_pajak {
+    width: 180px;
+    min-width: 180px;
+  }
+
+  #documentTableContainer .table-enhanced .col-deadline {
+    width: 210px;
+    min-width: 210px;
+  }
+
+  #documentTableContainer .table-enhanced .col-status {
+    width: 300px;
+    min-width: 300px;
+  }
+
+  #documentTableContainer .table-enhanced .col-handler {
+    width: 240px;
+    min-width: 240px;
+  }
+
   #documentTableContainer .table-enhanced .col-checkbox,
   #documentTableContainer .table-enhanced .col-no,
   #documentTableContainer .table-enhanced .col-number,
@@ -103,6 +203,27 @@
   body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead th.acn-active-col {
     background: #0d3b6e !important;
     box-shadow: 0 2px 0 #1a5276 !important;
+  }
+
+  #documentTableContainer .table-enhanced tbody td.acn-active,
+  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active {
+    position: relative !important;
+    z-index: 55 !important;
+    outline: 3px solid #083E40 !important;
+    outline-offset: -3px !important;
+    background-color: #e6f0ef !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(245, 158, 11, 0.8),
+      0 0 0 1px rgba(255, 255, 255, 0.75) !important;
+  }
+
+  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active {
+    outline-color: #052f31 !important;
+    box-shadow:
+      inset 0 0 0 1px #f59e0b,
+      0 0 0 2px rgba(255, 255, 255, 0.9) !important;
   }
 
   #documentTableContainer .table-enhanced tbody td.acn-active.col-checkbox,
