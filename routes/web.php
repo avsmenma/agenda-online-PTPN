@@ -471,17 +471,12 @@ Route::middleware(['auth', 'role:operator,team_verifikasi,verifikasi,perpajakan,
 
 // Professional Document Routes - Pembayaran
 Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('documents/pembayaran')->name('documents.pembayaran.')->group(function () {
-    Route::get('/', [DashboardPembayaranController::class, 'dokumens'])->name('index');
+    Route::get('/', [DashboardPembayaranController::class, 'redirectDokumens'])->name('index');
     Route::get('/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/payment-data', [DashboardPembayaranController::class, 'getPaymentData'])->name('payment-data');
     Route::post('/{dokumen}/set-deadline', [DashboardPembayaranController::class, 'setDeadline'])->name('set-deadline');
     Route::post('/{dokumen}/update-status', [DashboardPembayaranController::class, 'updateStatus'])->name('update-status');
     Route::post('/{dokumen}/upload-proof', [DashboardPembayaranController::class, 'uploadBukti'])->name('upload-proof');
-    Route::get('/create', [DashboardPembayaranController::class, 'createDokumen'])->name('create');
-    Route::post('/', [DashboardPembayaranController::class, 'storeDokumen'])->name('store');
-    Route::get('/{dokumen}/edit', [DashboardPembayaranController::class, 'editDokumen'])->name('edit');
-    Route::put('/{dokumen}', [DashboardPembayaranController::class, 'updateDokumen'])->name('update');
-    Route::delete('/{dokumen}', [DashboardPembayaranController::class, 'destroyDokumen'])->name('destroy');
 });
 
 // Professional Reports Routes - Pembayaran

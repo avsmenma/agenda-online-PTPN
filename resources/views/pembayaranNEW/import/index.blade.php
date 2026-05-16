@@ -385,7 +385,7 @@
         </div>
 
         <div class="mt-4">
-            <a href="/documents/pembayaran" class="btn btn-upload">
+            <a href="{{ route('dashboard.pembayaran') }}" class="btn btn-upload">
                 <i class="fa-solid fa-list me-2"></i>Lihat Daftar Dokumen
             </a>
             <button type="button" class="btn btn-secondary ms-2" onclick="location.reload()">
@@ -658,7 +658,6 @@
     </script>
 
 @endsection
-
 
 
 

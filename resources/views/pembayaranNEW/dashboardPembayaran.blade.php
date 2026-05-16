@@ -1567,13 +1567,244 @@
     }
   </style>
 
+  <style>
+    #documentTableContainer.table-dokumen {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+      border: 1px solid #f1f5f9;
+      overflow: hidden;
+    }
+
+    #documentTableContainer .dtable-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.35rem;
+      border-bottom: 1px solid #f1f5f9;
+      gap: 1rem;
+      flex-wrap: wrap;
+      background: #ffffff;
+    }
+
+    #documentTableContainer .dtable-toolbar-left,
+    #documentTableContainer .dtable-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    #documentTableContainer .dtable-toolbar-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #083E40 0%, #0a5254 100%);
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    #documentTableContainer .dtable-toolbar-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    #documentTableContainer .dtable-toolbar-subtitle {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    #documentTableContainer .btn-customize-columns-inline,
+    #documentTableContainer .btn-refresh,
+    #documentTableContainer .btn-fullscreen {
+      min-height: 44px;
+      border-radius: 8px;
+      border: none;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.16);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    #documentTableContainer .btn-customize-columns-inline {
+      background: linear-gradient(135deg, #889717 0%, #9cab15 100%);
+    }
+
+    #documentTableContainer .btn-refresh {
+      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    }
+
+    #documentTableContainer .btn-fullscreen {
+      background: linear-gradient(135deg, #083E40 0%, #052f31 100%);
+    }
+
+    #documentTableContainer .btn-customize-columns-inline:hover,
+    #documentTableContainer .btn-refresh:hover,
+    #documentTableContainer .btn-fullscreen:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.24);
+    }
+
+    #documentTableContainer .table-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.25rem;
+    }
+
+    #documentTableContainer .table-toggle-btn {
+      min-height: 36px;
+      padding: 0.45rem 0.8rem;
+      border-radius: 6px;
+      color: #475569;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      background: transparent;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    #documentTableContainer .table-toggle-btn.active {
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+    }
+
+    #documentTableContainer .data-table-wrapper {
+      border-radius: 0;
+      overflow: auto;
+      background: #ffffff;
+      min-height: 420px;
+      scrollbar-color: rgba(8, 62, 64, 0.36) rgba(241, 245, 249, 0.9);
+      scrollbar-width: thin;
+    }
+
+    #documentTableContainer .data-table {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+    }
+
+    #documentTableContainer .data-table th,
+    #documentTableContainer .dt-scroll-head th {
+      background: #0d3b6e !important;
+      color: rgba(255,255,255,0.95) !important;
+      box-shadow: 0 2px 0 #1a5276 !important;
+      border: none !important;
+      padding: 0.85rem 0.9rem !important;
+      font-size: 0.775rem !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.04em !important;
+      white-space: nowrap;
+    }
+
+    #documentTableContainer .data-table td {
+      border-top: 1px solid #f1f5f9 !important;
+      border-bottom: none !important;
+      border-right: 1px solid #eef2f7;
+      padding: 0.85rem 0.9rem !important;
+      color: #1f2937;
+      font-size: 0.875rem;
+      line-height: 1.45;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      background: #ffffff;
+    }
+
+    #documentTableContainer .data-table tbody tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    #documentTableContainer .data-table tbody tr:hover td {
+      background: #f3faf9 !important;
+    }
+
+    #documentTableContainer .data-table tbody tr:hover td:first-child {
+      box-shadow: inset 3px 0 0 #083E40;
+    }
+
+    #documentTableContainer .data-table th:first-child,
+    #documentTableContainer .data-table td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 30;
+      min-width: 210px;
+    }
+
+    #documentTableContainer .data-table th:first-child {
+      z-index: 560;
+    }
+
+    #documentTableContainer .status-pill {
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.45rem 0.8rem;
+      white-space: nowrap;
+    }
+
+    body.document-table-only-fullscreen #documentTableContainer,
+    body.is-fullscreen #documentTableContainer {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 99990 !important;
+      border-radius: 0 !important;
+      height: 100vh !important;
+      width: 100vw !important;
+    }
+
+    body.document-table-only-fullscreen #documentTableContainer .data-table-wrapper,
+    body.is-fullscreen #documentTableContainer .data-table-wrapper {
+      max-height: calc(100vh - 80px) !important;
+      min-height: calc(100vh - 80px) !important;
+    }
+
+    body.document-table-only-fullscreen .premium-dashboard > *:not(#documentTableContainer),
+    body.is-fullscreen .premium-dashboard > *:not(#documentTableContainer) {
+      visibility: hidden;
+    }
+
+    @media (max-width: 768px) {
+      #documentTableContainer .dtable-toolbar {
+        align-items: flex-start;
+      }
+
+      #documentTableContainer .dtable-toolbar-left,
+      #documentTableContainer .dtable-toolbar-right {
+        width: 100%;
+      }
+    }
+  </style>
+
   <div class="premium-dashboard">
     <!-- Header -->
     <header class="dashboard-header">
       <div class="header-content">
         <h1 class="header-title">
           <div class="header-title-icon">
-            <i class="fas fa-wallet"></i>
+            <i class="fa-solid fa-wallet"></i>
           </div>
           Dashboard Pembayaran
         </h1>
@@ -1581,7 +1812,7 @@
       </div>
       <div class="header-actions">
         <button type="button" class="btn-export-excel" onclick="exportDocument('excel')" title="Export Excel">
-          <i class="fas fa-file-excel"></i> Export Excel
+          <i class="fa-solid fa-file-excel"></i> Export Excel
         </button>
       </div>
       <!-- Hidden export form -->
@@ -1616,7 +1847,7 @@
           <div class="stat-subvalue">Rp {{ number_format($statistics['total_nilai'], 0, ',', '.') }}</div>
         </div>
         <div class="stat-icon stat-icon--total">
-          <i class="fas fa-layer-group"></i>
+          <i class="fa-solid fa-layer-group"></i>
         </div>
       </a>
 
@@ -1629,11 +1860,11 @@
             {{ number_format($statistics['total_nilai_by_status']['belum_dibayar'], 0, ',', '.') }}
           </div>
           <div class="stat-subvalue-link">
-            <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
+            <i class="fa-solid fa-arrow-right"></i> Klik untuk detail analitik
           </div>
         </div>
         <div class="stat-icon stat-icon--pending">
-          <i class="fas fa-hourglass-half"></i>
+          <i class="fa-solid fa-hourglass-half"></i>
         </div>
       </a>
 
@@ -1646,11 +1877,11 @@
             {{ number_format($statistics['total_nilai_by_status']['siap_dibayar'], 0, ',', '.') }}
           </div>
           <div class="stat-subvalue-link">
-            <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
+            <i class="fa-solid fa-arrow-right"></i> Klik untuk detail analitik
           </div>
         </div>
         <div class="stat-icon stat-icon--ready">
-          <i class="fas fa-check-circle"></i>
+          <i class="fa-solid fa-check-circle"></i>
         </div>
       </a>
 
@@ -1663,19 +1894,19 @@
             {{ number_format($statistics['total_nilai_by_status']['sudah_dibayar'], 0, ',', '.') }}
           </div>
           <div class="stat-subvalue-link">
-            <i class="fas fa-arrow-right"></i> Klik untuk detail analitik
+            <i class="fa-solid fa-arrow-right"></i> Klik untuk detail analitik
           </div>
         </div>
         <div class="stat-icon stat-icon--paid">
-          <i class="fas fa-check-double"></i>
+          <i class="fa-solid fa-check-double"></i>
         </div>
       </a>
 
       <!-- Deadline Cards -->
-      <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'aman']) }}"
+      <a href="{{ route('dashboard.pembayaran', ['status_keterlambatan' => 'aman']) }}"
         class="deadline-card deadline-card--aman animate-fade-in animate-delay-5">
         <div class="deadline-icon">
-          <i class="fas fa-shield-alt"></i>
+          <i class="fa-solid fa-shield-alt"></i>
         </div>
         <div class="deadline-content">
           <div class="deadline-label">Aman</div>
@@ -1684,10 +1915,10 @@
         </div>
       </a>
 
-      <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'peringatan']) }}"
+      <a href="{{ route('dashboard.pembayaran', ['status_keterlambatan' => 'peringatan']) }}"
         class="deadline-card deadline-card--peringatan animate-fade-in animate-delay-6">
         <div class="deadline-icon">
-          <i class="fas fa-exclamation-triangle"></i>
+          <i class="fa-solid fa-exclamation-triangle"></i>
         </div>
         <div class="deadline-content">
           <div class="deadline-label">Peringatan</div>
@@ -1696,10 +1927,10 @@
         </div>
       </a>
 
-      <a href="{{ route('documents.pembayaran.index', ['status_keterlambatan' => 'terlambat']) }}"
+      <a href="{{ route('dashboard.pembayaran', ['status_keterlambatan' => 'terlambat']) }}"
         class="deadline-card deadline-card--terlambat animate-fade-in animate-delay-7">
         <div class="deadline-icon">
-          <i class="fas fa-times-circle"></i>
+          <i class="fa-solid fa-times-circle"></i>
         </div>
         <div class="deadline-content">
           <div class="deadline-label">Terlambat</div>
@@ -1713,7 +1944,7 @@
     <form action="{{ route('dashboard.pembayaran') }}" method="GET" class="filter-section" id="filterForm">
       <div class="filter-row">
         <div class="filter-search">
-          <i class="fas fa-search filter-search-icon"></i>
+          <i class="fa-solid fa-search filter-search-icon"></i>
           <input type="text" name="search" placeholder="Cari no agenda, SPP, vendor..." value="{{ $search ?? '' }}">
         </div>
 
@@ -1736,12 +1967,12 @@
 
         <div class="filter-actions">
           <button type="submit" class="btn-filter btn-filter--primary">
-            <i class="fas fa-check"></i>
+            <i class="fa-solid fa-check"></i>
             Terapkan
           </button>
           <a href="{{ route('dashboard.pembayaran') }}" class="btn-filter btn-filter--secondary"
             onclick="try{localStorage.removeItem('pembayaran_columns')}catch(e){}">
-            <i class="fas fa-redo"></i>
+            <i class="fa-solid fa-redo"></i>
             Reset
           </a>
 
@@ -1761,9 +1992,9 @@
 
           <button type="button" class="advanced-filter-toggle {{ $activeAdvancedFilterCount > 0 ? 'active' : '' }}"
             id="advancedFilterToggle">
-            <i class="fas fa-sliders-h"></i>
+            <i class="fa-solid fa-sliders-h"></i>
             Filter Lanjutan
-            <i class="fas fa-chevron-down"></i>
+            <i class="fa-solid fa-chevron-down"></i>
             @if($activeAdvancedFilterCount > 0)
               <span class="active-filters-badge">{{ $activeAdvancedFilterCount }}</span>
             @endif
@@ -1777,7 +2008,7 @@
           <div class="advanced-filter-grid">
             <!-- Vendor Filter -->
             <div class="filter-group">
-              <label for="filterVendor"><i class="fas fa-store"></i> Vendor</label>
+              <label for="filterVendor"><i class="fa-solid fa-store"></i> Vendor</label>
               <select id="filterVendor" name="filter_vendor">
                 <option value="">Semua Vendor</option>
                 @foreach($availableDibayarKepada ?? [] as $key => $value)
@@ -1790,7 +2021,7 @@
 
             <!-- Kriteria Filter -->
             <div class="filter-group">
-              <label for="filterKategori"><i class="fas fa-tags"></i> Kriteria CF</label>
+              <label for="filterKategori"><i class="fa-solid fa-tags"></i> Kriteria CF</label>
               <select id="filterKategori" name="filter_kategori">
                 <option value="">Semua Kriteria</option>
                 @foreach($availableKategori ?? [] as $key => $value)
@@ -1801,7 +2032,7 @@
 
             <!-- Sub Kriteria Filter -->
             <div class="filter-group">
-              <label for="filterJenisDokumen"><i class="fas fa-tag"></i> Sub Kriteria</label>
+              <label for="filterJenisDokumen"><i class="fa-solid fa-tag"></i> Sub Kriteria</label>
               <select id="filterJenisDokumen" name="filter_jenis_dokumen">
                 <option value="">Semua Sub Kriteria</option>
                 @foreach($availableJenisDokumen ?? [] as $key => $value)
@@ -1813,7 +2044,7 @@
 
             <!-- Item Sub Kriteria Filter -->
             <div class="filter-group">
-              <label for="filterJenisSubPekerjaan"><i class="fas fa-th-list"></i> Item Sub Kriteria</label>
+              <label for="filterJenisSubPekerjaan"><i class="fa-solid fa-th-list"></i> Item Sub Kriteria</label>
               <select id="filterJenisSubPekerjaan" name="filter_jenis_sub_pekerjaan">
                 <option value="">Semua Item</option>
                 @foreach($availableJenisSubPekerjaan ?? [] as $key => $value)
@@ -1826,7 +2057,7 @@
 
             <!-- Kebun Filter -->
             <div class="filter-group">
-              <label for="filterKebun"><i class="fas fa-seedling"></i> Kebun</label>
+              <label for="filterKebun"><i class="fa-solid fa-seedling"></i> Kebun</label>
               <select id="filterKebun" name="filter_kebun">
                 <option value="">Semua Kebun</option>
                 @foreach($availableKebuns ?? [] as $key => $value)
@@ -1837,7 +2068,7 @@
 
             <!-- Jenis Pembayaran Filter -->
             <div class="filter-group">
-              <label for="filterJenisPembayaran"><i class="fas fa-money-bill-wave"></i> Jenis Pembayaran</label>
+              <label for="filterJenisPembayaran"><i class="fa-solid fa-money-bill-wave"></i> Jenis Pembayaran</label>
               <select id="filterJenisPembayaran" name="filter_jenis_pembayaran">
                 <option value="">Semua Jenis</option>
                 @foreach($availableJenisPembayaran ?? [] as $key => $value)
@@ -1850,7 +2081,7 @@
 
           <div class="advanced-filter-actions">
             <button type="button" class="btn-advanced-reset" onclick="resetAdvancedFilters()">
-              <i class="fas fa-times"></i>
+              <i class="fa-solid fa-times"></i>
               Reset Filter Lanjutan
             </button>
           </div>
@@ -1859,32 +2090,41 @@
     </form>
 
     <!-- Table Section -->
-    <div class="table-section" id="tableSection">
-      <div class="table-header">
-        <div class="table-heading">
-          <div class="table-title-stack">
-            <div class="table-title">
-              <i class="fas fa-list-alt"></i>
+    <div class="table-section table-dokumen" id="documentTableContainer">
+      <div class="dtable-toolbar">
+        <div class="dtable-toolbar-left">
+          <div class="dtable-toolbar-icon">
+            <i class="fa-solid fa-list"></i>
+          </div>
+          <div>
+            <div class="dtable-toolbar-title">
               Daftar Dokumen
               <span class="table-count" id="tableCount">{{ $dokumens->total() }}</span>
             </div>
-            <div class="table-subtitle">Nomor agenda, SPP, vendor, nilai, dan status pembayaran.</div>
+            <div class="dtable-toolbar-subtitle">Nomor agenda, SPP, vendor, nilai, dan status pembayaran.</div>
           </div>
         </div>
-        <div class="table-controls">
+        <div class="dtable-toolbar-right">
+          <button type="button" class="btn-refresh" onclick="refreshPembayaranTable()">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh
+          </button>
+          <button type="button" class="btn-customize-columns-inline" onclick="openColumnModal()">
+            <i class="fa-solid fa-table-columns"></i>
+            Kustomisasi Kolom Tabel
+          </button>
           <div class="table-toggle">
-            <button type="button" class="table-toggle-btn" onclick="openColumnModal()">
-              <i class="fas fa-columns"></i> Atur Kolom
-            </button>
             <button type="button" class="table-toggle-btn {{ $mode != 'rekapan_table' ? 'active' : '' }}"
               onclick="setViewMode('normal')">
-              <i class="fas fa-th-list"></i> Normal
+              <i class="fa-solid fa-table-list"></i> Normal
             </button>
             <button type="button" class="table-toggle-btn {{ $mode == 'rekapan_table' ? 'active' : '' }}"
               onclick="setViewMode('rekapan_table')">
-              <i class="fas fa-object-group"></i> Group Vendor
+              <i class="fa-solid fa-layer-group"></i> Group Vendor
             </button>
           </div>
+          <button type="button" class="btn-fullscreen" onclick="togglePembayaranTableFullscreen()">
+            <i class="fa-solid fa-expand"></i> Fullscreen
+          </button>
         </div>
       </div>
 
@@ -1897,7 +2137,7 @@
                 <div class="vendor-group-header" onclick="toggleVendorGroup(this)">
                   <div class="vendor-group-info">
                     <div class="vendor-icon">
-                      <i class="fas fa-building"></i>
+                      <i class="fa-solid fa-building"></i>
                     </div>
                     <span class="vendor-name">{{ $vendorData['vendor'] }}</span>
                     <span class="vendor-count">{{ $vendorData['count'] }} dokumen</span>
@@ -1907,7 +2147,7 @@
                       <div class="vendor-stat-label">Total Nilai</div>
                       <div class="vendor-stat-value">Rp {{ number_format($vendorData['total_nilai'], 0, ',', '.') }}</div>
                     </div>
-                    <i class="fas fa-chevron-down vendor-chevron"></i>
+                    <i class="fa-solid fa-chevron-down vendor-chevron"></i>
                   </div>
                 </div>
                 <div class="vendor-group-body">
@@ -1932,22 +2172,22 @@
                           <td>
                             @if($doc->computed_status == 'siap_dibayar')
                               <span class="status-pill status-pill--ready">
-                                <i class="fas fa-circle"></i> Siap Dibayar
+                                <i class="fa-solid fa-circle"></i> Siap Dibayar
                               </span>
                             @elseif($doc->computed_status == 'sudah_dibayar')
                               <span class="status-pill status-pill--paid">
-                                <i class="fas fa-circle"></i> Sudah Dibayar
+                                <i class="fa-solid fa-circle"></i> Sudah Dibayar
                               </span>
                             @else
                               <span class="status-pill status-pill--pending">
-                                <i class="fas fa-circle"></i> Belum Siap
+                                <i class="fa-solid fa-circle"></i> Belum Siap
                               </span>
                             @endif
                           </td>
                           <td>
                             <a href="{{ route('documents.pembayaran.detail', $doc->id) }}" class="btn-action"
                               title="Lihat Detail">
-                              <i class="fas fa-eye"></i>
+                              <i class="fa-solid fa-eye"></i>
                             </a>
                           </td>
                         </tr>
@@ -1964,12 +2204,12 @@
           <div class="ajax-loading-overlay" id="ajaxLoadingOverlay"
             style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);z-index:10;display:none;align-items:center;justify-content:center;border-radius:var(--radius-lg);">
             <div style="text-align:center;">
-              <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--brand-primary);"></i>
+              <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--brand-primary);"></i>
               <p style="margin-top:0.5rem;color:var(--text-secondary);font-size:0.875rem;">Memuat data...</p>
             </div>
           </div>
-          <div class="data-table-wrapper" id="dataTableWrapper">
-            <table class="data-table" id="pembayaranDocumentTable">
+          <div class="data-table-wrapper table-responsive" id="dataTableWrapper">
+            <table class="data-table table-enhanced" id="pembayaranDocumentTable">
               <thead>
                 <tr>
                   @foreach($selectedColumns as $colKey)
@@ -2001,13 +2241,13 @@
         <!-- Empty State -->
         <div class="empty-state">
           <div class="empty-state-icon">
-            <i class="fas fa-inbox"></i>
+            <i class="fa-solid fa-inbox"></i>
           </div>
           <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
           <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
           <a href="{{ route('dashboard.pembayaran') }}" class="btn-empty"
             onclick="try{localStorage.removeItem('pembayaran_columns')}catch(e){}">
-            <i class="fas fa-redo"></i>
+            <i class="fa-solid fa-redo"></i>
             Reset Filter
           </a>
         </div>
@@ -2830,6 +3070,29 @@
       window.location.href = url.toString();
     }
 
+    function refreshPembayaranTable() {
+      if (typeof window.refreshPembayaranDataTable === 'function') {
+        window.refreshPembayaranDataTable();
+        return;
+      }
+
+      window.location.reload();
+    }
+
+    function togglePembayaranTableFullscreen() {
+      document.body.classList.toggle('document-table-only-fullscreen');
+
+      setTimeout(function () {
+        if (window.jQuery && jQuery.fn && jQuery.fn.DataTable) {
+          try {
+            jQuery('#pembayaranDocumentTable').DataTable().columns.adjust();
+          } catch (error) {
+            console.warn('Gagal menyesuaikan tabel pembayaran:', error);
+          }
+        }
+      }, 150);
+    }
+
     function changePerPage(value) {
       const url = new URL(window.location.href);
       url.searchParams.set('per_page', value);
@@ -3160,6 +3423,8 @@
             loadFallbackRows(true);
           }
         }
+
+        window.refreshPembayaranDataTable = reloadTable;
 
         function buildDataRequestParams(start, length) {
           const params = currentFilterParams();

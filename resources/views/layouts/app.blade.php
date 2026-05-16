@@ -4252,7 +4252,7 @@
       $dokumenUrl = match ($module) {
         'operator'        => '/documents',
         'team_verifikasi' => '/documents/verifikasi',
-        'pembayaran'      => '/documents/pembayaran',
+        'pembayaran'      => '/dashboard/pembayaran',
         'akutansi'        => '/documents/akutansi',
         'perpajakan'      => '/documents/perpajakan',
         default           => '/documents'
@@ -4270,7 +4270,7 @@
         default    => null
       };
       $editDokumenUrl = match ($module) {
-        'pembayaran'      => '/documents/pembayaran',
+        'pembayaran'      => '/dashboard/pembayaran',
         'akutansi'        => '/documents/akutansi',
         'perpajakan'      => '/documents/perpajakan',
         'team_verifikasi' => '/documents/verifikasi',
@@ -4520,7 +4520,7 @@
           @php
             // Determine route based on module — gunakan route() helper sesuai web.php
             $menuRoute = match ($module) {
-              'pembayaran'      => route('documents.pembayaran.index'),
+              'pembayaran'      => route('dashboard.pembayaran'),
               'akutansi'        => route('documents.akutansi.index'),
               'perpajakan'      => route('documents.perpajakan.index'),
               'team_verifikasi' => route('documents.verifikasi.index'),
@@ -4529,11 +4529,17 @@
 
             // Check if current route is within this module
             $isModuleActive = match ($module) {
-              'pembayaran' => request()->routeIs('documents.pembayaran.*') ||
+              'pembayaran' => request()->routeIs('dashboard.pembayaran') ||
+              request()->routeIs('dashboard.pembayaran.data') ||
+              request()->routeIs('documents.pembayaran.detail') ||
+              request()->routeIs('documents.pembayaran.payment-data') ||
+              request()->routeIs('documents.pembayaran.set-deadline') ||
+              request()->routeIs('documents.pembayaran.update-status') ||
+              request()->routeIs('documents.pembayaran.upload-proof') ||
               request()->routeIs('reports.pembayaran.*') ||
               request()->routeIs('returns.pembayaran.*') ||
               request()->routeIs('csv.import.*') ||
-              request()->is('*documents/pembayaran*') ||
+              request()->is('*dashboard/pembayaran*') ||
               request()->is('*reports/pembayaran*') ||
               request()->is('*rekapan-keterlambatan*') ||
               request()->is('*csv-import*'),
@@ -4556,7 +4562,7 @@
             };
 
             $isDaftarDokumenActive = match ($module) {
-              'pembayaran' => request()->routeIs('documents.pembayaran.*') || request()->is('*documents/pembayaran*'),
+              'pembayaran' => request()->routeIs('dashboard.pembayaran') || request()->routeIs('dashboard.pembayaran.data') || request()->is('*dashboard/pembayaran*'),
               'akutansi' => request()->routeIs('documents.akutansi.*') || request()->is('*documents/akutansi*'),
               'perpajakan' => request()->routeIs('documents.perpajakan.*') || request()->is('*documents/perpajakan*'),
               'team_verifikasi' => request()->routeIs('documents.verifikasi.*') || request()->is('*documents/verifikasi*'),
@@ -4600,8 +4606,8 @@
             </a>
             <div class="nav-treeview">
               @if($module === 'pembayaran')
-                <a href="{{ route('documents.pembayaran.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-list"></i> Daftar Pembayaran
+                <a href="{{ route('dashboard.pembayaran') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
+                  <i class="fa-solid fa-list"></i> Daftar Dokumen
                 </a>
                 <a href="{{ route('csv.import.index') }}" class="{{ $isImportActive ? 'active' : '' }}">
                   <i class="fa-solid fa-file-import"></i> Import Data
@@ -4761,11 +4767,17 @@
     // Enhanced detection for pembayaran module
     $isSubmenuPage = false;
     if ($module === 'pembayaran') {
-      $isSubmenuPage = request()->routeIs('documents.pembayaran.*') ||
+      $isSubmenuPage = request()->routeIs('dashboard.pembayaran') ||
+        request()->routeIs('dashboard.pembayaran.data') ||
+        request()->routeIs('documents.pembayaran.detail') ||
+        request()->routeIs('documents.pembayaran.payment-data') ||
+        request()->routeIs('documents.pembayaran.set-deadline') ||
+        request()->routeIs('documents.pembayaran.update-status') ||
+        request()->routeIs('documents.pembayaran.upload-proof') ||
         request()->routeIs('reports.pembayaran.*') ||
         request()->routeIs('returns.pembayaran.*') ||
         request()->routeIs('csv.import.*') ||
-        request()->is('*documents/pembayaran*') ||
+        request()->is('*dashboard/pembayaran*') ||
         request()->is('*rekapan-keterlambatan*') ||
         request()->is('*csv-import*');
     } elseif ($module === 'akutansi') {
@@ -4821,9 +4833,9 @@
         @php
           // Determine active state for each submenu item (combine controller class + route detection)
           $isDaftarActive = ($menuDaftarDokumen ?? '') === 'Active' ||
-            request()->routeIs('documents.pembayaran.*') ||
-            request()->routeIs('documents.pembayaran.index') ||
-            request()->is('*documents/pembayaran*');
+            request()->routeIs('dashboard.pembayaran') ||
+            request()->routeIs('dashboard.pembayaran.data') ||
+            request()->is('*dashboard/pembayaran*');
           $isRekapanActive = ($menuRekapanDokumen ?? '') === 'Active' ||
             request()->routeIs('pembayaran.rekapan') ||
             request()->is('*rekapan-pembayaran*');
@@ -4831,8 +4843,8 @@
             request()->routeIs('rekapanKeterlambatan.*') ||
             request()->is('*rekapan-keterlambatan*');
         @endphp
-        <a href="{{ url($dokumenUrl) }}" class="{{ $isDaftarActive ? 'active' : '' }}">
-          <i class="fa-solid fa-list me-2"></i> Daftar Pembayaran
+        <a href="{{ route('dashboard.pembayaran') }}" class="{{ $isDaftarActive ? 'active' : '' }}">
+          <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
         </a>
         <a href="{{ route('csv.import.index') }}"
           class="{{ request()->routeIs('csv.import.*') || request()->is('*csv-import*') ? 'active' : '' }}">
@@ -6838,7 +6850,7 @@ document.addEventListener('DOMContentLoaded', function() {
                       currentPathCheck.includes('/rekapan-perpajakan') ||
                       currentPathCheck.includes('/dokumensB') ||
                       currentPathCheck.includes('/rekapan-Team Verifikasi') ||
-                      currentPathCheck.includes('/documents/pembayaran') ||
+                      currentPathCheck.includes('/dashboard/pembayaran') ||
                       currentPathCheck.includes('/documents/akutansi') ||
                       currentPathCheck.includes('/documents/perpajakan') ||
                       currentPathCheck.includes('/documents/verifikasi');

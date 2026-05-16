@@ -25,6 +25,11 @@ use Illuminate\Pagination\Paginator;
 
 class DashboardPembayaranController extends Controller
 {
+    public function redirectDokumens(Request $request)
+    {
+        return redirect()->route('dashboard.pembayaran', $request->query(), 301);
+    }
+
     public function index()
     {
         $now = Carbon::now();
@@ -1414,14 +1419,14 @@ class DashboardPembayaranController extends Controller
     public function storeDokumen(Request $request)
     {
         // Implementation for storing document
-        return redirect()->route('documents.pembayaran.index')->with('success', 'Pembayaran berhasil ditambahkan');
+        return redirect()->route('dashboard.pembayaran')->with('success', 'Pembayaran berhasil ditambahkan');
     }
 
     public function editDokumen(Dokumen $dokumen)
     {
         // Validate that user can edit this document
         if (!DokumenHelper::canEditDocument($dokumen, 'pembayaran')) {
-            return redirect()->route('documents.pembayaran.index')
+            return redirect()->route('dashboard.pembayaran')
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit dokumen ini.');
         }
 
@@ -1680,7 +1685,7 @@ class DashboardPembayaranController extends Controller
 
             \DB::commit();
 
-            return redirect()->route('documents.pembayaran.index')
+            return redirect()->route('dashboard.pembayaran')
                 ->with('success', 'Dokumen berhasil diperbarui.');
 
         } catch (\Exception $e) {
@@ -2012,13 +2017,13 @@ class DashboardPembayaranController extends Controller
     public function destroyDokumen($id)
     {
         // Implementation for deleting document
-        return redirect()->route('documents.pembayaran.index')->with('success', 'Pembayaran berhasil dihapus');
+        return redirect()->route('dashboard.pembayaran')->with('success', 'Pembayaran berhasil dihapus');
     }
 
     public function pengembalian()
     {
         // Redirect ke daftar pembayaran karena tidak ada view pengembalian khusus
-        return redirect()->route('documents.pembayaran.index')->with('info', 'Halaman pengembalian diarahkan ke daftar pembayaran');
+        return redirect()->route('dashboard.pembayaran')->with('info', 'Halaman pengembalian diarahkan ke dashboard pembayaran');
     }
 
     public function rekapanKeterlambatan()

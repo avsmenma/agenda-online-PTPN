@@ -3,20 +3,23 @@
   <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/css/tabulator.min.css" rel="stylesheet">
   <style>
     #documentTableContainer.table-dokumen {
-      border-radius: 8px;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #f1f5f9;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
       overflow: visible;
     }
 
     #dokumen-tabulator {
       width: 100%;
       min-height: 520px;
-      background: #f4f8fb;
+      background: #ffffff;
     }
 
     #dokumen-tabulator .tabulator {
       border: 0;
       border-radius: 0;
-      background: #f4f8fb;
+      background: #ffffff;
       font-family: inherit;
       font-size: 13px;
     }
@@ -44,12 +47,12 @@
     }
 
     #dokumen-tabulator .tabulator-row {
-      border-bottom: 1px solid #dbe3ea;
+      border-bottom: 1px solid #f1f5f9;
       min-height: 54px;
     }
 
     #dokumen-tabulator .tabulator-row .tabulator-cell {
-      border-right: 1px solid #dbe3ea;
+      border-right: 1px solid #eef2f7;
       padding: 9px 10px;
       display: inline-flex;
       align-items: center;
@@ -60,11 +63,12 @@
     }
 
     #dokumen-tabulator .tabulator-row.tabulator-row-even {
-      background: #f8fbff;
+      background: #f8fafc;
     }
 
     #dokumen-tabulator .tabulator-row:hover {
-      background: #eef6f4 !important;
+      background: #f3faf9 !important;
+      box-shadow: inset 3px 0 0 #083E40;
     }
 
     /* Frozen columns with solid background */
@@ -74,11 +78,11 @@
     }
 
     #dokumen-tabulator .tabulator-row.tabulator-row-even .tabulator-frozen {
-      background: #f8fbff !important;
+      background: #f8fafc !important;
     }
 
     #dokumen-tabulator .tabulator-row:hover .tabulator-frozen {
-      background: #eef6f4 !important;
+      background: #f3faf9 !important;
     }
 
     .tabulator-cell-text {
@@ -162,13 +166,13 @@
     }
 
     #dokumen-tabulator .tabulator-inline-editable-cell:hover {
-      background: rgba(136, 151, 23, 0.08);
-      box-shadow: inset 0 0 0 1px rgba(136, 151, 23, 0.22);
+      background: rgba(8, 62, 64, 0.06);
+      box-shadow: inset 0 0 0 1px rgba(8, 62, 64, 0.18);
     }
 
     #dokumen-tabulator .tabulator-editing {
-      background: #fffdf0 !important;
-      box-shadow: inset 0 0 0 2px #889717 !important;
+      background: #ffffff !important;
+      box-shadow: inset 0 0 0 2px #083E40 !important;
     }
 
     #dokumen-tabulator .tabulator-editing input,
@@ -188,7 +192,7 @@
     .tabulator-dropdown-editor {
       width: 100%;
       min-height: 34px;
-      border: 1px solid #889717;
+      border: 1px solid #cbd5e1;
       border-radius: 6px;
       padding: 7px 32px 7px 9px;
       color: #0f172a;
@@ -201,6 +205,11 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .tabulator-dropdown-editor:focus {
+      border-color: #083E40;
+      box-shadow: 0 0 0 2px rgba(8, 62, 64, 0.12);
     }
 
     .tabulator-dropdown-editor::after {
@@ -218,10 +227,10 @@
     .tabulator-dropdown-panel {
       position: fixed;
       background: #ffffff;
-      border: 2px solid #889717;
-      border-radius: 8px;
-      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2);
-      padding: 4px;
+      border: 1px solid #64748b;
+      border-radius: 4px;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.18);
+      padding: 0;
       z-index: 100000;
       overflow-y: auto;
       overscroll-behavior: contain;
@@ -230,7 +239,7 @@
     .tabulator-dropdown-option {
       padding: 10px 12px;
       cursor: pointer;
-      border-radius: 6px;
+      border-radius: 0;
       color: #0f172a;
       font-size: 13px;
       font-weight: 500;
@@ -240,7 +249,7 @@
 
     .tabulator-dropdown-option:hover,
     .tabulator-dropdown-option.is-active {
-      background: #889717;
+      background: #2563d4;
       color: #ffffff;
       font-weight: 600;
     }
@@ -413,7 +422,8 @@
       font-size: 11px;
     }
 
-    .tabulator-handler-select {
+    .tabulator-handler-select,
+    .document-handler-select {
       width: 100%;
       min-width: 150px;
       max-width: 220px;
@@ -423,14 +433,20 @@
       background: #fff;
       color: #0f172a;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
       line-height: 1.2;
     }
 
-    .tabulator-handler-select:disabled {
+    .tabulator-handler-select:disabled,
+    .document-handler-select:disabled {
       background: #f1f5f9;
       color: #64748b;
       cursor: not-allowed;
+    }
+
+    .tabulator-handler-select.is-saving,
+    .document-handler-select.is-saving {
+      opacity: .7;
     }
 
     .tabulator-actions {
@@ -3001,12 +3017,13 @@
         <span class="input-group-text">
           <i class="fa-solid fa-magnifying-glass text-muted"></i>
         </span>
-        <input type="text" class="form-control" id="searchInput" name="search" placeholder="Cari nomor agenda, SPP, nilai rupia"
+        <input type="text" class="form-control" id="searchInput" name="search"
+          placeholder="Cari nomor agenda, SPP, nilai rupiah, atau field lainnya..."
           value="{{ request('search') }}">
       </div>
       <div class="year-dropdown-wrapper" style="position: relative;">
         <button type="button" class="btn-year-select" id="yearSelectBtn">
-          <span id="yearSelectText">{{ request('year') ? request('year') : 'Semua Tahun' }}</span>
+        <span id="yearSelectText">{{ request('year') ? request('year') : 'Filter Tahun' }}</span>
           <i class="fa-solid fa-chevron-down ms-2"></i>
         </button>
         <div class="year-dropdown-menu" id="yearDropdownMenu" style="display: none;">
@@ -3061,7 +3078,7 @@
         <input type="hidden" name="status_filter" id="statusSelect" value="{{ request('status_filter') }}">
       </div>
       <button type="submit" class="btn-filter" id="filterBtn" onclick="handleFilterSubmit(event)">
-        <i class="fa-solid fa-magnifying-glass me-2"></i>Cari
+        <i class="fa-solid fa-filter me-2"></i>Filter
       </button>
       <button type="button" class="btn-refresh" id="btnRefreshTable" onclick="refreshDocumentTable()">
         <i class="fa-solid fa-arrows-rotate"></i> Refresh
@@ -4281,7 +4298,7 @@
                           yearSelect.value = selectedYear;
 
                           // Update button text
-                          yearSelectText.textContent = selectedYear || 'Semua Tahun';
+                          yearSelectText.textContent = selectedYear || 'Filter Tahun';
 
                           // Update active state
                           yearDropdownItems.forEach(i => i.classList.remove('active'));
@@ -6456,7 +6473,7 @@
                 : '';
 
               return `
-                <select class="tabulator-handler-select"
+                <select class="document-handler-select tabulator-handler-select"
                   data-document-id="${escapeHtml(data.id)}"
                   data-original-value="${escapeHtml(selected)}"
                   title="${title}"
