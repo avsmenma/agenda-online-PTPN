@@ -1453,7 +1453,7 @@ class DashboardPerpajakanController extends Controller
             ->count();
 
         $data = array(
-            "title" => "Daftar Pengembalian Dokumen Perpajakan ke team verifikasi",
+            "title" => "Dokumen Kembali dari Perpajakan ke Team Verifikasi",
             "module" => "perpajakan",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
@@ -1475,7 +1475,7 @@ class DashboardPerpajakanController extends Controller
         if ($dokumen->current_handler !== 'perpajakan') {
             return response()->json([
                 'success' => false,
-                'message' => 'Dokumen ini tidak dapat dikembalikan.'
+                'message' => 'Dokumen ini tidak dapat dikirim kembali.'
             ], 403);
         }
 
@@ -1483,9 +1483,9 @@ class DashboardPerpajakanController extends Controller
         $validator = Validator::make($request->all(), [
             'return_reason' => 'required|string|min:10|max:500',
         ], [
-            'return_reason.required' => 'Alasan pengembalian harus diisi.',
-            'return_reason.min' => 'Alasan pengembalian minimal 10 karakter.',
-            'return_reason.max' => 'Alasan pengembalian maksimal 500 karakter.',
+            'return_reason.required' => 'Catatan penyerahan kembali harus diisi.',
+            'return_reason.min' => 'Catatan penyerahan kembali minimal 10 karakter.',
+            'return_reason.max' => 'Catatan penyerahan kembali maksimal 500 karakter.',
         ]);
 
         if ($validator->fails()) {
@@ -1509,7 +1509,7 @@ class DashboardPerpajakanController extends Controller
 
             // Update all fields in a single call to avoid multiple queries and potential issues
             // current_handler diubah ke 'team_verifikasi' agar dokumen muncul di daftar Team Verifikasi
-            // Return to Team Verifikasi for corrections
+            // Hand the document back to Team Verifikasi after Perpajakan processing
             $updateData = [
                 'status' => 'returned_to_verifikasi',
                 'current_handler' => 'team_verifikasi',
@@ -1524,15 +1524,23 @@ class DashboardPerpajakanController extends Controller
 
             $dokumen->update($updateData);
 
+            $dokumen->setDisplayStatusForRole('perpajakan', 'terkirim_verifikasi');
+            $dokumen->setDisplayStatusForRole('team_verifikasi', 'sedang_diproses');
+
             \DB::commit();
 
-            // Log activity: dokumen dikembalikan ke Team Verifikasi oleh Perpajakan
+            // Log activity: dokumen dikirim kembali ke Team Verifikasi oleh Perpajakan
             try {
-                \App\Helpers\ActivityLogHelper::logReturned(
+                \App\Helpers\ActivityLogHelper::log(
                     $dokumen,
-                    'team_verifikasi',
-                    $request->return_reason,
-                    'perpajakan'
+                    'sent_back_to_verifikasi',
+                    'Dokumen dikirim kembali ke Team Verifikasi',
+                    'tax',
+                    'perpajakan',
+                    [
+                        'to' => 'team_verifikasi',
+                        'note' => $request->return_reason,
+                    ]
                 );
             } catch (\Exception $logException) {
                 \Log::error('Failed to log activity for returnDocument (perpajakan): ' . $logException->getMessage());
@@ -1545,7 +1553,7 @@ class DashboardPerpajakanController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dokumen berhasil dikembalikan ke Ibu Yuni.'
+                'message' => 'Dokumen berhasil dikirim kembali ke Ibu Yuni.'
             ]);
 
         } catch (\Exception $e) {
@@ -2689,5 +2697,3 @@ class DashboardPerpajakanController extends Controller
         return view('perpajakan.export.pdf', $data);
     }
 }
-
-

@@ -608,7 +608,7 @@
 
   <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="form-title">Daftar Pengembalian Dokumen Team Perpajakan ke Team Verifikasi</h2>
+      <h2 class="form-title">Dokumen Kembali dari Team Perpajakan ke Team Verifikasi</h2>
     </div>
 
     <!-- Statistics Cards -->
@@ -617,7 +617,7 @@
         <div class="stat-content">
           <div class="stat-label">
             <i class="fa-solid fa-file-invoice-dollar"></i>
-            Total Dokumen Dikembalikan
+            Total Dokumen Kembali
           </div>
           <div class="stat-value">{{ $totalReturned ?? 0 }}</div>
         </div>
@@ -630,7 +630,7 @@
         <div class="stat-content">
           <div class="stat-label">
             <i class="fa-solid fa-clock"></i>
-            Menunggu Perbaikan
+            Menunggu Verifikasi
           </div>
           <div class="stat-value">{{ $totalMenungguPerbaikan ?? 0 }}</div>
         </div>
@@ -643,7 +643,7 @@
         <div class="stat-content">
           <div class="stat-label">
             <i class="fa-solid fa-check-circle"></i>
-            Sudah Diperbaiki
+            Sudah Diproses Lanjut
           </div>
           <div class="stat-value">{{ $totalSudahDiperbaiki ?? 0 }}</div>
         </div>
@@ -684,8 +684,8 @@
                 <th>Nilai</th>
                 <th>Status Dokumen</th>
                 <th>Tanggal Terima</th>
-                <th>Tanggal Dikembalikan</th>
-                <th>Alasan</th>
+                <th>Tanggal Kembali</th>
+                <th>Catatan</th>
               </tr>
             </thead>
             <tbody>
@@ -703,7 +703,7 @@
                   <td class="nilai-column">{{ $dokumen->formatted_nilai_rupiah }}</td>
                   <td>
                     @php
-                      // Determine status: "Menunggu Perbaikan" or "Perbaikan Selesai"
+                      // Determine status: "Menunggu Verifikasi" or "Sudah Diproses Lanjut"
                       $roleDataStatus = $dokumen->getDataForRole('perpajakan');
                       $receivedAtStatus = $roleDataStatus?->received_at;
                       $returnedAtStatus = $dokumen->returned_at;
@@ -718,12 +718,12 @@
                     @if($isPerbaikanSelesai)
                       <span class="badge-status badge-success">
                         <i class="fa-solid fa-check-circle"></i>
-                        Perbaikan Selesai
+                        Sudah Diproses Lanjut
                       </span>
                     @else
                       <span class="badge-status badge-returned">
                         <i class="fa-solid fa-clock"></i>
-                        Menunggu Perbaikan
+                        Menunggu Verifikasi
                       </span>
                     @endif
                   </td>
@@ -806,7 +806,7 @@
           <div class="empty-state">
             <i class="fa-solid fa-file-invoice-dollar"></i>
             <h5>Belum ada dokumen</h5>
-            <p>Tidak ada dokumen yang dikembalikan ke team verifikasi saat ini.</p>
+            <p>Tidak ada dokumen yang kembali ke team verifikasi saat ini.</p>
             <a href="{{ route('documents.perpajakan.index') }}" class="btn btn-primary">
               <i class="fa-solid fa-arrow-left me-2"></i>Kembali ke Daftar Dokumen Team Perpajakan
             </a>

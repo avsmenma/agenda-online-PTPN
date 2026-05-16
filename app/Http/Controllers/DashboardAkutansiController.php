@@ -1228,7 +1228,7 @@ class DashboardAkutansiController extends Controller
             ->count();
 
         $data = array(
-            "title" => "Daftar Pengembalian Dokumen Akutansi ke team verifikasi",
+            "title" => "Dokumen Kembali dari Akuntansi ke Team Verifikasi",
             "module" => "akutansi",
             "menuDashboard" => "",
             'menuDokumen' => 'Active',
@@ -1883,7 +1883,7 @@ class DashboardAkutansiController extends Controller
         if ($dokumen->current_handler !== 'akutansi') {
             return response()->json([
                 'success' => false,
-                'message' => 'Dokumen ini tidak dapat dikembalikan.'
+                'message' => 'Dokumen ini tidak dapat dikirim kembali.'
             ], 403);
         }
 
@@ -1891,9 +1891,9 @@ class DashboardAkutansiController extends Controller
         $validator = Validator::make($request->all(), [
             'return_reason' => 'required|string|min:10|max:500',
         ], [
-            'return_reason.required' => 'Alasan pengembalian harus diisi.',
-            'return_reason.min' => 'Alasan pengembalian minimal 10 karakter.',
-            'return_reason.max' => 'Alasan pengembalian maksimal 500 karakter.',
+            'return_reason.required' => 'Catatan penyerahan kembali harus diisi.',
+            'return_reason.min' => 'Catatan penyerahan kembali minimal 10 karakter.',
+            'return_reason.max' => 'Catatan penyerahan kembali maksimal 500 karakter.',
         ]);
 
         if ($validator->fails()) {
@@ -1917,7 +1917,7 @@ class DashboardAkutansiController extends Controller
 
             // Update all fields in a single call to avoid multiple queries and potential issues
             // current_handler diubah ke 'team_verifikasi' agar dokumen muncul di daftar Team Verifikasi
-            // Return to Team Verifikasi for corrections
+            // Hand the document back to Team Verifikasi after Akutansi processing
             $updateData = [
                 'status' => 'returned_to_verifikasi',
                 'current_handler' => 'team_verifikasi',
@@ -1931,15 +1931,23 @@ class DashboardAkutansiController extends Controller
 
             $dokumen->update($updateData);
 
+            $dokumen->setDisplayStatusForRole('akutansi', 'terkirim_verifikasi');
+            $dokumen->setDisplayStatusForRole('team_verifikasi', 'sedang_diproses');
+
             \DB::commit();
 
-            // Log activity: dokumen dikembalikan ke Team Verifikasi oleh Akutansi
+            // Log activity: dokumen dikirim kembali ke Team Verifikasi oleh Akutansi
             try {
-                \App\Helpers\ActivityLogHelper::logReturned(
+                \App\Helpers\ActivityLogHelper::log(
                     $dokumen,
-                    'team_verifikasi',
-                    $request->return_reason,
-                    'akutansi'
+                    'sent_back_to_verifikasi',
+                    'Dokumen dikirim kembali ke Team Verifikasi',
+                    'accounting',
+                    'akutansi',
+                    [
+                        'to' => 'team_verifikasi',
+                        'note' => $request->return_reason,
+                    ]
                 );
             } catch (\Exception $logException) {
                 \Log::error('Failed to log activity for returnDocument (akutansi): ' . $logException->getMessage());
@@ -1952,7 +1960,7 @@ class DashboardAkutansiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dokumen berhasil dikembalikan ke team_verifikasi.'
+                'message' => 'Dokumen berhasil dikirim kembali ke Team Verifikasi.'
             ]);
 
         } catch (\Exception $e) {
@@ -1971,5 +1979,3 @@ class DashboardAkutansiController extends Controller
         }
     }
 }
-
-

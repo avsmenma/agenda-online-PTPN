@@ -4848,7 +4848,7 @@
             style="display: none; margin-left: auto;">0</span>
         </a>
         <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
-          <i class="fa-solid fa-rotate-left me-2"></i> Daftar Pengembalian Akutansi
+          <i class="fa-solid fa-inbox me-2"></i> Dokumen Kembali Akuntansi
         </a>
         <a href="{{ route('reports.akutansi.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Akutansi
@@ -4864,7 +4864,7 @@
             style="display: none; margin-left: auto;">0</span>
         </a>
         <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
-          <i class="fa-solid fa-rotate-left me-2"></i> Daftar Pengembalian Perpajakan
+          <i class="fa-solid fa-inbox me-2"></i> Dokumen Kembali Perpajakan
         </a>
         <a href="{{ route('reports.perpajakan.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan

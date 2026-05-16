@@ -615,7 +615,7 @@
 
   <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="form-title">Daftar Pengembalian Dokumen Team Akutansi ke Team Verifikasi</h2>
+      <h2 class="form-title">Dokumen Kembali dari Team Akuntansi ke Team Verifikasi</h2>
     </div>
 
     <!-- Statistics Cards -->
@@ -624,7 +624,7 @@
         <div class="stat-content">
           <div class="stat-label">
             <i class="fa-solid fa-file-invoice-dollar"></i>
-            Total Dokumen Dikembalikan
+            Total Dokumen Kembali
           </div>
           <div class="stat-value">{{ $totalReturned ?? 0 }}</div>
         </div>
@@ -637,7 +637,7 @@
         <div class="stat-content">
           <div class="stat-label">
             <i class="fa-solid fa-clock"></i>
-            Menunggu Perbaikan
+            Menunggu Verifikasi
           </div>
           <div class="stat-value">{{ $totalMenungguPerbaikan ?? 0 }}</div>
         </div>
@@ -650,7 +650,7 @@
         <div class="stat-content">
           <div class="stat-label">
             <i class="fa-solid fa-check-circle"></i>
-            Sudah Diperbaiki
+            Sudah Diproses Lanjut
           </div>
           <div class="stat-value">{{ $totalSudahDiperbaiki ?? 0 }}</div>
         </div>
@@ -690,7 +690,7 @@
                 <th>Nilai Rupiah</th>
                 <th>TGL DOKUMEN MASUK</th>
                 <th>Dari</th>
-                <th>Alasan</th>
+                <th>Catatan</th>
                 <th style="width: 200px;">Aksi</th>
               </tr>
             </thead>
@@ -739,14 +739,15 @@
                       } elseif ($dokumen->return_source) {
                         $dariRole = $dokumen->return_source;
                       }
+                      $isActualRejected = (bool) $rejectedStatus;
                     @endphp
                     @if($dariRole == 'pembayaran')
                       <span class="dept-badge pembayaran rejected">
                         <i class="fa-solid fa-times-circle me-1"></i>Team Pembayaran
                       </span>
                     @elseif($dariRole == 'akutansi')
-                      <span class="dept-badge akutansi rejected">
-                        <i class="fa-solid fa-times-circle me-1"></i>Team Akutansi
+                      <span class="dept-badge akutansi {{ $isActualRejected ? 'rejected' : '' }}">
+                        <i class="fa-solid {{ $isActualRejected ? 'fa-times-circle' : 'fa-paper-plane' }} me-1"></i>Team Akuntansi
                       </span>
                     @elseif($dariRole)
                       <span class="dept-badge" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">
@@ -776,17 +777,17 @@
                       }
                     @endphp
                     <div class="alasan-bubble">
-                      <i class="fa-solid fa-exclamation-circle alasan-icon"></i>
+                      <i class="fa-solid {{ $isActualRejected ? 'fa-exclamation-circle' : 'fa-comment-dots' }} alasan-icon"></i>
                       <div class="alasan-text">{{ \Illuminate\Support\Str::limit($alasan, 100) }}</div>
                     </div>
                   </td>
                   <td onclick="event.stopPropagation()">
                     <div class="action-buttons">
                       <a href="{{ route('documents.akutansi.edit', $dokumen->id) }}" class="btn-action btn-fix"
-                        title="Perbaiki Data"
+                        title="Lihat atau edit data"
                         style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
-                        <i class="fa-solid fa-wrench"></i>
-                        <span>Perbaiki Data</span>
+                        <i class="fa-solid fa-pen"></i>
+                        <span>Lihat/Edit</span>
                       </a>
                     </div>
                   </td>
@@ -807,7 +808,7 @@
           <div class="empty-state">
             <i class="fa-solid fa-file-invoice-dollar"></i>
             <h5>Belum ada dokumen</h5>
-            <p>Tidak ada dokumen yang dikembalikan ke team verifikasi saat ini.</p>
+            <p>Tidak ada dokumen yang kembali ke team verifikasi saat ini.</p>
             <a href="{{ route('documents.akutansi.index') }}" class="btn btn-primary">
               <i class="fa-solid fa-arrow-left me-2"></i>Kembali ke Daftar Dokumen Team Akutansi
             </a>

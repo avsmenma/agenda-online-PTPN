@@ -165,7 +165,7 @@ class DocumentHandlerController extends Controller
         if ($sourceRole === 'operator') {
             $dokumen->setDisplayStatusForRole('operator', 'terkirim');
         } else {
-            $dokumen->setDisplayStatusForRole($sourceRole, 'dikembalikan');
+            $dokumen->setDisplayStatusForRole($sourceRole, 'terkirim_verifikasi');
         }
         $dokumen->setDisplayStatusForRole('team_verifikasi', 'sedang_diproses');
 
@@ -175,7 +175,7 @@ class DocumentHandlerController extends Controller
             'current_stage' => 'reviewer',
             'last_action_status' => $sourceRole === 'operator' ? 'auto_accepted_by_verifikasi' : 'returned_to_verifikasi',
             'return_source' => $sourceRole === 'operator' ? null : $sourceRole,
-            'return_reason' => $sourceRole === 'operator' ? null : 'Dikembalikan melalui perubahan Pengurus Dokumen.',
+            'return_reason' => $sourceRole === 'operator' ? null : 'Diserahkan kembali melalui perubahan Pengurus Dokumen.',
             'returned_at' => $sourceRole === 'operator' ? null : now(),
         ]);
 

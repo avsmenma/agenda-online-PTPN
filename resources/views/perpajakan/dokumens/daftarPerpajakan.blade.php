@@ -3711,8 +3711,8 @@
                           $workflowStatusLabel = 'Diproses Team Perpajakan';
                           $workflowStatusClass = 'badge-proses';
                         } elseif ($dokumen->status == 'returned_to_verifikasi') {
-                          $workflowStatusLabel = 'Dikembalikan ke Verifikasi';
-                          $workflowStatusClass = 'badge-dikembalikan';
+                          $workflowStatusLabel = 'Kembali ke Team Verifikasi';
+                          $workflowStatusClass = 'badge-sent';
                         } elseif ($dokumen->status == 'sedang diproses') {
                           $workflowStatusLabel = 'Sedang Diproses';
                           $workflowStatusClass = 'badge-proses';
@@ -4005,7 +4005,10 @@
                 @elseif($dokumen->status == 'pending_approval_perpajakan')
                   <span class="badge-status badge-warning">📥 Baru Diterima</span>
                 @elseif($dokumen->status == 'returned_to_verifikasi')
-                  <span class="badge-status badge-dikembalikan">← Dikembalikan ke Verifikasi</span>
+                  <span class="badge-status badge-sent">
+                    <i class="fa-solid fa-paper-plane me-1"></i>
+                    Kembali ke Team Verifikasi
+                  </span>
                 @elseif($dokumen->status == 'sedang diproses')
                   <span class="badge-status badge-proses">⏳ Sedang Diproses</span>
                 @else
@@ -4057,10 +4060,10 @@
                       <span>Ditolak</span>
                     </button>
                   @elseif($dokumen->status == 'returned_to_verifikasi')
-                    {{-- Document returned to verifikasi - disable all actions --}}
-                    <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen dikembalikan ke Verifikasi">
-                      <i class="fa-solid fa-undo"></i>
-                      <span>Dikembalikan</span>
+                    {{-- Document has been handed back to Verifikasi - disable all actions --}}
+                    <button class="btn-action btn-edit locked btn-full-width" disabled title="Dokumen sudah kembali ke Verifikasi">
+                      <i class="fa-solid fa-check-circle"></i>
+                      <span>Kembali ke Verifikasi</span>
                     </button>
                   @else
                     <!-- Unlocked state - buttons enabled -->
@@ -4080,8 +4083,8 @@
                         </button>
                       </a>
                       <button type="button" class="btn-action btn-kembalikan" style="flex: 1;"
-                        onclick="openReturnModal({{ $dokumen->id }})" title="Kembalikan Dokumen ke Team Verifikasi">
-                        <i class="fa-solid fa-undo"></i>
+                        onclick="openReturnModal({{ $dokumen->id }})" title="Kirim kembali ke Team Verifikasi">
+                        <i class="fa-solid fa-paper-plane"></i>
                         <span>Balik</span>
                       </button>
                     </div>
@@ -4167,42 +4170,42 @@
   <div class="modal fade" id="returnModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white;">
           <h5 class="modal-title">
-            <i class="fa-solid fa-undo me-2"></i>Kembalikan Dokumen ke Team Verifikasi
+            <i class="fa-solid fa-paper-plane me-2"></i>Kirim Kembali ke Team Verifikasi
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <input type="hidden" id="returnDocId">
 
-          <div class="alert alert-warning border-0"
-            style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(200, 35, 51, 0.1) 100%); border-left: 4px solid #dc3545;">
-            <i class="fa-solid fa-exclamation-triangle me-2"></i>
-            <strong>Perhatian:</strong> Dokumen akan dikembalikan ke Team Verifikasi dan akan muncul di halaman
-            pengembalian dokumen. Pastikan Anda telah mengisi alasan pengembalian dengan jelas.
+          <div class="alert alert-info border-0"
+            style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(2, 132, 199, 0.1) 100%); border-left: 4px solid #0ea5e9;">
+            <i class="fa-solid fa-info-circle me-2"></i>
+            <strong>Informasi:</strong> Dokumen akan dikirim kembali ke Team Verifikasi setelah proses perpajakan selesai.
+            Isi catatan singkat agar Verifikasi tahu konteks dokumen.
           </div>
 
           <div class="form-group mb-3">
             <label for="returnReason" class="form-label">
-              <strong>Alasan Pengembalian <span class="text-danger">*</span></strong>
+              <strong>Catatan Penyerahan Kembali <span class="text-danger">*</span></strong>
             </label>
             <textarea class="form-control" id="returnReason" rows="4"
-              placeholder="Jelaskan kenapa dokumen ini dikembalikan ke Team Verifikasi..." maxlength="500"
+              placeholder="Contoh: Pajak sudah diproses, dokumen fisik diserahkan kembali ke Verifikasi." maxlength="500"
               required></textarea>
             <div class="form-text">
-              <small class="text-muted">Mohon isi alasan pengembalian secara detail dan jelas.</small><br>
+              <small class="text-muted">Mohon isi catatan singkat dan jelas.</small><br>
               <span id="returnCharCount">0</span>/500 karakter
             </div>
           </div>
 
           <div class="alert alert-info">
             <i class="fa-solid fa-info-circle me-2"></i>
-            <strong>Informasi:</strong> Dokumen yang dikembalikan akan:
+            <strong>Informasi:</strong> Dokumen yang dikirim kembali akan:
             <ul class="mb-0 mt-2">
-              <li>Muncul di halaman "Pengembalian Dokumen Team Verifikasi"</li>
-              <li>Muncul di halaman "Pengembalian Dokumen Perpajakan"</li>
-              <li>Tetap terlihat di daftar dokumen perpajakan dengan status "Dikembalikan ke Verifikasi"</li>
+              <li>Muncul di daftar dokumen Team Verifikasi</li>
+              <li>Tetap terlihat di daftar dokumen perpajakan sebagai riwayat kerja</li>
+              <li>Tampil dengan status "Kembali ke Team Verifikasi"</li>
             </ul>
           </div>
         </div>
@@ -4210,8 +4213,8 @@
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             <i class="fa-solid fa-times me-2"></i>Batal
           </button>
-          <button type="button" class="btn btn-danger" onclick="confirmReturn()">
-            <i class="fa-solid fa-undo me-2"></i>Kembalikan
+          <button type="button" class="btn btn-primary" onclick="confirmReturn()">
+            <i class="fa-solid fa-paper-plane me-2"></i>Kirim Kembali
           </button>
         </div>
       </div>
@@ -4223,36 +4226,36 @@
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white;">
           <h5 class="modal-title" id="returnConfirmationModalLabel">
-            <i class="fa-solid fa-question-circle me-2"></i>Konfirmasi Pengembalian
+            <i class="fa-solid fa-question-circle me-2"></i>Konfirmasi Kirim Kembali
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <div class="text-center mb-3">
-            <i class="fa-solid fa-exclamation-triangle" style="font-size: 52px; color: #dc3545;"></i>
+            <i class="fa-solid fa-paper-plane" style="font-size: 52px; color: #0ea5e9;"></i>
           </div>
-          <h5 class="fw-bold mb-3 text-center">Apakah Anda yakin ingin mengembalikan dokumen ini ke Team Verifikasi?</h5>
+          <h5 class="fw-bold mb-3 text-center">Apakah Anda yakin ingin mengirim kembali dokumen ini ke Team Verifikasi?</h5>
           <div class="alert alert-light border" style="background-color: #f8f9fa;">
             <div class="d-flex align-items-start">
-              <i class="fa-solid fa-info-circle me-2 mt-1" style="color: #dc3545;"></i>
+              <i class="fa-solid fa-info-circle me-2 mt-1" style="color: #0ea5e9;"></i>
               <div>
-                <strong>Alasan Pengembalian:</strong>
+                <strong>Catatan Penyerahan Kembali:</strong>
                 <p class="mb-0 mt-2" id="returnConfirmationReason" style="color: #495057; font-size: 14px;"></p>
               </div>
             </div>
           </div>
           <p class="text-muted mb-0 text-center small">
-            Dokumen akan dikembalikan ke Team Verifikasi dan akan muncul di halaman pengembalian dokumen.
+            Dokumen akan masuk kembali ke daftar Team Verifikasi untuk pengecekan lanjutan.
           </p>
         </div>
         <div class="modal-footer border-0 justify-content-center gap-2">
           <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
             <i class="fa-solid fa-times me-2"></i>Batal
           </button>
-          <button type="button" class="btn btn-danger px-4" id="confirmReturnBtn">
-            <i class="fa-solid fa-undo me-2"></i>Ya, Kembalikan
+          <button type="button" class="btn btn-primary px-4" id="confirmReturnBtn">
+            <i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Kembali
           </button>
         </div>
       </div>
@@ -4266,7 +4269,7 @@
       <div class="modal-content">
         <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
           <h5 class="modal-title" id="returnSuccessModalLabel">
-            <i class="fa-solid fa-circle-check me-2"></i>Pengembalian Berhasil
+            <i class="fa-solid fa-circle-check me-2"></i>Berhasil Dikirim Kembali
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -4274,11 +4277,11 @@
           <div class="mb-3">
             <i class="fa-solid fa-check-circle" style="font-size: 52px; color: #28a745;"></i>
           </div>
-          <h5 class="fw-bold mb-3">Dokumen berhasil dikembalikan ke Team Verifikasi!</h5>
+          <h5 class="fw-bold mb-3">Dokumen berhasil dikirim kembali ke Team Verifikasi!</h5>
           <p class="text-muted mb-0">
             Dokumen akan muncul di:
-            <br>• Halaman "Pengembalian Dokumen Team Verifikasi"
-            <br>• Halaman "Pengembalian Dokumen Team Perpajakan"
+            <br>• Daftar dokumen Team Verifikasi
+            <br>• Daftar dokumen Team Perpajakan sebagai riwayat
           </p>
         </div>
         <div class="modal-footer border-0 justify-content-center">
@@ -5363,16 +5366,16 @@
 
                               if (!returnReason) {
                                 const warningModal = new bootstrap.Modal(document.getElementById('returnValidationWarningModal'));
-                                document.getElementById('returnValidationWarningTitle').textContent = 'Alasan Pengembalian Wajib Diisi';
-                                document.getElementById('returnValidationWarningMessage').textContent = 'Mohon isi alasan pengembalian sebelum melanjutkan.';
+                                document.getElementById('returnValidationWarningTitle').textContent = 'Catatan Wajib Diisi';
+                                document.getElementById('returnValidationWarningMessage').textContent = 'Mohon isi catatan penyerahan kembali sebelum melanjutkan.';
                                 warningModal.show();
                                 return;
                               }
 
                               if (returnReason.length < 10) {
                                 const warningModal = new bootstrap.Modal(document.getElementById('returnValidationWarningModal'));
-                                document.getElementById('returnValidationWarningTitle').textContent = 'Alasan Pengembalian Terlalu Pendek';
-                                document.getElementById('returnValidationWarningMessage').textContent = 'Alasan pengembalian minimal 10 karakter.';
+                                document.getElementById('returnValidationWarningTitle').textContent = 'Catatan Terlalu Pendek';
+                                document.getElementById('returnValidationWarningMessage').textContent = 'Catatan penyerahan kembali minimal 10 karakter.';
                                 warningModal.show();
                                 return;
                               }
@@ -5417,11 +5420,11 @@
                                     });
                                   } else {
                                     const warningModal = new bootstrap.Modal(document.getElementById('returnValidationWarningModal'));
-                                    document.getElementById('returnValidationWarningTitle').textContent = 'Gagal Mengembalikan Dokumen';
-                                    document.getElementById('returnValidationWarningMessage').textContent = data.message || 'Terjadi kesalahan saat mengembalikan dokumen.';
+                                    document.getElementById('returnValidationWarningTitle').textContent = 'Gagal Mengirim Kembali Dokumen';
+                                    document.getElementById('returnValidationWarningMessage').textContent = data.message || 'Terjadi kesalahan saat mengirim kembali dokumen.';
                                     warningModal.show();
                                     confirmBtn.disabled = false;
-                                    confirmBtn.innerHTML = '<i class="fa-solid fa-undo me-2"></i>Ya, Kembalikan';
+                                    confirmBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Kembali';
                                   }
                                 })
                                 .catch(error => {
@@ -5431,10 +5434,10 @@
 
                                   const warningModal = new bootstrap.Modal(document.getElementById('returnValidationWarningModal'));
                                   document.getElementById('returnValidationWarningTitle').textContent = 'Terjadi Kesalahan';
-                                  document.getElementById('returnValidationWarningMessage').textContent = 'Terjadi kesalahan saat mengembalikan dokumen. Silakan coba lagi.';
+                                  document.getElementById('returnValidationWarningMessage').textContent = 'Terjadi kesalahan saat mengirim kembali dokumen. Silakan coba lagi.';
                                   warningModal.show();
                                   confirmBtn.disabled = false;
-                                  confirmBtn.innerHTML = '<i class="fa-solid fa-undo me-2"></i>Ya, Kembalikan';
+                                  confirmBtn.innerHTML = '<i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim Kembali';
                                 });
                               };
                             }

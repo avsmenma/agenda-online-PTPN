@@ -4801,21 +4801,20 @@
               <!-- Kolom Status: Menampilkan status badge -->
               <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
                 @if($isReturnedToVerifikasi)
-                  {{-- Dokumen dikembalikan oleh Perpajakan/Akutansi --}}
+                  {{-- Dokumen selesai diproses role lain dan kembali ke Verifikasi --}}
                   @php
                     $returnedByLabel = match ($dokumen->return_source) {
-                      'perpajakan' => 'Perpajakan',
-                      'akutansi' => 'Akutansi',
-                      default => Str::title($dokumen->return_source ?? 'Bidang'),
+                      'perpajakan' => 'Team Perpajakan',
+                      'akutansi' => 'Team Akutansi',
+                      'pembayaran' => 'Team Pembayaran',
+                      default => Str::title($dokumen->return_source ?? 'Role Terkait'),
                     };
                   @endphp
-                  <span class="badge-status badge-dikembalikan"
-                    style="position: relative; cursor: pointer;"
-                    onclick="event.stopPropagation(); showRejectionModal({{ $dokumen->id }})">
-                    <i class="fa-solid fa-rotate-left me-1"></i>
-                    <span>Dikembalikan,
-                      <span style="text-decoration: underline; font-weight: 700;">Alasan</span>
-                    </span>
+                  <span class="badge-status badge-proses"
+                    style="position: relative;"
+                    title="{{ $dokumen->return_reason ? 'Catatan: ' . $dokumen->return_reason : 'Kembali ke Team Verifikasi' }}">
+                    <i class="fa-solid fa-inbox me-1"></i>
+                    <span>Kembali dari {{ $returnedByLabel }}</span>
                   </span>
                 @elseif($isRejected)
                   {{-- Dokumen ditolak dari inbox atau dari perpajakan/akutansi --}}
@@ -4926,9 +4925,28 @@
                 @elseif($dokumen->status == 'returned_to_operator')
                   <span class="badge-status badge-dikembalikan">Dikembalikan ke Ibu A</span>
                 @elseif($dokumen->status == 'returned_to_department')
-                  <span class="badge-status badge-dikembalikan">
-                    Dikembalikan dari {{ Str::title($dokumen->return_source ?? 'Bagian Terkait') }}
-                  </span>
+                  @php
+                    $workflowReturnSources = ['perpajakan', 'akutansi', 'pembayaran'];
+                    $isWorkflowReturn = in_array($dokumen->return_source, $workflowReturnSources, true)
+                      && $dokumen->current_handler === 'team_verifikasi'
+                      && !$isRejected;
+                    $workflowReturnLabel = match ($dokumen->return_source) {
+                      'perpajakan' => 'Team Perpajakan',
+                      'akutansi' => 'Team Akutansi',
+                      'pembayaran' => 'Team Pembayaran',
+                      default => Str::title($dokumen->return_source ?? 'Bagian Terkait'),
+                    };
+                  @endphp
+                  @if($isWorkflowReturn)
+                    <span class="badge-status badge-proses">
+                      <i class="fa-solid fa-inbox me-1"></i>
+                      Kembali dari {{ $workflowReturnLabel }}
+                    </span>
+                  @else
+                    <span class="badge-status badge-dikembalikan">
+                      Dikembalikan dari {{ Str::title($dokumen->return_source ?? 'Bagian Terkait') }}
+                    </span>
+                  @endif
                 @elseif(Str::startsWith($dokumen->status, 'returned_from_'))
                   @php
                     $source = Str::after($dokumen->status, 'returned_from_');

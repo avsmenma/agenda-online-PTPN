@@ -67,7 +67,7 @@ return [
         'sent_to_pembayaran'        => 'Terkirim ke Pembayaran',
         'returned_to_operator'      => 'Dikembalikan ke Operator',
         'returned_to_department'    => 'Dikembalikan ke Bagian',
-        'returned_to_verifikasi'    => 'Dikembalikan ke Verifikasi',
+        'returned_to_verifikasi'    => 'Kembali ke Team Verifikasi',
         'returned_to_bidang'        => 'Dikembalikan ke Bidang',
         'completed'                 => 'Selesai',
         'selesai'                   => 'Selesai',
@@ -88,7 +88,7 @@ return [
         'sent_to_pembayaran'        => 'primary',
         'returned_to_operator'      => 'danger',
         'returned_to_department'    => 'danger',
-        'returned_to_verifikasi'    => 'danger',
+        'returned_to_verifikasi'    => 'info',
         'returned_to_bidang'        => 'danger',
         'completed'                 => 'success',
         'selesai'                   => 'success',
@@ -166,15 +166,13 @@ return [
     |
     | == returned_to_verifikasi ==
     | SIAPA yang menggunakan:
-    |   - Perpajakan, Akutansi -> mengembalikan untuk klarifikasi
+    |   - Perpajakan, Akutansi -> menyerahkan kembali ke Team Verifikasi
     | SIAPA yang menerima:
-    |   - Team Verifikasi (tapi current_handler BELUM berpindah)
+    |   - Team Verifikasi
     | PERBEDAAN vs returned_to_department:
-    |   1. returned_to_department  -> current_handler segera pindah ke 'team_verifikasi'
-    |   2. returned_to_verifikasi  -> current_handler BELUM pindah, dokumen masih
-    |      "dipegang" Perpajakan/Akutansi sampai Team Verifikasi mengambil alih
-    |      via sendBackToMainList().
-    | SKENARIO: Handler butuh klarifikasi, tapi belum sepenuhnya melepas dokumen.
+    |   1. returned_to_department  -> alur koreksi/penolakan legacy.
+    |   2. returned_to_verifikasi  -> handoff rutin kembali ke Verifikasi.
+    | SKENARIO: Handler selesai mengisi data dan dokumen fisik kembali dicek Verifikasi.
     |
     | == returned_to_bidang ==
     | SIAPA yang menggunakan:
@@ -206,7 +204,7 @@ return [
             'discriminator' => 'return_source: perpajakan|akutansi|pembayaran',
         ],
         'returned_to_verifikasi' => [
-            'description'   => 'Dikembalikan oleh Perpajakan/Akutansi ke Team Verifikasi untuk klarifikasi. current_handler BELUM berpindah - dokumen masih terlihat di Perpajakan/Akutansi sampai Team Verifikasi ambil alih via sendBackToMainList().',
+            'description'   => 'Diserahkan kembali oleh Perpajakan/Akutansi ke Team Verifikasi untuk pengecekan lanjutan setelah role tersebut selesai memproses dokumen.',
             'set_by'        => ['perpajakan', 'akutansi'],
             'received_by'   => 'team_verifikasi',
             'discriminator' => 'return_source: perpajakan|akutansi',

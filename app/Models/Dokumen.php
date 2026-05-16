@@ -1231,6 +1231,7 @@ class Dokumen extends Model
             'selesai' => 'Selesai',
             'returned_to_operator' => 'Dikembalikan ke Ibu Tarapul',
             'returned_to_department' => 'Dikembalikan ke Department',
+            'returned_to_verifikasi' => 'Kembali ke Team Verifikasi',
             'returned_to_bidang' => 'Dikembalikan ke Bidang',
             'returned_from_Team Verifikasi' => 'Dikembalikan dari Team Verifikasi',
             'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
@@ -1269,6 +1270,7 @@ class Dokumen extends Model
             'selesai' => 'Selesai',
             'returned_to_operator' => 'Dikembalikan ke Ibu Tarapul',
             'returned_to_department' => 'Dikembalikan ke Bagian',
+            'returned_to_verifikasi' => 'Kembali ke Team Verifikasi',
             'rejected_Team Verifikasi' => 'Ditolak oleh Ibu Yuni',
             'rejected_data_tidik_lengkap' => 'Ditolak (Data Tidak Lengkap)',
             'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
@@ -1472,6 +1474,11 @@ class Dokumen extends Model
                 return 'Ditolak Accounting (Perlu Revisi)';
             }
 
+            if ($this->status === 'returned_to_verifikasi') {
+                $sourceLabel = self::getRoleDisplayNameIndo($this->return_source ?: 'team terkait');
+                return "Kembali dari {$sourceLabel}";
+            }
+
             // If approved and moved forward
             if ($this->status === 'sedang diproses' || $this->status === 'sent_to_perpajakan' || $this->status === 'sent_to_akutansi') {
                 return 'Terkirim/Approved';
@@ -1502,6 +1509,7 @@ class Dokumen extends Model
             $taxStatusMap = [
                 'sent_to_perpajakan' => 'Sedang Diproses',
                 'sedang diproses' => 'Sedang Diproses',
+                'returned_to_verifikasi' => 'Kembali ke Team Verifikasi',
                 'returned_to_department' => 'Dikembalikan',
             ];
 
@@ -1520,6 +1528,7 @@ class Dokumen extends Model
             $accountingStatusMap = [
                 'sent_to_akutansi' => 'Sedang Diproses',
                 'sedang diproses' => 'Sedang Diproses',
+                'returned_to_verifikasi' => 'Kembali ke Team Verifikasi',
                 'returned_to_department' => 'Dikembalikan',
             ];
 
@@ -1650,6 +1659,7 @@ class Dokumen extends Model
             'terkirim_perpajakan' => 'Terkirim ke Team Perpajakan',
             'terkirim_akutansi' => 'Terkirim ke Team Akutansi',
             'terkirim_pembayaran' => 'Terkirim ke Team Pembayaran',
+            'kembali_ke_verifikasi' => 'Kembali ke Team Verifikasi',
 
             // Completed states
             'selesai' => 'Selesai',
@@ -1763,7 +1773,6 @@ class Dokumen extends Model
         }
     }
 }
-
 
 
 
