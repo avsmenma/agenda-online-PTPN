@@ -17,11 +17,31 @@
     text-overflow: clip;
   }
 
+  #documentTableContainer .table-enhanced thead th,
+  body.is-fullscreen #documentTableContainer .table-enhanced thead th,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead th {
+    border-right: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  #documentTableContainer .table-enhanced thead th:first-child,
+  body.is-fullscreen #documentTableContainer .table-enhanced thead th:first-child,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead th:first-child {
+    border-left: none !important;
+  }
+
+  #documentTableContainer .table-enhanced thead th:last-child,
+  body.is-fullscreen #documentTableContainer .table-enhanced thead th:last-child,
+  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead th:last-child {
+    border-right: none !important;
+  }
+
   #documentTableContainer .table-enhanced tbody td {
     white-space: normal !important;
     overflow-wrap: anywhere;
     word-break: break-word;
     line-height: 1.45;
+    border-right: 1px solid #d9e0e7 !important;
   }
 
   #documentTableContainer .table-enhanced thead th,

@@ -1711,7 +1711,8 @@
       background: #0d3b6e !important;
       color: rgba(255,255,255,0.95) !important;
       box-shadow: 0 2px 0 #1a5276 !important;
-      border: none !important;
+      border-right: 1px solid rgba(255, 255, 255, 0.18) !important;
+      border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
       padding: 0.85rem 0.9rem !important;
       font-size: 0.775rem !important;
       font-weight: 700 !important;
@@ -1719,10 +1720,20 @@
       white-space: nowrap;
     }
 
+    #documentTableContainer .data-table th:first-child,
+    #documentTableContainer .dt-scroll-head th:first-child {
+      border-left: none !important;
+    }
+
+    #documentTableContainer .data-table th:last-child,
+    #documentTableContainer .dt-scroll-head th:last-child {
+      border-right: none !important;
+    }
+
     #documentTableContainer .data-table td {
       border-top: 1px solid #f1f5f9 !important;
       border-bottom: none !important;
-      border-right: 1px solid #eef2f7;
+      border-right: 1px solid #d9e0e7 !important;
       padding: 0.85rem 0.9rem !important;
       color: #1f2937;
       font-size: 0.875rem;
@@ -1741,20 +1752,65 @@
       background: #f3faf9 !important;
     }
 
-    #documentTableContainer .data-table tbody tr:hover td:first-child {
+    #documentTableContainer .data-table tbody tr:hover td.col-no {
       box-shadow: inset 3px 0 0 #083E40;
     }
 
-    #documentTableContainer .data-table th:first-child,
-    #documentTableContainer .data-table td:first-child {
-      position: sticky;
-      left: 0;
-      z-index: 30;
-      min-width: 210px;
+    #documentTableContainer .data-table .col-no,
+    #documentTableContainer .dt-scroll-head .col-no {
+      width: 88px !important;
+      min-width: 88px !important;
+      max-width: 88px !important;
+      text-align: center;
+      font-weight: 700;
     }
 
-    #documentTableContainer .data-table th:first-child {
+    #documentTableContainer .data-table .col-nomor_agenda,
+    #documentTableContainer .dt-scroll-head .col-nomor_agenda {
+      min-width: 210px !important;
+      width: 210px !important;
+    }
+
+    #documentTableContainer .data-table th.col-no,
+    #documentTableContainer .data-table td.col-no,
+    #documentTableContainer .data-table th.col-nomor_agenda,
+    #documentTableContainer .data-table td.col-nomor_agenda {
+      position: sticky;
+      z-index: 30;
+      background-clip: padding-box;
+    }
+
+    #documentTableContainer .data-table th.col-no,
+    #documentTableContainer .data-table td.col-no {
+      left: 0;
+    }
+
+    #documentTableContainer .data-table th.col-nomor_agenda,
+    #documentTableContainer .data-table td.col-nomor_agenda {
+      left: 88px;
+    }
+
+    #documentTableContainer .data-table th.col-no {
       z-index: 560;
+    }
+
+    #documentTableContainer .data-table th.col-nomor_agenda {
+      z-index: 555;
+    }
+
+    #documentTableContainer .data-table tbody tr:nth-child(odd) td.col-no,
+    #documentTableContainer .data-table tbody tr:nth-child(odd) td.col-nomor_agenda {
+      background: #ffffff !important;
+    }
+
+    #documentTableContainer .data-table tbody tr:nth-child(even) td.col-no,
+    #documentTableContainer .data-table tbody tr:nth-child(even) td.col-nomor_agenda {
+      background: #f8fafc !important;
+    }
+
+    #documentTableContainer .data-table tbody tr:hover td.col-no,
+    #documentTableContainer .data-table tbody tr:hover td.col-nomor_agenda {
+      background: #f3faf9 !important;
     }
 
     #documentTableContainer .status-pill {
@@ -2212,8 +2268,9 @@
             <table class="data-table table-enhanced" id="pembayaranDocumentTable">
               <thead>
                 <tr>
+                  <th class="col-no">No</th>
                   @foreach($selectedColumns as $colKey)
-                    <th>{{ $availableColumns[$colKey] ?? Str::headline($colKey) }}</th>
+                    <th class="col-{{ $colKey }}">{{ $availableColumns[$colKey] ?? Str::headline($colKey) }}</th>
                   @endforeach
                 </tr>
               </thead>
@@ -3453,8 +3510,10 @@
             tableBody.innerHTML = '';
           }
 
-          const html = rows.map(function (row) {
-            return '<tr data-dokumen-id="' + escapeAttribute(row.dokumen_id) + '" data-editable="true" data-kategori="' + escapeAttribute(row.kategori_raw) + '" data-jenis-dokumen="' + escapeAttribute(row.jenis_dokumen_raw) + '" data-jenis-sub-pekerjaan="' + escapeAttribute(row.jenis_sub_pekerjaan_raw) + '">' + selectedColumns.map(function (columnKey) {
+          const currentStart = fallbackStart;
+          const html = rows.map(function (row, index) {
+            const rowNumber = currentStart + index + 1;
+            return '<tr data-dokumen-id="' + escapeAttribute(row.dokumen_id) + '" data-editable="true" data-kategori="' + escapeAttribute(row.kategori_raw) + '" data-jenis-dokumen="' + escapeAttribute(row.jenis_dokumen_raw) + '" data-jenis-sub-pekerjaan="' + escapeAttribute(row.jenis_sub_pekerjaan_raw) + '"><td class="col-no text-center">' + rowNumber + '</td>' + selectedColumns.map(function (columnKey) {
               const className = 'col-' + columnKey + ' ' + (columnClassMap[columnKey] || '') + (isEditableColumn(columnKey) ? ' ie-cell' : '');
               const value = row[columnKey] || '-';
               const rawValue = row._raw && row._raw[columnKey] !== undefined ? row._raw[columnKey] : '';
@@ -3544,6 +3603,7 @@
             lengthChange: false,
             searching: true,
             ordering: true,
+            order: [],
             info: false,
             paging: true,
             dom: 'rt',
@@ -3561,7 +3621,18 @@
                 d.visible_columns = selectedColumns;
               },
             },
-            columns: selectedColumns.map(function (columnKey) {
+            columns: [{
+              data: null,
+              name: 'row_number',
+              orderable: false,
+              searchable: false,
+              className: 'col-no text-center',
+              width: '88px',
+              render: function (data, type, row, meta) {
+                const start = meta && meta.settings ? (meta.settings._iDisplayStart || 0) : 0;
+                return start + meta.row + 1;
+              },
+            }].concat(selectedColumns.map(function (columnKey) {
               return {
                 data: columnKey,
                 name: columnKey,
@@ -3574,7 +3645,7 @@
                   decorateEditableCell(cell, columnKey, rowData);
                 },
               };
-            }),
+            })),
             createdRow: function (row, data) {
               decorateRow(row, data);
             },

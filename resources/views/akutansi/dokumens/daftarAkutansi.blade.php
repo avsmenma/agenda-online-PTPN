@@ -3253,25 +3253,6 @@
           </div>
         </div>
       </div>
-      <div class="dtable-toolbar-right">
-        <span class="dtable-perpage-label">Baris per halaman:</span>
-        @php $currentPerPage = request('per_page', session('akutansi_per_page', 10)); @endphp
-        <form method="GET" action="{{ route('documents.akutansi.index') }}" style="display:inline;">
-          @foreach(request()->except('per_page', 'page') as $key => $val)
-            @if(is_array($val))
-              @foreach($val as $v)<input type="hidden" name="{{ $key }}[]" value="{{ $v }}">@endforeach
-            @else
-              <input type="hidden" name="{{ $key }}" value="{{ $val }}">
-            @endif
-          @endforeach
-          <select name="per_page" class="dtable-perpage-select" onchange="this.form.submit()">
-            @foreach([10, 25, 50, 100] as $pp)
-              <option value="{{ $pp }}" {{ (int)$currentPerPage === $pp ? 'selected' : '' }}>{{ $pp }}</option>
-            @endforeach
-            <option value="all" {{ $currentPerPage === 'all' ? 'selected' : '' }}>Semua</option>
-          </select>
-        </form>
-      </div>
     </div>
 
     <div class="table-responsive" style="overflow-x:auto;">
@@ -3923,10 +3904,6 @@
       </table>
     </div>
   </div>
-
-  @if(isset($dokumens) && $dokumens->total() > 0)
-    @include('partials.pagination-enhanced', ['paginator' => $dokumens])
-  @endif
 
   <!-- Modal Set Deadline -->
   <div class="modal fade" id="setDeadlineModal" tabindex="-1" aria-hidden="true">

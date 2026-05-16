@@ -374,7 +374,7 @@
     }
 
     .tabulator-acn-indicator {
-      display: none;
+      display: none !important;
       align-items: center;
       gap: 12px;
       padding: 6px 16px;
@@ -387,7 +387,7 @@
     }
 
     .tabulator-acn-indicator.visible {
-      display: flex;
+      display: none !important;
     }
 
     .tabulator-acn-cell-ref {

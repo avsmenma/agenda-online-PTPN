@@ -10,6 +10,7 @@
 
 <style>
   .acn-indicator {
+    display: none !important;
     position: sticky;
     bottom: 0;
     left: 0;
@@ -21,7 +22,7 @@
     font-weight: 600;
     border-radius: 0 0 8px 8px;
     z-index: 20;
-    display: flex;
+    display: none !important;
     align-items: center;
     gap: 12px;
     user-select: none;
@@ -31,8 +32,8 @@
   }
 
   .acn-indicator.visible {
-    opacity: 1;
-    pointer-events: auto;
+    opacity: 0;
+    pointer-events: none;
   }
 
   .acn-cell-ref {
