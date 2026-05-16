@@ -41,6 +41,49 @@ final class ProfileController extends Controller
     }
 
     /**
+     * Update core account information from the unified profile screen.
+     */
+    public function updateAccount(Request $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!$user->hasTwoFactorEnabled()) {
+            return redirect()->route('profile.account')
+                ->with('error', '2FA harus diaktifkan terlebih dahulu untuk mengubah informasi akun.');
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', 'alpha_dash', 'unique:users,username,' . $user->id],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'phone_number' => ['nullable', 'string', 'max:20'],
+        ], [
+            'name.required' => 'Nama lengkap wajib diisi',
+            'username.required' => 'Username wajib diisi',
+            'username.alpha_dash' => 'Username hanya boleh berisi huruf, angka, dash dan underscore',
+            'username.unique' => 'Username sudah digunakan oleh user lain',
+            'email.required' => 'Email wajib diisi',
+            'email.email' => 'Format email tidak valid',
+            'email.unique' => 'Email sudah digunakan oleh user lain',
+            'phone_number.max' => 'Nomor HP maksimal 20 karakter',
+        ]);
+
+        $oldValues = $user->only(['name', 'username', 'email', 'phone_number']);
+        $user->fill($validated);
+        $user->save();
+
+        Log::info('User account information updated', [
+            'user_id' => $user->id,
+            'old_values' => $oldValues,
+            'new_values' => $user->only(['name', 'username', 'email', 'phone_number']),
+        ]);
+
+        return redirect()->route('profile.account')
+            ->with('success', 'Informasi akun berhasil disimpan.');
+    }
+
+    /**
      * Update user email
      */
     public function updateEmail(Request $request): RedirectResponse
@@ -179,7 +222,6 @@ final class ProfileController extends Controller
             ->with('success', 'Username berhasil diubah.');
     }
 }
-
 
 
 
