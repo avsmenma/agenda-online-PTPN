@@ -1,6 +1,5 @@
 @extends('layouts/app')
 @push('styles')
-  <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/css/tabulator.min.css" rel="stylesheet">
   <style>
     #documentTableContainer.table-dokumen {
       background: #ffffff;
@@ -478,6 +477,10 @@
   </style>
 @endpush
 @section('content')
+
+  <script>
+    window.__operatorSharedInlineEdit = true;
+  </script>
 
   <style>
     /* =============================================
@@ -3115,13 +3118,64 @@
     </div>
   @endif
 
-  <!-- Tabulator True Virtual DOM Table -->
+  @php
+    $operatorTableColumns = array_values(array_filter($selectedColumns, function ($col) use ($availableColumns) {
+      return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);
+    }));
+  @endphp
+
   <div class="table-dokumen" id="documentTableContainer">
-    <div id="tabulatorLoadingPanel" class="tabulator-loading-panel is-visible">
-      <span class="spinner-border spinner-border-sm text-success" role="status" aria-hidden="true"></span>
-      <span>Memuat data dokumen...</span>
+    <div class="table-responsive">
+      <table class="table table-enhanced mb-0 operator-document-table">
+        <thead>
+          <tr>
+            <th class="col-checkbox">
+              <input type="checkbox" id="selectAllCheckbox" class="bulk-checkbox" title="Pilih Semua">
+            </th>
+            <th class="col-no">No</th>
+            @foreach($operatorTableColumns as $col)
+              @php
+                $isSortableColumn = in_array($col, [
+                  'nomor_agenda',
+                  'bulan',
+                  'tahun',
+                  'kategori',
+                  'jenis_dokumen',
+                  'jenis_sub_pekerjaan',
+                  'jenis_pembayaran',
+                  'nomor_spp',
+                  'tanggal_masuk',
+                  'nilai_rupiah',
+                  'tanggal_spp',
+                  'status',
+                ], true);
+              @endphp
+              <th class="col-{{ $col }}"
+                @if($isSortableColumn) onclick="toggleSort('{{ $col }}')" style="cursor: pointer; user-select: none;" @endif>
+                <span>{{ $availableColumns[$col] ?? ucfirst(str_replace('_', ' ', $col)) }}</span>
+                @if($isSortableColumn)
+                  <span class="sort-indicator">
+                    @if($sortColumn === $col)
+                      <i class="fa-solid fa-sort-{{ $sortOrder === 'asc' ? 'up' : 'down' }}"></i>
+                    @else
+                      <i class="fa-solid fa-sort"></i>
+                    @endif
+                  </span>
+                @endif
+              </th>
+            @endforeach
+            <th class="col-handler">Pengurus Dokumen</th>
+          </tr>
+        </thead>
+        <tbody id="dokumenTableBody">
+          @include('operator.dokumens._tableRowsAjax', [
+            'dokumens' => $dokumens,
+            'selectedColumns' => $operatorTableColumns,
+            'availableColumns' => $availableColumns,
+          ])
+        </tbody>
+      </table>
     </div>
-    <div id="dokumen-tabulator"></div>
   </div>
   {{-- Modal untuk menampilkan alasan reject dari inbox --}}
   @if(isset($dokumens))
@@ -5609,6 +5663,11 @@
                 const newTable = doc.getElementById('documentTableContainer');
                 if (newTable) {
                   container.innerHTML = newTable.innerHTML;
+                  document.dispatchEvent(new CustomEvent('document-table-refreshed'));
+                  window.dispatchEvent(new CustomEvent('document-table-refreshed'));
+                  if (typeof window.syncDocumentStickyOffsets === 'function') {
+                    window.syncDocumentStickyOffsets();
+                  }
                   showRefreshToast('success', 'Data berhasil diperbarui!');
                 } else {
                   showRefreshToast('error', 'Gagal memperbarui data.');
@@ -5730,6 +5789,7 @@
             // =========================================================
             (function () {
               'use strict';
+              if (window.__operatorSharedInlineEdit) return;
 
               // ---- Dropdown data passed from Laravel ----
               const IE_KATEGORI   = @json($ieKategoriList ?? []);
@@ -6189,6 +6249,7 @@
             })();
           </script>
 
+          @if(false)
           {{-- Datalist autocomplete untuk field "Dibayar Kepada" --}}
           <datalist id="ie-dibayar-kepada-list"></datalist>
           <script>
@@ -6245,8 +6306,10 @@
               });
             })();
           </script>
+          @endif
 
 
+          @if(false)
           @php
             $tabulatorInitialColumns = array_values(array_filter($selectedColumns, function ($col) use ($availableColumns) {
               return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);
@@ -7750,4 +7813,29 @@
               scheduleTabulatorActiveCellVisibility(120);
             });
           </script>
+          @endif
+
+@include('partials.virtual-document-table', ['paginator' => $dokumens, 'chunkSize' => 100, 'enabled' => true])
+@include('partials._inlineEditEngine')
+@include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
+@include('partials._documentTableStickyCells')
+<style>
+  #documentTableContainer #dokumenTableBody tr,
+  #documentTableContainer #dokumenTableBody tr.main-row {
+    contain: none !important;
+    content-visibility: visible !important;
+  }
+
+  #documentTableContainer .operator-document-table .sort-indicator {
+    display: inline-flex;
+    margin-left: 6px;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.75rem;
+  }
+
+  #documentTableContainer .operator-document-table .col-handler .document-handler-select {
+    width: 100%;
+    max-width: none;
+  }
+</style>
 @endsection

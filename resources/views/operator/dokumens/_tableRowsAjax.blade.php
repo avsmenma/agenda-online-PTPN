@@ -49,6 +49,7 @@
         && in_array($statusLowerForCheck, ['draft','returned_to_operator','belum_dikirim','belum dikirim','menunggu_approval_keuangan'])
         || ($isRejectedForCheck && $currentHandlerOperatorForCheck);
 
+    $rowNumberBase = method_exists($dokumens, 'firstItem') ? (($dokumens->firstItem() ?? 1) - 1) : 0;
     $filteredColumns = array_filter($selectedColumns, fn($c) => $c !== 'nomor_mirror' && $c !== 'keterangan' && isset($availableColumns[$c]));
     $dateCols        = ['tanggal_spp','tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf','tanggal_miro'];
   @endphp
@@ -58,6 +59,9 @@
     data-nomor-agenda="{{ $dokumen->nomor_agenda }}"
     data-nomor-spp="{{ $dokumen->nomor_spp }}"
     data-nilai-rupiah="{{ $dokumen->formatted_nilai_rupiah }}"
+    data-kategori="{{ $dokumen->kategori ?? '' }}"
+    data-jenis-dokumen="{{ $dokumen->jenis_dokumen ?? '' }}"
+    data-jenis-sub-pekerjaan="{{ $dokumen->jenis_sub_pekerjaan ?? '' }}"
     data-can-send="{{ $canSendForBulk ? 'true' : 'false' }}"
     data-editable="{{ $canInlineEdit ? 'true' : 'false' }}"
     data-dokumen-id="{{ $dokumen->id }}"
@@ -76,7 +80,7 @@
       @endif
     </td>
 
-    <td class="col-no">{{ $dokumens->firstItem() + $index }}</td>
+    <td class="col-no">{{ $rowNumberBase + $index + 1 }}</td>
 
     @foreach($filteredColumns as $col)
       @php
@@ -210,39 +214,6 @@
 
     <td class="col-handler" onclick="event.stopPropagation()">
       @include('partials.document-handler-select', ['dokumen' => $dokumen])
-    </td>
-
-    <td class="col-action" onclick="event.stopPropagation()">
-      <div class="action-buttons">
-        @php
-          $isFromBagian        = $currentHandlerOperatorForCheck && !$createdByOperatorForCheck;
-          $isSent              = ($isSentToTeamVerifikasi || ($tvApproved && $isSentToOther)) && !$isRejectedForCheck;
-          if ($isFromBagian) { $isSent = false; }
-          $canEdit = false;
-          $canSend = false;
-          if ($isFromBagian && !$isSent)                                              { $canEdit = true; $canSend = true; }
-          elseif ($isRejectedForCheck && $currentHandlerOperatorForCheck && !$isSent) { $canEdit = true; $canSend = true; }
-          elseif ($isReturnedForCheck && $currentHandlerOperatorForCheck && !$isSent) { $canEdit = true; $canSend = true; }
-          elseif ($statusLowerForCheck === 'draft' && $currentHandlerOperatorForCheck && !$isSent) { $canEdit = true; $canSend = true; }
-        @endphp
-        @if($canEdit)
-          <a href="{{ route('documents.edit', $dokumen->id) }}" class="btn-action btn-edit" title="Edit Dokumen">
-            <i class="fa-solid fa-edit"></i><span>Edit</span>
-          </a>
-        @endif
-        @if($canSend)
-          <form action="{{ route('documents.send-to-verifikasi', $dokumen->id) }}" method="POST" style="display:inline;">
-            @csrf
-            <button type="submit" class="btn-action btn-send" title="Kirim ke Team Verifikasi">
-              <i class="fa-solid fa-paper-plane"></i><span>Kirim</span>
-            </button>
-          </form>
-        @elseif($isSent)
-          <button class="btn-action btn-send" disabled title="Dokumen sudah dikirim">
-            <i class="fa-solid fa-paper-plane"></i><span>Kirim</span>
-          </button>
-        @endif
-      </div>
     </td>
   </tr>
 

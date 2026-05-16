@@ -1772,9 +1772,7 @@
     }
 
     #documentTableContainer .data-table th.col-no,
-    #documentTableContainer .data-table td.col-no,
-    #documentTableContainer .data-table th.col-nomor_agenda,
-    #documentTableContainer .data-table td.col-nomor_agenda {
+    #documentTableContainer .data-table td.col-no {
       position: sticky;
       z-index: 30;
       background-clip: padding-box;
@@ -1785,31 +1783,19 @@
       left: 0;
     }
 
-    #documentTableContainer .data-table th.col-nomor_agenda,
-    #documentTableContainer .data-table td.col-nomor_agenda {
-      left: 88px;
-    }
-
     #documentTableContainer .data-table th.col-no {
       z-index: 560;
     }
 
-    #documentTableContainer .data-table th.col-nomor_agenda {
-      z-index: 555;
-    }
-
-    #documentTableContainer .data-table tbody tr:nth-child(odd) td.col-no,
-    #documentTableContainer .data-table tbody tr:nth-child(odd) td.col-nomor_agenda {
+    #documentTableContainer .data-table tbody tr:nth-child(odd) td.col-no {
       background: #ffffff !important;
     }
 
-    #documentTableContainer .data-table tbody tr:nth-child(even) td.col-no,
-    #documentTableContainer .data-table tbody tr:nth-child(even) td.col-nomor_agenda {
+    #documentTableContainer .data-table tbody tr:nth-child(even) td.col-no {
       background: #f8fafc !important;
     }
 
-    #documentTableContainer .data-table tbody tr:hover td.col-no,
-    #documentTableContainer .data-table tbody tr:hover td.col-nomor_agenda {
+    #documentTableContainer .data-table tbody tr:hover td.col-no {
       background: #f3faf9 !important;
     }
 
