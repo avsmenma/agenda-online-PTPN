@@ -488,7 +488,7 @@
   .owner-docs-docmeta {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 8px;
     margin-bottom: 7px;
   }
@@ -518,7 +518,7 @@
     font-weight: 800;
     font-size: 14px;
     line-height: 1.35;
-    text-align: center;
+    text-align: left;
   }
 
   .owner-docs-payee {
@@ -526,7 +526,7 @@
     font-size: 12px;
     line-height: 1.35;
     margin-top: 3px;
-    text-align: center;
+    text-align: left;
   }
 
   .owner-docs-money {
@@ -774,6 +774,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    z-index: 10;
   }
 
   .owner-docs-modal-body {
@@ -1178,8 +1179,8 @@
         <table class="owner-docs-table">
           <thead>
             <tr>
-              <th style="width:34%">Nomor / Uraian SPP</th>
-              <th style="text-align:right">Nilai</th>
+              <th style="width:34%;text-align:center">Nomor / Uraian SPP</th>
+              <th style="text-align:center">Nilai</th>
               <th>Dari</th>
               <th>Pengurus Dokumen</th>
               <th>Status Pembayaran</th>
@@ -1219,7 +1220,6 @@
                     <span class="owner-docs-dot" style="background:{{ $bagianColor }}"></span>
                     <span>
                       {{ $bagian }}
-                      <small>Bagian asal</small>
                     </span>
                   </span>
                 </td>
