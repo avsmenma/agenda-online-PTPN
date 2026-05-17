@@ -129,7 +129,7 @@ final class TwoFactorController extends Controller
     /**
      * Show recovery codes
      */
-    public function showRecoveryCodes(): View
+    public function showRecoveryCodes(): View|RedirectResponse
     {
         /** @var User $user */
         $user = Auth::user();
@@ -148,7 +148,7 @@ final class TwoFactorController extends Controller
     /**
      * Show 2FA verification page (after login)
      */
-    public function showVerify(): View
+    public function showVerify(): View|RedirectResponse
     {
         if (!session('2fa_user_id')) {
             return redirect()->route('login')
@@ -356,7 +356,6 @@ final class TwoFactorController extends Controller
             ->with('success', 'Recovery codes berhasil di-generate ulang. Silakan simpan recovery codes baru Anda.');
     }
 }
-
 
 
 
