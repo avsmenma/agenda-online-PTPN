@@ -3985,17 +3985,9 @@
     $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
     $isSubmenuPageForHeader = false;
 
-    // Check if owner is on rekapan keterlambatan page (includes analytics - merged)
-    // Only show secondary sidebar header offset for per-role sub-pages
-    $isOwnerRekapanKeterlambatan = $isOwner && (
-      request()->routeIs('owner.rekapan-keterlambatan.role') ||
-      request()->routeIs('rekapan-keterlambatan.role') ||
-      (request()->is('*rekapan-keterlambatan/*') && request()->route('roleCode'))
-    );
-
-    if ($isOwnerRekapanKeterlambatan) {
-      $isSubmenuPageForHeader = true;
-    } elseif (isset($module)) {
+    // Owner pages use the dedicated owner sidebar only. The legacy secondary
+    // sidebar is reserved for non-owner workflow modules.
+    if (!$isOwner && isset($module)) {
       if ($module === 'pembayaran') {
         $isSubmenuPageForHeader = request()->routeIs('dokumensPembayaran.*') ||
           request()->routeIs('pembayaran.*') ||
@@ -4027,7 +4019,7 @@
           request()->is('*pengembalian*');
       }
     }
-    $shouldShowSecondarySidebarForHeader = $hasSubmenu || $isSubmenuPageForHeader || $isOwnerRekapanKeterlambatan;
+    $shouldShowSecondarySidebarForHeader = !$isOwner && ($hasSubmenu || $isSubmenuPageForHeader);
 
     // Define $isBagianUser early so it's available everywhere (not just inside sidebar block)
     $isBagianUser = false;
@@ -4725,40 +4717,7 @@
 
   <!-- Secondary Sidebar (Submenu Panel) - Mekari Style -->
   @if($isOwner)
-    @php
-      // Secondary sidebar only shows on per-role sub-pages (with roleCode), NOT on main unified page
-      $isRekapanByRolePage = request()->routeIs('owner.rekapan-keterlambatan.role') ||
-        request()->routeIs('rekapan-keterlambatan.role') ||
-        (request()->is('*rekapan-keterlambatan/*') && request()->route('roleCode'));
-      $shouldShowSecondarySidebarOwner = $isRekapanByRolePage;
-    @endphp
-    <div class="secondary-sidebar {{ $shouldShowSecondarySidebarOwner ? 'active' : '' }}"
-      id="sidebar-rekapan-keterlambatan" role="complementary" aria-label="Submenu Panel">
-      <div class="secondary-sidebar-header">
-        REKAPAN &amp; ANALISIS KERJA
-      </div>
-      <div class="secondary-sidebar-content">
-        @php
-          $currentRole = strtolower(request()->route('roleCode') ?? '');
-        @endphp
-        <a href="{{ route('rekapan-keterlambatan.role', 'team_verifikasi') }}"
-          class="{{ $currentRole === 'team_verifikasi' ? 'active' : '' }}">
-          <i class="fa-solid fa-users me-2"></i> Team Verifikasi
-        </a>
-        <a href="{{ route('rekapan-keterlambatan.role', 'perpajakan') }}"
-          class="{{ $currentRole === 'perpajakan' ? 'active' : '' }}">
-          <i class="fa-solid fa-file-invoice-dollar me-2"></i> Team Perpajakan
-        </a>
-        <a href="{{ route('rekapan-keterlambatan.role', 'akutansi') }}"
-          class="{{ $currentRole === 'akutansi' ? 'active' : '' }}">
-          <i class="fa-solid fa-calculator me-2"></i> Team Akutansi
-        </a>
-        <a href="{{ route('rekapan-keterlambatan.role', 'pembayaran') }}"
-          class="{{ $currentRole === 'pembayaran' ? 'active' : '' }}">
-          <i class="fa-solid fa-money-bill-wave me-2"></i> Pembayaran
-        </a>
-      </div>
-    </div>
+    {{-- Owner layout intentionally uses only the dedicated owner sidebar. --}}
   @else
   @php
     // Check if user is on a submenu page or menu dokumen is active
