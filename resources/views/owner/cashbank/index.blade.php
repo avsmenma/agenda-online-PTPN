@@ -222,6 +222,208 @@ table.cb-table tbody td{padding:10px 14px;font-size:12px;vertical-align:middle}
   .legend-item{padding:10px;gap:10px}
 }
 
+/* Rencana Pengeluaran per Kategori */
+.expense-plan-card .cb-card-body{padding:20px 22px 22px}
+.expense-summary-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:16px;
+}
+.expense-summary-card{
+  min-width:0;
+  padding:12px;
+  border:1px solid #ede9fe;
+  border-radius:10px;
+  background:linear-gradient(180deg,#fbfaff,#f8fafc);
+}
+.expense-summary-card.accent{
+  border-color:#ddd6fe;
+  background:linear-gradient(135deg,#f5f3ff,#faf5ff);
+}
+.expense-summary-label{
+  margin-bottom:5px;
+  color:#7c6aa6;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.expense-summary-value{
+  min-width:0;
+  color:#2d2350;
+  font-family:'Sora',sans-serif;
+  font-size:15px;
+  font-weight:800;
+  line-height:1.25;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.expense-summary-sub{
+  margin-top:4px;
+  color:#8b7aa8;
+  font-size:10.5px;
+  font-weight:600;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.expense-insight{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+  padding:12px 14px;
+  border:1px solid #ede9fe;
+  border-radius:12px;
+  background:#faf8ff;
+}
+.expense-insight-copy{min-width:0}
+.expense-insight-label{
+  color:#7c3aed;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.expense-insight-title{
+  margin-top:3px;
+  color:var(--primary);
+  font-size:13px;
+  font-weight:800;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.expense-insight-pill{
+  flex:0 0 auto;
+  padding:7px 10px;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid #ddd6fe;
+  color:#7c3aed;
+  font-family:'Sora',sans-serif;
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.expense-list{
+  display:grid;
+  gap:10px;
+  max-height:390px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding-right:4px;
+}
+.expense-list::-webkit-scrollbar{width:6px}
+.expense-list::-webkit-scrollbar-track{background:#f1f5f9;border-radius:999px}
+.expense-list::-webkit-scrollbar-thumb{background:#d8d2ea;border-radius:999px}
+.expense-category-item{
+  --rank-color:#7c3aed;
+  --bar-width:0%;
+  display:grid;
+  grid-template-columns:34px minmax(0,1fr) auto;
+  gap:12px;
+  align-items:center;
+  min-width:0;
+  padding:12px;
+  border:1px solid #edf1f7;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 1px 2px rgba(15,23,42,.03);
+}
+.expense-rank{
+  width:34px;
+  height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
+  background:color-mix(in srgb,var(--rank-color) 13%,white);
+  color:var(--rank-color);
+  font-family:'Sora',sans-serif;
+  font-size:11px;
+  font-weight:800;
+}
+.expense-main{min-width:0}
+.expense-name{
+  color:var(--primary);
+  font-size:12.5px;
+  font-weight:800;
+  line-height:1.3;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.expense-meta{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:10.5px;
+  font-weight:600;
+}
+.expense-track{
+  margin-top:8px;
+  height:8px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#f1f5f9;
+}
+.expense-fill{
+  display:block;
+  width:var(--bar-width);
+  min-width:0;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,var(--rank-color),#6d28d9);
+}
+.expense-value{
+  justify-self:end;
+  min-width:92px;
+  text-align:right;
+}
+.expense-value strong{
+  display:block;
+  color:#2d2350;
+  font-family:'Sora',sans-serif;
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.expense-share{
+  display:inline-flex;
+  margin-top:5px;
+  padding:3px 7px;
+  border-radius:999px;
+  border:1px solid #e9d5ff;
+  background:#faf5ff;
+  color:#7c3aed;
+  font-size:10.5px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.expense-empty{
+  padding:40px 20px;
+  border:1px dashed #ddd6fe;
+  border-radius:12px;
+  background:#faf8ff;
+  color:var(--muted);
+  text-align:center;
+  font-size:12px;
+  font-weight:700;
+}
+@media(max-width:1180px){
+  .expense-summary-grid{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .expense-plan-card .cb-card-body{padding:18px 16px}
+  .expense-insight{align-items:flex-start;flex-direction:column}
+  .expense-category-item{grid-template-columns:30px minmax(0,1fr);align-items:start}
+  .expense-rank{width:30px;height:30px}
+  .expense-value{grid-column:2;justify-self:start;text-align:left;min-width:0}
+}
+
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 </style>
 
@@ -454,7 +656,7 @@ function rupiahFull(float $n): string {
     </div>
 
     {{-- Chart Bar: Rencana Pengeluaran per Kategori --}}
-    <div class="cb-card" style="animation-delay:.4s">
+    <div class="cb-card expense-plan-card" style="animation-delay:.4s">
       <div class="cb-card-header">
         <div class="cb-card-title" style="color:#7c3aed">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -465,19 +667,76 @@ function rupiahFull(float $n): string {
         </div>
       </div>
       <div class="cb-card-body">
-        @php $maxPermintaan = !empty($permintaanKategori) ? max(array_column((array)$permintaanKategori, 'total_rencana')) : 1 @endphp
-        @foreach($permintaanKategori as $pk)
-          @php $pctP = $maxPermintaan > 0 ? round($pk->total_rencana / $maxPermintaan * 100, 1) : 0; @endphp
-          <div class="cb-progress-row">
-            <div class="cb-progress-label" style="font-size:11px">{{ Str::limit($pk->nama_kriteria, 30) }}</div>
-            <div class="cb-progress-bar-wrap">
-              <div class="cb-progress-bar" style="width:{{ $pctP }}%;background:linear-gradient(90deg,#7c3aed,#6d28d9)"></div>
+        @php
+          $pengeluaranKategori = collect($permintaanKategori ?? [])
+            ->sortByDesc(fn ($item) => (float) ($item->total_rencana ?? 0))
+            ->values();
+          $totalRencanaKategori = (float) $pengeluaranKategori->sum(fn ($item) => (float) ($item->total_rencana ?? 0));
+          $topPengeluaran = $pengeluaranKategori->first();
+          $maxPengeluaran = max(1, (float) ($topPengeluaran->total_rencana ?? 0));
+          $topPengeluaranPct = $totalRencanaKategori > 0
+            ? round(((float) ($topPengeluaran->total_rencana ?? 0) / $totalRencanaKategori) * 100, 1)
+            : 0;
+          $expenseColors = ['#7c3aed', '#6d28d9', '#8b5cf6', '#a855f7', '#9333ea', '#5b21b6'];
+        @endphp
+
+        @if($pengeluaranKategori->isNotEmpty())
+          <div class="expense-summary-grid">
+            <div class="expense-summary-card accent">
+              <div class="expense-summary-label">Total Rencana</div>
+              <div class="expense-summary-value">{{ rupiah($totalRencanaKategori) }}</div>
+              <div class="expense-summary-sub">{{ $bulanList[$bulanDari] }} - {{ $bulanList[$bulanSampai] }} {{ $tahun }}</div>
             </div>
-            <div class="cb-progress-val">{{ rupiah((float)$pk->total_rencana) }}</div>
+            <div class="expense-summary-card">
+              <div class="expense-summary-label">Kategori Dominan</div>
+              <div class="expense-summary-value" title="{{ $topPengeluaran->nama_kriteria ?? '-' }}">{{ $topPengeluaran->nama_kriteria ?? '-' }}</div>
+              <div class="expense-summary-sub">{{ $topPengeluaranPct }}% dari total rencana</div>
+            </div>
+            <div class="expense-summary-card">
+              <div class="expense-summary-label">Jumlah Kategori</div>
+              <div class="expense-summary-value">{{ $pengeluaranKategori->count() }} kategori</div>
+              <div class="expense-summary-sub">Diurutkan dari nilai terbesar</div>
+            </div>
           </div>
-        @endforeach
-        @if(empty($permintaanKategori))
-          <div class="cb-empty">Belum ada data rencana pengeluaran</div>
+
+          <div class="expense-insight">
+            <div class="expense-insight-copy">
+              <div class="expense-insight-label">Kategori terbesar</div>
+              <div class="expense-insight-title" title="{{ $topPengeluaran->nama_kriteria ?? '-' }}">
+                {{ $topPengeluaran->nama_kriteria ?? '-' }}
+              </div>
+            </div>
+            <div class="expense-insight-pill">{{ rupiah((float) ($topPengeluaran->total_rencana ?? 0)) }} · {{ $topPengeluaranPct }}%</div>
+          </div>
+
+          <div class="expense-list">
+            @foreach($pengeluaranKategori as $index => $pk)
+              @php
+                $value = (float) ($pk->total_rencana ?? 0);
+                $share = $totalRencanaKategori > 0 ? round(($value / $totalRencanaKategori) * 100, 1) : 0;
+                $barWidth = $maxPengeluaran > 0 ? round(($value / $maxPengeluaran) * 100, 1) : 0;
+                $rankColor = $expenseColors[$index % count($expenseColors)];
+              @endphp
+              <div class="expense-category-item" style="--bar-width:{{ $barWidth }}%;--rank-color:{{ $rankColor }}">
+                <div class="expense-rank">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</div>
+                <div class="expense-main">
+                  <div class="expense-name" title="{{ $pk->nama_kriteria }}">{{ $pk->nama_kriteria }}</div>
+                  <div class="expense-meta">Kontribusi terhadap total rencana pengeluaran</div>
+                  <div class="expense-track" aria-hidden="true">
+                    <span class="expense-fill"></span>
+                  </div>
+                </div>
+                <div class="expense-value">
+                  <strong>{{ rupiah($value) }}</strong>
+                  <span class="expense-share">{{ $share }}%</span>
+                </div>
+              </div>
+            @endforeach
+          </div>
+        @else
+          <div class="expense-empty">
+            Belum ada data rencana pengeluaran untuk periode ini.
+          </div>
         @endif
       </div>
     </div>
