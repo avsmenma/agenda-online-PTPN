@@ -24,11 +24,6 @@ final class ProfileController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        // Check if 2FA is enabled (required to access account settings)
-        if (!$user->hasTwoFactorEnabled()) {
-            return view('profile.require-2fa');
-        }
-
         $latestResetRequest = TwoFactorResetRequest::query()
             ->where('requester_id', $user->id)
             ->orderByDesc('id')
@@ -222,7 +217,6 @@ final class ProfileController extends Controller
             ->with('success', 'Username berhasil diubah.');
     }
 }
-
 
 
 

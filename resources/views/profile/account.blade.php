@@ -271,6 +271,11 @@
         font-weight: 700;
     }
 
+    .security-sub.warning {
+        color: #f59e0b;
+        font-weight: 700;
+    }
+
     .profile-actions {
         display: flex;
         justify-content: flex-end;
@@ -467,11 +472,19 @@
                                 <div class="security-icon ok"><i class="fa-solid fa-shield-halved"></i></div>
                                 <div>
                                     <h3 class="security-heading">Two-Factor Authentication</h3>
-                                    <p class="security-sub success">
-                                        <i class="fa-solid fa-circle-check me-1"></i>
-                                        Aktif - Google Authenticator
-                                    </p>
-                                    @if($latestResetRequest)
+                                    @if($user->hasTwoFactorEnabled())
+                                        <p class="security-sub success">
+                                            <i class="fa-solid fa-circle-check me-1"></i>
+                                            Aktif - Google Authenticator
+                                        </p>
+                                    @else
+                                        <p class="security-sub warning">
+                                            <i class="fa-solid fa-circle-exclamation me-1"></i>
+                                            Belum aktif - aktifkan untuk mengubah data akun
+                                        </p>
+                                    @endif
+
+                                    @if($user->hasTwoFactorEnabled() && $latestResetRequest)
                                         <p class="security-sub">Pengajuan reset: {{ $resetLabel }}</p>
                                         @if($resetStatus === 'rejected' && !empty($latestResetRequest->notes))
                                             <p class="security-sub">Alasan: {{ $latestResetRequest->notes }}</p>
@@ -481,19 +494,26 @@
                             </div>
 
                             <div class="d-flex flex-wrap gap-2 justify-content-end">
-                                @if(!($latestResetRequest && $latestResetRequest->status === 'pending'))
-                                    <button type="button" class="btn-danger-outline" data-bs-toggle="modal" data-bs-target="#request2faResetModal">
-                                        Reset 2FA
-                                    </button>
-                                @else
-                                    <button type="button" class="btn-danger-outline" disabled>Menunggu</button>
-                                @endif
+                                @if($user->hasTwoFactorEnabled())
+                                    @if(!($latestResetRequest && $latestResetRequest->status === 'pending'))
+                                        <button type="button" class="btn-danger-outline" data-bs-toggle="modal" data-bs-target="#request2faResetModal">
+                                            Reset 2FA
+                                        </button>
+                                    @else
+                                        <button type="button" class="btn-danger-outline" disabled>Menunggu</button>
+                                    @endif
 
-                                <form method="POST" action="{{ route('2fa.disable') }}" onsubmit="return confirm('Apakah Anda yakin ingin menonaktifkan 2FA? Akun Anda akan menjadi kurang aman.');">
-                                    @csrf
-                                    <input type="hidden" name="password" id="disable2faPassword">
-                                    <button type="submit" class="btn-danger-outline">Disable</button>
-                                </form>
+                                    <form method="POST" action="{{ route('2fa.disable') }}" onsubmit="return confirm('Apakah Anda yakin ingin menonaktifkan 2FA? Akun Anda akan menjadi kurang aman.');">
+                                        @csrf
+                                        <input type="hidden" name="password" id="disable2faPassword">
+                                        <button type="submit" class="btn-danger-outline">Disable</button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('2fa.setup') }}" class="btn-security">
+                                        <i class="fa-solid fa-shield-halved"></i>
+                                        Aktifkan 2FA
+                                    </a>
+                                @endif
                             </div>
                         </div>
 
@@ -505,17 +525,28 @@
                                     <p class="security-sub">Terakhir diubah {{ $user->updated_at?->diffForHumans() ?? '-' }}</p>
                                 </div>
                             </div>
-                            <button type="button" class="btn-security" data-bs-toggle="modal" data-bs-target="#passwordModal">Ubah Password</button>
+                            @if($user->hasTwoFactorEnabled())
+                                <button type="button" class="btn-security" data-bs-toggle="modal" data-bs-target="#passwordModal">Ubah Password</button>
+                            @else
+                                <a href="{{ route('2fa.setup') }}" class="btn-security">Aktifkan 2FA</a>
+                            @endif
                         </div>
                     </div>
                 </section>
 
                 <div class="profile-actions">
                     <a href="{{ url(Auth::user()->getDashboardRoute()) }}" class="btn-soft text-decoration-none d-inline-flex align-items-center justify-content-center">Batal</a>
-                    <button type="submit" form="accountForm" class="btn-primary-profile">
-                        <i class="fa-solid fa-floppy-disk"></i>
-                        Simpan Perubahan
-                    </button>
+                    @if($user->hasTwoFactorEnabled())
+                        <button type="submit" form="accountForm" class="btn-primary-profile">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Simpan Perubahan
+                        </button>
+                    @else
+                        <a href="{{ route('2fa.setup') }}" class="btn-primary-profile">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            Aktifkan 2FA untuk Simpan
+                        </a>
+                    @endif
                 </div>
         </main>
     </div>
