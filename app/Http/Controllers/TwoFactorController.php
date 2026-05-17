@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Traits\LogsProgrammerActivity;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -37,14 +38,25 @@ final class TwoFactorController extends Controller
             return view('auth.2fa.already-enabled');
         }
 
-        // Generate secret key if not exists
         if (!$user->two_factor_secret) {
             $secretKey = $this->google2fa->generateSecretKey();
             $user->two_factor_secret = encrypt($secretKey);
             $user->save();
+        } else {
+            try {
+                $secretKey = decrypt($user->two_factor_secret);
+            } catch (DecryptException $exception) {
+                $secretKey = $this->google2fa->generateSecretKey();
+                $user->two_factor_secret = encrypt($secretKey);
+                $user->save();
+
+                Log::warning('Invalid 2FA setup secret regenerated', [
+                    'user_id' => $user->id,
+                    'username' => $user->username,
+                ]);
+            }
         }
 
-        $secretKey = decrypt($user->two_factor_secret);
         $qrCodeUrl = $this->google2fa->getQRCodeUrl(
             config('app.name', 'Agenda Online PTPN'),
             $user->email,
@@ -344,7 +356,6 @@ final class TwoFactorController extends Controller
             ->with('success', 'Recovery codes berhasil di-generate ulang. Silakan simpan recovery codes baru Anda.');
     }
 }
-
 
 
 
