@@ -141,6 +141,87 @@ table.cb-table tbody td{padding:10px 14px;font-size:12px;vertical-align:middle}
 .gauge-pct{font-family:'Sora',sans-serif;font-size:36px;font-weight:700;line-height:1;color:var(--accent)}
 .gauge-lbl{font-size:11px;color:var(--muted);margin-top:4px}
 
+/* Komposisi Penerimaan per Komoditas */
+.commodity-summary-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:22px;
+}
+.commodity-summary-card{min-width:0;border-radius:10px;padding:13px 14px}
+.commodity-summary-card.green{background:#f0fdf4;border:1px solid #bbf7d0}
+.commodity-summary-card.blue{background:#eff6ff;border:1px solid #bfdbfe}
+.commodity-summary-card.yellow{background:#fef3c7;border:1px solid #fde047}
+.commodity-summary-label{
+  margin-bottom:5px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+}
+.commodity-summary-card.green .commodity-summary-label{color:#15803d}
+.commodity-summary-card.blue .commodity-summary-label{color:#1e40af}
+.commodity-summary-card.yellow .commodity-summary-label{color:#a16207}
+.commodity-summary-value{
+  min-width:0;font-family:'Sora',sans-serif;font-size:16px;font-weight:700;line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.commodity-summary-card.green .commodity-summary-value{color:#15803d}
+.commodity-summary-card.blue .commodity-summary-value{color:#1e40af;font-size:14px}
+.commodity-summary-card.yellow .commodity-summary-value{color:#a16207}
+.commodity-composition{
+  display:grid;
+  grid-template-columns:minmax(240px,.85fr) minmax(300px,1.15fr);
+  gap:22px;align-items:center;min-width:0;
+}
+.commodity-chart-panel{
+  min-width:0;display:flex;align-items:center;justify-content:center;padding:16px;
+  border:1px solid #e3efed;border-radius:14px;background:linear-gradient(180deg,#fbfdfd,#f8fafc);
+}
+.commodity-chart-box{
+  position:relative;width:min(100%,280px);max-width:300px;aspect-ratio:1;
+  display:flex;align-items:center;justify-content:center;
+}
+.commodity-chart-box canvas{width:100% !important;height:100% !important;max-width:100%;max-height:100%}
+.commodity-loading{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;color:var(--muted);text-align:center;font-size:12px;font-weight:700;pointer-events:none;
+}
+.commodity-loading-icon{font-size:22px;line-height:1}
+.commodity-legend{min-width:0;max-height:356px;overflow-y:auto;overflow-x:hidden;padding-right:4px}
+.commodity-legend::-webkit-scrollbar{width:6px}
+.commodity-legend::-webkit-scrollbar-track{background:#f1f5f9;border-radius:999px}
+.commodity-legend::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
+.commodity-legend-list{display:grid;grid-template-columns:1fr;gap:9px;min-width:0}
+.legend-item{
+  --item-color:#0d9488;
+  display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:12px;align-items:center;min-width:0;
+  padding:10px 12px;border:1px solid #edf1f7;border-radius:11px;background:#fafbfd;cursor:pointer;
+  transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+.legend-item:hover,.legend-item.active{border-color:var(--item-color);background:#fff;box-shadow:0 6px 18px rgba(15,23,42,.07)}
+.legend-item:hover{transform:translateY(-1px)}
+.legend-marker{width:12px;height:12px;border-radius:4px;background:var(--item-color)}
+.legend-main{min-width:0}
+.legend-name{
+  color:var(--primary);font-size:12.5px;font-weight:700;line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.legend-value{margin-top:3px;color:var(--muted);font-size:11px;font-weight:600;white-space:nowrap}
+.legend-percent{
+  justify-self:end;max-width:none;padding:4px 8px;border-radius:999px;background:#fff;
+  border:1px solid color-mix(in srgb,var(--item-color) 25%,#e5e7eb);
+  color:var(--item-color);font-family:'Sora',sans-serif;font-size:12px;font-weight:700;line-height:1;white-space:nowrap;
+}
+@media(max-width:1180px){
+  .commodity-composition{grid-template-columns:1fr}
+  .commodity-chart-panel{padding:14px}
+  .commodity-legend{max-height:320px}
+}
+@media(max-width:640px){
+  .cb-wrap{padding-left:16px;padding-right:16px}
+  .commodity-summary-grid{grid-template-columns:1fr}
+  .commodity-composition{gap:16px}
+  .commodity-chart-box{width:min(100%,250px)}
+  .legend-item{padding:10px;gap:10px}
+}
+
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 </style>
 
@@ -330,40 +411,42 @@ function rupiahFull(float $n): string {
       </div>
       <div class="cb-card-body" style="padding:24px">
         {{-- Metric Cards --}}
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
+        <div class="commodity-summary-grid">
           @php
             $topKomoditas = collect($penerimaanKategori)->sortByDesc('total')->first();
             $jumlahKomoditas = count($penerimaanKategori);
           @endphp
-          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px">
-            <div style="font-size:10px;color:#15803d;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Total Penerimaan</div>
-            <div style="font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:#15803d">{{ rupiah((float)$ringkasan['total_penerimaan']) }}</div>
+          <div class="commodity-summary-card green">
+            <div class="commodity-summary-label">Total Penerimaan</div>
+            <div class="commodity-summary-value">{{ rupiah((float)$ringkasan['total_penerimaan']) }}</div>
           </div>
-          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px">
-            <div style="font-size:10px;color:#1e40af;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Komoditas Utama</div>
-            <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:#1e40af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ $topKomoditas ? $topKomoditas->nama_kriteria : '-' }}">{{ $topKomoditas ? $topKomoditas->nama_kriteria : '-' }}</div>
+          <div class="commodity-summary-card blue">
+            <div class="commodity-summary-label">Komoditas Utama</div>
+            <div class="commodity-summary-value" title="{{ $topKomoditas ? $topKomoditas->nama_kriteria : '-' }}">{{ $topKomoditas ? $topKomoditas->nama_kriteria : '-' }}</div>
           </div>
-          <div style="background:#fef3c7;border:1px solid #fde047;border-radius:8px;padding:12px">
-            <div style="font-size:10px;color:#a16207;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Jumlah Komoditas</div>
-            <div style="font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:#a16207">{{ $jumlahKomoditas }} item</div>
+          <div class="commodity-summary-card yellow">
+            <div class="commodity-summary-label">Jumlah Komoditas</div>
+            <div class="commodity-summary-value">{{ $jumlahKomoditas }} item</div>
           </div>
         </div>
 
         {{-- Chart + Legend Container --}}
-        <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;justify-content:center">
+        <div class="commodity-composition">
           {{-- Donut Chart --}}
-          <div style="flex:0 0 280px;height:280px;position:relative;border:2px dashed #0d9488;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#fafbfd">
-            <canvas id="chartPenerimaan" aria-label="Komposisi penerimaan per komoditas dalam bentuk donut chart" style="max-width:100%;max-height:100%">
+          <div class="commodity-chart-panel">
+            <div class="commodity-chart-box">
+              <canvas id="chartPenerimaan" aria-label="Komposisi penerimaan per komoditas dalam bentuk donut chart">
               Grafik menampilkan komposisi penerimaan dari berbagai komoditas
-            </canvas>
-            <div id="chartLoadingIndicator" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:12px;color:#8492a6;text-align:center;font-weight:600">
-              <div style="margin-bottom:8px;font-size:24px">📊</div>
-              Loading chart...
+              </canvas>
+              <div id="chartLoadingIndicator" class="commodity-loading">
+                <div class="commodity-loading-icon">Chart</div>
+                <div>Loading chart...</div>
+              </div>
             </div>
           </div>
 
           {{-- Custom Legend --}}
-          <div id="customLegend" style="flex:1;min-width:200px;max-width:360px">
+          <div id="customLegend" class="commodity-legend">
             <!-- Legend will be generated by JavaScript -->
           </div>
         </div>
@@ -579,6 +662,15 @@ function formatRupiah(value) {
   return 'Rp ' + value.toLocaleString('id-ID');
 }
 
+function escapeHtml(value) {
+  return String(value ?? '-')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Check Canvas element
 const canvasEl = document.getElementById('chartPenerimaan');
 console.log('🔍 Canvas element:', {
@@ -624,10 +716,15 @@ if (typeof Chart === 'undefined') {
     console.log('Total penerimaan:', totalPenerimaan);
 
     // Prepare data dengan persentase
-    const chartData = penerimaanData.map((d, i) => ({
+    const chartData = penerimaanData
+    .map((d) => ({
       label: d.nama_kriteria,
       value: parseFloat(d.total),
-      pct: ((parseFloat(d.total) / totalPenerimaan) * 100).toFixed(1),
+    }))
+    .sort((a, b) => b.value - a.value)
+    .map((d, i) => ({
+      ...d,
+      pct: totalPenerimaan > 0 ? ((d.value / totalPenerimaan) * 100).toFixed(1) : '0.0',
       color: CHART_COLORS[i % CHART_COLORS.length]
     }));
     console.log('Chart data prepared:', chartData.length, 'items');
@@ -757,21 +854,20 @@ if (typeof Chart === 'undefined') {
       const legendContainer = document.getElementById('customLegend');
       if (!legendContainer) return;
 
-      let html = '<div style="display:grid;grid-template-columns:1fr;gap:8px">';
+      let html = '<div class="commodity-legend-list">';
 
       chartData.forEach((item, index) => {
+        const safeLabel = escapeHtml(item.label);
+        const safeValue = escapeHtml(formatRupiah(item.value));
         html += `
-          <div class="legend-item" data-index="${index}"
-               style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;transition:all 0.2s;background:#fafbfd;border:2px solid transparent"
-               onmouseover="this.style.background='#f1f5f9';this.style.borderColor='${item.color}'"
-               onmouseout="if(!this.classList.contains('active')){this.style.background='#fafbfd';this.style.borderColor='transparent'}"
+          <div class="legend-item" data-index="${index}" style="--item-color:${item.color}"
                onclick="handleLegendClick(${index})">
-            <div style="width:12px;height:12px;border-radius:3px;background:${item.color};flex-shrink:0"></div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:12px;font-weight:600;color:#1a2340;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.label}</div>
-              <div style="font-size:10px;color:#8492a6;margin-top:2px">${formatRupiah(item.value)}</div>
+            <div class="legend-marker"></div>
+            <div class="legend-main">
+              <div class="legend-name" title="${safeLabel}">${safeLabel}</div>
+              <div class="legend-value">${safeValue}</div>
             </div>
-            <div style="font-size:13px;font-weight:700;color:${item.color};font-family:Sora,sans-serif">${item.pct}%</div>
+            <div class="legend-percent">${item.pct}%</div>
           </div>
         `;
       });
@@ -798,12 +894,8 @@ if (typeof Chart === 'undefined') {
       items.forEach((item, i) => {
         if (i === selectedIndex) {
           item.classList.add('active');
-          item.style.background = '#eff6ff';
-          item.style.borderColor = chartData[i].color;
         } else {
           item.classList.remove('active');
-          item.style.background = '#fafbfd';
-          item.style.borderColor = 'transparent';
         }
       });
     }
