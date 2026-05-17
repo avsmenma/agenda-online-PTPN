@@ -689,15 +689,15 @@ class OwnerDashboardController extends Controller
         }
 
         if ($request && $request->has('filter_pengurus') && !empty($request->filter_pengurus)) {
-            $query->where('current_handler', $request->filter_pengurus);
+            $query->whereIn('current_handler', $this->getHandlerAliasesForFilter($request->filter_pengurus));
         }
 
         if ($request && $request->filled('filter_nilai_min')) {
-            $query->where('nilai_rupiah', '>=', (float) preg_replace('/[^0-9.]/', '', (string) $request->filter_nilai_min));
+            $query->where('nilai_rupiah', '>=', (float) preg_replace('/[^0-9]/', '', (string) $request->filter_nilai_min));
         }
 
         if ($request && $request->filled('filter_nilai_max')) {
-            $query->where('nilai_rupiah', '<=', (float) preg_replace('/[^0-9.]/', '', (string) $request->filter_nilai_max));
+            $query->where('nilai_rupiah', '<=', (float) preg_replace('/[^0-9]/', '', (string) $request->filter_nilai_max));
         }
 
         // Filter by umur dokumen â€” tampilkan semua dokumen belum dibayar berumur > X hari
@@ -878,6 +878,10 @@ class OwnerDashboardController extends Controller
                 'nomor_spp' => $dokumen->nomor_spp,
                 'uraian_spp' => $dokumen->uraian_spp,
                 'nilai_rupiah' => $dokumen->nilai_rupiah,
+                'kategori' => $dokumen->kategori ?? '-',
+                'jenis_dokumen' => $dokumen->jenis_dokumen ?? '-',
+                'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan ?? '-',
+                'jenis_pembayaran' => $dokumen->jenis_pembayaran ?? '-',
                 'bagian' => $dokumen->bagian ?? '-',
                 'status' => $dokumen->status,
                 'status_display' => $this->getStatusDisplayName($dokumen->status),
@@ -890,6 +894,7 @@ class OwnerDashboardController extends Controller
                 'durasi_peran' => $roleDuration,
                 'created_at' => $dokumen->created_at ? $dokumen->created_at->format('d M Y H:i') : '-',
                 'tanggal_masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d M Y') : ($dokumen->created_at ? $dokumen->created_at->format('d M Y') : '-'),
+                'tanggal_spp' => $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d M Y') : '-',
                 'progress_percentage' => $this->calculateProgress($dokumen),
                 'status_badge_color' => $this->getStatusBadgeColor($dokumen->status),
                 'progress_color' => $this->getProgressColor($dokumen->status),
@@ -4192,6 +4197,20 @@ class OwnerDashboardController extends Controller
         return ['label' => 'Belum Dibayar', 'class' => 'waiting'];
     }
 
+    private function getHandlerAliasesForFilter(string $handler): array
+    {
+        $normalized = $this->normalizeHandlerName($handler);
+
+        return match ($normalized) {
+            'operator' => ['operator', 'Operator', 'ibu_a', 'ibu_tarapul', 'tarapul', 'ibutarapul'],
+            'team_verifikasi' => ['team_verifikasi', 'Team Verifikasi', 'team verifikasi', 'teamverifikasi', 'verifikasi', 'ibu_b', 'ibu_yuni', 'ibuyuni'],
+            'perpajakan' => ['perpajakan', 'team_perpajakan', 'team perpajakan', 'teamperpajakan', 'pajak'],
+            'akutansi' => ['akutansi', 'akuntansi', 'team_akutansi', 'team akutansi', 'teamakutansi'],
+            'pembayaran' => ['pembayaran', 'team_pembayaran', 'team pembayaran', 'teampembayaran', 'payment'],
+            default => [$handler],
+        };
+    }
+
     private function resolveDocumentOrigin($dokumen): string
     {
         $bagian = trim((string) ($dokumen->bagian ?? ''));
@@ -4365,9 +4384,13 @@ class OwnerDashboardController extends Controller
 
         $pengurusList = Dokumen::whereNotNull('current_handler')
             ->where('current_handler', '!=', '')
-            ->distinct()
             ->orderBy('current_handler')
             ->pluck('current_handler')
+            ->map(fn ($handler) => $this->normalizeHandlerName($handler))
+            ->unique()
+            ->sortBy(fn ($handler) => array_search($handler, ['operator', 'team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'], true) !== false
+                ? array_search($handler, ['operator', 'team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'], true)
+                : 99)
             ->mapWithKeys(fn ($handler) => [$handler => $this->getRoleDisplayName($handler)])
             ->toArray();
 

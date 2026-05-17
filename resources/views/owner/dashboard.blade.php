@@ -25,6 +25,9 @@
     : 'Rp ' . number_format($totalNilaiNum / 1_000_000, 1, ',', '.') . ' Jt';
 
   $queryWithoutStatus = request()->except(['status', 'page']);
+  $formatFilterMoney = fn ($value) => trim((string) $value) === ''
+    ? ''
+    : number_format((float) preg_replace('/[^0-9]/', '', (string) $value), 0, ',', '.');
 @endphp
 
 <style>
@@ -485,6 +488,7 @@
   .owner-docs-docmeta {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     margin-bottom: 7px;
   }
@@ -514,6 +518,7 @@
     font-weight: 800;
     font-size: 14px;
     line-height: 1.35;
+    text-align: center;
   }
 
   .owner-docs-payee {
@@ -521,6 +526,7 @@
     font-size: 12px;
     line-height: 1.35;
     margin-top: 3px;
+    text-align: center;
   }
 
   .owner-docs-money {
@@ -553,7 +559,7 @@
     display: flex;
     align-items: center;
     gap: 9px;
-    white-space: nowrap;
+    min-width: 0;
   }
 
   .owner-docs-avatar {
@@ -571,15 +577,19 @@
   }
 
   .owner-docs-handler-name {
+    display: block;
     color: var(--od-text);
     font-weight: 800;
     font-size: 12.5px;
+    white-space: nowrap;
   }
 
   .owner-docs-handler-sub {
+    display: block;
     color: var(--od-muted);
     font-size: 10.5px;
     margin-top: 2px;
+    white-space: nowrap;
   }
 
   .owner-docs-status {
@@ -666,6 +676,227 @@
     margin-bottom: 4px;
   }
 
+  .owner-docs-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 11000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    background: rgba(15, 23, 42, .55);
+    backdrop-filter: blur(5px);
+  }
+
+  .owner-docs-modal.open {
+    display: flex;
+  }
+
+  .owner-docs-modal-panel {
+    width: min(1180px, 96vw);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, .28);
+  }
+
+  .owner-docs-modal-head {
+    position: relative;
+    overflow: hidden;
+    padding: 26px 34px 28px;
+    background: linear-gradient(135deg, #14513f 0%, #0f3d2e 100%);
+    color: #fff;
+  }
+
+  .owner-docs-modal-head::before,
+  .owner-docs-modal-head::after {
+    content: '';
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, .10);
+    border-radius: 50%;
+    width: 260px;
+    height: 260px;
+    right: 150px;
+    top: -110px;
+  }
+
+  .owner-docs-modal-head::after {
+    width: 360px;
+    height: 360px;
+    right: -70px;
+    top: -160px;
+  }
+
+  .owner-docs-modal-no {
+    position: relative;
+    font-family: 'Sora', monospace;
+    font-size: 12px;
+    color: rgba(255, 255, 255, .72);
+    margin-bottom: 8px;
+  }
+
+  .owner-docs-modal-title {
+    position: relative;
+    margin: 0;
+    font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.25;
+    max-width: 760px;
+  }
+
+  .owner-docs-modal-sub {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    color: rgba(255, 255, 255, .78);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .owner-docs-modal-close {
+    position: absolute;
+    right: 32px;
+    top: 28px;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+    font-size: 19px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .owner-docs-modal-body {
+    display: grid;
+    grid-template-columns: 1.2fr .9fr;
+    overflow: auto;
+  }
+
+  .owner-docs-modal-timeline {
+    padding: 30px 34px;
+    border-right: 1px solid var(--od-border);
+  }
+
+  .owner-docs-modal-detail {
+    padding: 30px 34px;
+    background: #f8fafc;
+  }
+
+  .owner-docs-modal-section {
+    margin: 0 0 22px;
+    color: var(--od-muted);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  .owner-docs-timeline-list {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .owner-docs-timeline-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 16px;
+    min-height: 76px;
+  }
+
+  .owner-docs-timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 36px;
+    bottom: 0;
+    width: 2px;
+    background: #dbe3ef;
+  }
+
+  .owner-docs-timeline-item.done:not(:last-child)::before,
+  .owner-docs-timeline-item.active:not(:last-child)::before {
+    background: #10b981;
+  }
+
+  .owner-docs-timeline-dot {
+    position: relative;
+    z-index: 1;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f8fafc;
+    border: 1px solid #dbe3ef;
+    color: #94a3b8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+  }
+
+  .owner-docs-timeline-item.done .owner-docs-timeline-dot {
+    background: #10b981;
+    border-color: #10b981;
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, .14);
+  }
+
+  .owner-docs-timeline-item.active .owner-docs-timeline-dot {
+    background: #eff4ff;
+    border-color: #2563eb;
+    color: #2563eb;
+  }
+
+  .owner-docs-timeline-name {
+    color: var(--od-text);
+    font-size: 15px;
+    font-weight: 900;
+    margin-top: 2px;
+  }
+
+  .owner-docs-timeline-date {
+    margin-top: 5px;
+    color: #8ca0bd;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .owner-docs-detail-field {
+    margin-bottom: 18px;
+  }
+
+  .owner-docs-detail-label {
+    margin-bottom: 6px;
+    color: var(--od-muted);
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  .owner-docs-detail-value {
+    color: var(--od-text);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.45;
+  }
+
+  .owner-docs-detail-value.mono {
+    font-family: 'Sora', monospace;
+  }
+
   @media (max-width: 1280px) {
     .owner-docs-stats {
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -691,6 +922,26 @@
     .owner-docs-filter-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .owner-docs-modal {
+      padding: 16px;
+      align-items: flex-start;
+      overflow: auto;
+    }
+
+    .owner-docs-modal-panel {
+      width: 100%;
+      max-height: none;
+    }
+
+    .owner-docs-modal-body {
+      grid-template-columns: 1fr;
+    }
+
+    .owner-docs-modal-timeline {
+      border-right: 0;
+      border-bottom: 1px solid var(--od-border);
+    }
   }
 
   @media (max-width: 640px) {
@@ -711,6 +962,23 @@
 
     .owner-docs-shortcut {
       display: none;
+    }
+
+    .owner-docs-modal-head,
+    .owner-docs-modal-timeline,
+    .owner-docs-modal-detail {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .owner-docs-modal-close {
+      right: 18px;
+      top: 18px;
+    }
+
+    .owner-docs-modal-title {
+      padding-right: 48px;
+      font-size: 20px;
     }
   }
 </style>
@@ -859,12 +1127,12 @@
 
           <div class="owner-docs-filter-group">
             <label>Nilai Min</label>
-            <input type="number" min="0" name="filter_nilai_min" value="{{ request('filter_nilai_min') }}" placeholder="0">
+            <input class="owner-docs-money-input" type="text" inputmode="numeric" name="filter_nilai_min" value="{{ $formatFilterMoney(request('filter_nilai_min')) }}" placeholder="0">
           </div>
 
           <div class="owner-docs-filter-group">
             <label>Nilai Max</label>
-            <input type="number" min="0" name="filter_nilai_max" value="{{ request('filter_nilai_max') }}" placeholder="999999999">
+            <input class="owner-docs-money-input" type="text" inputmode="numeric" name="filter_nilai_max" value="{{ $formatFilterMoney(request('filter_nilai_max')) }}" placeholder="999.999.999">
           </div>
 
           <div class="owner-docs-filter-group">
@@ -931,7 +1199,7 @@
                 $isUrgent = ($dokumen['urgency_active'] ?? false) || (($durasi['seconds'] ?? 0) >= 259200 && !($dokumen['is_paid'] ?? false));
                 $nomor = $dokumen['nomor_agenda'] ?: ($dokumen['nomor_spp'] ?: '-');
               @endphp
-              <tr class="owner-docs-row" onclick="navigateToWorkflow('{{ $dokumen['id'] }}')">
+              <tr class="owner-docs-row" onclick="openOwnerDocModal({{ (int) $dokumen['id'] }})">
                 <td>
                   <div class="owner-docs-docmeta">
                     <span class="owner-docs-dot" style="background:{{ $bagianColor }}"></span>
@@ -1001,11 +1269,35 @@
   </div>
 </div>
 
+<div class="owner-docs-modal" id="ownerDocsModal" role="dialog" aria-modal="true" aria-labelledby="ownerDocModalTitle" onclick="if (event.target === this) closeOwnerDocModal()">
+  <div class="owner-docs-modal-panel">
+    <div class="owner-docs-modal-head">
+      <button type="button" class="owner-docs-modal-close" onclick="closeOwnerDocModal()" aria-label="Tutup detail dokumen">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="owner-docs-modal-no" id="ownerDocModalNo">-</div>
+      <h3 class="owner-docs-modal-title" id="ownerDocModalTitle">-</h3>
+      <div class="owner-docs-modal-sub">
+        <span class="owner-docs-dot" id="ownerDocModalDot"></span>
+        <span id="ownerDocModalMeta">-</span>
+      </div>
+    </div>
+    <div class="owner-docs-modal-body">
+      <div class="owner-docs-modal-timeline">
+        <h4 class="owner-docs-modal-section">Timeline Workflow</h4>
+        <div class="owner-docs-timeline-list" id="ownerDocModalTimeline"></div>
+      </div>
+      <div class="owner-docs-modal-detail">
+        <h4 class="owner-docs-modal-section">Detail Dokumen</h4>
+        <div id="ownerDocModalDetails"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-  function navigateToWorkflow(id) {
-    const currentUrl = window.location.pathname + window.location.search;
-    window.location.href = '{{ url("/owner/workflow") }}/' + id + '?return_url=' + encodeURIComponent(currentUrl);
-  }
+  const ownerDocs = new Map((@json($documents->items())).map((doc) => [Number(doc.id), doc]));
+  const ownerBagianColors = @json($bagianColors);
 
   function changePerPage(value) {
     const url = new URL(window.location.href);
@@ -1014,7 +1306,129 @@
     window.location.href = url.toString();
   }
 
+  function escapeOwnerHtml(value) {
+    return String(value ?? '-')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function formatOwnerRupiah(value) {
+    const amount = Number(value || 0);
+    return 'Rp ' + amount.toLocaleString('id-ID');
+  }
+
+  function formatOwnerDots(value) {
+    const digits = String(value || '').replace(/\D/g, '');
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  function renderOwnerTimeline(steps) {
+    const timeline = document.getElementById('ownerDocModalTimeline');
+    if (!timeline) return;
+
+    const safeSteps = Array.isArray(steps) && steps.length ? steps : [
+      { label: 'Bagian', status: 'active', received_at: null },
+      { label: 'Operator', status: 'pending', received_at: null },
+      { label: 'Team Verifikasi', status: 'pending', received_at: null },
+      { label: 'Perpajakan', status: 'pending', received_at: null },
+      { label: 'Akutansi', status: 'pending', received_at: null },
+      { label: 'Pembayaran', status: 'pending', received_at: null },
+    ];
+
+    timeline.innerHTML = safeSteps.map((step, index) => {
+      const isDone = step.status === 'completed';
+      const isActive = step.status === 'active' || step.status === 'waiting' || step.is_current;
+      const date = step.processed_at || step.received_at || step.sent_at || '-';
+      const dot = isDone ? '<i class="fas fa-check"></i>' : index + 1;
+      const classes = ['owner-docs-timeline-item', isDone ? 'done' : '', isActive ? 'active' : '']
+        .filter(Boolean)
+        .join(' ');
+
+      return `
+        <div class="${classes}">
+          <span class="owner-docs-timeline-dot">${dot}</span>
+          <div>
+            <div class="owner-docs-timeline-name">${escapeOwnerHtml(step.label || '-')}</div>
+            <div class="owner-docs-timeline-date">${escapeOwnerHtml(date)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderOwnerDetails(doc) {
+    const detail = document.getElementById('ownerDocModalDetails');
+    if (!detail) return;
+
+    const fields = [
+      ['Pengurus Dokumen Saat Ini', doc.current_handler_display || '-'],
+      ['Nilai Rupiah', formatOwnerRupiah(doc.nilai_rupiah), true],
+      ['Kategori', doc.kategori || '-'],
+      ['Sub Kriteria', doc.jenis_dokumen || '-'],
+      ['Item Sub Kriteria', doc.jenis_sub_pekerjaan || '-'],
+      ['Jenis Pembayaran', doc.jenis_pembayaran || '-'],
+    ];
+
+    detail.innerHTML = fields.map(([label, value, mono]) => `
+      <div class="owner-docs-detail-field">
+        <div class="owner-docs-detail-label">${escapeOwnerHtml(label)}</div>
+        <div class="owner-docs-detail-value ${mono ? 'mono' : ''}">${escapeOwnerHtml(value)}</div>
+      </div>
+    `).join('');
+  }
+
+  function openOwnerDocModal(id) {
+    const doc = ownerDocs.get(Number(id));
+    const modal = document.getElementById('ownerDocsModal');
+    if (!doc || !modal) return;
+
+    const bagian = doc.from_label || doc.bagian || '-';
+    const bagianColor = ownerBagianColors[bagian] || '#10b981';
+
+    document.getElementById('ownerDocModalNo').textContent = doc.nomor_agenda || doc.nomor_spp || '-';
+    document.getElementById('ownerDocModalTitle').textContent = doc.uraian_spp || '-';
+    document.getElementById('ownerDocModalDot').style.background = bagianColor;
+    document.getElementById('ownerDocModalMeta').textContent = 'Bagian ' + bagian + ' - Dibayar kepada ' + (doc.vendor || '-');
+
+    renderOwnerTimeline(doc.workflow_timeline?.steps || []);
+    renderOwnerDetails(doc);
+
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeOwnerDocModal() {
+    const modal = document.getElementById('ownerDocsModal');
+    if (!modal) return;
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.owner-docs-money-input').forEach((input) => {
+    input.value = formatOwnerDots(input.value);
+    input.addEventListener('input', () => {
+      const cursorAtEnd = input.selectionStart === input.value.length;
+      input.value = formatOwnerDots(input.value);
+      if (cursorAtEnd) {
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+    });
+  });
+
+  document.getElementById('ownerDocsFilterForm')?.addEventListener('submit', function() {
+    this.querySelectorAll('.owner-docs-money-input').forEach((input) => {
+      input.value = String(input.value || '').replace(/\D/g, '');
+    });
+  });
+
   document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      closeOwnerDocModal();
+    }
+
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
       const input = document.querySelector('.owner-docs-search input');
       if (input) {
