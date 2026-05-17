@@ -411,15 +411,50 @@
 
     function copySecretKey() {
         const secretKeyInput = document.getElementById('secretKey');
-        secretKeyInput.select();
-        secretKeyInput.setSelectionRange(0, 99999);
+        const secretKey = secretKeyInput.value;
+        const copyButton = document.querySelector('[onclick="copySecretKey()"]');
+        const originalHtml = copyButton ? copyButton.innerHTML : '';
 
-        navigator.clipboard.writeText(secretKeyInput.value).then(function () {
-            alert('Secret key berhasil disalin.');
-        }).catch(function () {
-            document.execCommand('copy');
-            alert('Secret key berhasil disalin.');
-        });
+        function showCopiedState() {
+            if (!copyButton) return;
+            copyButton.innerHTML = '<i class="fa-solid fa-check"></i> Tersalin';
+            setTimeout(function () {
+                copyButton.innerHTML = originalHtml;
+            }, 1600);
+        }
+
+        function fallbackCopy() {
+            const helper = document.createElement('textarea');
+            helper.value = secretKey;
+            helper.setAttribute('readonly', '');
+            helper.style.position = 'fixed';
+            helper.style.left = '-9999px';
+            helper.style.top = '0';
+            document.body.appendChild(helper);
+            helper.focus();
+            helper.select();
+
+            const copied = document.execCommand('copy');
+            helper.remove();
+
+            if (copied) {
+                showCopiedState();
+                return;
+            }
+
+            secretKeyInput.focus();
+            secretKeyInput.select();
+            alert('Secret key belum bisa disalin otomatis. Silakan tekan Ctrl+C.');
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(secretKey)
+                .then(showCopiedState)
+                .catch(fallbackCopy);
+            return;
+        }
+
+        fallbackCopy();
     }
 
     document.addEventListener('click', function (event) {

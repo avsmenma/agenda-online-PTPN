@@ -389,18 +389,6 @@
                     <i class="fa-solid fa-user"></i>
                     <span>Informasi Akun</span>
                 </a>
-                <a href="#security-section" class="profile-menu-item">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span>Keamanan & 2FA</span>
-                </a>
-                <a href="{{ url(Auth::user()->getDashboardRoute()) }}" class="profile-menu-item">
-                    <i class="fa-solid fa-bell"></i>
-                    <span>Notifikasi</span>
-                </a>
-                <a href="{{ url(Auth::user()->getDashboardRoute()) }}" class="profile-menu-item">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>Preferensi Tabel</span>
-                </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="profile-menu-button logout">
@@ -525,28 +513,17 @@
                                     <p class="security-sub">Terakhir diubah {{ $user->updated_at?->diffForHumans() ?? '-' }}</p>
                                 </div>
                             </div>
-                            @if($user->hasTwoFactorEnabled())
-                                <button type="button" class="btn-security" data-bs-toggle="modal" data-bs-target="#passwordModal">Ubah Password</button>
-                            @else
-                                <a href="{{ route('2fa.setup') }}" class="btn-security">Aktifkan 2FA</a>
-                            @endif
+                            <button type="button" class="btn-security" data-bs-toggle="modal" data-bs-target="#passwordModal">Ubah Password</button>
                         </div>
                     </div>
                 </section>
 
                 <div class="profile-actions">
                     <a href="{{ url(Auth::user()->getDashboardRoute()) }}" class="btn-soft text-decoration-none d-inline-flex align-items-center justify-content-center">Batal</a>
-                    @if($user->hasTwoFactorEnabled())
-                        <button type="submit" form="accountForm" class="btn-primary-profile">
-                            <i class="fa-solid fa-floppy-disk"></i>
-                            Simpan Perubahan
-                        </button>
-                    @else
-                        <a href="{{ route('2fa.setup') }}" class="btn-primary-profile">
-                            <i class="fa-solid fa-shield-halved"></i>
-                            Aktifkan 2FA untuk Simpan
-                        </a>
-                    @endif
+                    <button type="submit" form="accountForm" class="btn-primary-profile">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Simpan Perubahan
+                    </button>
                 </div>
         </main>
     </div>

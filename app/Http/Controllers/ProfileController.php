@@ -43,11 +43,6 @@ final class ProfileController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (!$user->hasTwoFactorEnabled()) {
-            return redirect()->route('profile.account')
-                ->with('error', '2FA harus diaktifkan terlebih dahulu untuk mengubah informasi akun.');
-        }
-
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'alpha_dash', 'unique:users,username,' . $user->id],
@@ -96,12 +91,6 @@ final class ProfileController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        // Check if 2FA is enabled (required)
-        if (!$user->hasTwoFactorEnabled()) {
-            return redirect()->route('profile.account')
-                ->with('error', '2FA harus diaktifkan terlebih dahulu untuk mengubah email.');
-        }
-
         // Verify password
         if (!Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
@@ -143,12 +132,6 @@ final class ProfileController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        // Check if 2FA is enabled (required)
-        if (!$user->hasTwoFactorEnabled()) {
-            return redirect()->route('profile.account')
-                ->with('error', '2FA harus diaktifkan terlebih dahulu untuk mengubah password.');
-        }
-
         // Verify current password
         if (!Hash::check($request->current_password, $user->password)) {
             throw ValidationException::withMessages([
@@ -189,12 +172,6 @@ final class ProfileController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        // Check if 2FA is enabled (required)
-        if (!$user->hasTwoFactorEnabled()) {
-            return redirect()->route('profile.account')
-                ->with('error', '2FA harus diaktifkan terlebih dahulu untuk mengubah username.');
-        }
-
         // Verify password
         if (!Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
@@ -217,7 +194,6 @@ final class ProfileController extends Controller
             ->with('success', 'Username berhasil diubah.');
     }
 }
-
 
 
 

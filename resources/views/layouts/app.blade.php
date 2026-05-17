@@ -4953,7 +4953,11 @@
   <!-- Content -->
   <div class="content {{ ($isOperatorSpreadsheet ?? false) ? '' : (($shouldShowSecondarySidebar ?? false) ? 'with-secondary-sidebar' : '') }}">
     <!-- Notifikasi Success/Error -->
-    @if(session('success'))
+    @php
+      $showGlobalFlash = !request()->routeIs('profile.account');
+    @endphp
+
+    @if($showGlobalFlash && session('success'))
       <div class="alert alert-success alert-dismissible fade show" role="alert"
         style="margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);">
         <i class="fa-solid fa-circle-check me-2"></i>
@@ -4962,7 +4966,7 @@
       </div>
     @endif
 
-    @if(session('error'))
+    @if($showGlobalFlash && session('error'))
       <div class="alert alert-danger alert-dismissible fade show" role="alert"
         style="margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);">
         <i class="fa-solid fa-circle-exclamation me-2"></i>
@@ -4971,7 +4975,7 @@
       </div>
     @endif
 
-    @if($errors->any())
+    @if($showGlobalFlash && $errors->any())
       <div class="alert alert-danger alert-dismissible fade show" role="alert"
         style="margin-bottom: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);">
         <i class="fa-solid fa-circle-exclamation me-2"></i>
