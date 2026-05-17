@@ -76,6 +76,8 @@ class OwnerDashboardController extends Controller
 
         // Get filter data for dropdowns
         $filterData = $this->getFilterData();
+        $documentTabs = $this->getOwnerDocumentTabCounts();
+        $activeFilterCount = $this->countOwnerDocumentFilters($request);
 
         // Calculate dashboard statistics
         $totalDokumen = Dokumen::count();
@@ -201,21 +203,33 @@ class OwnerDashboardController extends Controller
             ->where('created_at', '<', now()->subDays(30))
             ->count();
 
+        // Aliases used by the shared owner summary card design.
+        $dokumenProses = $dokumenBelumSiapBayar;
+        $nilaiBelumDibayar = $nilaiBelumSiapBayar;
+        $nilaiSiapDibayar = $nilaiSiapBayar;
+        $nilaiSudahDibayar = $nilaiSelesai;
+
         return view('owner.dashboard', compact(
             'documents',
             'totalDokumen',
             'dokumenBelumSiapBayar',
+            'dokumenProses',
             'dokumenSiapBayar',
             'dokumenSelesai',
             'totalNilai',
             'nilaiBelumSiapBayar',
+            'nilaiBelumDibayar',
             'nilaiSiapBayar',
+            'nilaiSiapDibayar',
             'nilaiSelesai',
+            'nilaiSudahDibayar',
             'totalDokumenTrend',
             'dokumenSelesaiTrend',
             'dokumenProsesTrend',
             'totalNilaiTrend',
             'filterData',
+            'documentTabs',
+            'activeFilterCount',
             'allDokumenUmur',
             'belumBayarUmur3',
             'belumBayarUmur7',
@@ -613,96 +627,77 @@ class OwnerDashboardController extends Controller
     {
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData', 'roleStatuses']);
 
-        // Apply status filter if provided
-        if ($request && $request->has('status') && !empty($request->status)) {
-            $status = $request->status;
+        // Apply the lightweight inbox-style tabs used by /owner/dokumen.
+        $status = $request ? $request->get('status', 'all') : 'all';
+        if ($status === 'semua') {
+            $status = 'all';
+        }
 
-            // Semua Dokumen: no status filter, show everything
-            if ($status === 'semua') {
-                // Don't apply any status filter - show all documents
-            }
-            // Belum Siap Dibayar: dokumen dari operator sampai akutansi (belum di pembayaran)
-            elseif ($status === 'belum_siap' || $status === '') {
-                $query->where(function ($q) {
-                    $q->whereIn('current_handler', ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'])
-                        ->orWhereIn('status', [
-                            'draft',
-                            'sedang diproses',
-                            'menunggu_verifikasi',
-                            'pending_approval_team_verifikasi',
-                            'sent_to_team_verifikasi',
-                            'sent_to_perpajakan',
-                            'sent_to_akutansi',
-                            'pending_approval_perpajakan',
-                            'pending_approval_akutansi',
-                        ]);
-                })
-                    ->where(function ($subQ) {
-                        $subQ->whereNull('status_pembayaran')
-                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                    })
-                    ->where(function ($subQ) {
-                        $subQ->where('current_handler', '!=', 'pembayaran')
-                            ->orWhereNull('current_handler');
-                    });
-            }
-            // Siap Dibayar: dokumen yang sudah di role pembayaran tapi belum dibayar
-            elseif ($status === 'siap_dibayar') {
-                $query->where(function ($q) {
-                    $q->where('current_handler', 'pembayaran')
-                        ->orWhere('status', 'sent_to_pembayaran')
-                        ->orWhere('status_pembayaran', 'siap_dibayar')
-                        ->orWhere('status_pembayaran', 'siap_bayar');
-                })
-                    ->where(function ($subQ) {
-                        $subQ->whereNull('status_pembayaran')
-                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                    })
-                    ->whereNull('tanggal_dibayar');
-            }
-            // Sudah Dibayar: dokumen yang sudah dibayar
-            elseif ($status === 'sudah_dibayar') {
-                $query->where(function ($q) {
-                    $q->where('status_pembayaran', 'sudah_dibayar')
-                        ->orWhereNotNull('tanggal_dibayar')
-                        ->orWhereNotNull('link_bukti_pembayaran');
+        if ($status === 'pending' || $status === 'menunggu' || $status === 'belum_siap') {
+            $query->where(function ($q) {
+                $q->whereNull('status_pembayaran')
+                    ->orWhereNotIn('status_pembayaran', ['sudah_dibayar']);
+            })
+                ->whereNull('tanggal_dibayar')
+                ->where(function ($q) {
+                    $q->whereNull('status')
+                        ->orWhereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed']);
                 });
-            }
-        } else {
-            // Default: show Belum Siap Dibayar (operator to akutansi)
-            // BUT skip this filter if user is searching, so search can find all documents
-            $hasSearch = $request && $request->has('search') && !empty($request->search) && trim((string) $request->search) !== '';
-
-            if (!$hasSearch) {
-                $query->where(function ($q) {
-                    $q->whereIn('current_handler', ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'])
-                        ->orWhereIn('status', [
-                            'draft',
-                            'sedang diproses',
-                            'menunggu_verifikasi',
-                            'pending_approval_team_verifikasi',
-                            'sent_to_team_verifikasi',
-                            'sent_to_perpajakan',
-                            'sent_to_akutansi',
-                            'pending_approval_perpajakan',
-                            'pending_approval_akutansi',
-                        ]);
-                })
-                    ->where(function ($subQ) {
-                        $subQ->whereNull('status_pembayaran')
-                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                    })
-                    ->where(function ($subQ) {
-                        $subQ->where('current_handler', '!=', 'pembayaran')
-                            ->orWhereNull('current_handler');
+        } elseif ($status === 'urgent') {
+            $query->where(function ($q) {
+                $q->where('urgency_active', true)
+                    ->orWhere(function ($subQ) {
+                        $subQ->where('created_at', '<', now()->subDays(3))
+                            ->whereNull('tanggal_dibayar')
+                            ->where(function ($payQ) {
+                                $payQ->whereNull('status_pembayaran')
+                                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                            });
                     });
-            }
+            });
+        } elseif ($status === 'returned' || $status === 'dikembalikan') {
+            $query->where(function ($q) {
+                $q->whereNotNull('returned_at')
+                    ->orWhere('status', 'like', 'returned%')
+                    ->orWhere('status', 'like', '%dikembalikan%')
+                    ->orWhereNotNull('return_source');
+            });
+        } elseif ($status === 'done' || $status === 'selesai' || $status === 'sudah_dibayar') {
+            $query->where(function ($q) {
+                $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                    ->orWhere('status_pembayaran', 'sudah_dibayar')
+                    ->orWhereNotNull('tanggal_dibayar');
+            });
+        } elseif ($status === 'siap_dibayar') {
+            $query->where(function ($q) {
+                $q->where('current_handler', 'pembayaran')
+                    ->orWhere('status', 'sent_to_pembayaran')
+                    ->orWhere('status_pembayaran', 'siap_dibayar')
+                    ->orWhere('status_pembayaran', 'siap_bayar');
+            })
+                ->where(function ($subQ) {
+                    $subQ->whereNull('status_pembayaran')
+                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                })
+                ->whereNull('tanggal_dibayar');
         }
 
         // Apply advanced filters
         // Filter by bagian
         if ($request && $request->has('filter_bagian') && !empty($request->filter_bagian)) {
             $query->where('bagian', $request->filter_bagian);
+        }
+
+        if ($request && $request->has('filter_pengurus') && !empty($request->filter_pengurus)) {
+            $query->where('current_handler', $request->filter_pengurus);
+        }
+
+        if ($request && $request->filled('filter_nilai_min')) {
+            $query->where('nilai_rupiah', '>=', (float) preg_replace('/[^0-9.]/', '', (string) $request->filter_nilai_min));
+        }
+
+        if ($request && $request->filled('filter_nilai_max')) {
+            $query->where('nilai_rupiah', '<=', (float) preg_replace('/[^0-9.]/', '', (string) $request->filter_nilai_max));
         }
 
         // Filter by umur dokumen â€” tampilkan semua dokumen belum dibayar berumur > X hari
@@ -714,6 +709,24 @@ class OwnerDashboardController extends Controller
                       $q->whereNull('status_pembayaran')
                         ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
                   });
+        }
+
+        if ($request && $request->has('filter_umur_min') && !empty($request->filter_umur_min)) {
+            $query->where('created_at', '<=', now()->subDays((int) $request->filter_umur_min));
+        }
+
+        if ($request && $request->has('filter_durasi_min') && !empty($request->filter_durasi_min)) {
+            $durationDays = (int) $request->filter_durasi_min;
+            $query->where(function ($q) use ($durationDays) {
+                $q->whereHas('roleData', function ($roleQ) use ($durationDays) {
+                    $roleQ->whereColumn('role_code', 'dokumens.current_handler')
+                        ->whereNotNull('received_at')
+                        ->where('received_at', '<=', now()->subDays($durationDays));
+                })->orWhere(function ($fallbackQ) use ($durationDays) {
+                    $fallbackQ->whereNull('current_handler')
+                        ->where('created_at', '<=', now()->subDays($durationDays));
+                });
+            });
         }
 
         // Filter by vendor/dibayar_kepada
@@ -853,16 +866,28 @@ class OwnerDashboardController extends Controller
 
         // Map the paginated collection
         $paginatedDocuments->getCollection()->transform(function ($dokumen) {
+            $handlerCode = $this->normalizeHandlerName($dokumen->current_handler);
+            $handlerData = method_exists($dokumen, 'getDataForRole') ? $dokumen->getDataForRole($handlerCode) : null;
+            $roleDuration = $this->calculateActiveRoleDuration($dokumen, $handlerData);
+            $paymentStatus = $this->resolveOwnerPaymentStatus($dokumen);
+            $fromLabel = $this->resolveDocumentOrigin($dokumen);
+
             return [
                 'id' => $dokumen->id,
                 'nomor_agenda' => $dokumen->nomor_agenda,
                 'nomor_spp' => $dokumen->nomor_spp,
                 'uraian_spp' => $dokumen->uraian_spp,
                 'nilai_rupiah' => $dokumen->nilai_rupiah,
+                'bagian' => $dokumen->bagian ?? '-',
                 'status' => $dokumen->status,
                 'status_display' => $this->getStatusDisplayName($dokumen->status),
                 'current_handler' => $dokumen->current_handler,
                 'current_handler_display' => $this->getRoleDisplayName($dokumen->current_handler),
+                'from_label' => $fromLabel,
+                'status_pembayaran' => $dokumen->status_pembayaran,
+                'status_pembayaran_label' => $paymentStatus['label'],
+                'status_pembayaran_class' => $paymentStatus['class'],
+                'durasi_peran' => $roleDuration,
                 'created_at' => $dokumen->created_at ? $dokumen->created_at->format('d M Y H:i') : '-',
                 'tanggal_masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d M Y') : ($dokumen->created_at ? $dokumen->created_at->format('d M Y') : '-'),
                 'progress_percentage' => $this->calculateProgress($dokumen),
@@ -4149,6 +4174,151 @@ class OwnerDashboardController extends Controller
     /**
      * Get filter data for dropdowns
      */
+    private function resolveOwnerPaymentStatus($dokumen): array
+    {
+        $rawStatus = strtolower((string) ($dokumen->status_pembayaran ?? ''));
+        $isPaid = !empty($dokumen->tanggal_dibayar)
+            || $rawStatus === 'sudah_dibayar'
+            || in_array($dokumen->status, ['selesai', 'approved_data_sudah_terkirim', 'completed']);
+
+        if ($isPaid) {
+            return ['label' => 'Sudah Dibayar', 'class' => 'paid'];
+        }
+
+        if (in_array($rawStatus, ['siap_dibayar', 'siap_bayar']) || $dokumen->current_handler === 'pembayaran') {
+            return ['label' => 'Siap Dibayar', 'class' => 'ready'];
+        }
+
+        return ['label' => 'Belum Dibayar', 'class' => 'waiting'];
+    }
+
+    private function resolveDocumentOrigin($dokumen): string
+    {
+        $bagian = trim((string) ($dokumen->bagian ?? ''));
+        if ($bagian !== '') {
+            return $bagian;
+        }
+
+        $pengirim = trim((string) ($dokumen->nama_pengirim ?? ''));
+        return $pengirim !== '' ? $pengirim : '-';
+    }
+
+    private function calculateActiveRoleDuration($dokumen, $roleData = null): array
+    {
+        $start = $roleData?->received_at ?? $roleData?->created_at ?? $dokumen->updated_at ?? $dokumen->created_at;
+        if (!$start) {
+            return ['text' => '-', 'days' => 0, 'seconds' => 0, 'class' => 'muted', 'since' => null];
+        }
+
+        $end = $roleData?->processed_at;
+        if (!$end) {
+            $end = (!empty($dokumen->tanggal_dibayar) && $this->resolveOwnerPaymentStatus($dokumen)['class'] === 'paid')
+                ? Carbon::parse($dokumen->tanggal_dibayar)
+                : now();
+        }
+
+        $start = Carbon::parse($start);
+        $end = Carbon::parse($end);
+        $seconds = max(0, $start->diffInSeconds($end));
+        $days = (int) floor($seconds / 86400);
+
+        $class = 'safe';
+        if ($seconds >= 259200) {
+            $class = 'late';
+        } elseif ($seconds >= 86400) {
+            $class = 'warn';
+        }
+
+        return [
+            'text' => $this->formatCompactDuration($seconds),
+            'days' => $days,
+            'seconds' => $seconds,
+            'class' => $class,
+            'since' => $start->format('d M Y H:i'),
+        ];
+    }
+
+    private function formatCompactDuration(int $seconds): string
+    {
+        $days = intdiv($seconds, 86400);
+        $hours = intdiv($seconds % 86400, 3600);
+        $minutes = intdiv($seconds % 3600, 60);
+
+        if ($days > 0) {
+            return $days . ' hari' . ($hours > 0 ? ' ' . $hours . ' jam' : '');
+        }
+
+        if ($hours > 0) {
+            return $hours . ' jam' . ($minutes > 0 ? ' ' . $minutes . ' menit' : '');
+        }
+
+        return max(1, $minutes) . ' menit';
+    }
+
+    private function getOwnerDocumentTabCounts(): array
+    {
+        $base = Dokumen::query();
+
+        return [
+            'all' => (clone $base)->count(),
+            'pending' => (clone $base)
+                ->where(function ($q) {
+                    $q->whereNull('status_pembayaran')
+                        ->orWhereNotIn('status_pembayaran', ['sudah_dibayar']);
+                })
+                ->whereNull('tanggal_dibayar')
+                ->where(function ($q) {
+                    $q->whereNull('status')
+                        ->orWhereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed']);
+                })
+                ->count(),
+            'urgent' => (clone $base)
+                ->where(function ($q) {
+                    $q->where('urgency_active', true)
+                        ->orWhere(function ($subQ) {
+                            $subQ->where('created_at', '<', now()->subDays(3))
+                                ->whereNull('tanggal_dibayar')
+                                ->where(function ($payQ) {
+                                    $payQ->whereNull('status_pembayaran')
+                                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                                });
+                        });
+                })
+                ->count(),
+            'returned' => (clone $base)
+                ->where(function ($q) {
+                    $q->whereNotNull('returned_at')
+                        ->orWhere('status', 'like', 'returned%')
+                        ->orWhere('status', 'like', '%dikembalikan%')
+                        ->orWhereNotNull('return_source');
+                })
+                ->count(),
+            'done' => (clone $base)
+                ->where(function ($q) {
+                    $q->whereIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed'])
+                        ->orWhere('status_pembayaran', 'sudah_dibayar')
+                        ->orWhereNotNull('tanggal_dibayar');
+                })
+                ->count(),
+        ];
+    }
+
+    private function countOwnerDocumentFilters(Request $request): int
+    {
+        $keys = [
+            'search',
+            'filter_bagian',
+            'filter_pengurus',
+            'filter_status_pembayaran',
+            'filter_nilai_min',
+            'filter_nilai_max',
+            'filter_durasi_min',
+            'filter_umur_min',
+        ];
+
+        return collect($keys)->filter(fn ($key) => trim((string) $request->get($key, '')) !== '')->count();
+    }
+
     private function getFilterData(): array
     {
         // Get distinct bagian values
@@ -4193,6 +4363,14 @@ class OwnerDashboardController extends Controller
             ->pluck('kebun', 'kebun')
             ->toArray();
 
+        $pengurusList = Dokumen::whereNotNull('current_handler')
+            ->where('current_handler', '!=', '')
+            ->distinct()
+            ->orderBy('current_handler')
+            ->pluck('current_handler')
+            ->mapWithKeys(fn ($handler) => [$handler => $this->getRoleDisplayName($handler)])
+            ->toArray();
+
         // Get Kriteria CF, Sub Kriteria, Item Sub Kriteria from cash_bank database
         $kriteriaCfList = [];
         $subKriteriaList = [];
@@ -4225,6 +4403,7 @@ class OwnerDashboardController extends Controller
             'sub_kriteria' => $subKriteriaList,
             'item_sub_kriteria' => $itemSubKriteriaList,
             'kebun' => $kebunList,
+            'pengurus' => $pengurusList,
         ];
     }
 
