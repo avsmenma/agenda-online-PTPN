@@ -259,8 +259,12 @@ Route::get('rekapan-keterlambatan/{roleCode}', [OwnerDashboardController::class,
     ->where('roleCode', 'operator|team_verifikasi|perpajakan|akutansi|pembayaran')
     ->name('rekapan-keterlambatan.role');
 
-Route::get('rekapan-keterlambatan', function () {
+Route::get('rekapan-keterlambatan', function (Request $request) {
     $role = strtolower(str_replace(' ', '_', trim((string) (auth()->user()?->role ?? ''))));
+    if (in_array($role, ['admin', 'owner'], true)) {
+        return app(OwnerDashboardController::class)->rekapanKeterlambatan($request);
+    }
+
     $roleCode = match ($role) {
         'verifikasi', 'tim_verifikasi', 'team_verifikasi' => 'team_verifikasi',
         'tim_perpajakan', 'team_perpajakan', 'perpajakan' => 'perpajakan',
