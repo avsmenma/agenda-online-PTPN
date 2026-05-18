@@ -3944,6 +3944,47 @@
     body.owner-layout .topbar {
       margin-left: 240px !important;
     }
+
+    @media (max-width: 768px) {
+      body.owner-layout .sidebar-owner {
+        width: 72px !important;
+      }
+      body.owner-layout .owner-sidebar-logo {
+        justify-content: center; padding: 16px 0 12px;
+      }
+      body.owner-layout .owner-logo-text,
+      body.owner-layout .owner-logo-sub,
+      body.owner-layout .owner-sidebar-label,
+      body.owner-layout .owner-user-info,
+      body.owner-layout .owner-profile-icon {
+        display: none;
+      }
+      body.owner-layout .owner-sidebar-section {
+        padding: 12px 8px 4px;
+      }
+      body.owner-layout .sidebar-owner .owner-nav-item {
+        justify-content: center; padding: 12px 10px; font-size: 0;
+      }
+      body.owner-layout .sidebar-owner .owner-nav-item svg {
+        width: 20px !important; height: 20px !important;
+      }
+      body.owner-layout .owner-sidebar-bottom {
+        padding: 10px 8px;
+      }
+      body.owner-layout .owner-user-actions {
+        flex-direction: column; gap: 8px;
+      }
+      body.owner-layout .owner-user-card {
+        justify-content: center; flex: 0 0 auto; width: 44px; height: 44px; padding: 0;
+      }
+      body.owner-layout .owner-logout-btn {
+        width: 40px; height: 40px;
+      }
+      body.owner-layout .content,
+      body.owner-layout .topbar {
+        margin-left: 72px !important;
+      }
+    }
   </style>
 
 
@@ -4008,12 +4049,16 @@
   </script>
 </head>
 
-<body class="{{ isset($module) && strtolower($module ?? '') === 'owner' ? 'owner-layout' : '' }}">
+@php
+  $layoutUserRoleLower = auth()->check() ? strtolower(auth()->user()->role ?? '') : '';
+  $usesOwnerShell = in_array($layoutUserRoleLower, ['owner', 'admin'], true);
+@endphp
+<body class="{{ $usesOwnerShell ? 'owner-layout' : '' }}">
   @php
     // Pre-calculate shouldShowSecondarySidebar for header
     // Check if user is owner
-    $userRoleLower = auth()->check() ? strtolower(auth()->user()->role ?? '') : '';
-    $isOwner = in_array($userRoleLower, ['owner', 'admin'], true);
+    $userRoleLower = $layoutUserRoleLower;
+    $isOwner = $usesOwnerShell;
 
     $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
     $isSubmenuPageForHeader = false;

@@ -18,20 +18,27 @@
 @endphp
 
 <style>
+    .profile-page,
+    .profile-page * {
+        box-sizing: border-box;
+    }
+
     .profile-page {
-        max-width: 1180px;
+        width: 100%;
+        max-width: 1320px;
         margin: 0 auto;
-        padding: 44px 24px 72px;
+        padding: 36px clamp(18px, 2vw, 32px) 72px;
     }
 
     .profile-grid {
         display: grid;
-        grid-template-columns: 320px minmax(0, 1fr);
-        gap: 26px;
+        grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+        gap: clamp(18px, 2vw, 28px);
         align-items: start;
     }
 
     .profile-card {
+        min-width: 0;
         background: #fff;
         border: 1px solid #dfe7ef;
         border-radius: 14px;
@@ -41,6 +48,8 @@
     .profile-sidebar {
         padding: 30px 24px;
         min-height: 560px;
+        position: sticky;
+        top: 24px;
     }
 
     .profile-avatar {
@@ -70,6 +79,7 @@
         color: #61708f;
         font-size: 15px;
         margin-bottom: 14px;
+        overflow-wrap: anywhere;
     }
 
     .role-pill {
@@ -132,7 +142,7 @@
     }
 
     .account-panel {
-        padding: 28px 32px 30px;
+        padding: clamp(22px, 2.3vw, 34px);
     }
 
     .panel-header {
@@ -145,7 +155,7 @@
 
     .panel-title {
         color: #07152f;
-        font-size: 22px;
+        font-size: clamp(21px, 1.8vw, 28px);
         font-weight: 800;
         margin: 0;
     }
@@ -174,6 +184,7 @@
 
     .profile-input {
         width: 100%;
+        min-width: 0;
         min-height: 54px;
         border: 1px solid #dbe3ea;
         border-radius: 9px;
@@ -220,6 +231,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 18px;
+        min-width: 0;
         border: 1px solid #dfe7ef;
         border-radius: 12px;
         padding: 18px;
@@ -230,6 +242,10 @@
         display: flex;
         align-items: center;
         gap: 16px;
+        min-width: 0;
+    }
+
+    .security-copy > div:last-child {
         min-width: 0;
     }
 
@@ -258,6 +274,7 @@
         font-size: 16px;
         font-weight: 800;
         margin: 0 0 3px;
+        overflow-wrap: anywhere;
     }
 
     .security-sub {
@@ -308,6 +325,7 @@
         font-weight: 800;
         text-decoration: none;
         box-shadow: 0 12px 24px rgba(12, 73, 59, 0.2);
+        white-space: nowrap;
     }
 
     .btn-primary-profile:hover,
@@ -341,12 +359,13 @@
 
         .profile-sidebar {
             min-height: auto;
+            position: static;
         }
     }
 
     @media (max-width: 720px) {
         .profile-page {
-            padding: 24px 14px 48px;
+            padding: 22px 12px 48px;
         }
 
         .account-panel {
@@ -363,6 +382,24 @@
         .profile-actions {
             align-items: stretch;
             flex-direction: column;
+        }
+
+        .profile-sidebar {
+            padding: 24px 18px;
+        }
+
+        .profile-avatar {
+            width: 104px;
+            height: 104px;
+            font-size: 32px;
+        }
+
+        .profile-name {
+            font-size: 20px;
+        }
+
+        .security-copy {
+            align-items: flex-start;
         }
 
         .btn-danger-outline,
