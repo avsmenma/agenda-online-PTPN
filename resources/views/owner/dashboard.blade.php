@@ -440,25 +440,52 @@
 
   .owner-docs-table {
     width: 100%;
-    min-width: 1160px;
+    min-width: 1240px;
     border-collapse: collapse;
     table-layout: fixed;
   }
+
+  .owner-docs-col-doc { width: 34%; }
+  .owner-docs-col-value { width: 11%; }
+  .owner-docs-col-from { width: 8%; }
+  .owner-docs-col-handler { width: 18%; }
+  .owner-docs-col-status { width: 13%; }
+  .owner-docs-col-duration { width: 8%; }
+  .owner-docs-col-age { width: 8%; }
 
   .owner-docs-table thead {
     background: #f8fafc;
   }
 
   .owner-docs-table th {
-    padding: 16px 14px;
+    padding: 16px 12px;
     color: var(--od-muted);
     font-size: 10.5px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: .08em;
-    text-align: left;
+    text-align: center;
     border-bottom: 1px solid var(--od-border);
-    white-space: nowrap;
+    white-space: normal;
+    line-height: 1.25;
+    vertical-align: middle;
+  }
+
+  .owner-docs-th-label {
+    display: inline-block;
+    max-width: 100%;
+    overflow-wrap: normal;
+  }
+
+  .owner-docs-table th:nth-child(n+4),
+  .owner-docs-table td:nth-child(n+4) {
+    border-left: 1px solid var(--od-border-soft);
+  }
+
+  .owner-docs-table th:nth-child(4),
+  .owner-docs-table td:nth-child(4) {
+    padding-left: 18px;
+    padding-right: 18px;
   }
 
   .owner-docs-table th:first-child,
@@ -475,6 +502,17 @@
     padding: 17px 14px;
     border-bottom: 1px solid var(--od-border-soft);
     vertical-align: middle;
+    min-width: 0;
+  }
+
+  .owner-docs-table td:nth-child(2) {
+    text-align: right;
+  }
+
+  .owner-docs-table td:nth-child(5),
+  .owner-docs-table td:nth-child(6),
+  .owner-docs-table td:nth-child(7) {
+    text-align: center;
   }
 
   .owner-docs-row {
@@ -577,6 +615,12 @@
     align-items: center;
     gap: 9px;
     min-width: 0;
+    width: 100%;
+  }
+
+  .owner-docs-handler > span:last-child {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .owner-docs-avatar {
@@ -598,6 +642,9 @@
     color: var(--od-text);
     font-weight: 800;
     font-size: 12.5px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
@@ -606,6 +653,9 @@
     color: var(--od-muted);
     font-size: 10.5px;
     margin-top: 2px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
@@ -618,6 +668,7 @@
     font-size: 11.5px;
     font-weight: 800;
     white-space: nowrap;
+    max-width: 100%;
   }
 
   .owner-docs-status.waiting {
@@ -643,6 +694,7 @@
     font-size: 11.5px;
     font-weight: 800;
     white-space: nowrap;
+    justify-content: center;
   }
 
   .owner-docs-duration.safe {
@@ -1058,6 +1110,21 @@
       border-bottom: 0;
     }
 
+    .owner-docs-table td:nth-child(n+4) {
+      border-left: 0;
+    }
+
+    .owner-docs-table td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      margin-bottom: 4px;
+      color: var(--od-muted);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
     .owner-docs-table td:first-child {
       padding: 16px 18px 8px;
     }
@@ -1079,6 +1146,12 @@
     .owner-docs-money,
     .owner-docs-table td:nth-child(n+2) {
       text-align: left;
+    }
+
+    .owner-docs-status,
+    .owner-docs-duration,
+    .owner-docs-age {
+      justify-content: flex-start;
     }
   }
 </style>
@@ -1276,15 +1349,24 @@
     <div class="owner-docs-table-card">
       <div class="owner-docs-table-wrap">
         <table class="owner-docs-table">
+          <colgroup>
+            <col class="owner-docs-col-doc">
+            <col class="owner-docs-col-value">
+            <col class="owner-docs-col-from">
+            <col class="owner-docs-col-handler">
+            <col class="owner-docs-col-status">
+            <col class="owner-docs-col-duration">
+            <col class="owner-docs-col-age">
+          </colgroup>
           <thead>
             <tr>
-              <th style="width:34%;text-align:center">Nomor / Uraian SPP</th>
-              <th style="text-align:center">Nilai</th>
-              <th>Dari</th>
-              <th>Pengurus Dokumen</th>
-              <th>Status Pembayaran</th>
-              <th>Durasi Peran</th>
-              <th>Umur Dokumen</th>
+              <th><span class="owner-docs-th-label">Nomor / Uraian SPP</span></th>
+              <th><span class="owner-docs-th-label">Nilai</span></th>
+              <th><span class="owner-docs-th-label">Dari</span></th>
+              <th><span class="owner-docs-th-label">Pengurus Dokumen</span></th>
+              <th><span class="owner-docs-th-label">Status Pembayaran</span></th>
+              <th><span class="owner-docs-th-label">Durasi Peran</span></th>
+              <th><span class="owner-docs-th-label">Umur Dokumen</span></th>
             </tr>
           </thead>
           <tbody>
@@ -1311,10 +1393,10 @@
                   <div class="owner-docs-docname" title="{{ $dokumen['uraian_spp'] ?: '-' }}">{{ $dokumen['uraian_spp'] ?: '-' }}</div>
                   <div class="owner-docs-payee" title="{{ ($dokumen['vendor'] ?? '') ?: '-' }}">Dibayar kepada: {{ ($dokumen['vendor'] ?? '') ?: '-' }}</div>
                 </td>
-                <td class="owner-docs-money">
+                <td class="owner-docs-money" data-label="Nilai">
                   Rp {{ number_format((float)($dokumen['nilai_rupiah'] ?? 0), 0, ',', '.') }}
                 </td>
-                <td>
+                <td data-label="Dari">
                   <span class="owner-docs-bagian">
                     <span class="owner-docs-dot" style="background:{{ $bagianColor }}"></span>
                     <span>
@@ -1322,27 +1404,27 @@
                     </span>
                   </span>
                 </td>
-                <td>
+                <td data-label="Pengurus Dokumen">
                   <div class="owner-docs-handler">
                     <span class="owner-docs-avatar">{{ strtoupper(substr($dokumen['current_handler_display'] ?? '-', 0, 1)) }}</span>
                     <span>
                       <span class="owner-docs-handler-name">{{ $dokumen['current_handler_display'] ?? '-' }}</span>
-                      <span class="owner-docs-handler-sub">{{ $durasi['since'] ? 'sejak ' . $durasi['since'] : 'posisi aktif' }}</span>
+                      <span class="owner-docs-handler-sub" title="{{ $durasi['since'] ? 'sejak ' . $durasi['since'] : 'posisi aktif' }}">{{ $durasi['since'] ? 'sejak ' . $durasi['since'] : 'posisi aktif' }}</span>
                     </span>
                   </div>
                 </td>
-                <td>
+                <td data-label="Status Pembayaran">
                   <span class="owner-docs-status {{ $dokumen['status_pembayaran_class'] ?? 'waiting' }}">
                     {{ $dokumen['status_pembayaran_label'] ?? 'Belum Dibayar' }}
                   </span>
                 </td>
-                <td>
+                <td data-label="Durasi Peran">
                   <span class="owner-docs-duration {{ $durasi['class'] ?? 'muted' }}">
                     <i class="far fa-clock"></i>
                     {{ $durasi['text'] ?? '-' }}
                   </span>
                 </td>
-                <td>
+                <td data-label="Umur Dokumen">
                   <span class="owner-docs-age {{ $umurPaid ? 'paid' : '' }}">{{ $umurText }}</span>
                 </td>
               </tr>
