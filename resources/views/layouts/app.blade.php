@@ -3886,12 +3886,24 @@
       border-top: 1px solid #e8ecf4;
     }
     .dark .owner-sidebar-bottom { border-top-color: #334155; }
+    .owner-user-actions {
+      display: flex; align-items: center; gap: 8px;
+    }
     .owner-user-card {
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
       padding: 10px; border-radius: 10px;
       background: #f4f6fb; cursor: pointer; text-decoration: none;
+      color: inherit; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .owner-user-card:hover {
+      background: #eff4ff; box-shadow: 0 8px 18px rgba(37, 99, 235, 0.08);
+    }
+    .owner-user-card:focus-visible,
+    .owner-logout-btn:focus-visible {
+      outline: 2px solid #2563eb; outline-offset: 2px;
     }
     .dark .owner-user-card { background: #334155; }
+    .dark .owner-user-card:hover { background: rgba(37, 99, 235, 0.18); }
     .owner-avatar {
       width: 34px; height: 34px; border-radius: 50%;
       background: linear-gradient(135deg, #0f766e, #10b981);
@@ -3903,6 +3915,27 @@
     .owner-user-role-text { font-size: 11px; color: #a0aec0; }
     .dark .owner-user-name { color: #f1f5f9; }
     .dark .owner-user-role-text { color: #94a3b8; }
+    .owner-profile-icon {
+      width: 14px; height: 14px; color: #8da0bd; flex-shrink: 0;
+    }
+    .owner-logout-btn {
+      width: 40px; height: 40px; border: 1px solid #e8ecf4; border-radius: 10px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #ffffff; color: #94a3b8; cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+      flex-shrink: 0;
+    }
+    .owner-logout-btn:hover {
+      background: #fef2f2; border-color: #fecaca; color: #ef4444;
+      box-shadow: 0 8px 18px rgba(239, 68, 68, 0.08);
+    }
+    .owner-logout-btn svg { width: 15px; height: 15px; }
+    .dark .owner-logout-btn {
+      background: #1f2937; border-color: #334155; color: #94a3b8;
+    }
+    .dark .owner-logout-btn:hover {
+      background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.32); color: #f87171;
+    }
 
     /* Owner content area — wider margin for fixed sidebar */
     body.owner-layout .content {
@@ -4358,25 +4391,32 @@
 
       {{-- User Card Bottom --}}
       <div class="owner-sidebar-bottom">
-        <a class="owner-user-card" href="{{ url('/logout') }}"
-          onclick="event.preventDefault(); document.getElementById('logout-form-owner').submit();"
-          title="Keluar">
-          @php
-            $authUser = auth()->user();
-            $initials = $authUser ? strtoupper(substr($authUser->name ?? 'U', 0, 1) . (strpos($authUser->name ?? '', ' ') !== false ? substr($authUser->name, strpos($authUser->name, ' ') + 1, 1) : '')) : 'U';
-          @endphp
-          <div class="owner-avatar">{{ $initials }}</div>
-          <div class="owner-user-info">
-            <div class="owner-user-name">{{ $authUser->name ?? 'Pengguna' }}</div>
-            <div class="owner-user-role-text">{{ ucfirst(str_replace('_', ' ', $authUser->role ?? 'Owner')) }}</div>
-          </div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:#a0aec0;flex-shrink:0">
-            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
-          </svg>
-        </a>
-        <form id="logout-form-owner" action="{{ url('/logout') }}" method="POST" style="display: none;">
-          @csrf
-        </form>
+        @php
+          $authUser = auth()->user();
+          $initials = $authUser ? strtoupper(substr($authUser->name ?? 'U', 0, 1) . (strpos($authUser->name ?? '', ' ') !== false ? substr($authUser->name, strpos($authUser->name, ' ') + 1, 1) : '')) : 'U';
+        @endphp
+        <div class="owner-user-actions">
+          <a class="owner-user-card" href="{{ route('profile.account') }}" title="Buka pengaturan profil">
+            <div class="owner-avatar">{{ $initials }}</div>
+            <div class="owner-user-info">
+              <div class="owner-user-name">{{ $authUser->name ?? 'Pengguna' }}</div>
+              <div class="owner-user-role-text">{{ ucfirst(str_replace('_', ' ', $authUser->role ?? 'Owner')) }}</div>
+            </div>
+            <svg class="owner-profile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21a8 8 0 10-16 0"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </a>
+          <form id="logout-form-owner" action="{{ route('logout') }}" method="POST" style="display: none;">
+            @csrf
+          </form>
+          <button type="button" class="owner-logout-btn" title="Keluar" aria-label="Keluar"
+            onclick="event.preventDefault(); document.getElementById('logout-form-owner').submit();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
     @else
