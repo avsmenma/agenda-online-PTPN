@@ -402,6 +402,8 @@ class OperatorCsvImportController extends Controller
      */
     private function executeImport($filePath, $skipDuplicates)
     {
+        @set_time_limit(0);
+
         $handle = fopen($filePath, 'r');
 
         $rawHeaders = fgetcsv($handle);
@@ -415,6 +417,10 @@ class OperatorCsvImportController extends Controller
         $failed = 0;
 
         $batchId = 'OPERATOR_CSV_' . now()->format('YmdHis');
+        $now = now()->format('Y-m-d H:i:s');
+        $dokumenColumns = array_flip(\Schema::getColumnListing('dokumens'));
+        $candidateRows = [];
+        $seenAgendaInFile = [];
 
         while (($data = fgetcsv($handle)) !== false) {
             if (empty(array_filter($data))) {
@@ -433,6 +439,10 @@ class OperatorCsvImportController extends Controller
             }
 
             $row = array_combine($headers, $filteredData);
+            if ($row === false || empty($row)) {
+                $failed++;
+                continue;
+            }
 
             // Skip rows without required fields
             if (empty(trim($row['Agenda'] ?? '')) || empty(trim($row['No SPP'] ?? ''))) {
@@ -440,51 +450,93 @@ class OperatorCsvImportController extends Controller
                 continue;
             }
 
-            // Check duplicate
-            if ($skipDuplicates && !empty($row['Agenda'])) {
-                if (Dokumen::where('nomor_agenda', trim($row['Agenda']))->exists()) {
-                    $skipped++;
-                    continue;
-                }
+            $dokumenData = $this->transformRow($row);
+
+            // Set created_by to Operator and correct status
+            $dokumenData['created_by'] = 'operator';
+            $dokumenData['status'] = 'draft';
+            $dokumenData['current_handler'] = 'operator';
+            $dokumenData['created_at'] = $now;
+            $dokumenData['updated_at'] = $now;
+
+            // CSV import tracking
+            if (isset($dokumenColumns['imported_from_csv'])) {
+                $dokumenData['imported_from_csv'] = true;
+            }
+            if (isset($dokumenColumns['csv_import_batch_id'])) {
+                $dokumenData['csv_import_batch_id'] = $batchId;
+            }
+            if (isset($dokumenColumns['csv_imported_at'])) {
+                $dokumenData['csv_imported_at'] = $now;
             }
 
-            try {
-                DB::beginTransaction();
+            $dokumenData = array_intersect_key($dokumenData, $dokumenColumns);
+            $nomorAgenda = $dokumenData['nomor_agenda'] ?? null;
 
-                $dokumenData = $this->transformRow($row);
-
-                // Set created_by to Operator and correct status
-                $dokumenData['created_by'] = 'operator';
-                $dokumenData['status'] = 'draft';  // IMPORTANT: Use 'draft' not 'belum_dikirim'
-                $dokumenData['current_handler'] = 'operator';  // IMPORTANT: Set current handler
-
-                // CSV import tracking
-                if (\Schema::hasColumn('dokumens', 'imported_from_csv')) {
-                    $dokumenData['imported_from_csv'] = true;
-                }
-                if (\Schema::hasColumn('dokumens', 'csv_import_batch_id')) {
-                    $dokumenData['csv_import_batch_id'] = $batchId;
-                }
-                if (\Schema::hasColumn('dokumens', 'csv_imported_at')) {
-                    $dokumenData['csv_imported_at'] = now();
-                }
-
-                Dokumen::create($dokumenData);
-
-                DB::commit();
-                $imported++;
-
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error('Import row failed', [
-                    'error' => $e->getMessage(),
-                    'nomor_agenda' => $row['Agenda'] ?? 'N/A',
-                ]);
-                $failed++;
+            if ($skipDuplicates && $nomorAgenda && isset($seenAgendaInFile[$nomorAgenda])) {
+                $skipped++;
+                continue;
             }
+
+            if ($nomorAgenda) {
+                $seenAgendaInFile[$nomorAgenda] = true;
+            }
+
+            $candidateRows[] = $dokumenData;
         }
 
         fclose($handle);
+
+        $existingAgenda = [];
+        if ($skipDuplicates && !empty($candidateRows)) {
+            $agendaNumbers = array_values(array_filter(array_unique(array_column($candidateRows, 'nomor_agenda'))));
+            foreach (array_chunk($agendaNumbers, 500) as $agendaChunk) {
+                $existing = DB::table('dokumens')
+                    ->whereIn('nomor_agenda', $agendaChunk)
+                    ->pluck('nomor_agenda')
+                    ->all();
+
+                foreach ($existing as $agenda) {
+                    $existingAgenda[$agenda] = true;
+                }
+            }
+        }
+
+        $rowsToInsert = [];
+        foreach ($candidateRows as $dokumenData) {
+            $nomorAgenda = $dokumenData['nomor_agenda'] ?? null;
+            if ($skipDuplicates && $nomorAgenda && isset($existingAgenda[$nomorAgenda])) {
+                $skipped++;
+                continue;
+            }
+
+            $rowsToInsert[] = $dokumenData;
+        }
+
+        foreach (array_chunk($rowsToInsert, 500) as $chunk) {
+            try {
+                DB::table('dokumens')->insert($chunk);
+                $imported += count($chunk);
+            } catch (\Throwable $e) {
+                Log::warning('Operator CSV chunk insert failed, retrying per row', [
+                    'error' => $e->getMessage(),
+                    'rows' => count($chunk),
+                ]);
+
+                foreach ($chunk as $dokumenData) {
+                    try {
+                        DB::table('dokumens')->insert($dokumenData);
+                        $imported++;
+                    } catch (\Throwable $rowException) {
+                        Log::error('Import row failed', [
+                            'error' => $rowException->getMessage(),
+                            'nomor_agenda' => $dokumenData['nomor_agenda'] ?? 'N/A',
+                        ]);
+                        $failed++;
+                    }
+                }
+            }
+        }
 
         return [
             'imported' => $imported,
@@ -712,7 +764,6 @@ class OperatorCsvImportController extends Controller
         return (float) $cleaned;
     }
 }
-
 
 
 

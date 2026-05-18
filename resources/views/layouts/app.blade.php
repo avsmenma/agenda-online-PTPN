@@ -6442,7 +6442,7 @@
             try {
                 console.log('🔍 Checking for rejected documents...', { lastCheckTime: rejectedLastCheckTime });
                 
-                const response = await fetch(`/Operator/check-rejected?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
+                const response = await fetch(`/api/documents/rejected/check?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -6639,7 +6639,7 @@
             try {
                 console.log('Checking rejected documents for Team Verifikasi, last check:', rejectedLastCheckTime);
                 
-                const response = await fetch(`/Team Verifikasi/check-rejected?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
+                const response = await fetch(`/api/documents/verifikasi/rejected/check?last_check_time=${encodeURIComponent(rejectedLastCheckTime)}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
