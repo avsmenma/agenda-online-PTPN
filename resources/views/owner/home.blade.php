@@ -210,16 +210,31 @@
   }
   .doc-table td:not(:last-child) { padding-right: 14px; }
   .doc-table tr:last-child td { border-bottom: none; }
+  .doc-table td > * { min-width: 0; }
   .doc-name {
     font-weight: 600; color: var(--text-primary);
     max-width: none; white-space: normal;
-    overflow: visible; text-overflow: clip;
+    overflow: hidden;
     line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
   }
-  .doc-no { font-size: 10.5px; color: var(--text-muted); }
+  .doc-no {
+    font-size: 10.5px; color: var(--text-muted);
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .doc-payee {
     font-size: 12px; color: var(--text-primary);
     line-height: 1.35; white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     overflow-wrap: anywhere;
   }
   .status-pill {
@@ -295,6 +310,41 @@
     to   { opacity: 1; transform: translateY(0); }
   }
   .doc-row-new { animation: rowFadeIn .4s ease both; }
+
+  @media (max-width: 1100px) { .bottom-row { grid-template-columns: 1fr !important; } }
+  @media (max-width: 768px) {
+    .doc-table {
+      min-width: 0;
+      table-layout: auto;
+    }
+    .doc-table colgroup,
+    .doc-table thead {
+      display: none;
+    }
+    .doc-table,
+    .doc-table tbody,
+    .doc-table tr,
+    .doc-table td {
+      display: block;
+      width: 100%;
+    }
+    .doc-table tr {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .doc-table tr:last-child {
+      border-bottom: 0;
+    }
+    .doc-table td {
+      padding: 4px 0;
+      border-bottom: 0;
+      text-align: left !important;
+    }
+    .doc-table td:not(:last-child) { padding-right: 0; }
+    .doc-name { -webkit-line-clamp: 2; }
+    .doc-payee { -webkit-line-clamp: 1; }
+    .doc-amount { text-align: left; }
+  }
 </style>
 
 {{-- Load Chart.js --}}
@@ -525,13 +575,13 @@
                   data-created="{{ $doc['created_at'] ?? '' }}"
                   data-handler-since="{{ $doc['updated_at'] ?? '' }}">
                 <td>
-                  <div class="doc-name" title="{{ $doc['uraian_spp'] ?? '-' }}">
-                    {{ $doc['uraian_spp'] ?? '-' }}
+                  <div class="doc-name" title="{{ $doc['uraian_spp'] ?: '-' }}">
+                    {{ $doc['uraian_spp'] ?: '-' }}
                   </div>
-                  <div class="doc-no">{{ $doc['nomor_spp'] ?? '-' }}</div>
+                  <div class="doc-no" title="{{ $doc['nomor_spp'] ?: '-' }}">{{ $doc['nomor_spp'] ?: '-' }}</div>
                 </td>
                 <td>
-                  <div class="doc-payee">{{ $doc['dibayar_kepada'] ?? '-' }}</div>
+                  <div class="doc-payee" title="{{ $doc['dibayar_kepada'] ?: '-' }}">{{ $doc['dibayar_kepada'] ?: '-' }}</div>
                 </td>
                 <td>
                   @php $bColor = $bagianColors[$doc['bagian'] ?? ''] ?? '#94a3b8'; @endphp
@@ -708,6 +758,15 @@ function truncate(str, len) {
   return str.length > len ? str.substring(0, len) + '...' : str;
 }
 
+function escapeHtml(value) {
+  return String(value ?? '-')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 /**
  * Format elapsed seconds â†’ compact string
  * e.g: "2h 03j 15m"  /  "5j 03m 10d"  /  "43m 10d"  /  "12d"
@@ -727,17 +786,20 @@ function formatDuration(totalSeconds) {
 
 function buildDocRow(doc) {
   const color = bagianColors[doc.bagian] || '#94a3b8';
+  const uraian = doc.uraian_spp || '-';
+  const nomorSpp = doc.nomor_spp || '-';
+  const payee = doc.dibayar_kepada || '-';
   return `
     <tr class="doc-row-new"
         data-created="${doc.created_at || ''}"
         data-handler-since="${doc.updated_at || ''}">
       <td>
-        <div class="doc-name" title="${(doc.uraian_spp || '-').replace(/"/g,'&quot;')}">${doc.uraian_spp || '-'}</div>
-        <div class="doc-no">${doc.nomor_spp || '-'}</div>
+        <div class="doc-name" title="${escapeHtml(uraian)}">${escapeHtml(uraian)}</div>
+        <div class="doc-no" title="${escapeHtml(nomorSpp)}">${escapeHtml(nomorSpp)}</div>
       </td>
-      <td><div class="doc-payee">${doc.dibayar_kepada || '-'}</div></td>
-      <td><span style="font-size:11.5px;font-weight:600;color:${color}">${doc.bagian || '-'}</span></td>
-      <td><span class="status-pill ${doc.status_class || 'status-belum'}">${doc.status_label || 'Menunggu'}</span></td>
+      <td><div class="doc-payee" title="${escapeHtml(payee)}">${escapeHtml(payee)}</div></td>
+      <td><span style="font-size:11.5px;font-weight:600;color:${color}">${escapeHtml(doc.bagian || '-')}</span></td>
+      <td><span class="status-pill ${doc.status_class || 'status-belum'}">${escapeHtml(doc.status_label || 'Menunggu')}</span></td>
       <td class="doc-amount">${formatCurrency(doc.nilai_rupiah)}</td>
       <td style="text-align:center">
         <span class="timer-cell timer-age" style="font-size:11px;font-family:'Sora',monospace;color:#475569;white-space:nowrap">-</span>

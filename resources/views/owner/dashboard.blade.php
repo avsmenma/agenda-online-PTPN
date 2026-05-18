@@ -442,6 +442,7 @@
     width: 100%;
     min-width: 1160px;
     border-collapse: collapse;
+    table-layout: fixed;
   }
 
   .owner-docs-table thead {
@@ -491,6 +492,7 @@
     justify-content: flex-start;
     gap: 8px;
     margin-bottom: 7px;
+    min-width: 0;
   }
 
   .owner-docs-docno {
@@ -498,6 +500,11 @@
     color: #475569;
     font-size: 11.5px;
     font-weight: 700;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .owner-docs-urgent {
@@ -519,6 +526,11 @@
     font-size: 14px;
     line-height: 1.35;
     text-align: left;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
   }
 
   .owner-docs-payee {
@@ -527,6 +539,11 @@
     line-height: 1.35;
     margin-top: 3px;
     text-align: left;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
   }
 
   .owner-docs-money {
@@ -706,9 +723,10 @@
   .owner-docs-modal-head {
     position: relative;
     overflow: hidden;
-    padding: 26px 34px 28px;
+    padding: 24px 92px 24px 34px;
     background: linear-gradient(135deg, #14513f 0%, #0f3d2e 100%);
     color: #fff;
+    flex: 0 0 auto;
   }
 
   .owner-docs-modal-head::before,
@@ -742,10 +760,16 @@
     position: relative;
     margin: 0;
     font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
-    font-size: 24px;
+    font-size: clamp(20px, 2.1vw, 24px);
     font-weight: 800;
     line-height: 1.25;
     max-width: 760px;
+    max-height: 3.75em;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
   }
 
   .owner-docs-modal-sub {
@@ -757,6 +781,14 @@
     color: rgba(255, 255, 255, .78);
     font-size: 14px;
     font-weight: 600;
+    min-width: 0;
+  }
+
+  .owner-docs-modal-sub span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .owner-docs-modal-close {
@@ -781,6 +813,7 @@
     display: grid;
     grid-template-columns: 1.2fr .9fr;
     overflow: auto;
+    min-height: 0;
   }
 
   .owner-docs-modal-timeline {
@@ -876,6 +909,14 @@
 
   .owner-docs-detail-field {
     margin-bottom: 18px;
+    min-width: 0;
+  }
+
+  .owner-docs-detail-field.full {
+    padding: 16px;
+    border: 1px solid #dfe7ef;
+    border-radius: 12px;
+    background: #fff;
   }
 
   .owner-docs-detail-label {
@@ -892,10 +933,17 @@
     font-size: 14px;
     font-weight: 800;
     line-height: 1.45;
+    overflow-wrap: anywhere;
   }
 
   .owner-docs-detail-value.mono {
     font-family: 'Sora', monospace;
+  }
+
+  .owner-docs-detail-value.long-text {
+    color: #334155;
+    font-weight: 650;
+    white-space: pre-wrap;
   }
 
   @media (max-width: 1280px) {
@@ -980,6 +1028,57 @@
     .owner-docs-modal-title {
       padding-right: 48px;
       font-size: 20px;
+      -webkit-line-clamp: 2;
+      max-height: 2.5em;
+    }
+
+    .owner-docs-table {
+      min-width: 0;
+      table-layout: auto;
+    }
+
+    .owner-docs-table thead {
+      display: none;
+    }
+
+    .owner-docs-table colgroup {
+      display: none;
+    }
+
+    .owner-docs-table,
+    .owner-docs-table tbody,
+    .owner-docs-table tr,
+    .owner-docs-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .owner-docs-table td {
+      padding: 9px 18px;
+      border-bottom: 0;
+    }
+
+    .owner-docs-table td:first-child {
+      padding: 16px 18px 8px;
+    }
+
+    .owner-docs-table td:last-child {
+      padding: 8px 18px 16px;
+    }
+
+    .owner-docs-row {
+      display: block;
+      border-bottom: 1px solid var(--od-border-soft);
+    }
+
+    .owner-docs-docname {
+      max-width: none;
+      -webkit-line-clamp: 3;
+    }
+
+    .owner-docs-money,
+    .owner-docs-table td:nth-child(n+2) {
+      text-align: left;
     }
   }
 </style>
@@ -1207,10 +1306,10 @@
                     @if($isUrgent)
                       <span class="owner-docs-urgent"><i class="fas fa-bolt"></i> URGENT</span>
                     @endif
-                    <span class="owner-docs-docno">{{ $nomor }}</span>
+                    <span class="owner-docs-docno" title="{{ $nomor }}">{{ $nomor }}</span>
                   </div>
-                  <div class="owner-docs-docname">{{ $dokumen['uraian_spp'] ?: '-' }}</div>
-                  <div class="owner-docs-payee">Dibayar kepada: {{ $dokumen['vendor'] ?? '-' }}</div>
+                  <div class="owner-docs-docname" title="{{ $dokumen['uraian_spp'] ?: '-' }}">{{ $dokumen['uraian_spp'] ?: '-' }}</div>
+                  <div class="owner-docs-payee" title="{{ ($dokumen['vendor'] ?? '') ?: '-' }}">Dibayar kepada: {{ ($dokumen['vendor'] ?? '') ?: '-' }}</div>
                 </td>
                 <td class="owner-docs-money">
                   Rp {{ number_format((float)($dokumen['nilai_rupiah'] ?? 0), 0, ',', '.') }}
@@ -1372,7 +1471,14 @@
       ['Jenis Pembayaran', doc.jenis_pembayaran || '-'],
     ];
 
-    detail.innerHTML = fields.map(([label, value, mono]) => `
+    const fullDescription = `
+      <div class="owner-docs-detail-field full">
+        <div class="owner-docs-detail-label">Uraian Dokumen</div>
+        <div class="owner-docs-detail-value long-text">${escapeOwnerHtml(doc.uraian_spp || '-')}</div>
+      </div>
+    `;
+
+    detail.innerHTML = fullDescription + fields.map(([label, value, mono]) => `
       <div class="owner-docs-detail-field">
         <div class="owner-docs-detail-label">${escapeOwnerHtml(label)}</div>
         <div class="owner-docs-detail-value ${mono ? 'mono' : ''}">${escapeOwnerHtml(value)}</div>
@@ -1389,9 +1495,13 @@
     const bagianColor = ownerBagianColors[bagian] || '#10b981';
 
     document.getElementById('ownerDocModalNo').textContent = doc.nomor_agenda || doc.nomor_spp || '-';
-    document.getElementById('ownerDocModalTitle').textContent = doc.uraian_spp || '-';
+    const modalTitle = document.getElementById('ownerDocModalTitle');
+    modalTitle.textContent = doc.uraian_spp || '-';
+    modalTitle.title = doc.uraian_spp || '-';
     document.getElementById('ownerDocModalDot').style.background = bagianColor;
-    document.getElementById('ownerDocModalMeta').textContent = 'Bagian ' + bagian + ' - Dibayar kepada ' + (doc.vendor || '-');
+    const modalMeta = document.getElementById('ownerDocModalMeta');
+    modalMeta.textContent = 'Bagian ' + bagian + ' - Dibayar kepada ' + (doc.vendor || '-');
+    modalMeta.title = modalMeta.textContent;
 
     renderOwnerTimeline(doc.workflow_timeline?.steps || []);
     renderOwnerDetails(doc);
