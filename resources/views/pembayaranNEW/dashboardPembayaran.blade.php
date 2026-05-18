@@ -3349,6 +3349,7 @@
           dibayar_kepada: 'cell-vendor',
           uraian_spp: 'cell-uraian',
           nilai_rupiah: 'cell-rupiah text-end',
+          tanggal_dibayar: 'cell-mono',
         };
         const columnWidthMap = {
           nomor_agenda: '170px',
@@ -3357,6 +3358,7 @@
           uraian_spp: '360px',
           nilai_rupiah: '150px',
           status_pembayaran: '170px',
+          tanggal_dibayar: '170px',
           tanggal_spp: '170px',
           tanggal_masuk: '170px',
         };
@@ -3364,6 +3366,7 @@
           'nomor_agenda',
           'nomor_spp',
           'tanggal_spp',
+          'tanggal_dibayar',
           'uraian_spp',
           'nilai_rupiah',
           'kategori',

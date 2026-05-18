@@ -1850,6 +1850,7 @@ class DokumenController extends Controller
             'no_spk', 'tanggal_spk', 'tanggal_berakhir_spk',
             'nomor_miro', 'tanggal_miro', 'no_faktur', 'tanggal_faktur',
             'tanggal_paraf', 'pemaraf', 'bulan', 'tahun',
+            'tanggal_dibayar',
             // Perpajakan-specific
             'jenis_pph', 'dpp_pph', 'ppn_terhutang', 'tanggal_selesai_verifikasi_pajak',
             'npwp', 'link_dokumen_pajak',
@@ -1883,6 +1884,18 @@ class DokumenController extends Controller
                 if ($saveValue <= 0) $saveValue = null;
             } elseif (in_array($field, ['tanggal_berita_acara', 'tanggal_spk', 'tanggal_berakhir_spk', 'tanggal_faktur', 'tanggal_paraf', 'tanggal_miro', 'tanggal_selesai_verifikasi_pajak'])) {
                 $saveValue = !empty($value) ? $value : null;
+            } elseif ($field === 'tanggal_dibayar') {
+                if ($userRole !== 'pembayaran') {
+                    return response()->json(['success' => false, 'message' => 'Hanya role pembayaran yang dapat mengubah tanggal bayar.'], 403);
+                }
+
+                if (empty($value)) {
+                    return response()->json(['success' => false, 'message' => 'Tanggal bayar wajib diisi untuk menandai dokumen sudah dibayar.'], 422);
+                }
+
+                $saveValue = \Carbon\Carbon::parse($value)->format('Y-m-d');
+                $dokumen->status_pembayaran = 'sudah_dibayar';
+                $dokumen->status = 'completed';
             } elseif ($field === 'link_dokumen_pajak') {
                 // Simpan URL, null jika kosong
                 $saveValue = !empty(trim($value ?? '')) ? trim($value) : null;
@@ -1948,7 +1961,7 @@ class DokumenController extends Controller
                 $displayValue = 'Rp. ' . number_format($saveValue, 0, ',', '.');
             } elseif ($field === 'tanggal_spp' && $saveValue) {
                 $displayValue = \Carbon\Carbon::parse($saveValue)->format('d-m-Y');
-            } elseif (in_array($field, ['tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf','tanggal_selesai_verifikasi_pajak']) && $saveValue) {
+            } elseif (in_array($field, ['tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf','tanggal_selesai_verifikasi_pajak','tanggal_dibayar']) && $saveValue) {
                 $displayValue = \Carbon\Carbon::parse($saveValue)->format('d-m-Y');
             } elseif (in_array($field, ['dpp_pph', 'ppn_terhutang']) && $saveValue) {
                 $displayValue = number_format($saveValue, 0, ',', '.');

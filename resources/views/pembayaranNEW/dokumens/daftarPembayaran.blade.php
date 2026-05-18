@@ -1436,13 +1436,14 @@
           <td class="col-no">{{ $dokumens->firstItem() + $index }}</td>
           @foreach($selectedColumns as $col)
             @if($col !== 'status')
-            @if(in_array($col, ['nomor_spp', 'uraian_spp', 'nilai_rupiah', 'tanggal_spp']) && $canInlineEdit)
+            @if(in_array($col, ['nomor_spp', 'uraian_spp', 'nilai_rupiah', 'tanggal_spp', 'tanggal_dibayar']) && $canInlineEdit)
               {{-- Editable cell: attr set directly on td, no wrapper needed --}}
               <td class="col-{{ $col }} ie-cell"
                   data-id="{{ $dokumen->id }}"
                   data-field="{{ $col }}"
                   @if($col === 'nilai_rupiah') data-raw="{{ $dokumen->nilai_rupiah ?? '' }}"
                   @elseif($col === 'tanggal_spp') data-raw="{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('Y-m-d') : '' }}"
+                  @elseif($col === 'tanggal_dibayar') data-raw="{{ $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('Y-m-d') : '' }}"
                   @else data-raw="{{ $dokumen->$col ?? '' }}"
                   @endif
                   onclick="event.stopPropagation()"
@@ -1453,6 +1454,8 @@
                   <span class="ie-display"><strong>{{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong></span>
                 @elseif($col === 'tanggal_spp')
                   <span class="ie-display">{{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}</span>
+                @elseif($col === 'tanggal_dibayar')
+                  <span class="ie-display">{{ $dokumen->tanggal_dibayar ? $dokumen->tanggal_dibayar->format('d/m/Y') : '-' }}</span>
                 @else
                   <span class="ie-display">{{ $dokumen->$col ?? '-' }}</span>
                 @endif
@@ -1673,23 +1676,22 @@
               @elseif($paymentStatus === 'siap_bayar' || $paymentStatus === 'sudah_dibayar')
                 {{-- Status "Siap Bayar" atau "Sudah Dibayar" - Cek kelengkapan data --}}
                 @php
-                  // Cek apakah kedua field sudah diisi untuk menentukan apakah tombol Edit masih perlu ditampilkan
-                  // Tombol Edit tetap aktif bahkan jika status sudah "sudah_dibayar", selama salah satu field masih kosong
-                  $isComplete = !empty($dokumen->tanggal_dibayar) && !empty($dokumen->link_bukti_pembayaran);
+                  // Tanggal bayar menjadi penanda data pembayaran sudah lengkap.
+                  $isComplete = !empty($dokumen->tanggal_dibayar);
                 @endphp
                 
                 @if($isComplete)
-                  {{-- Kedua field sudah diisi - Tampilkan tombol Selesai (disabled) --}}
+                  {{-- Tanggal bayar sudah diisi - Tampilkan tombol Selesai (disabled) --}}
                   <button type="button" class="btn-action" disabled style="opacity: 0.6; cursor: not-allowed;" title="Data pembayaran sudah lengkap">
                     <i class="fa-solid fa-check-circle"></i>
                     Selesai
                   </button>
                 @else
-                  {{-- Minimal satu field masih kosong - Tampilkan tombol Edit (enabled) --}}
-                  <a href="{{ route('documents.pembayaran.edit', $dokumen->id) }}" class="btn-action" onclick="event.stopPropagation();" title="Input/Edit data pembayaran">
+                  {{-- Tanggal bayar masih kosong - Tampilkan tombol Edit (enabled) --}}
+                  <button type="button" class="btn-action" onclick="event.stopPropagation(); openEditPembayaranModalHandler({{ $dokumen->id }});" title="Input/Edit tanggal bayar">
                     <i class="fa-solid fa-edit"></i>
                     Edit
-                  </a>
+                  </button>
                 @endif
               @endif
             </div>
@@ -1829,20 +1831,10 @@
             </small>
           </div>
           
-          <div class="form-group mb-4">
-            <label for="link_bukti_pembayaran" class="form-label" style="font-weight: 600; color: #083E40; margin-bottom: 8px;">
-              <i class="fa-brands fa-google-drive me-2"></i>Link Google Drive Bukti Pembayaran
-            </label>
-            <input type="url" name="link_bukti_pembayaran" id="link_bukti_pembayaran" class="form-control" placeholder="https://drive.google.com/file/d/..." value="" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 10px; font-size: 14px;">
-            <small class="text-muted" style="font-size: 12px; margin-top: 4px; display: block;">
-              <i class="fa-solid fa-info-circle me-1"></i>Masukkan link Google Drive untuk bukti pembayaran (PDF/File)
-            </small>
-          </div>
-          
           <div class="alert alert-info" style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 8px; padding: 12px; margin-bottom: 0;">
             <i class="fa-solid fa-info-circle me-2" style="color: #0d6efd;"></i>
             <strong style="color: #0d6efd;">Catatan:</strong> 
-            <span style="color: #0d6efd;">Minimal salah satu field harus diisi. Status akan otomatis berubah menjadi "Sudah Dibayar" setelah salah satu field diisi.</span>
+            <span style="color: #0d6efd;">Mengisi tanggal pembayaran akan otomatis mengubah status menjadi "Sudah Dibayar".</span>
           </div>
         </form>
       </div>
@@ -2852,14 +2844,12 @@ window.openEditPembayaranModal = function(docId) {
     // Set dokumen ID in hidden field
     const docIdField = document.getElementById('editPembayaranDocId');
     const tanggalField = document.getElementById('tanggal_dibayar');
-    const linkField = document.getElementById('link_bukti_pembayaran');
     const modalElement = document.getElementById('editPembayaranModal');
     
-    if (!docIdField || !tanggalField || !linkField || !modalElement) {
+    if (!docIdField || !tanggalField || !modalElement) {
         console.error('Modal elements not found:', {
             docIdField: !!docIdField,
             tanggalField: !!tanggalField,
-            linkField: !!linkField,
             modalElement: !!modalElement
         });
         alert('Terjadi kesalahan. Silakan muat ulang halaman.');
@@ -2886,7 +2876,6 @@ window.openEditPembayaranModal = function(docId) {
         console.log('Payment data received:', data);
         if (data.success) {
             tanggalField.value = data.tanggal_dibayar || '';
-            linkField.value = data.link_bukti_pembayaran || '';
         }
         
         // Use getOrCreateInstance for better compatibility
@@ -2910,7 +2899,6 @@ window.openEditPembayaranModal = function(docId) {
         console.error('Error fetching payment data:', error);
         // Jika error, tetap buka modal dengan nilai kosong
         tanggalField.value = '';
-        linkField.value = '';
         
         if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
             const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
@@ -2940,11 +2928,9 @@ window.submitEditPembayaran = function() {
     const submitBtn = document.querySelector('#editPembayaranModal .btn-primary');
 
     const tanggalDibayar = formData.get('tanggal_dibayar');
-    const linkBukti = formData.get('link_bukti_pembayaran');
 
-    // Validasi: minimal salah satu harus diisi
-    if (!tanggalDibayar && !linkBukti) {
-        alert('Minimal salah satu field (tanggal pembayaran atau link bukti) harus diisi.');
+    if (!tanggalDibayar) {
+        alert('Tanggal pembayaran wajib diisi.');
         return;
     }
 
@@ -2952,16 +2938,7 @@ window.submitEditPembayaran = function() {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menyimpan...';
 
-    // Kirim semua field yang ada di form (termasuk yang kosong, untuk mempertahankan nilai yang sudah ada)
-    const requestData = {};
-    // Selalu kirim tanggal_dibayar jika ada (termasuk string kosong, akan di-handle di backend)
-    if (tanggalDibayar) {
-        requestData.tanggal_dibayar = tanggalDibayar;
-    }
-    // Selalu kirim link_bukti_pembayaran jika ada (termasuk string kosong, akan di-handle di backend)
-    if (linkBukti) {
-        requestData.link_bukti_pembayaran = linkBukti;
-    }
+    const requestData = { tanggal_dibayar: tanggalDibayar };
 
     fetch(`/dokumensPembayaran/${docId}/update-pembayaran`, {
         method: 'POST',
@@ -2981,11 +2958,7 @@ window.submitEditPembayaran = function() {
                     modal.hide();
                 }
             }
-            if (data.is_complete) {
-                showSuccessModal('Data pembayaran berhasil disimpan!', 'Kedua field sudah lengkap, dokumen selesai.');
-            } else {
-                showSuccessModal('Data pembayaran berhasil disimpan!', 'Status otomatis berubah menjadi "Sudah Dibayar".');
-            }
+            showSuccessModal('Tanggal pembayaran berhasil disimpan!', 'Status otomatis berubah menjadi "Sudah Dibayar".');
         } else {
             const errorModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editPembayaranModal'));
             if (errorModal) errorModal.hide();
@@ -4199,4 +4172,3 @@ document.addEventListener('DOMContentLoaded', function() {
 @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
 
 @endsection
-

@@ -127,6 +127,7 @@
     tanggal_paraf       : 'date',
     tanggal_miro        : 'date',
     tanggal_selesai_verifikasi_pajak: 'date',
+    tanggal_dibayar     : 'date',
     kebun               : 'text',
     bagian              : 'text',
     nama_pengirim       : 'text',
@@ -407,6 +408,13 @@
     if (field === 'kategori') row.dataset.kategori = value ?? '';
     if (field === 'jenis_dokumen') row.dataset.jenisDokumen = value ?? '';
     if (field === 'jenis_sub_pekerjaan') row.dataset.jenisSubPekerjaan = value ?? '';
+    if (field === 'tanggal_dibayar') {
+      const statusCell = row.querySelector('td[data-field="status_pembayaran"], td.col-status_pembayaran');
+      if (statusCell) {
+        statusCell.innerHTML = '<span class="status-pill status-pill--paid status-badge sudah-dibayar"><i class="fas fa-circle"></i> Sudah Dibayar</span>';
+        statusCell.dataset.raw = 'sudah_dibayar';
+      }
+    }
   }
 
   function buildSelect(field, currentVal, cell) {

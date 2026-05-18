@@ -3218,14 +3218,18 @@
     /* Hide old pagination-perpage-top */
     #documentTableContainer .pagination-perpage-top-wrapper { display: none !important; }
     /* thead styling */
-    div#documentTableContainer thead tr { background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important; }
+    div#documentTableContainer thead tr { background: #f8fafc !important; }
     div#documentTableContainer table thead th,
     div#documentTableContainer table thead tr th {
-      background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
-      color: rgba(255,255,255,0.95) !important;
+      background: #f8fafc !important;
+      color: #64748b !important;
       font-size: 0.775rem !important; font-weight: 600 !important;
       letter-spacing: 0.04em !important; text-transform: uppercase !important;
-      padding: 0.85rem 0.9rem !important; border: none !important; white-space: nowrap !important;
+      padding: 0.85rem 0.9rem !important; border: none !important; border-bottom: 1px solid #e2e8f0 !important; white-space: nowrap !important;
+    }
+
+    div#documentTableContainer table thead tr {
+      background: #f8fafc !important;
     }
     /* Zebra rows */
     #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(even) { background: #f8fafc; }

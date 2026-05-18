@@ -3274,16 +3274,17 @@
 
     /* Cleaner thead — direct selectors (no descendant .table-dokumen needed) */
     div#documentTableContainer thead tr {
-      background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
+      background: #f8fafc !important;
     }
     div#documentTableContainer thead th {
-      background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
-      color: rgba(255,255,255,0.95) !important;
+      background: #f8fafc !important;
+      color: #64748b !important;
       font-size: 0.775rem !important;
       font-weight: 600 !important;
       letter-spacing: 0.04em !important;
       padding: 0.85rem 0.9rem !important;
       border: none !important;
+      border-bottom: 1px solid #e2e8f0 !important;
       white-space: nowrap;
       text-transform: uppercase;
     }
@@ -3313,16 +3314,20 @@
     /* Force all header th styling — highest specificity override */
     #documentTableContainer table thead th,
     #documentTableContainer table thead tr th {
-      background: linear-gradient(135deg, #083E40 0%, #0d5254 100%) !important;
-      color: rgba(255,255,255,0.95) !important;
+      background: #f8fafc !important;
+      color: #64748b !important;
       font-size: 0.775rem !important;
       font-weight: 600 !important;
       letter-spacing: 0.04em !important;
       text-transform: uppercase !important;
       padding: 0.85rem 0.9rem !important;
       border: none !important;
-      border-bottom: none !important;
+      border-bottom: 1px solid #e2e8f0 !important;
       white-space: nowrap !important;
+    }
+
+    #documentTableContainer table thead tr {
+      background: #f8fafc !important;
     }
   </style>
 
@@ -3345,7 +3350,7 @@
         $showActionColumn = false;
       @endphp
       <table class="table table-enhanced mb-0">
-        <thead style="background: linear-gradient(135deg, #083E40 0%, #0d5254 100%); color: white;">
+        <thead>
           <tr>
 
             <th class="col-checkbox" style="width: 50px; background: transparent; color: white; border: none; padding: 0.85rem 0.9rem; font-size: 0.775rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;">
