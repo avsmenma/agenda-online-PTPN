@@ -164,20 +164,18 @@ class OwnerDashboardController extends Controller
         $allDokumenUmur = Dokumen::select('created_at', 'tanggal_masuk', 'tanggal_dibayar', 'status_pembayaran', 'status')
             ->get()
             ->map(function ($dok) {
-                $startTime = $dok->created_at ?? $dok->tanggal_masuk;
+                $startTime = $this->resolveDocumentAgeStartTime($dok);
                 if (!$startTime)
                     return 0;
 
-                $startTime = Carbon::parse($startTime);
                 $isPaid = !empty($dok->tanggal_dibayar) ||
                     $dok->status_pembayaran === 'sudah_dibayar' ||
                     $dok->status === 'completed';
 
-                $endTime = ($isPaid && !empty($dok->tanggal_dibayar))
-                    ? Carbon::parse($dok->tanggal_dibayar)
-                    : Carbon::now();
+                $endTime = $this->resolveDocumentAgeEndTime($dok, $isPaid);
+                $seconds = max(0, (int) $startTime->diffInSeconds($endTime, false));
 
-                return (int) floor($startTime->diffInHours($endTime) / 24);
+                return (int) floor($seconds / 86400);
             })
             ->toArray();
 
@@ -1344,27 +1342,22 @@ class OwnerDashboardController extends Controller
      */
     private function calculateDocumentAge($dokumen)
     {
-        // Start time: when document was created or imported
-        $startTime = $dokumen->created_at ?? $dokumen->tanggal_masuk;
+        // Start time: use the real document entry date first; CSV imports set created_at to import time.
+        $startTime = $this->resolveDocumentAgeStartTime($dokumen);
         if (!$startTime) {
             return null;
         }
-
-        $startTime = Carbon::parse($startTime);
 
         // End time: payment date if paid, otherwise current time
         $isPaid = !empty($dokumen->tanggal_dibayar) ||
             $dokumen->status_pembayaran === 'sudah_dibayar' ||
             $dokumen->status === 'completed';
 
-        if ($isPaid && !empty($dokumen->tanggal_dibayar)) {
-            $endTime = Carbon::parse($dokumen->tanggal_dibayar);
-        } else {
-            $endTime = Carbon::now();
-        }
+        $endTime = $this->resolveDocumentAgeEndTime($dokumen, $isPaid);
+        $totalSeconds = max(0, (int) $startTime->diffInSeconds($endTime, false));
 
         // Calculate total difference in hours first, then derive days
-        $totalHours = (int) $startTime->diffInHours($endTime);
+        $totalHours = intdiv($totalSeconds, 3600);
         $diffDays = (int) floor($totalHours / 24);
         $diffHours = $totalHours % 24;
 
@@ -1378,7 +1371,7 @@ class OwnerDashboardController extends Controller
             $text = $diffHours . ' jam';
             if ($diffHours == 0) {
                 // Less than 1 hour, show minutes
-                $diffMinutes = (int) $startTime->diffInMinutes($endTime);
+                $diffMinutes = intdiv($totalSeconds, 60);
                 $text = $diffMinutes . ' menit';
             }
         }
@@ -1391,6 +1384,37 @@ class OwnerDashboardController extends Controller
             'start_date' => $startTime->format('d M Y'),
             'end_date' => $endTime->format('d M Y'),
         ];
+    }
+
+    private function resolveDocumentAgeStartTime($dokumen): ?Carbon
+    {
+        $startTime = $dokumen->tanggal_masuk ?? $dokumen->created_at;
+
+        return $startTime ? Carbon::parse($startTime) : null;
+    }
+
+    private function resolveDocumentAgeEndTime($dokumen, bool $isPaid): Carbon
+    {
+        if (!$isPaid || empty($dokumen->tanggal_dibayar)) {
+            return Carbon::now();
+        }
+
+        $endTime = Carbon::parse($dokumen->tanggal_dibayar);
+        $rawPaidDate = method_exists($dokumen, 'getRawOriginal')
+            ? (string) ($dokumen->getRawOriginal('tanggal_dibayar') ?: $dokumen->tanggal_dibayar)
+            : (string) $dokumen->tanggal_dibayar;
+
+        $isDateOnlyPayment = preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($rawPaidDate))
+            || (
+                method_exists($dokumen, 'getCasts')
+                && (($dokumen->getCasts()['tanggal_dibayar'] ?? null) === 'date')
+            );
+
+        if ($isDateOnlyPayment) {
+            $endTime->endOfDay();
+        }
+
+        return $endTime;
     }
 
     /**
