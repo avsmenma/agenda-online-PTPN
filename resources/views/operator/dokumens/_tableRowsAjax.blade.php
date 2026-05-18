@@ -50,8 +50,16 @@
         || ($isRejectedForCheck && $currentHandlerOperatorForCheck);
 
     $rowNumberBase = method_exists($dokumens, 'firstItem') ? (($dokumens->firstItem() ?? 1) - 1) : 0;
-    $filteredColumns = array_filter($selectedColumns, fn($c) => $c !== 'nomor_mirror' && $c !== 'keterangan' && isset($availableColumns[$c]));
+    $filteredColumns = array_filter($selectedColumns, fn($c) => $c !== 'nomor_mirror' && isset($availableColumns[$c]));
     $dateCols        = ['tanggal_spp','tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf','tanggal_miro'];
+    $formatDateCell = function ($value, $format = 'd/m/Y') {
+        if (!$value) return '-';
+        try {
+            return \Carbon\Carbon::parse($value)->format($format);
+        } catch (\Throwable $e) {
+            return $value;
+        }
+    };
   @endphp
 
   <tr class="main-row clickable-row"
@@ -195,6 +203,20 @@
           {{ $dokumen->bagian ?? '-' }}
         @elseif($col === 'tanggal_paraf')
           {{ $dokumen->tanggal_paraf ? $dokumen->tanggal_paraf->format('d/m/Y H:i') : '-' }}
+        @elseif($col === 'tanggal_selesai_diproses')
+          {{ $formatDateCell($dokumen->tanggal_selesai_diproses, 'd/m/Y H:i') }}
+        @elseif($col === 'tanggal_kembali_ke_bagian')
+          {{ $formatDateCell($dokumen->tanggal_kembali_ke_bagian, 'd/m/Y H:i') }}
+        @elseif($col === 'tanggal_hasil_koreksi_bagian')
+          {{ $formatDateCell($dokumen->tanggal_hasil_koreksi_bagian, 'd/m/Y H:i') }}
+        @elseif($col === 'kepala_sub_bagian')
+          {{ $dokumen->kepala_sub_bagian ?? '-' }}
+        @elseif($col === 'keterangan')
+          <span title="{{ $dokumen->keterangan ?? '-' }}" style="display:block;word-wrap:break-word;white-space:normal;overflow-wrap:break-word;line-height:1.5;width:100%;">{{ $dokumen->keterangan ?? '-' }}</span>
+        @elseif($col === 'status_dokumen_custom')
+          {{ $dokumen->status_dokumen_csv ?? $dokumen->status_dokumen_custom ?? '-' }}
+        @elseif($col === 'tanggal_dibayar')
+          {{ $formatDateCell($dokumen->tanggal_dibayar, 'd/m/Y') }}
         @elseif($col === 'pemaraf')
           @if($dokumen->pemaraf)
             <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border-radius:6px;font-size:11px;font-weight:600;">
@@ -206,6 +228,24 @@
           {{ $dokumen->no_faktur ?? '-' }}
         @elseif($col === 'tanggal_faktur')
           {{ $dokumen->tanggal_faktur ? $dokumen->tanggal_faktur->format('d/m/Y') : '-' }}
+        @elseif($col === 'nomor_po')
+          {{ $dokumen->dokumenPos->pluck('nomor_po')->filter()->join(', ') ?: ($dokumen->NO_PO ?? '-') }}
+        @elseif($col === 'tanggal_selesai_verifikasi_pajak')
+          {{ $formatDateCell($dokumen->tanggal_selesai_verifikasi_pajak, 'd/m/Y') }}
+        @elseif($col === 'jenis_pph')
+          {{ $dokumen->jenis_pph ?? '-' }}
+        @elseif($col === 'dpp_pph')
+          {{ $dokumen->dpp_pph !== null ? 'Rp ' . number_format((float) $dokumen->dpp_pph, 0, ',', '.') : '-' }}
+        @elseif($col === 'ppn_terhutang')
+          {{ $dokumen->ppn_terhutang !== null ? 'Rp ' . number_format((float) $dokumen->ppn_terhutang, 0, ',', '.') : '-' }}
+        @elseif($col === 'npwp')
+          {{ $dokumen->npwp ?? '-' }}
+        @elseif($col === 'link_dokumen_pajak')
+          @if(!empty($dokumen->link_dokumen_pajak))
+            <a href="{{ $dokumen->link_dokumen_pajak }}" target="_blank" rel="noopener" title="{{ $dokumen->link_dokumen_pajak }}">Lihat Dokumen</a>
+          @else
+            -
+          @endif
         @else
           -
         @endif
@@ -219,7 +259,7 @@
 
   <tr class="detail-row" id="detail-{{ $dokumen->id }}" style="display:none;">
     @php
-      $fcAjax = array_filter($selectedColumns, fn($c) => $c !== 'nomor_mirror' && $c !== 'keterangan' && isset($availableColumns[$c]));
+      $fcAjax = array_filter($selectedColumns, fn($c) => $c !== 'nomor_mirror' && isset($availableColumns[$c]));
     @endphp
     <td colspan="{{ count($fcAjax) + 3 }}">
       <div class="detail-content" id="detail-content-{{ $dokumen->id }}">

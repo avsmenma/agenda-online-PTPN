@@ -188,6 +188,8 @@ class DokumenController extends Controller
             'link_dokumen_pajak' => 'Link Dokumen Pajak',
         ];
 
+        $defaultColumns = $this->defaultOperatorDocumentColumns($availableColumns);
+
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
 
@@ -202,19 +204,17 @@ class DokumenController extends Controller
             session(['dokumens_table_columns' => $selectedColumns]);
         } else {
             // Load from session if available
-            $selectedColumns = session('dokumens_table_columns', [
-                'nomor_agenda',
-                'nomor_spp',
-                'tanggal_masuk',
-                'nilai_rupiah',
-                'status'
-            ]);
+            $selectedColumns = session('dokumens_table_columns', $defaultColumns);
 
             // Remove deprecated columns if they exist in session
             $selectedColumns = array_filter($selectedColumns, function ($col) {
                 return $col !== 'nomor_mirror';
             });
             $selectedColumns = array_values($selectedColumns); // Re-index array
+
+            if ($this->isLegacyOperatorDefaultColumns($selectedColumns)) {
+                $selectedColumns = $defaultColumns;
+            }
 
             // Update session with cleaned columns
             session(['dokumens_table_columns' => $selectedColumns]);
@@ -303,29 +303,14 @@ class DokumenController extends Controller
         $paginator = $query->paginate($chunkSize, ['*'], 'page', $chunkPage)
                            ->appends($request->except(['chunk_page', 'chunk_size']));
 
-        // Available columns (mirrors index())
-        $availableColumns = [
-            'nomor_agenda' => 'Nomor Agenda', 'bulan' => 'Bulan', 'tahun' => 'Tahun',
-            'kategori' => 'Kriteria CF', 'jenis_dokumen' => 'Sub Kriteria',
-            'jenis_sub_pekerjaan' => 'Item Sub Kriteria', 'jenis_pembayaran' => 'Jenis Pembayaran',
-            'nomor_spp' => 'Nomor SPP', 'tanggal_spp' => 'Tanggal SPP',
-            'tanggal_masuk' => 'Tanggal Masuk', 'dibayar_kepada' => 'Dibayar Kepada',
-            'uraian_spp' => 'Uraian SPP', 'nilai_rupiah' => 'Nilai Rupiah',
-            'tanggal_paraf' => 'Tanggal Paraf', 'pemaraf' => 'Pemaraf',
-            'tanggal_selesai_diproses' => 'Tgl Selesai Diproses', 'kepala_sub_bagian' => 'Kepala Sub Bagian',
-            'status_dokumen_custom' => 'Status Dokumen', 'tanggal_dibayar' => 'Tanggal Bayar',
-            'bagian' => 'Bagian', 'nama_pengirim' => 'Nama Pengirim',
-            'no_spk' => 'No SPK', 'tanggal_spk' => 'Tanggal SPK',
-            'tanggal_berakhir_spk' => 'Tgl Berakhir SPK', 'kebun' => 'Kebun',
-            'no_berita_acara' => 'No Berita Acara', 'tanggal_berita_acara' => 'Tgl Berita Acara',
-            'status' => 'Status', 'no_faktur' => 'No Faktur', 'tanggal_faktur' => 'Tgl Faktur',
-            'nomor_miro' => 'Nomor MIRO',
-            'npwp' => 'NPWP', 'link_dokumen_pajak' => 'Link Dokumen Pajak',
-        ];
+        $availableColumns = $this->operatorDocumentColumns();
 
-        $selectedColumns = session('dokumens_table_columns', [
-            'nomor_agenda', 'tanggal_masuk', 'uraian_spp', 'nilai_rupiah', 'status',
-        ]);
+        $defaultColumns = $this->defaultOperatorDocumentColumns($availableColumns);
+        $selectedColumns = session('dokumens_table_columns', $defaultColumns);
+        if ($this->isLegacyOperatorDefaultColumns($selectedColumns)) {
+            $selectedColumns = $defaultColumns;
+            session(['dokumens_table_columns' => $selectedColumns]);
+        }
         $selectedColumns = array_filter($selectedColumns, fn($c) => isset($availableColumns[$c]));
 
         $html = view('operator.dokumens._tableRowsAjax', [
@@ -351,7 +336,7 @@ class DokumenController extends Controller
         $availableColumns = $this->operatorDocumentColumns();
         $selectedColumns = $this->resolveOperatorSelectedColumns($request, $availableColumns);
         $filteredColumns = array_values(array_filter($selectedColumns, function ($col) use ($availableColumns) {
-            return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);
+            return $col !== 'nomor_mirror' && isset($availableColumns[$col]);
         }));
 
         $documents = $query->get();
@@ -443,13 +428,12 @@ class DokumenController extends Controller
             return $selectedColumns;
         }
 
-        $selectedColumns = session('dokumens_table_columns', [
-            'nomor_agenda',
-            'nomor_spp',
-            'tanggal_masuk',
-            'nilai_rupiah',
-            'status',
-        ]);
+        $defaultColumns = $this->defaultOperatorDocumentColumns($availableColumns);
+        $selectedColumns = session('dokumens_table_columns', $defaultColumns);
+
+        if ($this->isLegacyOperatorDefaultColumns($selectedColumns)) {
+            $selectedColumns = $defaultColumns;
+        }
 
         $selectedColumns = array_values(array_filter((array) $selectedColumns, function ($col) use ($availableColumns) {
             return $col !== 'nomor_mirror' && isset($availableColumns[$col]);
@@ -458,6 +442,22 @@ class DokumenController extends Controller
         session(['dokumens_table_columns' => $selectedColumns]);
 
         return $selectedColumns;
+    }
+
+    private function defaultOperatorDocumentColumns(array $availableColumns): array
+    {
+        return array_values(array_filter(array_keys($availableColumns), fn($col) => $col !== 'nomor_mirror'));
+    }
+
+    private function isLegacyOperatorDefaultColumns($selectedColumns): bool
+    {
+        $selectedColumns = array_values((array) $selectedColumns);
+        $legacyDefaults = [
+            ['nomor_agenda', 'nomor_spp', 'tanggal_masuk', 'nilai_rupiah', 'status'],
+            ['nomor_agenda', 'tanggal_masuk', 'uraian_spp', 'nilai_rupiah', 'status'],
+        ];
+
+        return collect($legacyDefaults)->contains(fn($legacy) => $selectedColumns === $legacy);
     }
 
     private function formatOperatorTabulatorRow(Dokumen $dokumen, int $index): array

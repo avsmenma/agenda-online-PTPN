@@ -3120,7 +3120,7 @@
 
   @php
     $operatorTableColumns = array_values(array_filter($selectedColumns, function ($col) use ($availableColumns) {
-      return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);
+      return $col !== 'nomor_mirror' && isset($availableColumns[$col]);
     }));
   @endphp
 
@@ -6312,7 +6312,7 @@
           @if(false)
           @php
             $tabulatorInitialColumns = array_values(array_filter($selectedColumns, function ($col) use ($availableColumns) {
-              return $col !== 'nomor_mirror' && $col !== 'keterangan' && isset($availableColumns[$col]);
+              return $col !== 'nomor_mirror' && isset($availableColumns[$col]);
             }));
           @endphp
           <script>
@@ -7104,7 +7104,7 @@
               ];
 
               (selectedColumns && selectedColumns.length ? selectedColumns : initialSelectedColumns).forEach(field => {
-                if (field === 'nomor_mirror' || field === 'keterangan') return;
+                if (field === 'nomor_mirror') return;
                 if (!availableColumns[field]) return;
                 columns.push(buildTabulatorDataColumn(field, availableColumns[field]));
               });
