@@ -690,7 +690,7 @@
       }
 
       function shouldIgnoreRowClick(target) {
-        return !!closestElement(target, 'a, button, input, select, textarea, label, .dropdown-menu, .modal, .ie-cell, .document-handler-select');
+        return !!closestElement(target, 'a, button, input, select, textarea, label, .dropdown-menu, .modal, .document-handler-select');
       }
 
       function bindEvents() {

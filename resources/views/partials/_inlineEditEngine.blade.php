@@ -24,7 +24,7 @@
     box-shadow: inset 0 0 0 1px rgba(13, 91, 89, 0.24);
   }
   .ie-cell:not(.ie-editing):hover::after {
-    content: 'Edit';
+    content: '2x klik Edit';
     background: #083E40;
     border-radius: 999px;
     color: #ffffff;
@@ -731,15 +731,24 @@
         e.stopPropagation();
         return; // buka link, tidak memicu inline edit
       }
-      e.stopPropagation();
-      activateCell(cell);
+      // Klik biasa dipakai untuk membuka Detail Cepat. Inline edit sengaja
+      // dibuat eksplisit agar tidak terasa seperti salah klik di tabel.
+      if (activeCell && activeCell !== cell) {
+        commitCell(activeCell);
+      }
+      return;
     } else if (activeCell) {
       commitCell(activeCell);
     }
   });
 
   document.addEventListener('dblclick', function(e) {
-    if (e.target.closest('.ie-cell')) { e.stopPropagation(); e.preventDefault(); }
+    const cell = e.target.closest('.ie-cell');
+    if (!cell) return;
+    if (e.target.tagName === 'A' || e.target.closest('a')) return;
+    e.stopPropagation();
+    e.preventDefault();
+    activateCell(cell);
   }, true);
 
 })();
