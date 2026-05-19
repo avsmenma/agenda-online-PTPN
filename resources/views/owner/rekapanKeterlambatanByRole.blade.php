@@ -1769,8 +1769,8 @@
               }
             @endphp
             <div class="document-card document-card-{{ $ageColor }}"
-              onclick="window.location.href='@if(in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner'])){{ route('owner.workflow', ['id' => $dokumen->id]) }}@elseif($roleCode === 'team_verifikasi'){{ route('documents.verifikasi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'perpajakan'){{ route('documents.perpajakan.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'akutansi'){{ route('documents.akutansi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'pembayaran'){{ route('dashboard.pembayaran', ['search' => $dokumen->nomor_agenda]) }}@else{{ route('owner.workflow', ['id' => $dokumen->id]) }}@endif'"
-              title="{{ in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner']) ? 'Klik untuk melihat detail workflow dokumen' : 'Klik untuk melihat dokumen di daftar dokumen' }}">
+              onclick="window.location.href='@if($roleCode === 'team_verifikasi'){{ route('documents.verifikasi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'perpajakan'){{ route('documents.perpajakan.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'akutansi'){{ route('documents.akutansi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'pembayaran'){{ route('dashboard.pembayaran', ['search' => $dokumen->nomor_agenda]) }}@else{{ route('tracking.dokumen', ['search' => $dokumen->nomor_agenda]) }}@endif'"
+              title="Klik untuk melihat dokumen">
               <div class="card-header">
                 <div>
                   <div class="card-title">{{ $dokumen->nomor_agenda }}</div>
@@ -1949,8 +1949,8 @@
                     }
                   @endphp
                   <tr class="clickable-row table-row-{{ $ageColor }}"
-                    onclick="window.location.href='@if(in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner'])){{ route('owner.workflow', ['id' => $dokumen->id]) }}@elseif($roleCode === 'team_verifikasi'){{ route('documents.verifikasi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'perpajakan'){{ route('documents.perpajakan.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'akutansi'){{ route('documents.akutansi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'pembayaran'){{ route('dashboard.pembayaran', ['search' => $dokumen->nomor_agenda]) }}@else{{ route('owner.workflow', ['id' => $dokumen->id]) }}@endif'"
-                    title="{{ in_array(strtolower(auth()->user()->role ?? ''), ['admin', 'owner']) ? 'Klik untuk melihat detail workflow dokumen' : 'Klik untuk melihat dokumen di daftar dokumen' }}">
+                    onclick="window.location.href='@if($roleCode === 'team_verifikasi'){{ route('documents.verifikasi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'perpajakan'){{ route('documents.perpajakan.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'akutansi'){{ route('documents.akutansi.index', ['search' => $dokumen->nomor_agenda]) }}@elseif($roleCode === 'pembayaran'){{ route('dashboard.pembayaran', ['search' => $dokumen->nomor_agenda]) }}@else{{ route('tracking.dokumen', ['search' => $dokumen->nomor_agenda]) }}@endif'"
+                    title="Klik untuk melihat dokumen">
 
                     <td>{{ $dokumens->firstItem() + $index }}</td>
                     <td>{{ $dokumen->nomor_agenda }}</td>

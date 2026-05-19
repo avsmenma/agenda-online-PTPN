@@ -242,14 +242,6 @@ Route::get('tracking-dokumen', [OwnerDashboardController::class, 'trackingDokume
     ->middleware('auth')
     ->name('tracking.dokumen');
 
-Route::get('owner/api/document-timeline/{id}', [OwnerDashboardController::class, 'getDocumentTimeline'])
-    ->middleware('auth', 'role:admin,owner')
-    ->name('owner.api.document-timeline');
-
-Route::get('owner/workflow/{id}', [OwnerDashboardController::class, 'showWorkflow'])
-    ->middleware('auth')
-    ->name('owner.workflow');
-
 Route::get('owner/rekapan-keterlambatan', fn () => redirect()->route('rekapan-keterlambatan.index'))
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.rekapan-keterlambatan');

@@ -1836,8 +1836,7 @@
     /* Prevent text selection on clickable containers */
     .clickable-row,
     .clickable-card,
-    [onclick*="handleItemClick"],
-    [onclick*="handleCardClick"] {
+    [onclick*="handleItemClick"] {
       user-select: none;
       -webkit-user-select: none;
       -moz-user-select: none;
@@ -1847,8 +1846,7 @@
     /* Allow text selection on specific elements inside clickable containers */
     .clickable-row .select-text,
     .clickable-card .select-text,
-    [onclick*="handleItemClick"] .select-text,
-    [onclick*="handleCardClick"] .select-text {
+    [onclick*="handleItemClick"] .select-text {
       user-select: text;
       -webkit-user-select: text;
       -moz-user-select: text;

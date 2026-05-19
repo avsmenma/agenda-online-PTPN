@@ -98,10 +98,7 @@
                                 <td class="text-muted">{{ $logs->firstItem() + $index }}</td>
                                 <td>
                                     @if($log->dokumen)
-                                        <a href="{{ route('owner.workflow', $log->dokumen_id) }}" target="_blank"
-                                            class="text-decoration-none fw-semibold" title="Lihat detail workflow">
-                                            {{ $log->dokumen->nomor_agenda ?? '-' }}
-                                        </a>
+                                        <span class="fw-semibold">{{ $log->dokumen->nomor_agenda ?? '-' }}</span>
                                     @else
                                         <span class="text-muted">ID: {{ $log->dokumen_id }}</span>
                                     @endif

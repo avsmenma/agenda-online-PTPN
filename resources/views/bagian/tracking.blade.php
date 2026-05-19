@@ -575,8 +575,7 @@
                     // Progress percentage (100% if paid)
                     $progressPercent = $isPaid ? 100 : ((($step - 1) / 4) * 100);
                 @endphp
-                <div class="doc-card {{ $isPaid ? 'paid' : '' }}"
-                    onclick="window.location.href='{{ route('owner.workflow', $doc->id) }}'" style="cursor: pointer;">
+                <div class="doc-card {{ $isPaid ? 'paid' : '' }}">
                     @if($isPaid)
                         <div class="paid-stamp">
                             <i class="fa-solid fa-check-circle"></i>
@@ -658,7 +657,6 @@
                                         <th>Nilai Rupiah</th>
                                         <th>Status</th>
                                         <th>Posisi Saat Ini</th>
-                                        <th style="text-align: center;">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -700,7 +698,7 @@
                                                 $position = 'Bagian ' . $bagianCode;
                                             }
                                         @endphp
-                                        <tr onclick="window.location.href='{{ route('owner.workflow', $doc->id) }}'">
+                                        <tr>
                                             <td>
                                                 <span class="doc-agenda-cell">{{ $doc->nomor_agenda }}</span>
                                             </td>
@@ -722,12 +720,6 @@
                                                     <i class="fa-solid fa-location-dot"></i>
                                                     {{ $position }}
                                                 </span>
-                                            </td>
-                                            <td style="text-align: center;" onclick="event.stopPropagation()">
-                                                <a href="{{ route('owner.workflow', $doc->id) }}" class="table-action-btn"
-                                                    title="Lihat Detail Alur">
-                                                    <i class="fa-solid fa-route"></i>
-                                                </a>
                                             </td>
                                         </tr>
                                     @endforeach

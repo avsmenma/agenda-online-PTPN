@@ -1664,15 +1664,7 @@
           <td class="col-action" onclick="if(event) { event.stopPropagation(); }">
             <div class="action-buttons">
               @if($paymentStatus === 'belum_siap_bayar')
-                {{-- Kondisi A: Status = "Belum Siap Bayar" - Tampilkan icon mata untuk tracking --}}
-                <a href="{{ route('owner.workflow', $dokumen->id) }}" 
-                   target="_blank"
-                   class="btn-action workflow-link"
-                   title="Lihat Tracking Workflow Dokumen"
-                   data-workflow-id="{{ $dokumen->id }}"
-                   onclick="event.stopPropagation();">
-                  <i class="fas fa-eye"></i>
-                </a>
+                <span class="status-badge belum-diproses">Belum Siap Bayar</span>
               @elseif($paymentStatus === 'siap_bayar' || $paymentStatus === 'sudah_dibayar')
                 {{-- Status "Siap Bayar" atau "Sudah Dibayar" - Cek kelengkapan data --}}
                 @php
@@ -3188,29 +3180,7 @@ function changePerPage(perPage) {
 // Note: openEditPembayaranModal and submitEditPembayaran are already defined at the top of this script
 // They are defined before DOMContentLoaded to ensure they're available immediately
 
-// Ensure workflow tracking links work correctly
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle workflow tracking links - use mousedown instead of click to prevent any interference
-    document.querySelectorAll('.workflow-link').forEach(function(link) {
-        // Use mousedown to capture event earlier
-        link.addEventListener('mousedown', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-        });
-        
-        // Also handle click as backup
-        link.addEventListener('click', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-            const url = this.getAttribute('href');
-            console.log('Workflow link clicked, URL:', url);
-            if (url) {
-                window.open(url, '_blank');
-            }
-            return false;
-        }, true); // Use capture phase to intercept early
-    });
-    
     // Prevent row click when clicking on action buttons (for all rows)
     document.querySelectorAll('.clickable-row .action-buttons a, .clickable-row .action-buttons button').forEach(function(element) {
         element.addEventListener('click', function(e) {

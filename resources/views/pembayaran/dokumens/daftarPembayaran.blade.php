@@ -944,13 +944,9 @@
               <td style="text-align: center;" onclick="event.stopPropagation()">
                 <div class="d-flex justify-content-center flex-wrap gap-1">
                   @if($isBelumSiapBayar)
-                    {{-- Dokumen belum siap bayar - hanya bisa lihat tracking, tidak bisa lihat detail --}}
-                    <a href="{{ route('owner.workflow', $dokumen->id) }}" target="_blank" class="btn-action workflow-link"
-                      title="Lihat Tracking Workflow Dokumen" data-workflow-id="{{ $dokumen->id }}"
-                      style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-                      <i class="fas fa-eye"></i>
-                      <span style="font-size: 12px;">Tracking</span>
-                    </a>
+                    <span class="badge-status badge-proses" style="font-size: 10px; padding: 4px 8px;">
+                      <i class="fa-solid fa-clock me-1"></i>Belum Siap
+                    </span>
                   @elseif($isBelumSiap)
                     {{-- Dokumen belum siap - hanya bisa dilihat, tidak bisa diedit --}}
                     <span class="badge-status badge-proses" style="font-size: 10px; padding: 4px 8px;">
@@ -2232,5 +2228,4 @@ if (searchInput) {
 @include('partials._activeCellNav', ['tableSelector' => '.data-table'])
 
 @endsection
-
 
