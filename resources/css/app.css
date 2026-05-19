@@ -84,7 +84,7 @@
 }
 
 /* Fix for Nilai Rupiah column vertical line issue */
-.table-enhanced td.col-nilai,
+.data-table td.col-nilai,
 .table-dokumen td.col-nilai,
 .table tbody td.col-nilai {
     border-right: none !important;
@@ -93,7 +93,7 @@
     box-shadow: none !important;
 }
 
-.table-enhanced th.col-nilai,
+.data-table th.col-nilai,
 .table-dokumen th.col-nilai {
     border-right: none !important;
     border-left: none !important;

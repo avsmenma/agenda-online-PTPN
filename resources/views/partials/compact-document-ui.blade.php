@@ -196,7 +196,7 @@
   }
 
   #documentTableContainer table,
-  #documentTableContainer .table-enhanced {
+  #documentTableContainer .data-table {
     border-collapse: separate !important;
     border-spacing: 0 !important;
     border: 1px solid #dee2e6 !important;
@@ -215,7 +215,7 @@
   }
 
   #documentTableContainer table thead,
-  #documentTableContainer .table-enhanced thead {
+  #documentTableContainer .data-table thead {
     display: table-header-group !important;
     position: static !important;
     top: auto !important;
@@ -224,7 +224,7 @@
   }
 
   #documentTableContainer table thead tr,
-  #documentTableContainer .table-enhanced thead tr {
+  #documentTableContainer .data-table thead tr {
     display: table-row !important;
     position: static !important;
     top: auto !important;
@@ -233,7 +233,7 @@
   }
 
   #documentTableContainer table thead::after,
-  #documentTableContainer .table-enhanced thead::after {
+  #documentTableContainer .data-table thead::after {
     content: none !important;
     display: none !important;
   }
@@ -372,7 +372,7 @@
   }
 
   #documentTableContainer table tbody td,
-  #documentTableContainer .table-enhanced tbody td {
+  #documentTableContainer .data-table tbody td {
     padding: 8px 10px !important;
     height: 44px !important;
     min-height: 44px !important;
@@ -387,25 +387,25 @@
   }
 
   #documentTableContainer table tbody,
-  #documentTableContainer .table-enhanced tbody,
+  #documentTableContainer .data-table tbody,
   #documentTableContainer table tbody tr,
-  #documentTableContainer .table-enhanced tbody tr,
+  #documentTableContainer .data-table tbody tr,
   #documentTableContainer table tbody td,
-  #documentTableContainer .table-enhanced tbody td {
+  #documentTableContainer .data-table tbody td {
     position: static !important;
     z-index: 0 !important;
   }
 
   #documentTableContainer table tbody td.acn-active,
-  #documentTableContainer .table-enhanced tbody td.acn-active {
+  #documentTableContainer .data-table tbody td.acn-active {
     position: relative !important;
     z-index: 1 !important;
   }
 
   #documentTableContainer table tbody td strong,
-  #documentTableContainer .table-enhanced tbody td strong,
+  #documentTableContainer .data-table tbody td strong,
   #documentTableContainer table tbody td b,
-  #documentTableContainer .table-enhanced tbody td b {
+  #documentTableContainer .data-table tbody td b {
     font-weight: 500 !important;
   }
 
@@ -415,25 +415,25 @@
   }
 
   #documentTableContainer table tbody td:last-child,
-  #documentTableContainer .table-enhanced tbody td:last-child {
+  #documentTableContainer .data-table tbody td:last-child {
     border-right: 1px solid #dee2e6 !important;
     box-shadow: none !important;
   }
 
   #documentTableContainer table tbody tr:nth-child(even) td,
-  #documentTableContainer .table-enhanced tbody tr:nth-child(even) td {
+  #documentTableContainer .data-table tbody tr:nth-child(even) td {
     background-color: #f8fbff !important;
   }
 
   #documentTableContainer table tbody tr:hover td,
-  #documentTableContainer .table-enhanced tbody tr:hover td {
+  #documentTableContainer .data-table tbody tr:hover td {
     background-color: #f0f5fb !important;
     border-color: #dee2e6 !important;
   }
 
   #documentTableContainer .virtual-scroll-spacer,
   #documentTableContainer table tbody tr.virtual-scroll-spacer,
-  #documentTableContainer .table-enhanced tbody tr.virtual-scroll-spacer {
+  #documentTableContainer .data-table tbody tr.virtual-scroll-spacer {
     height: var(--virtual-spacer-height, 0px) !important;
     min-height: 0 !important;
     max-height: var(--virtual-spacer-height, 0px) !important;
@@ -442,7 +442,7 @@
 
   #documentTableContainer .virtual-scroll-spacer td,
   #documentTableContainer table tbody tr.virtual-scroll-spacer td,
-  #documentTableContainer .table-enhanced tbody tr.virtual-scroll-spacer td {
+  #documentTableContainer .data-table tbody tr.virtual-scroll-spacer td {
     height: var(--virtual-spacer-height, 0px) !important;
     min-height: 0 !important;
     max-height: var(--virtual-spacer-height, 0px) !important;
@@ -453,7 +453,7 @@
   }
 
   #documentTableContainer table tbody tr,
-  #documentTableContainer .table-enhanced tbody tr {
+  #documentTableContainer .data-table tbody tr {
     transform: none !important;
   }
 
@@ -483,12 +483,12 @@
     height: 32px !important;
   }
 
-  #documentTableContainer .table-enhanced th.col-uraian,
-  #documentTableContainer .table-enhanced td.col-uraian,
-  #documentTableContainer .table-enhanced th.col-uraian_spp,
-  #documentTableContainer .table-enhanced td.col-uraian_spp,
-  #documentTableContainer .table-enhanced th[class*="uraian"],
-  #documentTableContainer .table-enhanced td[class*="uraian"],
+  #documentTableContainer .data-table th.col-uraian,
+  #documentTableContainer .data-table td.col-uraian,
+  #documentTableContainer .data-table th.col-uraian_spp,
+  #documentTableContainer .data-table td.col-uraian_spp,
+  #documentTableContainer .data-table th[class*="uraian"],
+  #documentTableContainer .data-table td[class*="uraian"],
   #documentTableContainer table th[class*="uraian"],
   #documentTableContainer table td[class*="uraian"] {
     width: 620px !important;
@@ -502,22 +502,22 @@
     padding: 0.6rem 0.75rem !important;
   }
 
-  #documentTableContainer .table-enhanced th.col-uraian,
-  #documentTableContainer .table-enhanced th.col-uraian_spp,
-  #documentTableContainer .table-enhanced th[class*="uraian"] {
+  #documentTableContainer .data-table th.col-uraian,
+  #documentTableContainer .data-table th.col-uraian_spp,
+  #documentTableContainer .data-table th[class*="uraian"] {
     text-align: center !important;
   }
 
-  #documentTableContainer .table-enhanced td.col-uraian,
-  #documentTableContainer .table-enhanced td.col-uraian_spp,
-  #documentTableContainer .table-enhanced td[class*="uraian"],
+  #documentTableContainer .data-table td.col-uraian,
+  #documentTableContainer .data-table td.col-uraian_spp,
+  #documentTableContainer .data-table td[class*="uraian"],
   #documentTableContainer table td[class*="uraian"] {
     text-align: left !important;
   }
 
-  #documentTableContainer .table-enhanced td.col-uraian > *,
-  #documentTableContainer .table-enhanced td.col-uraian_spp > *,
-  #documentTableContainer .table-enhanced td[class*="uraian"] > *,
+  #documentTableContainer .data-table td.col-uraian > *,
+  #documentTableContainer .data-table td.col-uraian_spp > *,
+  #documentTableContainer .data-table td[class*="uraian"] > *,
   #documentTableContainer table td[class*="uraian"] > * {
     width: 100% !important;
     max-width: none !important;
@@ -686,8 +686,8 @@
 
   body.document-table-only-fullscreen #documentTableContainer th,
   body.document-table-only-fullscreen #documentTableContainer td,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced th,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced td {
+  body.document-table-only-fullscreen #documentTableContainer .data-table th,
+  body.document-table-only-fullscreen #documentTableContainer .data-table td {
     border-left: 0 !important;
     border-image: none !important;
     outline-color: transparent !important;
@@ -720,7 +720,7 @@
 
   body.document-table-only-fullscreen #documentTableContainer .virtual-scroll-spacer,
   body.document-table-only-fullscreen #documentTableContainer table tbody tr.virtual-scroll-spacer,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody tr.virtual-scroll-spacer {
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody tr.virtual-scroll-spacer {
     height: var(--virtual-spacer-height, 0px) !important;
     min-height: 0 !important;
     max-height: var(--virtual-spacer-height, 0px) !important;
@@ -729,7 +729,7 @@
 
   body.document-table-only-fullscreen #documentTableContainer .virtual-scroll-spacer td,
   body.document-table-only-fullscreen #documentTableContainer table tbody tr.virtual-scroll-spacer td,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody tr.virtual-scroll-spacer td {
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody tr.virtual-scroll-spacer td {
     height: var(--virtual-spacer-height, 0px) !important;
     min-height: 0 !important;
     max-height: var(--virtual-spacer-height, 0px) !important;
@@ -739,12 +739,12 @@
     box-shadow: none !important;
   }
 
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced th.col-uraian,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced td.col-uraian,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced th.col-uraian_spp,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced td.col-uraian_spp,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced th[class*="uraian"],
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced td[class*="uraian"],
+  body.document-table-only-fullscreen #documentTableContainer .data-table th.col-uraian,
+  body.document-table-only-fullscreen #documentTableContainer .data-table td.col-uraian,
+  body.document-table-only-fullscreen #documentTableContainer .data-table th.col-uraian_spp,
+  body.document-table-only-fullscreen #documentTableContainer .data-table td.col-uraian_spp,
+  body.document-table-only-fullscreen #documentTableContainer .data-table th[class*="uraian"],
+  body.document-table-only-fullscreen #documentTableContainer .data-table td[class*="uraian"],
   body.document-table-only-fullscreen #documentTableContainer table th[class*="uraian"],
   body.document-table-only-fullscreen #documentTableContainer table td[class*="uraian"] {
     width: 680px !important;
@@ -845,8 +845,8 @@
 
   body.is-fullscreen #documentTableContainer th,
   body.is-fullscreen #documentTableContainer td,
-  body.is-fullscreen #documentTableContainer .table-enhanced th,
-  body.is-fullscreen #documentTableContainer .table-enhanced td {
+  body.is-fullscreen #documentTableContainer .data-table th,
+  body.is-fullscreen #documentTableContainer .data-table td {
     border-left: 0 !important;
     border-image: none !important;
   }
@@ -883,7 +883,7 @@
 
   body.is-fullscreen #documentTableContainer .virtual-scroll-spacer,
   body.is-fullscreen #documentTableContainer table tbody tr.virtual-scroll-spacer,
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody tr.virtual-scroll-spacer {
+  body.is-fullscreen #documentTableContainer .data-table tbody tr.virtual-scroll-spacer {
     height: var(--virtual-spacer-height, 0px) !important;
     min-height: 0 !important;
     max-height: var(--virtual-spacer-height, 0px) !important;
@@ -892,7 +892,7 @@
 
   body.is-fullscreen #documentTableContainer .virtual-scroll-spacer td,
   body.is-fullscreen #documentTableContainer table tbody tr.virtual-scroll-spacer td,
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody tr.virtual-scroll-spacer td {
+  body.is-fullscreen #documentTableContainer .data-table tbody tr.virtual-scroll-spacer td {
     height: var(--virtual-spacer-height, 0px) !important;
     min-height: 0 !important;
     max-height: var(--virtual-spacer-height, 0px) !important;
@@ -971,12 +971,12 @@
       font-size: 0.64rem !important;
     }
 
-    #documentTableContainer .table-enhanced th.col-uraian,
-    #documentTableContainer .table-enhanced td.col-uraian,
-    #documentTableContainer .table-enhanced th.col-uraian_spp,
-    #documentTableContainer .table-enhanced td.col-uraian_spp,
-    #documentTableContainer .table-enhanced th[class*="uraian"],
-    #documentTableContainer .table-enhanced td[class*="uraian"],
+    #documentTableContainer .data-table th.col-uraian,
+    #documentTableContainer .data-table td.col-uraian,
+    #documentTableContainer .data-table th.col-uraian_spp,
+    #documentTableContainer .data-table td.col-uraian_spp,
+    #documentTableContainer .data-table th[class*="uraian"],
+    #documentTableContainer .data-table td[class*="uraian"],
     #documentTableContainer table th[class*="uraian"],
     #documentTableContainer table td[class*="uraian"] {
       width: 560px !important;

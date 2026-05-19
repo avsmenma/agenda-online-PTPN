@@ -321,14 +321,14 @@
     border: 2px solid rgba(255, 255, 255, 0.8);
   }
 
-  .table-enhanced {
+  .data-table {
     border-collapse: separate;
     border-spacing: 0;
     min-width: 1400px;
     width: 100%;
   }
 
-  .table-enhanced thead th {
+  .data-table thead th {
     position: sticky;
     top: 0;
     z-index: 10;
@@ -345,46 +345,46 @@
     white-space: nowrap;
   }
 
-  .table-enhanced tbody tr {
+  .data-table tbody tr {
     transition: all 0.2s ease;
     border-left: 3px solid transparent;
     background: white;
   }
 
-  .table-enhanced tbody tr:hover {
+  .data-table tbody tr:hover {
     background: linear-gradient(135deg, rgba(8, 62, 64, 0.02) 0%, rgba(136, 151, 23, 0.02) 100%);
   }
 
-  .table-enhanced tbody tr.clickable-row {
+  .data-table tbody tr.clickable-row {
     cursor: pointer;
   }
 
-  .table-enhanced tbody tr.clickable-row:hover {
+  .data-table tbody tr.clickable-row:hover {
     background: linear-gradient(135deg, rgba(136, 151, 23, 0.08) 0%, rgba(136, 151, 23, 0.04) 100%);
     border-left-color: #889717;
   }
   
-  .table-enhanced tbody tr.no-click-row {
+  .data-table tbody tr.no-click-row {
     cursor: default !important;
   }
   
-  .table-enhanced tbody tr.no-click-row:hover {
+  .data-table tbody tr.no-click-row:hover {
     background-color: transparent !important;
     border-left-color: transparent !important;
   }
 
-  .table-enhanced tbody tr.non-clickable-row {
+  .data-table tbody tr.non-clickable-row {
     opacity: 0.7;
     cursor: not-allowed;
   }
 
-  .table-enhanced tbody tr.locked-row {
+  .data-table tbody tr.locked-row {
     background: linear-gradient(135deg, #f8f9fa 0%, #eef3f3 100%);
     border-left-color: #ffc107;
     position: relative;
   }
 
-  .table-enhanced tbody tr.locked-row::before {
+  .data-table tbody tr.locked-row::before {
     content: '🔒';
     position: absolute;
     left: 8px;
@@ -394,13 +394,13 @@
     opacity: 0.6;
   }
 
-  .table-enhanced tbody td {
+  .data-table tbody td {
     padding: 14px 12px;
     border-bottom: 1px solid rgba(8, 62, 64, 0.08);
     vertical-align: middle;
   }
 
-  .table-enhanced .col-uraian {
+  .data-table .col-uraian {
     width: 700px;
     min-width: 500px;
     max-width: 1000px;
@@ -412,7 +412,7 @@
     padding: 12px;
   }
   
-  .table-enhanced .col-uraian span {
+  .data-table .col-uraian span {
     display: block;
     word-wrap: break-word;
     white-space: normal;
@@ -421,8 +421,8 @@
     width: 100%;
   }
 
-  .table-enhanced .col-dibayar_kepada,
-  .table-enhanced td.col-dibayar_kepada {
+  .data-table .col-dibayar_kepada,
+  .data-table td.col-dibayar_kepada {
     width: 250px;
     min-width: 200px;
     max-width: 300px;
@@ -435,11 +435,11 @@
     padding: 12px;
   }
 
-  .table-enhanced tbody tr:last-child td {
+  .data-table tbody tr:last-child td {
     border-bottom: none;
   }
 
-  .table-enhanced tbody tr.selected {
+  .data-table tbody tr.selected {
     background: linear-gradient(135deg, rgba(136, 151, 23, 0.08) 0%, rgba(136, 151, 23, 0.04) 100%);
     border-left-color: #889717;
   }
@@ -1033,7 +1033,7 @@
       padding: 20px;
     }
 
-    .table-enhanced {
+    .data-table {
       min-width: 1200px;
     }
 

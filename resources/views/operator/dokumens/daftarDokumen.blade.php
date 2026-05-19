@@ -1421,7 +1421,7 @@
     }
 
     /* Enhanced table for better UX - Adopted from Team Verifikasi */
-    .table-enhanced {
+    .data-table {
       border-collapse: separate;
       border-spacing: 0;
       min-width: 100%;
@@ -1429,7 +1429,7 @@
       table-layout: auto;
     }
 
-    .table-enhanced thead th {
+    .data-table thead th {
       position: sticky;
       top: 0;
       z-index: 10;
@@ -1452,18 +1452,18 @@
     }
 
 
-    .table-enhanced tbody tr {
+    .data-table tbody tr {
       transition: all 0.2s ease;
       border-bottom: 1px solid #f0f0f0;
     }
 
-    .table-enhanced tbody tr:hover {
+    .data-table tbody tr:hover {
       background: linear-gradient(135deg, rgba(136, 151, 23, 0.05) 0%, rgba(255, 255, 255, 0.8) 100%);
       transform: translateY(-1px);
     }
 
     /* Column width optimization for Operator */
-    .table-enhanced td {
+    .data-table td {
       padding: 12px;
       text-align: center;
       vertical-align: middle;
@@ -1471,54 +1471,54 @@
       border-right: none;
     }
 
-    .table-enhanced .col-no {
+    .data-table .col-no {
       width: 80px;
       min-width: 80px;
     }
 
-    .table-enhanced .col-nomor_agenda {
+    .data-table .col-nomor_agenda {
       width: 120px;
       min-width: 120px;
     }
 
-    .table-enhanced .col-nomor_spp,
-    .table-enhanced .col-no_spk,
-    .table-enhanced .col-no_berita_acara,
-    .table-enhanced .col-nomor_po,
-    .table-enhanced .col-nomor_miro,
-    .table-enhanced .col-no_faktur {
+    .data-table .col-nomor_spp,
+    .data-table .col-no_spk,
+    .data-table .col-no_berita_acara,
+    .data-table .col-nomor_po,
+    .data-table .col-nomor_miro,
+    .data-table .col-no_faktur {
       width: 170px;
       min-width: 170px;
       max-width: 240px;
     }
 
-    .table-enhanced [class*="col-tanggal"] {
+    .data-table [class*="col-tanggal"] {
       width: 150px;
       min-width: 150px;
       max-width: 180px;
     }
 
-    .table-enhanced .col-nilai_rupiah,
-    .table-enhanced .col-dpp_pph,
-    .table-enhanced .col-ppn_terhutang {
+    .data-table .col-nilai_rupiah,
+    .data-table .col-dpp_pph,
+    .data-table .col-ppn_terhutang {
       width: 120px;
       min-width: 120px;
     }
 
-    .table-enhanced .col-kategori,
-    .table-enhanced .col-jenis_dokumen,
-    .table-enhanced .col-jenis_sub_pekerjaan,
-    .table-enhanced .col-jenis_pembayaran,
-    .table-enhanced .col-nama_pengirim,
-    .table-enhanced .col-kepala_sub_bagian,
-    .table-enhanced .col-handler {
+    .data-table .col-kategori,
+    .data-table .col-jenis_dokumen,
+    .data-table .col-jenis_sub_pekerjaan,
+    .data-table .col-jenis_pembayaran,
+    .data-table .col-nama_pengirim,
+    .data-table .col-kepala_sub_bagian,
+    .data-table .col-handler {
       width: 190px;
       min-width: 190px;
       max-width: 280px;
     }
 
-    .table-enhanced .col-status,
-    .table-enhanced .col-status_dokumen_custom {
+    .data-table .col-status,
+    .data-table .col-status_dokumen_custom {
       width: 250px;
       min-width: 250px;
       max-width: 280px;
@@ -1526,31 +1526,31 @@
       overflow: visible;
     }
 
-    .table-enhanced th.col-status {
+    .data-table th.col-status {
       text-align: center;
     }
 
-    .table-enhanced td.col-status {
+    .data-table td.col-status {
       text-align: center;
     }
 
-    .table-enhanced .col-status .badge-status {
+    .data-table .col-status .badge-status {
       margin: 0 auto;
       display: inline-flex;
       white-space: normal;
     }
 
-    .table-enhanced .col-keterangan {
+    .data-table .col-keterangan {
       width: 150px;
       min-width: 130px;
     }
 
-    .table-enhanced .col-action {
+    .data-table .col-action {
       width: 140px;
       min-width: 140px;
     }
 
-    .table-enhanced .col-uraian {
+    .data-table .col-uraian {
       width: 700px;
       min-width: 500px;
       max-width: 1000px;
@@ -1562,7 +1562,7 @@
       padding: 12px;
     }
 
-    .table-enhanced .col-uraian span {
+    .data-table .col-uraian span {
       display: block;
       word-wrap: break-word;
       white-space: normal;
@@ -1571,8 +1571,8 @@
       width: 100%;
     }
 
-    .table-enhanced .col-dibayar_kepada,
-    .table-enhanced td.col-dibayar_kepada {
+    .data-table .col-dibayar_kepada,
+    .data-table td.col-dibayar_kepada {
       width: 250px;
       min-width: 200px;
       max-width: 300px;
@@ -1586,8 +1586,8 @@
     }
 
     /* Ensure checkbox and No columns are NOT sticky */
-    .table-enhanced .col-checkbox,
-    .table-enhanced .col-no {
+    .data-table .col-checkbox,
+    .data-table .col-no {
       position: static !important;
       left: auto !important;
       z-index: auto !important;
@@ -1601,57 +1601,57 @@
         box-shadow: 0 2px 15px rgba(8, 62, 64, 0.05);
       }
 
-      .table-enhanced {
+      .data-table {
         min-width: 700px;
         font-size: 12px;
       }
 
-      .table-enhanced th {
+      .data-table th {
         padding: 12px 8px;
         font-size: 12px;
       }
 
-      .table-enhanced td {
+      .data-table td {
         padding: 10px 8px;
         font-size: 12px;
       }
 
-      .table-enhanced .col-no {
+      .data-table .col-no {
         width: 60px;
         min-width: 60px;
       }
 
-      .table-enhanced .col-nomor_agenda {
+      .data-table .col-nomor_agenda {
         width: 100px;
         min-width: 100px;
       }
 
-      .table-enhanced .col-nomor_spp {
+      .data-table .col-nomor_spp {
         width: 120px;
         min-width: 120px;
       }
 
-      .table-enhanced [class*="col-tanggal"] {
+      .data-table [class*="col-tanggal"] {
         width: 130px;
         min-width: 130px;
       }
 
-      .table-enhanced .col-nilai_rupiah {
+      .data-table .col-nilai_rupiah {
         width: 100px;
         min-width: 100px;
       }
 
-      .table-enhanced .col-status {
+      .data-table .col-status {
         width: 90px;
         min-width: 90px;
       }
 
-      .table-enhanced .col-keterangan {
+      .data-table .col-keterangan {
         width: 110px;
         min-width: 110px;
       }
 
-      .table-enhanced .col-action {
+      .data-table .col-action {
         width: 120px;
         min-width: 120px;
       }
@@ -1678,56 +1678,56 @@
     }
 
     @media (max-width: 480px) {
-      .table-enhanced {
+      .data-table {
         min-width: 600px;
       }
 
-      .table-enhanced th {
+      .data-table th {
         padding: 10px 6px;
         font-size: 11px;
       }
 
-      .table-enhanced td {
+      .data-table td {
         padding: 8px 6px;
         font-size: 11px;
       }
 
-      .table-enhanced .col-no {
+      .data-table .col-no {
         width: 50px;
         min-width: 50px;
       }
 
-      .table-enhanced .col-nomor_agenda {
+      .data-table .col-nomor_agenda {
         width: 90px;
         min-width: 90px;
       }
 
-      .table-enhanced .col-nomor_spp {
+      .data-table .col-nomor_spp {
         width: 100px;
         min-width: 100px;
       }
 
-      .table-enhanced [class*="col-tanggal"] {
+      .data-table [class*="col-tanggal"] {
         width: 120px;
         min-width: 120px;
       }
 
-      .table-enhanced .col-nilai_rupiah {
+      .data-table .col-nilai_rupiah {
         width: 80px;
         min-width: 80px;
       }
 
-      .table-enhanced .col-status {
+      .data-table .col-status {
         width: 80px;
         min-width: 80px;
       }
 
-      .table-enhanced .col-keterangan {
+      .data-table .col-keterangan {
         width: 90px;
         min-width: 90px;
       }
 
-      .table-enhanced .col-action {
+      .data-table .col-action {
         width: 100px;
         min-width: 100px;
       }
@@ -2549,7 +2549,7 @@
     }
 
     /* Ensure scrollbar is always visible when needed */
-    .table-container:has(.table-enhanced) {
+    .table-container:has(.data-table) {
       overflow-x: scroll;
       /* Force scrollbar to appear */
     }

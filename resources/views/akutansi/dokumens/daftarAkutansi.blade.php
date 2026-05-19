@@ -407,7 +407,7 @@
       background: linear-gradient(135deg, rgba(26, 77, 62, 0.5), rgba(15, 61, 46, 0.6));
     }
 
-    .table-enhanced {
+    .data-table {
       border-collapse: separate;
       border-spacing: 0;
       min-width: 1600px;
@@ -415,7 +415,7 @@
       width: 100%;
     }
 
-    .table-enhanced thead th {
+    .data-table thead th {
       position: sticky;
       top: 0;
       z-index: 10;
@@ -434,44 +434,44 @@
     }
 
     /* Column Widths - Enhanced from perpajakan */
-    .table-enhanced .col-number {
+    .data-table .col-number {
       width: 60px;
       min-width: 60px;
       text-align: center;
       font-weight: 600;
     }
 
-    .table-enhanced .col-agenda {
+    .data-table .col-agenda {
       width: 150px;
       min-width: 150px;
       text-align: center;
     }
 
-    .table-enhanced .col-tanggal {
+    .data-table .col-tanggal {
       width: 140px;
       min-width: 140px;
       text-align: center;
     }
 
-    .table-enhanced .col-spp {
+    .data-table .col-spp {
       width: 160px;
       min-width: 160px;
       text-align: center;
     }
 
-    .table-enhanced .col-nilai {
+    .data-table .col-nilai {
       width: 150px;
       min-width: 150px;
       text-align: center;
     }
 
-    .table-enhanced .col-tanggal-spp {
+    .data-table .col-tanggal-spp {
       width: 140px;
       min-width: 140px;
       text-align: center;
     }
 
-    .table-enhanced .col-uraian {
+    .data-table .col-uraian {
       width: 700px;
       min-width: 500px;
       max-width: 1000px;
@@ -484,7 +484,7 @@
       padding: 12px;
     }
 
-    .table-enhanced .col-uraian span {
+    .data-table .col-uraian span {
       display: block;
       word-wrap: break-word;
       white-space: normal;
@@ -493,8 +493,8 @@
       width: 100%;
     }
 
-    .table-enhanced .col-dibayar_kepada,
-    .table-enhanced td.col-dibayar_kepada {
+    .data-table .col-dibayar_kepada,
+    .data-table td.col-dibayar_kepada {
       width: 250px;
       min-width: 200px;
       max-width: 300px;
@@ -507,13 +507,13 @@
       padding: 12px;
     }
 
-    .table-enhanced .col-deadline {
+    .data-table .col-deadline {
       width: 180px;
       min-width: 180px;
       text-align: center;
     }
 
-    .table-enhanced .col-status {
+    .data-table .col-status {
       width: 320px;
       min-width: 320px;
       max-width: 350px;
@@ -521,7 +521,7 @@
       overflow: visible;
     }
 
-    .table-enhanced .col-action {
+    .data-table .col-action {
       width: 180px;
       min-width: 180px;
       text-align: center;
@@ -530,26 +530,26 @@
       box-sizing: border-box;
     }
 
-    .table-enhanced tbody tr {
+    .data-table tbody tr {
       transition: all 0.3s ease;
       border-bottom: 1px solid rgba(26, 77, 62, 0.08);
       position: relative;
       border-left: 3px solid transparent;
     }
 
-    .table-enhanced tbody td {
+    .data-table tbody td {
       font-weight: 700;
     }
 
     /* Enhanced Locked Row Styling from perpajakan */
-    .table-enhanced tbody tr.locked-row {
+    .data-table tbody tr.locked-row {
       background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
       opacity: 0.85;
       position: relative;
       border-left: 4px solid #ffc107 !important;
     }
 
-    .table-enhanced tbody tr.locked-row:hover {
+    .data-table tbody tr.locked-row:hover {
       background: linear-gradient(135deg, #fff8e1 0%, #fff3c4 100%);
       border-left: 4px solid #ffc107 !important;
       transform: translateY(-1px);
@@ -557,7 +557,7 @@
     }
 
     /* Regular row hover effect */
-    .table-enhanced tbody tr:hover {
+    .data-table tbody tr:hover {
       background: linear-gradient(90deg, rgba(26, 77, 62, 0.05) 0%, transparent 100%);
       border-left: 3px solid #1a4d3e;
       transform: scale(1.002);
@@ -565,12 +565,12 @@
 
 
     /* Selected row styling */
-    .table-enhanced tbody tr.selected {
+    .data-table tbody tr.selected {
       background: linear-gradient(90deg, rgba(26, 77, 62, 0.15) 0%, transparent 100%);
       border-left: 3px solid #1a4d3e;
     }
 
-    .table-enhanced tbody td {
+    .data-table tbody td {
       padding: 16px;
       vertical-align: middle;
       border-right: 1px solid rgba(26, 77, 62, 0.05);
@@ -583,27 +583,27 @@
     }
 
     /* Custom centering for specific column content */
-    .table-enhanced .col-number,
-    .table-enhanced .col-agenda,
-    .table-enhanced .col-nilai,
-    .table-enhanced .col-tanggal-spp,
-    .table-enhanced .col-status,
-    .table-enhanced .col-deadline,
-    .table-enhanced .col-action {
+    .data-table .col-number,
+    .data-table .col-agenda,
+    .data-table .col-nilai,
+    .data-table .col-tanggal-spp,
+    .data-table .col-status,
+    .data-table .col-deadline,
+    .data-table .col-action {
       text-align: center;
     }
 
-    .table-enhanced .col-tanggal {
-      text-align: center;
-      font-weight: 600;
-    }
-
-    .table-enhanced .col-spp {
+    .data-table .col-tanggal {
       text-align: center;
       font-weight: 600;
     }
 
-    .table-enhanced .col-uraian {
+    .data-table .col-spp {
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .data-table .col-uraian {
       width: 700px;
       min-width: 500px;
       max-width: 1000px;
@@ -621,25 +621,25 @@
     }
 
     /* Override uraian column header to center */
-    .table-enhanced thead th.col-uraian {
+    .data-table thead th.col-uraian {
       text-align: center;
     }
 
     /* Special styling for centered content */
-    .table-enhanced td[colspan] {
+    .data-table td[colspan] {
       text-align: left;
     }
 
     /* Center agenda content properly */
-    .table-enhanced td.col-agenda>strong,
-    .table-enhanced td.col-agenda>small {
+    .data-table td.col-agenda>strong,
+    .data-table td.col-agenda>small {
       display: block;
       text-align: center;
     }
 
     /* Center deadline content */
-    .table-enhanced td.col-deadline>small,
-    .table-enhanced td.col-deadline>span {
+    .data-table td.col-deadline>small,
+    .data-table td.col-deadline>span {
       display: block;
       text-align: center;
     }
@@ -1669,7 +1669,7 @@
     }
 
     /* Enhanced Row Separation */
-    .table-enhanced tbody tr:not(:last-child)::after {
+    .data-table tbody tr:not(:last-child)::after {
       content: '';
       position: absolute;
       bottom: -1px;
@@ -1686,13 +1686,13 @@
         border-radius: 12px;
       }
 
-      .table-enhanced thead th {
+      .data-table thead th {
         padding: 14px 8px;
         font-size: 11px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       }
 
-      .table-enhanced td {
+      .data-table td {
         padding: 12px 8px;
         font-size: 12px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -1755,39 +1755,39 @@
     }
 
     @media (max-width: 576px) {
-      .table-enhanced {
+      .data-table {
         min-width: 1600px;
         /* Still allow horizontal scroll on very small screens */
       }
 
-      .table-enhanced .col-number {
+      .data-table .col-number {
         min-width: 60px;
         font-weight: 600;
       }
 
-      .table-enhanced .col-agenda {
+      .data-table .col-agenda {
         min-width: 130px;
       }
 
-      .table-enhanced .col-tanggal {
+      .data-table .col-tanggal {
         min-width: 130px;
         font-weight: 600;
       }
 
-      .table-enhanced .col-spp {
+      .data-table .col-spp {
         min-width: 140px;
         font-weight: 600;
       }
 
-      .table-enhanced .col-nilai {
+      .data-table .col-nilai {
         min-width: 140px;
       }
 
-      .table-enhanced .col-tanggal-spp {
+      .data-table .col-tanggal-spp {
         min-width: 130px;
       }
 
-      .table-enhanced .col-uraian {
+      .data-table .col-uraian {
         width: 500px;
         min-width: 400px;
         max-width: 700px;
@@ -1800,15 +1800,15 @@
         font-weight: 600;
       }
 
-      .table-enhanced .col-deadline {
+      .data-table .col-deadline {
         min-width: 160px;
       }
 
-      .table-enhanced .col-status {
+      .data-table .col-status {
         min-width: 140px;
       }
 
-      .table-enhanced .col-action {
+      .data-table .col-action {
         min-width: 160px;
       }
     }
@@ -2050,12 +2050,12 @@
         padding: 15px;
       }
 
-      .table-enhanced thead th {
+      .data-table thead th {
         padding: 12px 8px;
         font-size: 11px;
       }
 
-      .table-enhanced tbody td {
+      .data-table tbody td {
         padding: 10px 8px;
         font-size: 12px;
       }
@@ -3232,13 +3232,13 @@
       background: #f8fafc !important;
     }
     /* Zebra rows */
-    #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(even) { background: #f8fafc; }
-    #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(odd) { background: #ffffff; }
-    #documentTableContainer .table-enhanced tbody tr.main-row:hover {
+    #documentTableContainer .data-table tbody tr.main-row:nth-child(even) { background: #f8fafc; }
+    #documentTableContainer .data-table tbody tr.main-row:nth-child(odd) { background: #ffffff; }
+    #documentTableContainer .data-table tbody tr.main-row:hover {
       background: linear-gradient(90deg, rgba(8,62,64,0.04) 0%, transparent 100%) !important;
       border-left: 3px solid #083E40;
     }
-    #documentTableContainer .table-enhanced td { border-top: 1px solid #f1f5f9 !important; border-bottom: none !important; }
+    #documentTableContainer .data-table td { border-top: 1px solid #f1f5f9 !important; border-bottom: none !important; }
     #documentTableContainer .pagination-wrapper,
     #documentTableContainer nav[aria-label],
     #documentTableContainer .paginate-wrapper { padding: 0.75rem 1rem; border-top: 1px solid #f1f5f9; }

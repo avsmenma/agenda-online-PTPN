@@ -154,14 +154,14 @@
       border: 2px solid rgba(255, 255, 255, 0.8);
     }
 
-    .table-enhanced {
+    .data-table {
       border-collapse: separate;
       border-spacing: 0;
       min-width: 1400px;
       width: 100%;
     }
 
-    .table-enhanced thead th {
+    .data-table thead th {
       position: sticky;
       top: 0;
       z-index: 10;
@@ -176,19 +176,19 @@
       white-space: nowrap;
     }
 
-    .table-enhanced tbody tr {
+    .data-table tbody tr {
       transition: all 0.2s ease;
       border-left: 3px solid transparent;
       background: white;
     }
 
-    .table-enhanced tbody tr.locked-row {
+    .data-table tbody tr.locked-row {
       background: linear-gradient(135deg, #f8f9fa 0%, #eef3f3 100%);
       border-left-color: #ffc107;
       position: relative;
     }
 
-    .table-enhanced tbody tr.locked-row::before {
+    .data-table tbody tr.locked-row::before {
       content: '🔒';
       position: absolute;
       left: 8px;
@@ -198,13 +198,13 @@
       opacity: 0.6;
     }
 
-    .table-enhanced tbody tr:hover {
+    .data-table tbody tr:hover {
       background: linear-gradient(90deg, rgba(136, 151, 23, 0.05) 0%, transparent 100%);
       border-left: 3px solid #889717;
       transform: scale(1.005);
     }
 
-    .table-enhanced tbody td {
+    .data-table tbody td {
       padding: 14px 12px;
       vertical-align: middle;
       font-size: 13px;
@@ -213,7 +213,7 @@
       border-bottom: 1px solid rgba(8, 62, 64, 0.05);
     }
 
-    .table-enhanced .col-uraian {
+    .data-table .col-uraian {
       width: 700px;
       min-width: 500px;
       max-width: 1000px;
@@ -225,7 +225,7 @@
       padding: 12px;
     }
 
-    .table-enhanced .col-uraian span {
+    .data-table .col-uraian span {
       display: block;
       word-wrap: break-word;
       white-space: normal;
