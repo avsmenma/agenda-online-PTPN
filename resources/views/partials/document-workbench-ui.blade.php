@@ -437,6 +437,11 @@
         return (text || '').replace(/\s+/g, ' ').trim();
       }
 
+      function closestElement(target, selector) {
+        const element = target && target.nodeType === 1 ? target : target?.parentElement;
+        return element ? element.closest(selector) : null;
+      }
+
       function getSearchInput() {
         return document.querySelector('.role-filter-toolbar input[name="search"], .owner-docs-search input[name="search"], input[name="search"]');
       }
@@ -685,12 +690,12 @@
       }
 
       function shouldIgnoreRowClick(target) {
-        return !!target.closest('a, button, input, select, textarea, label, .dropdown-menu, .modal, .ie-cell, .document-handler-select');
+        return !!closestElement(target, 'a, button, input, select, textarea, label, .dropdown-menu, .modal, .ie-cell, .document-handler-select');
       }
 
       function bindEvents() {
         document.addEventListener('click', function (event) {
-          const row = event.target.closest('#documentTableContainer tbody tr, .owner-docs-row');
+          const row = closestElement(event.target, '#documentTableContainer tbody tr, .owner-docs-row');
           if (!row || shouldIgnoreRowClick(event.target)) return;
           if (row.classList.contains('owner-docs-row')) {
             event.preventDefault();
