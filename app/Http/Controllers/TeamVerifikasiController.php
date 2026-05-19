@@ -233,13 +233,26 @@ class TeamVerifikasiController extends Controller
                 });
         }
 
-        // Filter by year with sub-filter type support
-        if ($request->has('year') && $request->year) {
-            $this->applyDocumentYearFilter(
-                $query,
-                $request->year,
-                $request->get('year_filter_type', 'tanggal_spp')
-            );
+        if ($request->filled('filter_dari')) {
+            $query->where('dokumens.bagian', $request->filter_dari);
+        }
+
+        if ($request->filled('filter_tanggal_masuk')) {
+            try {
+                $query->whereDate('dokumens.tanggal_masuk', Carbon::parse($request->filter_tanggal_masuk)->toDateString());
+            } catch (\Throwable $e) {
+                Log::warning('Team Verifikasi ignored invalid tanggal_masuk filter', [
+                    'filter_tanggal_masuk' => $request->filter_tanggal_masuk,
+                ]);
+            }
+        }
+
+        if ($request->filled('filter_nilai_min')) {
+            $query->where('dokumens.nilai_rupiah', '>=', (float) preg_replace('/[^0-9]/', '', (string) $request->filter_nilai_min));
+        }
+
+        if ($request->filled('filter_nilai_max')) {
+            $query->where('dokumens.nilai_rupiah', '<=', (float) preg_replace('/[^0-9]/', '', (string) $request->filter_nilai_max));
         }
 
         // Filter by status - Apply strict filtering (override base filter)
@@ -739,6 +752,18 @@ class TeamVerifikasiController extends Controller
         if (empty($ieJenisPembayaranList)) {
             $ieJenisPembayaranList = \App\Models\Dokumen::whereNotNull('jenis_pembayaran')->where('jenis_pembayaran','!=','')->distinct()->orderBy('jenis_pembayaran')->pluck('jenis_pembayaran')->map(fn($v)=>['id_jenis_pembayaran'=>$v,'nama_jenis_pembayaran'=>$v])->toArray();
         }
+        $filterDariOptions = Dokumen::when($hasImportedFromCsvColumn, function ($query) {
+            $query->where(function ($q) {
+                $q->where('imported_from_csv', false)
+                    ->orWhereNull('imported_from_csv');
+            });
+        })
+            ->whereNotNull('bagian')
+            ->where('bagian', '!=', '')
+            ->distinct()
+            ->orderBy('bagian')
+            ->pluck('bagian', 'bagian')
+            ->toArray();
 
         $data = array(
             "title" => "Daftar Dokumen Team Verifikasi",
@@ -761,6 +786,7 @@ class TeamVerifikasiController extends Controller
             'ieSubKriteriaList' => $ieSubKriteriaList,
             'ieItemSubKriteriaList' => $ieItemSubKriteriaList,
             'ieJenisPembayaranList' => $ieJenisPembayaranList,
+            'filterDariOptions' => $filterDariOptions,
         );
         return view('team_verifikasi.dokumens.daftarDokumen', $data);
     }

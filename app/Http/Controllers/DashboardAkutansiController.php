@@ -151,26 +151,26 @@ class DashboardAkutansiController extends Controller
                 });
         }
 
-        // Filter by year
-        // Filter by year with sub-filter type support
-        if ($request->has('year') && $request->year) {
-            $year = $request->year;
-            $filterType = $request->get('year_filter_type', 'tanggal_spp');
+        if ($request->filled('filter_dari')) {
+            $query->where('dokumens.bagian', $request->filter_dari);
+        }
 
-            switch ($filterType) {
-                case 'tanggal_spp':
-                    $query->whereYear('tanggal_spp', $year);
-                    break;
-                case 'tanggal_masuk':
-                    $query->whereYear('tanggal_masuk', $year);
-                    break;
-                case 'nomor_spp':
-                    // Extract year from format like "192/M/SPP/14/03/2024"
-                    $query->where('nomor_spp', 'REGEXP', '/' . $year . '$');
-                    break;
-                default:
-                    $query->whereYear('tanggal_spp', $year);
+        if ($request->filled('filter_tanggal_masuk')) {
+            try {
+                $query->whereDate('dokumens.tanggal_masuk', Carbon::parse($request->filter_tanggal_masuk)->toDateString());
+            } catch (\Throwable $e) {
+                Log::warning('Akutansi ignored invalid tanggal_masuk filter', [
+                    'filter_tanggal_masuk' => $request->filter_tanggal_masuk,
+                ]);
             }
+        }
+
+        if ($request->filled('filter_nilai_min')) {
+            $query->where('dokumens.nilai_rupiah', '>=', (float) preg_replace('/[^0-9]/', '', (string) $request->filter_nilai_min));
+        }
+
+        if ($request->filled('filter_nilai_max')) {
+            $query->where('dokumens.nilai_rupiah', '<=', (float) preg_replace('/[^0-9]/', '', (string) $request->filter_nilai_max));
         }
 
         // Filter by status
@@ -584,6 +584,13 @@ class DashboardAkutansiController extends Controller
         if (empty($ieJenisPembayaranList)) {
             $ieJenisPembayaranList = \App\Models\Dokumen::whereNotNull('jenis_pembayaran')->where('jenis_pembayaran','!=','')->distinct()->orderBy('jenis_pembayaran')->pluck('jenis_pembayaran')->map(fn($v)=>['id_jenis_pembayaran'=>$v,'nama_jenis_pembayaran'=>$v])->toArray();
         }
+        $filterDariOptions = Dokumen::excludeCsvImports()
+            ->whereNotNull('bagian')
+            ->where('bagian', '!=', '')
+            ->distinct()
+            ->orderBy('bagian')
+            ->pluck('bagian', 'bagian')
+            ->toArray();
 
         $data = array(
             "title" => "Daftar Dokumen Team Akutansi",
@@ -608,6 +615,7 @@ class DashboardAkutansiController extends Controller
             'ieSubKriteriaList' => $ieSubKriteriaList,
             'ieItemSubKriteriaList' => $ieItemSubKriteriaList,
             'ieJenisPembayaranList' => $ieJenisPembayaranList,
+            'filterDariOptions' => $filterDariOptions,
         );
         return view('akutansi.dokumens.daftarAkutansi', $data);
     }
