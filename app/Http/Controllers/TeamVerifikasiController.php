@@ -235,24 +235,11 @@ class TeamVerifikasiController extends Controller
 
         // Filter by year with sub-filter type support
         if ($request->has('year') && $request->year) {
-            $year = $request->year;
-            $filterType = $request->get('year_filter_type', 'tanggal_spp');
-
-            switch ($filterType) {
-                case 'tanggal_spp':
-                    $query->whereYear('tanggal_spp', $year);
-                    break;
-                case 'tanggal_masuk':
-                    $query->whereYear('tanggal_masuk', $year);
-                    break;
-                case 'nomor_spp':
-                    // Extract year from format like "192/M/SPP/14/03/2024"
-                    // The year is typically at the end of the nomor_spp string
-                    $query->where('nomor_spp', 'REGEXP', '/' . $year . '$');
-                    break;
-                default:
-                    $query->whereYear('tanggal_spp', $year);
-            }
+            $this->applyDocumentYearFilter(
+                $query,
+                $request->year,
+                $request->get('year_filter_type', 'tanggal_spp')
+            );
         }
 
         // Filter by status - Apply strict filtering (override base filter)
@@ -3034,24 +3021,8 @@ class TeamVerifikasiController extends Controller
             });
 
         // Apply year filter based on filter type
-        switch ($yearFilterType) {
-            case 'tanggal_spp':
-                $baseQuery->whereYear('tanggal_spp', $selectedYear);
-                $dateColumn = 'tanggal_spp';
-                break;
-            case 'tanggal_masuk':
-                $baseQuery->whereYear('tanggal_masuk', $selectedYear);
-                $dateColumn = 'tanggal_masuk';
-                break;
-            case 'nomor_spp':
-                // Extract year from nomor_spp format like: 192/M/SPP/14/03/2024
-                $baseQuery->where('nomor_spp', 'LIKE', '%/' . $selectedYear);
-                $dateColumn = 'tanggal_spp'; // Fallback for monthly stats
-                break;
-            default:
-                $baseQuery->whereYear('tanggal_spp', $selectedYear);
-                $dateColumn = 'tanggal_spp';
-        }
+        $dateColumn = $yearFilterType === 'tanggal_masuk' ? 'tanggal_masuk' : 'tanggal_spp';
+        $this->applyDocumentYearFilter($baseQuery, $selectedYear, $yearFilterType);
 
         // Filter by bagian if selected
         if ($selectedBagian && in_array($selectedBagian, array_keys(self::BAGIAN_LIST))) {
@@ -3174,11 +3145,7 @@ class TeamVerifikasiController extends Controller
                 })
                 ->where('bagian', $bagianCode);
 
-            if ($yearFilterType === 'nomor_spp') {
-                $countQuery->where('nomor_spp', 'LIKE', '%/' . $selectedYear);
-            } else {
-                $countQuery->whereYear($dateColumn, $selectedYear);
-            }
+            $this->applyDocumentYearFilter($countQuery, $selectedYear, $yearFilterType);
 
             $bagianCounts[$bagianCode] = $countQuery->count();
         }
@@ -3910,5 +3877,43 @@ class TeamVerifikasiController extends Controller
                 'message' => 'Failed to check updates: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    private function applyDocumentYearFilter($query, $year, string $filterType = 'tanggal_spp'): void
+    {
+        $year = (string) $year;
+
+        if (!preg_match('/^\d{4}$/', $year)) {
+            return;
+        }
+
+        switch ($filterType) {
+            case 'tanggal_masuk':
+                $query->whereYear('dokumens.tanggal_masuk', $year);
+                break;
+            case 'nomor_spp':
+                $this->applyNomorSppYearFilter($query, $year);
+                break;
+            case 'tanggal_spp':
+            default:
+                $query->whereYear('dokumens.tanggal_spp', $year);
+                break;
+        }
+    }
+
+    private function applyNomorSppYearFilter($query, string $year): void
+    {
+        $driver = DB::connection()->getDriverName();
+
+        if (in_array($driver, ['mysql', 'mariadb'], true)) {
+            $query->whereRaw('RTRIM(dokumens.nomor_spp) REGEXP ?', ['(^|[^0-9])' . $year . '([^0-9]|$)']);
+            return;
+        }
+
+        $query->where(function ($q) use ($year) {
+            $q->whereRaw('RTRIM(dokumens.nomor_spp) LIKE ?', ['%/' . $year])
+                ->orWhere('dokumens.nomor_spp', 'LIKE', '%/' . $year . '/%')
+                ->orWhere('dokumens.nomor_spp', 'LIKE', '%/' . $year . ' %');
+        });
     }
 }

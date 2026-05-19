@@ -966,6 +966,10 @@
 
     function selectFilterType(type, element) {
       selectedFilterType = type;
+      const hiddenFilterType = document.getElementById('yearFilterType');
+      if (hiddenFilterType) {
+        hiddenFilterType.value = type;
+      }
 
       // Update visual state
       document.querySelectorAll('.filter-type-option').forEach(opt => {
@@ -978,6 +982,10 @@
 
     function selectYear(year, element) {
       selectedYear = year;
+      const hiddenYear = document.getElementById('yearSelect');
+      if (hiddenYear) {
+        hiddenYear.value = year;
+      }
 
       // Update visual state
       document.querySelectorAll('.year-btn').forEach(btn => {
@@ -1012,6 +1020,11 @@
     }
 
     function applyYearFilter() {
+      const checkedFilterType = document.querySelector('input[name="modal_filter_type"]:checked');
+      if (checkedFilterType) {
+        selectedFilterType = checkedFilterType.value;
+      }
+
       // Update hidden inputs
       document.getElementById('yearSelect').value = selectedYear;
       document.getElementById('yearFilterType').value = selectedFilterType;
@@ -1099,7 +1112,6 @@
   </script>
 
 @endsection
-
 
 
 
