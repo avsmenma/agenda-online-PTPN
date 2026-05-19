@@ -316,16 +316,6 @@
       border-color: #889717;
     }
 
-    .table-dokumen {
-      background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-      border-radius: 16px;
-      padding: 30px;
-      box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-      border: 1px solid rgba(8, 62, 64, 0.08);
-      position: relative;
-      overflow: hidden;
-    }
-
     /* Table Container Header with Statistics */
     .table-container-header {
       background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
@@ -1282,10 +1272,6 @@
 
     /* Mobile optimization */
     @media (max-width: 768px) {
-      .table-dokumen {
-        padding: 15px;
-        border-radius: 12px;
-      }
 
       .data-table {
         min-width: 800px;
@@ -1493,83 +1479,6 @@
         width: 70px;
         min-width: 70px;
       }
-    }
-
-    .table-dokumen thead {
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 50%, #889717 100%);
-      color: white;
-      position: relative;
-    }
-
-    .table-dokumen thead::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent 0%, #889717 50%, transparent 100%);
-    }
-
-    .table-dokumen thead th {
-      padding: 16px 12px;
-      font-weight: 600;
-      font-size: 13px;
-      border: none;
-      text-align: center;
-      vertical-align: middle;
-      letter-spacing: 0.5px;
-    }
-
-    .table-dokumen tbody tr.main-row {
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border-left: 3px solid transparent;
-      position: relative;
-    }
-
-    .table-dokumen tbody tr.main-row::after {
-      content: '';
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 10px;
-      color: #889717;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-      background: white;
-      padding: 2px 6px;
-      border-radius: 4px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .table-dokumen tbody tr.main-row:hover {
-      background: linear-gradient(90deg, rgba(183, 204, 26, 0.05) 0%, transparent 100%);
-      border-left: 3px solid #889717;
-      transform: scale(1.005);
-    }
-
-    .table-dokumen tbody tr.main-row:hover::after {
-      opacity: 0;
-    }
-
-    .table-dokumen tbody tr.main-row.highlight {
-      background: linear-gradient(90deg, rgba(136, 151, 23, 0.15) 0%, transparent 100%) !important;
-      border-left: 3px solid #889717;
-    }
-
-    .table-dokumen tbody tr.main-row.selected {
-      background: linear-gradient(90deg, rgba(8, 62, 64, 0.05) 0%, transparent 100%);
-      border-left: 3px solid #083E40;
-    }
-
-    .table-dokumen tbody td {
-      padding: 14px 12px;
-      font-size: 13px;
-      vertical-align: middle;
-      border-bottom: 1px solid rgba(8, 62, 64, 0.05);
     }
 
     /* Detail Row Styles */

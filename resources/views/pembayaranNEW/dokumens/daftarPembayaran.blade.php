@@ -287,15 +287,6 @@
   }
 
   /* Table Container */
-  .table-dokumen {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-    border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-    border: 1px solid rgba(8, 62, 64, 0.08);
-    position: relative;
-    overflow: hidden;
-  }
 
   .table-responsive {
     overflow-x: auto;
@@ -1010,10 +1001,6 @@
   @media (max-width: 768px) {
     .search-box {
       padding: 15px;
-    }
-
-    .table-dokumen {
-      padding: 20px;
     }
 
     .data-table {

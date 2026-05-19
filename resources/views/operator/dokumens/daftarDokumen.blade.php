@@ -1,13 +1,6 @@
 @extends('layouts/app')
 @push('styles')
   <style>
-    #documentTableContainer.table-dokumen {
-      background: #ffffff;
-      border-radius: 16px;
-      border: 1px solid #f1f5f9;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-      overflow: visible;
-    }
 
     #dokumen-tabulator {
       width: 100%;
@@ -1359,18 +1352,6 @@
     }
 
     /* Table Container - Enhanced Horizontal Scroll from dokumensPerpajakan */
-    .table-dokumen {
-      background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-      border-radius: 16px;
-      padding: 30px;
-      box-shadow: 0 8px 32px rgba(8, 62, 64, 0.1), 0 2px 8px rgba(136, 151, 23, 0.05);
-      border: 1px solid rgba(8, 62, 64, 0.08);
-      position: relative;
-      overflow: visible;
-      /* Changed from hidden to visible to allow scrollbar */
-      width: 100%;
-      max-width: 100%;
-    }
 
     /* Horizontal Scroll Container - Enhanced */
     .table-responsive {
@@ -1574,10 +1555,6 @@
 
     /* Responsive design improvements */
     @media (max-width: 768px) {
-      .table-dokumen {
-        border-radius: 8px;
-        box-shadow: 0 2px 15px rgba(8, 62, 64, 0.05);
-      }
 
       .data-table {
         min-width: 700px;
@@ -1709,59 +1686,6 @@
         width: 100px;
         min-width: 100px;
       }
-    }
-
-    .table-dokumen thead {
-      background: #0d3b6e;
-      color: white;
-      position: relative;
-    }
-
-    .table-dokumen thead::after {
-      content: none;
-      display: none;
-    }
-
-    .table-dokumen thead th {
-      padding: 9px 8px;
-      font-weight: 600;
-      font-size: 11.5px;
-      border: 1px solid #1a5276;
-      background: #0d3b6e;
-      background-clip: padding-box;
-      box-shadow: 0 2px 0 #1a5276;
-      text-align: center;
-      letter-spacing: 0;
-    }
-
-    .table-dokumen tbody tr.main-row {
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border-left: 3px solid transparent;
-    }
-
-    .table-dokumen tbody tr.main-row:hover {
-      background: linear-gradient(90deg, rgba(136, 151, 23, 0.05) 0%, transparent 100%);
-      border-left: 3px solid #889717;
-      transform: scale(1.005);
-    }
-
-    .table-dokumen tbody tr.main-row.highlight {
-      background: linear-gradient(90deg, rgba(136, 151, 23, 0.15) 0%, transparent 100%) !important;
-      border-left: 3px solid #889717;
-    }
-
-    .table-dokumen tbody tr.main-row.selected {
-      background: linear-gradient(90deg, rgba(8, 62, 64, 0.05) 0%, transparent 100%);
-      border-left: 3px solid #083E40;
-    }
-
-    .table-dokumen tbody td {
-      padding: 14px 12px;
-      font-size: 13px;
-      vertical-align: middle;
-      border-bottom: 1px solid rgba(8, 62, 64, 0.05);
-      border-right: none;
     }
 
     /* Enhanced Detail Row Styles - Adopted from Team Verifikasi */
@@ -2548,12 +2472,6 @@
     }
 
     /* Additional scrollbar enhancements for better visibility */
-    .table-dokumen .table-responsive {
-      padding-bottom: 5px;
-      /* Add space for scrollbar */
-      margin-bottom: 5px;
-      /* Add margin for scrollbar visibility */
-    }
 
     /* Ensure scrollbar is always visible on all browsers */
     /* Ensure scrollbar is always visible on all browsers */

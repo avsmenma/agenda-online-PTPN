@@ -297,15 +297,6 @@
     }
 
     /* Table Container - Enhanced Horizontal Scroll from dokumensB */
-    .table-dokumen {
-      background: linear-gradient(135deg, #ffffff 0%, #f8faf8 100%);
-      border-radius: 16px;
-      padding: 30px;
-      box-shadow: 0 8px 32px rgba(26, 77, 62, 0.1), 0 2px 8px rgba(15, 61, 46, 0.05);
-      border: 1px solid rgba(26, 77, 62, 0.08);
-      position: relative;
-      overflow: hidden;
-    }
 
     /* Horizontal Scroll Container */
     .table-responsive {
@@ -1171,23 +1162,6 @@
       white-space: nowrap;
     }
 
-    .table-dokumen tbody tr.main-row {
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border-left: 3px solid transparent;
-    }
-
-    .table-dokumen tbody tr.main-row:hover {
-      background: linear-gradient(90deg, rgba(26, 77, 62, 0.05) 0%, transparent 100%);
-      border-left: 3px solid #1a4d3e;
-      transform: scale(1.002);
-    }
-
-    .table-dokumen tbody tr.main-row.selected {
-      background: linear-gradient(90deg, rgba(26, 77, 62, 0.15) 0%, transparent 100%);
-      border-left: 3px solid #1a4d3e;
-    }
-
     .detail-item {
       display: flex;
       flex-direction: column;
@@ -1937,10 +1911,6 @@
 
     /* Responsive Design - Mobile Optimization */
     @media (max-width: 768px) {
-      .table-dokumen {
-        padding: 15px;
-        border-radius: 12px;
-      }
 
       .data-table td {
         padding: 12px 8px;
