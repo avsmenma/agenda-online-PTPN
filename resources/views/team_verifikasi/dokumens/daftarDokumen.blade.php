@@ -401,13 +401,13 @@
     }
 
     /* Enhanced table for better UX */
-    .table-enhanced {
+    .data-table {
       border-collapse: separate;
       border-spacing: 0;
       min-width: 1200px;
     }
 
-    .table-enhanced thead th {
+    .data-table thead th {
       position: sticky;
       top: 0;
       z-index: 10;
@@ -422,24 +422,24 @@
     }
 
 
-    .table-enhanced tbody tr {
+    .data-table tbody tr {
       transition: all 0.2s ease;
       border-bottom: 1px solid #f0f0f0;
     }
 
-    .table-enhanced tbody td {
+    .data-table tbody td {
       text-align: center;
       vertical-align: middle;
       font-weight: 700;
     }
 
-    .table-enhanced tbody tr:hover {
+    .data-table tbody tr:hover {
       background: linear-gradient(135deg, rgba(136, 151, 23, 0.05) 0%, rgba(255, 255, 255, 0.8) 100%);
       transform: translateY(-1px);
     }
 
     /* Enhanced Locked State UX - Simplified for better readability */
-    .table-enhanced tbody tr.locked-row {
+    .data-table tbody tr.locked-row {
       background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
       opacity: 1;
       position: relative;
@@ -449,17 +449,17 @@
       cursor: pointer;
     }
 
-    .table-enhanced tbody tr.locked-row::before {
+    .data-table tbody tr.locked-row::before {
       display: none;
       /* Removed lock icon overlay */
     }
 
-    .table-enhanced tbody tr.locked-row::after {
+    .data-table tbody tr.locked-row::after {
       display: none;
       /* Removed diagonal pattern overlay */
     }
 
-    .table-enhanced tbody tr.locked-row:hover {
+    .data-table tbody tr.locked-row:hover {
       background: linear-gradient(135deg, #fffef5 0%, #fff9e6 100%);
       transform: translateY(-1px);
       box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
@@ -469,63 +469,63 @@
     /* Lock animation - Removed for better readability */
 
     /* Enhanced locked state indicators - Simplified */
-    .table-enhanced tbody tr.locked-row .col-status .badge-locked {
+    .data-table tbody tr.locked-row .col-status .badge-locked {
       position: relative;
       z-index: 1;
       /* Removed animation for better readability */
     }
 
     /* Ensure all content in locked row stays above overlay */
-    .table-enhanced tbody tr.locked-row td {
+    .data-table tbody tr.locked-row td {
       position: relative;
       z-index: 1;
     }
 
-    .table-enhanced tbody tr.locked-row .btn-action {
+    .data-table tbody tr.locked-row .btn-action {
       position: relative;
       z-index: 1;
     }
 
-    .table-enhanced tbody tr.locked-row .badge-status {
+    .data-table tbody tr.locked-row .badge-status {
       position: relative;
       z-index: 1;
     }
 
-    .table-enhanced tbody tr.locked-row .col-status .badge-locked::before {
+    .data-table tbody tr.locked-row .col-status .badge-locked::before {
       display: none;
       /* Removed warning icon animation */
     }
 
     /* Enhanced locked button states - Simplified */
-    .table-enhanced tbody tr.locked-row .btn-action.locked {
+    .data-table tbody tr.locked-row .btn-action.locked {
       position: relative;
       overflow: hidden;
       opacity: 0.6;
     }
 
-    .table-enhanced tbody tr.locked-row .btn-action.locked::before {
+    .data-table tbody tr.locked-row .btn-action.locked::before {
       display: none;
       /* Removed shimmer animation */
     }
 
-    .table-enhanced tbody tr.locked-row .btn-action.locked:hover {
+    .data-table tbody tr.locked-row .btn-action.locked:hover {
       opacity: 0.7;
       cursor: not-allowed;
     }
 
     /* Lock hover tooltip enhancement */
-    .table-enhanced tbody tr.locked-row:hover .btn-action.locked {
+    .data-table tbody tr.locked-row:hover .btn-action.locked {
       cursor: not-allowed;
     }
 
     /* Ensure all document rows are clickable regardless of status */
-    .table-enhanced tbody tr {
+    .data-table tbody tr {
       cursor: pointer !important;
       pointer-events: auto !important;
     }
 
     /* Override any cursor styles for locked rows to still show pointer */
-    .table-enhanced tbody tr.locked-row {
+    .data-table tbody tr.locked-row {
       cursor: pointer !important;
       pointer-events: auto !important;
     }
@@ -1111,7 +1111,7 @@
 
     /* Mobile responsive adjustments */
     @media (max-width: 768px) {
-      .table-enhanced .col-deadline {
+      .data-table .col-deadline {
         min-width: 140px;
       }
 
@@ -1172,13 +1172,13 @@
 
     /* Responsive Locked State Enhancements */
     @media (max-width: 768px) {
-      .table-enhanced tbody tr.locked-row .col-status .badge-locked::before {
+      .data-table tbody tr.locked-row .col-status .badge-locked::before {
         top: -6px;
         right: -6px;
         font-size: 8px;
       }
 
-      .table-enhanced tbody tr.locked-row:hover {
+      .data-table tbody tr.locked-row:hover {
         transform: translateY(-1px);
       }
     }
@@ -1186,13 +1186,13 @@
     @media (max-width: 480px) {
       /* Removed locked-row::before styles */
 
-      .table-enhanced tbody tr.locked-row .col-status .badge-locked::before {
+      .data-table tbody tr.locked-row .col-status .badge-locked::before {
         display: none;
         /* Hide warning icon on very small screens */
       }
 
       /* Reduce animation intensity on mobile for better performance */
-      .table-enhanced tbody tr.locked-row .btn-action.locked::before {
+      .data-table tbody tr.locked-row .btn-action.locked::before {
         animation-duration: 4s;
         /* Slower shimmer on mobile */
       }
@@ -1204,14 +1204,14 @@
     /* Reduced motion support for accessibility */
     @media (prefers-reduced-motion: reduce) {
 
-      .table-enhanced tbody tr.locked-row .col-status .badge-locked,
-      .table-enhanced tbody tr.locked-row .btn-action.locked::before,
-      .table-enhanced tbody tr.locked-row .deadline-empty {
+      .data-table tbody tr.locked-row .col-status .badge-locked,
+      .data-table tbody tr.locked-row .btn-action.locked::before,
+      .data-table tbody tr.locked-row .deadline-empty {
         animation: none;
       }
     }
 
-    .table-enhanced td {
+    .data-table td {
       padding: 12px;
       vertical-align: middle;
       border-right: 1px solid #e0e0e0;
@@ -1219,22 +1219,22 @@
     }
 
     /* Column width optimization */
-    .table-enhanced .col-no {
+    .data-table .col-no {
       width: 80px;
       min-width: 80px;
     }
 
-    .table-enhanced .col-surat {
+    .data-table .col-surat {
       width: 120px;
       min-width: 120px;
     }
 
-    .table-enhanced .col-spp {
+    .data-table .col-spp {
       width: 140px;
       min-width: 140px;
     }
 
-    .table-enhanced .col-uraian {
+    .data-table .col-uraian {
       width: 700px;
       min-width: 500px;
       max-width: 1000px;
@@ -1246,7 +1246,7 @@
       padding: 12px;
     }
 
-    .table-enhanced .col-uraian span {
+    .data-table .col-uraian span {
       display: block;
       word-wrap: break-word;
       white-space: normal;
@@ -1255,8 +1255,8 @@
       width: 100%;
     }
 
-    .table-enhanced .col-dibayar_kepada,
-    .table-enhanced td.col-dibayar_kepada {
+    .data-table .col-dibayar_kepada,
+    .data-table td.col-dibayar_kepada {
       width: 250px;
       min-width: 200px;
       max-width: 300px;
@@ -1269,27 +1269,27 @@
       padding: 12px;
     }
 
-    .table-enhanced .col-nilai {
+    .data-table .col-nilai {
       width: 120px;
       min-width: 120px;
     }
 
-    .table-enhanced .col-deadline {
+    .data-table .col-deadline {
       width: 160px;
       min-width: 140px;
     }
 
-    .table-enhanced .col-status {
+    .data-table .col-status {
       width: 120px;
       min-width: 100px;
     }
 
-    .table-enhanced .col-action {
+    .data-table .col-action {
       width: 120px;
       min-width: 120px;
     }
 
-    .table-enhanced .col-paraf {
+    .data-table .col-paraf {
       width: 120px;
       min-width: 120px;
     }
@@ -1301,17 +1301,17 @@
         border-radius: 12px;
       }
 
-      .table-enhanced {
+      .data-table {
         min-width: 800px;
         font-size: 12px;
       }
 
-      .table-enhanced th {
+      .data-table th {
         padding: 14px 8px;
         font-size: 11px;
       }
 
-      .table-enhanced td {
+      .data-table td {
         padding: 12px 8px;
         font-size: 12px;
       }
@@ -1370,7 +1370,7 @@
     }
 
     @media (max-width: 576px) {
-      .table-enhanced {
+      .data-table {
         min-width: 900px;
         /* Still allow horizontal scroll on very small screens */
       }
@@ -1388,22 +1388,22 @@
       }
     }
 
-    .table-enhanced .col-no {
+    .data-table .col-no {
       width: 60px;
       min-width: 60px;
     }
 
-    .table-enhanced .col-surat {
+    .data-table .col-surat {
       width: 80px;
       min-width: 80px;
     }
 
-    .table-enhanced .col-spp {
+    .data-table .col-spp {
       width: 100px;
       min-width: 100px;
     }
 
-    .table-enhanced .col-uraian {
+    .data-table .col-uraian {
       width: 500px;
       min-width: 400px;
       max-width: 700px;
@@ -1415,63 +1415,63 @@
       padding: 12px;
     }
 
-    .table-enhanced .col-nilai {
+    .data-table .col-nilai {
       width: 80px;
       min-width: 80px;
     }
 
-    .table-enhanced .col-deadline {
+    .data-table .col-deadline {
       width: 100px;
       min-width: 100px;
     }
 
-    .table-enhanced .col-status {
+    .data-table .col-status {
       width: 80px;
       min-width: 80px;
     }
 
-    .table-enhanced .col-action {
+    .data-table .col-action {
       width: 80px;
       min-width: 80px;
     }
 
-    .table-enhanced .col-paraf {
+    .data-table .col-paraf {
       width: 80px;
       min-width: 80px;
     }
     }
 
     @media (max-width: 480px) {
-      .table-enhanced {
+      .data-table {
         min-width: 480px;
       }
 
-      .table-enhanced th {
+      .data-table th {
         padding: 10px 6px;
         font-size: 11px;
       }
 
-      .table-enhanced td {
+      .data-table td {
         padding: 8px 6px;
         font-size: 11px;
       }
 
-      .table-enhanced .col-no {
+      .data-table .col-no {
         width: 50px;
         min-width: 50px;
       }
 
-      .table-enhanced .col-surat {
+      .data-table .col-surat {
         width: 70px;
         min-width: 70px;
       }
 
-      .table-enhanced .col-spp {
+      .data-table .col-spp {
         width: 80px;
         min-width: 80px;
       }
 
-      .table-enhanced .col-uraian {
+      .data-table .col-uraian {
         width: 400px;
         min-width: 300px;
         max-width: 600px;
@@ -1483,27 +1483,27 @@
         padding: 12px;
       }
 
-      .table-enhanced .col-nilai {
+      .data-table .col-nilai {
         width: 60px;
         min-width: 60px;
       }
 
-      .table-enhanced .col-deadline {
+      .data-table .col-deadline {
         width: 90px;
         min-width: 90px;
       }
 
-      .table-enhanced .col-status {
+      .data-table .col-status {
         width: 70px;
         min-width: 70px;
       }
 
-      .table-enhanced .col-action {
+      .data-table .col-action {
         width: 70px;
         min-width: 70px;
       }
 
-      .table-enhanced .col-paraf {
+      .data-table .col-paraf {
         width: 70px;
         min-width: 70px;
       }
@@ -4063,109 +4063,109 @@
       white-space: nowrap;
     }
     /* Zebra rows — subtle */
-    #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(even) {
+    #documentTableContainer .data-table tbody tr.main-row:nth-child(even) {
       background: #f8fafc;
     }
-    #documentTableContainer .table-enhanced tbody tr.main-row:nth-child(odd) {
+    #documentTableContainer .data-table tbody tr.main-row:nth-child(odd) {
       background: #ffffff;
     }
-    #documentTableContainer .table-enhanced tbody tr.main-row:hover {
+    #documentTableContainer .data-table tbody tr.main-row:hover {
       background: linear-gradient(90deg, rgba(8,62,64,0.04) 0%, transparent 100%) !important;
       border-left: 3px solid #083E40;
     }
     /* Remove double borders */
-    #documentTableContainer .table-enhanced td {
+    #documentTableContainer .data-table td {
       border-top: 1px solid #f1f5f9 !important;
       border-bottom: none !important;
     }
 
-    #documentTableContainer .table-enhanced {
+    #documentTableContainer .data-table {
       table-layout: fixed;
       width: max-content;
       min-width: 100%;
     }
 
-    #documentTableContainer .table-enhanced th,
-    #documentTableContainer .table-enhanced td {
+    #documentTableContainer .data-table th,
+    #documentTableContainer .data-table td {
       box-sizing: border-box;
       max-width: 100%;
       overflow: hidden;
       text-overflow: clip;
     }
 
-    #documentTableContainer .table-enhanced tbody td {
+    #documentTableContainer .data-table tbody td {
       white-space: normal !important;
       overflow-wrap: anywhere;
       word-break: break-word;
       line-height: 1.45;
     }
 
-    #documentTableContainer .table-enhanced .col-checkbox {
+    #documentTableContainer .data-table .col-checkbox {
       width: 64px;
       min-width: 64px;
     }
 
-    #documentTableContainer .table-enhanced .col-no {
+    #documentTableContainer .data-table .col-no {
       width: 88px;
       min-width: 88px;
     }
 
-    #documentTableContainer .table-enhanced .col-nomor_agenda {
+    #documentTableContainer .data-table .col-nomor_agenda {
       width: 210px;
       min-width: 210px;
     }
 
-    #documentTableContainer .table-enhanced .col-bulan {
+    #documentTableContainer .data-table .col-bulan {
       width: 110px;
       min-width: 110px;
     }
 
-    #documentTableContainer .table-enhanced .col-tahun {
+    #documentTableContainer .data-table .col-tahun {
       width: 100px;
       min-width: 100px;
     }
 
-    #documentTableContainer .table-enhanced .col-kategori,
-    #documentTableContainer .table-enhanced .col-jenis_dokumen,
-    #documentTableContainer .table-enhanced .col-jenis_sub_pekerjaan {
+    #documentTableContainer .data-table .col-kategori,
+    #documentTableContainer .data-table .col-jenis_dokumen,
+    #documentTableContainer .data-table .col-jenis_sub_pekerjaan {
       width: 300px;
       min-width: 300px;
     }
 
-    #documentTableContainer .table-enhanced .col-jenis_pembayaran {
+    #documentTableContainer .data-table .col-jenis_pembayaran {
       width: 190px;
       min-width: 190px;
     }
 
-    #documentTableContainer .table-enhanced .col-nomor_spp {
+    #documentTableContainer .data-table .col-nomor_spp {
       width: 230px;
       min-width: 230px;
     }
 
-    #documentTableContainer .table-enhanced .col-tanggal_masuk,
-    #documentTableContainer .table-enhanced .col-tanggal_spp,
-    #documentTableContainer .table-enhanced .col-tanggal_berita_acara,
-    #documentTableContainer .table-enhanced .col-tanggal_spk,
-    #documentTableContainer .table-enhanced .col-tanggal_berakhir_spk,
-    #documentTableContainer .table-enhanced .col-tanggal_faktur,
-    #documentTableContainer .table-enhanced .col-tanggal_paraf,
-    #documentTableContainer .table-enhanced .col-tanggal_miro,
-    #documentTableContainer .table-enhanced .col-tanggal_selesai_verifikasi_pajak {
+    #documentTableContainer .data-table .col-tanggal_masuk,
+    #documentTableContainer .data-table .col-tanggal_spp,
+    #documentTableContainer .data-table .col-tanggal_berita_acara,
+    #documentTableContainer .data-table .col-tanggal_spk,
+    #documentTableContainer .data-table .col-tanggal_berakhir_spk,
+    #documentTableContainer .data-table .col-tanggal_faktur,
+    #documentTableContainer .data-table .col-tanggal_paraf,
+    #documentTableContainer .data-table .col-tanggal_miro,
+    #documentTableContainer .data-table .col-tanggal_selesai_verifikasi_pajak {
       width: 180px;
       min-width: 180px;
     }
 
-    #documentTableContainer .table-enhanced .col-deadline {
+    #documentTableContainer .data-table .col-deadline {
       width: 210px;
       min-width: 210px;
     }
 
-    #documentTableContainer .table-enhanced .col-status {
+    #documentTableContainer .data-table .col-status {
       width: 300px;
       min-width: 300px;
     }
 
-    #documentTableContainer .table-enhanced .col-handler {
+    #documentTableContainer .data-table .col-handler {
       width: 240px;
       min-width: 240px;
     }
@@ -4191,74 +4191,74 @@
       position: relative;
     }
 
-    #documentTableContainer .table-enhanced .col-checkbox,
-    #documentTableContainer .table-enhanced .col-no,
-    #documentTableContainer .table-enhanced .col-nomor_agenda,
-    #documentTableContainer .table-enhanced .col-handler {
+    #documentTableContainer .data-table .col-checkbox,
+    #documentTableContainer .data-table .col-no,
+    #documentTableContainer .data-table .col-nomor_agenda,
+    #documentTableContainer .data-table .col-handler {
       position: sticky !important;
       background-clip: padding-box;
     }
 
-    #documentTableContainer .table-enhanced thead .col-checkbox,
-    #documentTableContainer .table-enhanced thead .col-no,
-    #documentTableContainer .table-enhanced thead .col-nomor_agenda,
-    #documentTableContainer .table-enhanced thead .col-handler {
+    #documentTableContainer .data-table thead .col-checkbox,
+    #documentTableContainer .data-table thead .col-no,
+    #documentTableContainer .data-table thead .col-nomor_agenda,
+    #documentTableContainer .data-table thead .col-handler {
       background: #0d3b6e !important;
       box-shadow: 0 2px 0 #1a5276 !important;
       z-index: 560 !important;
     }
 
-    #documentTableContainer .table-enhanced tbody .col-checkbox,
-    #documentTableContainer .table-enhanced tbody .col-no,
-    #documentTableContainer .table-enhanced tbody .col-nomor_agenda,
-    #documentTableContainer .table-enhanced tbody .col-handler {
+    #documentTableContainer .data-table tbody .col-checkbox,
+    #documentTableContainer .data-table tbody .col-no,
+    #documentTableContainer .data-table tbody .col-nomor_agenda,
+    #documentTableContainer .data-table tbody .col-handler {
       background: #ffffff !important;
       z-index: 30 !important;
     }
 
-    #documentTableContainer .table-enhanced .col-checkbox {
+    #documentTableContainer .data-table .col-checkbox {
       left: 0 !important;
     }
 
-    #documentTableContainer .table-enhanced .col-no {
+    #documentTableContainer .data-table .col-no {
       left: var(--verif-sticky-no-left, 64px) !important;
     }
 
-    #documentTableContainer .table-enhanced .col-nomor_agenda {
+    #documentTableContainer .data-table .col-nomor_agenda {
       left: var(--verif-sticky-agenda-left, 152px) !important;
     }
 
-    #documentTableContainer .table-enhanced .col-handler {
+    #documentTableContainer .data-table .col-handler {
       right: 0 !important;
     }
 
-    #documentTableContainer .table-enhanced thead .col-handler {
+    #documentTableContainer .data-table thead .col-handler {
       z-index: 570 !important;
     }
 
-    #documentTableContainer .table-enhanced tbody td.acn-active.col-checkbox,
-    #documentTableContainer .table-enhanced tbody td.acn-active.col-no,
-    #documentTableContainer .table-enhanced tbody td.acn-active.col-nomor_agenda,
-    #documentTableContainer .table-enhanced tbody td.acn-active.col-handler {
+    #documentTableContainer .data-table tbody td.acn-active.col-checkbox,
+    #documentTableContainer .data-table tbody td.acn-active.col-no,
+    #documentTableContainer .data-table tbody td.acn-active.col-nomor_agenda,
+    #documentTableContainer .data-table tbody td.acn-active.col-handler {
       position: sticky !important;
       background-color: rgba(8, 62, 64, 0.08) !important;
       z-index: 80 !important;
     }
 
-    #documentTableContainer .table-enhanced tbody .col-handler select,
-    #documentTableContainer .table-enhanced tbody .col-handler .document-handler-select {
+    #documentTableContainer .data-table tbody .col-handler select,
+    #documentTableContainer .data-table tbody .col-handler .document-handler-select {
       position: relative;
       z-index: 1;
     }
 
-    body.is-fullscreen #documentTableContainer .table-enhanced .col-checkbox,
-    body.is-fullscreen #documentTableContainer .table-enhanced .col-no,
-    body.is-fullscreen #documentTableContainer .table-enhanced .col-nomor_agenda,
-    body.is-fullscreen #documentTableContainer .table-enhanced .col-handler,
-    body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-checkbox,
-    body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-no,
-    body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-nomor_agenda,
-    body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-handler {
+    body.is-fullscreen #documentTableContainer .data-table .col-checkbox,
+    body.is-fullscreen #documentTableContainer .data-table .col-no,
+    body.is-fullscreen #documentTableContainer .data-table .col-nomor_agenda,
+    body.is-fullscreen #documentTableContainer .data-table .col-handler,
+    body.document-table-only-fullscreen #documentTableContainer .data-table .col-checkbox,
+    body.document-table-only-fullscreen #documentTableContainer .data-table .col-no,
+    body.document-table-only-fullscreen #documentTableContainer .data-table .col-nomor_agenda,
+    body.document-table-only-fullscreen #documentTableContainer .data-table .col-handler {
       position: sticky !important;
     }
     /* Pagination inside card */
@@ -4291,7 +4291,7 @@
       @php
         $showActionColumn = false;
       @endphp
-      <table class="table table-enhanced mb-0">
+      <table class="data-table document-table">
         <thead>
           <tr>
             <th class="col-checkbox" style="width: 50px;">
@@ -9193,11 +9193,11 @@
 @include('partials._inlineEditEngine')
 
 {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
-@include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
+@include('partials._activeCellNav', ['tableSelector' => '.data-table'])
 <style>
-  #documentTableContainer .table-enhanced tbody td.acn-active,
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active {
+  #documentTableContainer .data-table tbody td.acn-active,
+  body.is-fullscreen #documentTableContainer .data-table tbody td.acn-active,
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody td.acn-active {
     position: relative !important;
     z-index: 5 !important;
     outline: 3px solid #083E40 !important;
@@ -9207,119 +9207,119 @@
       inset 0 0 0 1px rgba(245, 158, 11, 0.55) !important;
   }
 
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active {
+  body.is-fullscreen #documentTableContainer .data-table tbody td.acn-active,
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody td.acn-active {
     outline-color: #052f31 !important;
     box-shadow:
       inset 0 0 0 1px #f59e0b,
       0 0 0 2px rgba(255, 255, 255, 0.9) !important;
   }
 
-  #documentTableContainer .table-enhanced tbody td.acn-active::before,
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active::before,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active::before {
+  #documentTableContainer .data-table tbody td.acn-active::before,
+  body.is-fullscreen #documentTableContainer .data-table tbody td.acn-active::before,
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody td.acn-active::before {
     border-width: 8px 8px 0 0 !important;
     border-color: #f59e0b transparent transparent transparent !important;
     z-index: 2 !important;
   }
 
-  #documentTableContainer .table-enhanced thead th.acn-active-col,
-  body.is-fullscreen #documentTableContainer .table-enhanced thead th.acn-active-col,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead th.acn-active-col {
+  #documentTableContainer .data-table thead th.acn-active-col,
+  body.is-fullscreen #documentTableContainer .data-table thead th.acn-active-col,
+  body.document-table-only-fullscreen #documentTableContainer .data-table thead th.acn-active-col {
     background: #0d3b6e !important;
     box-shadow: 0 2px 0 #1a5276 !important;
   }
 
-  #documentTableContainer .table-enhanced .col-checkbox,
-  #documentTableContainer .table-enhanced .col-no,
-  #documentTableContainer .table-enhanced .col-nomor_agenda,
-  #documentTableContainer .table-enhanced .col-handler,
-  body.is-fullscreen #documentTableContainer .table-enhanced .col-checkbox,
-  body.is-fullscreen #documentTableContainer .table-enhanced .col-no,
-  body.is-fullscreen #documentTableContainer .table-enhanced .col-nomor_agenda,
-  body.is-fullscreen #documentTableContainer .table-enhanced .col-handler,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-checkbox,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-no,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-nomor_agenda,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-handler {
+  #documentTableContainer .data-table .col-checkbox,
+  #documentTableContainer .data-table .col-no,
+  #documentTableContainer .data-table .col-nomor_agenda,
+  #documentTableContainer .data-table .col-handler,
+  body.is-fullscreen #documentTableContainer .data-table .col-checkbox,
+  body.is-fullscreen #documentTableContainer .data-table .col-no,
+  body.is-fullscreen #documentTableContainer .data-table .col-nomor_agenda,
+  body.is-fullscreen #documentTableContainer .data-table .col-handler,
+  body.document-table-only-fullscreen #documentTableContainer .data-table .col-checkbox,
+  body.document-table-only-fullscreen #documentTableContainer .data-table .col-no,
+  body.document-table-only-fullscreen #documentTableContainer .data-table .col-nomor_agenda,
+  body.document-table-only-fullscreen #documentTableContainer .data-table .col-handler {
     position: sticky !important;
   }
 
-  #documentTableContainer .table-enhanced thead .col-checkbox,
-  #documentTableContainer .table-enhanced thead .col-no,
-  #documentTableContainer .table-enhanced thead .col-nomor_agenda,
-  #documentTableContainer .table-enhanced thead .col-handler,
-  body.is-fullscreen #documentTableContainer .table-enhanced thead .col-checkbox,
-  body.is-fullscreen #documentTableContainer .table-enhanced thead .col-no,
-  body.is-fullscreen #documentTableContainer .table-enhanced thead .col-nomor_agenda,
-  body.is-fullscreen #documentTableContainer .table-enhanced thead .col-handler,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead .col-checkbox,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead .col-no,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead .col-nomor_agenda,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead .col-handler {
+  #documentTableContainer .data-table thead .col-checkbox,
+  #documentTableContainer .data-table thead .col-no,
+  #documentTableContainer .data-table thead .col-nomor_agenda,
+  #documentTableContainer .data-table thead .col-handler,
+  body.is-fullscreen #documentTableContainer .data-table thead .col-checkbox,
+  body.is-fullscreen #documentTableContainer .data-table thead .col-no,
+  body.is-fullscreen #documentTableContainer .data-table thead .col-nomor_agenda,
+  body.is-fullscreen #documentTableContainer .data-table thead .col-handler,
+  body.document-table-only-fullscreen #documentTableContainer .data-table thead .col-checkbox,
+  body.document-table-only-fullscreen #documentTableContainer .data-table thead .col-no,
+  body.document-table-only-fullscreen #documentTableContainer .data-table thead .col-nomor_agenda,
+  body.document-table-only-fullscreen #documentTableContainer .data-table thead .col-handler {
     background: #0d3b6e !important;
     box-shadow: 0 2px 0 #1a5276 !important;
     z-index: 560 !important;
   }
 
-  #documentTableContainer .table-enhanced thead .col-handler,
-  body.is-fullscreen #documentTableContainer .table-enhanced thead .col-handler,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced thead .col-handler {
+  #documentTableContainer .data-table thead .col-handler,
+  body.is-fullscreen #documentTableContainer .data-table thead .col-handler,
+  body.document-table-only-fullscreen #documentTableContainer .data-table thead .col-handler {
     z-index: 570 !important;
   }
 
-  #documentTableContainer .table-enhanced tbody .col-checkbox,
-  #documentTableContainer .table-enhanced tbody .col-no,
-  #documentTableContainer .table-enhanced tbody .col-nomor_agenda,
-  #documentTableContainer .table-enhanced tbody .col-handler,
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody .col-checkbox,
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody .col-no,
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody .col-nomor_agenda,
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody .col-handler,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody .col-checkbox,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody .col-no,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody .col-nomor_agenda,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody .col-handler {
+  #documentTableContainer .data-table tbody .col-checkbox,
+  #documentTableContainer .data-table tbody .col-no,
+  #documentTableContainer .data-table tbody .col-nomor_agenda,
+  #documentTableContainer .data-table tbody .col-handler,
+  body.is-fullscreen #documentTableContainer .data-table tbody .col-checkbox,
+  body.is-fullscreen #documentTableContainer .data-table tbody .col-no,
+  body.is-fullscreen #documentTableContainer .data-table tbody .col-nomor_agenda,
+  body.is-fullscreen #documentTableContainer .data-table tbody .col-handler,
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody .col-checkbox,
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody .col-no,
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody .col-nomor_agenda,
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody .col-handler {
     background: #ffffff !important;
     z-index: 30 !important;
   }
 
-  #documentTableContainer .table-enhanced .col-checkbox,
-  body.is-fullscreen #documentTableContainer .table-enhanced .col-checkbox,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-checkbox {
+  #documentTableContainer .data-table .col-checkbox,
+  body.is-fullscreen #documentTableContainer .data-table .col-checkbox,
+  body.document-table-only-fullscreen #documentTableContainer .data-table .col-checkbox {
     left: 0 !important;
   }
 
-  #documentTableContainer .table-enhanced .col-no,
-  body.is-fullscreen #documentTableContainer .table-enhanced .col-no,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-no {
+  #documentTableContainer .data-table .col-no,
+  body.is-fullscreen #documentTableContainer .data-table .col-no,
+  body.document-table-only-fullscreen #documentTableContainer .data-table .col-no {
     left: var(--verif-sticky-no-left, 64px) !important;
   }
 
-  #documentTableContainer .table-enhanced .col-nomor_agenda,
-  body.is-fullscreen #documentTableContainer .table-enhanced .col-nomor_agenda,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-nomor_agenda {
+  #documentTableContainer .data-table .col-nomor_agenda,
+  body.is-fullscreen #documentTableContainer .data-table .col-nomor_agenda,
+  body.document-table-only-fullscreen #documentTableContainer .data-table .col-nomor_agenda {
     left: var(--verif-sticky-agenda-left, 152px) !important;
   }
 
-  #documentTableContainer .table-enhanced .col-handler,
-  body.is-fullscreen #documentTableContainer .table-enhanced .col-handler,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced .col-handler {
+  #documentTableContainer .data-table .col-handler,
+  body.is-fullscreen #documentTableContainer .data-table .col-handler,
+  body.document-table-only-fullscreen #documentTableContainer .data-table .col-handler {
     right: 0 !important;
   }
 
-  #documentTableContainer .table-enhanced tbody td.acn-active.col-checkbox,
-  #documentTableContainer .table-enhanced tbody td.acn-active.col-no,
-  #documentTableContainer .table-enhanced tbody td.acn-active.col-nomor_agenda,
-  #documentTableContainer .table-enhanced tbody td.acn-active.col-handler,
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-checkbox,
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-no,
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-nomor_agenda,
-  body.is-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-handler,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-checkbox,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-no,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-nomor_agenda,
-  body.document-table-only-fullscreen #documentTableContainer .table-enhanced tbody td.acn-active.col-handler {
+  #documentTableContainer .data-table tbody td.acn-active.col-checkbox,
+  #documentTableContainer .data-table tbody td.acn-active.col-no,
+  #documentTableContainer .data-table tbody td.acn-active.col-nomor_agenda,
+  #documentTableContainer .data-table tbody td.acn-active.col-handler,
+  body.is-fullscreen #documentTableContainer .data-table tbody td.acn-active.col-checkbox,
+  body.is-fullscreen #documentTableContainer .data-table tbody td.acn-active.col-no,
+  body.is-fullscreen #documentTableContainer .data-table tbody td.acn-active.col-nomor_agenda,
+  body.is-fullscreen #documentTableContainer .data-table tbody td.acn-active.col-handler,
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody td.acn-active.col-checkbox,
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody td.acn-active.col-no,
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody td.acn-active.col-nomor_agenda,
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody td.acn-active.col-handler {
     position: sticky !important;
     background-color: rgba(8, 62, 64, 0.08) !important;
     z-index: 80 !important;
@@ -9329,7 +9329,7 @@
   (function () {
     function syncVerificationStickyOffsets() {
       const container = document.getElementById('documentTableContainer');
-      const table = container ? container.querySelector('.table-enhanced') : null;
+      const table = container ? container.querySelector('.data-table') : null;
       if (!container || !table) return;
 
       const checkboxCol = table.querySelector('thead .col-checkbox') || table.querySelector('tbody .col-checkbox');

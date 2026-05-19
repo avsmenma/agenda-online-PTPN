@@ -3349,7 +3349,7 @@
       @php
         $showActionColumn = false;
       @endphp
-      <table class="table table-enhanced mb-0">
+      <table class="data-table document-table">
         <thead>
           <tr>
 
@@ -7117,7 +7117,7 @@
 
 @include('partials.virtual-document-table', ['paginator' => $dokumens, 'chunkSize' => 100, 'enabled' => true])
 @include('partials._inlineEditEngine')
-@include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
+@include('partials._activeCellNav', ['tableSelector' => '.data-table'])
 @include('partials._documentTableStickyCells')
 @include('partials.auto-refresh-documents')
 @endsection

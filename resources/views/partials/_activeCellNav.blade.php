@@ -2,7 +2,7 @@
   _activeCellNav.blade.php
   Spreadsheet-style active cell navigation untuk tabel daftar dokumen.
 
-  Usage: @include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
+  Usage: @include('partials._activeCellNav', ['tableSelector' => '.data-table'])
 --}}
 @php
   $tableSelector = $tableSelector ?? '.data-table';

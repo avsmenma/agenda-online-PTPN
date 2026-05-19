@@ -3126,7 +3126,7 @@
 
   <div class="table-dokumen" id="documentTableContainer">
     <div class="table-responsive">
-      <table class="table table-enhanced mb-0 operator-document-table">
+      <table class="data-table document-table operator-document-table">
         <thead>
           <tr>
             <th class="col-checkbox">
@@ -7817,7 +7817,7 @@
 
 @include('partials.virtual-document-table', ['paginator' => $dokumens, 'chunkSize' => 100, 'enabled' => true])
 @include('partials._inlineEditEngine')
-@include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
+@include('partials._activeCellNav', ['tableSelector' => '.data-table'])
 @include('partials._documentTableStickyCells')
 <style>
   #documentTableContainer #dokumenTableBody tr,

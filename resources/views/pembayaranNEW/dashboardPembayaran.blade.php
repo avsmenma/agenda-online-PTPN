@@ -2251,7 +2251,7 @@
             </div>
           </div>
           <div class="data-table-wrapper table-responsive" id="dataTableWrapper">
-            <table class="data-table table-enhanced" id="pembayaranDocumentTable">
+            <table class="data-table" id="pembayaranDocumentTable">
               <thead>
                 <tr>
                   <th class="col-no">No</th>

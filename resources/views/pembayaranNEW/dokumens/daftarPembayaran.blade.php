@@ -1375,7 +1375,7 @@
 <!-- Tabel Dokumen -->
 <div class="table-dokumen" id="documentTableContainer">
   <div class="table-responsive">
-    <table class="table table-enhanced mb-0">
+    <table class="data-table document-table">
       <thead>
         <tr>
           <th class="col-no">No</th>
@@ -4169,6 +4169,6 @@ document.addEventListener('DOMContentLoaded', function() {
 ])
 
 {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
-@include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
+@include('partials._activeCellNav', ['tableSelector' => '.data-table'])
 
 @endsection

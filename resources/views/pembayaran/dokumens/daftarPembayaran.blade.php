@@ -870,7 +870,7 @@
   <!-- Tabel Dokumen -->
   <div class="table-dokumen">
     <div class="table-responsive">
-      <table class="table table-enhanced mb-0">
+      <table class="data-table document-table">
         <thead>
           <tr>
             <th class="col-no">No</th>
@@ -1892,7 +1892,7 @@
     // Search functionality
     document.getElementById('pembayaranSearchInput').addEventListener('input', function (e) {
       const searchTerm = e.target.value.toLowerCase();
-      const allRows = document.querySelectorAll('.table-enhanced tbody tr');
+      const allRows = document.querySelectorAll('.data-table tbody tr');
 
       allRows.forEach(row => {
         if (row.classList.contains('detail-row')) {
@@ -2229,9 +2229,8 @@ if (searchInput) {
 }
 </script>
 
-@include('partials._activeCellNav', ['tableSelector' => '.table-enhanced'])
+@include('partials._activeCellNav', ['tableSelector' => '.data-table'])
 
 @endsection
-
 
 
