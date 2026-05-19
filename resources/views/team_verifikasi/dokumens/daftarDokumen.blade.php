@@ -3427,7 +3427,7 @@
       grid-template-columns: 1.25fr repeat(5, minmax(0, 1fr));
       gap: 0.65rem;
       margin-bottom: 0.75rem;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     .vsummary-item {
@@ -3509,27 +3509,27 @@
 
     .vsummary-label {
       color: #94a3b8;
-      font-size: 0.62rem;
-      font-weight: 800;
-      letter-spacing: 0.035em;
-      line-height: 1.15;
-      margin-bottom: 0.14rem;
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+      margin-bottom: 0.12rem;
       text-transform: uppercase;
       white-space: nowrap;
     }
 
     .vsummary-value {
       color: #0f172a;
-      font-size: clamp(1.18rem, 1.05vw, 1.42rem);
-      font-weight: 800;
+      font-size: clamp(1.16rem, 1.03vw, 1.36rem);
+      font-weight: 700;
       letter-spacing: 0;
       line-height: 1;
     }
 
     .vsummary-sub {
       color: #10b981;
-      font-size: 0.66rem;
-      font-weight: 700;
+      font-size: 0.64rem;
+      font-weight: 600;
       line-height: 1.2;
       margin-top: 0.18rem;
       max-width: 100%;
