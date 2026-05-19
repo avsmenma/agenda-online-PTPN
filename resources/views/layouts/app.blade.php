@@ -5033,6 +5033,7 @@
 
     @yield('content')
     @include('partials.compact-document-ui')
+    @include('partials.document-workbench-ui')
   </div>
 
   <!-- Notification Container -->

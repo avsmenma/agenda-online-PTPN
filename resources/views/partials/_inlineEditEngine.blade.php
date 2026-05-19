@@ -16,6 +16,35 @@
   .ie-cell.ie-saving   { background: #eff6ff !important; opacity: 0.7; }
   .ie-cell.ie-saved    { background: #f0fdf4 !important; transition: background 0.5s; }
   .ie-cell.ie-error    { background: #fef2f2 !important; outline: 2px solid #ef4444; }
+  .ie-cell {
+    transition: background 140ms ease, box-shadow 140ms ease, outline-color 140ms ease;
+  }
+  .ie-cell:not(.ie-editing):hover {
+    background: #f0fdfa !important;
+    box-shadow: inset 0 0 0 1px rgba(13, 91, 89, 0.24);
+  }
+  .ie-cell:not(.ie-editing):hover::after {
+    content: 'Edit';
+    background: #083E40;
+    border-radius: 999px;
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1;
+    opacity: 0.88;
+    padding: 4px 6px;
+    right: 6px;
+    text-transform: uppercase;
+    top: 6px;
+  }
+  .ie-cell.ie-saving {
+    box-shadow: inset 0 0 0 1px #93c5fd;
+    opacity: 0.82;
+  }
+  .ie-cell.ie-saved {
+    box-shadow: inset 0 0 0 1px #34d399;
+  }
   .ie-input {
     width: 100%; box-sizing: border-box;
     border: 1px solid #d1d5db; border-radius: 4px;

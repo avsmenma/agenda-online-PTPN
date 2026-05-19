@@ -25,6 +25,13 @@
     : 'Rp ' . number_format($totalNilaiNum / 1_000_000, 1, ',', '.') . ' Jt';
 
   $queryWithoutStatus = request()->except(['status', 'page']);
+  $ownerDocsBaseUrl = url('/owner/dokumen');
+  $ownerStatUrls = [
+    'total' => $ownerDocsBaseUrl . '?' . http_build_query(['status' => 'all']),
+    'unpaid' => $ownerDocsBaseUrl . '?' . http_build_query(['status' => 'all', 'filter_status_pembayaran' => 'belum_dibayar']),
+    'ready' => $ownerDocsBaseUrl . '?' . http_build_query(['status' => 'all', 'filter_status_pembayaran' => 'siap_dibayar']),
+    'paid' => $ownerDocsBaseUrl . '?' . http_build_query(['status' => 'all', 'filter_status_pembayaran' => 'sudah_dibayar']),
+  ];
   $formatFilterMoney = fn ($value) => trim((string) $value) === ''
     ? ''
     : number_format((float) preg_replace('/[^0-9]/', '', (string) $value), 0, ',', '.');
@@ -136,11 +143,44 @@
     background: var(--od-card);
     border: 1px solid var(--od-border);
     border-radius: 14px;
+    color: inherit;
+    display: block;
     padding: 18px 18px 14px;
     box-shadow: var(--od-shadow);
     position: relative;
     min-height: 132px;
     overflow: hidden;
+    text-decoration: none;
+  }
+
+  .owner-docs-stat-link {
+    cursor: pointer;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  .owner-docs-stat-link:hover,
+  .owner-docs-stat-link:focus {
+    border-color: #cbd5e1;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    color: inherit;
+    outline: none;
+    transform: translateY(-1px);
+  }
+
+  .owner-docs-stat-link:focus-visible {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16), 0 8px 24px rgba(15, 23, 42, 0.12);
+  }
+
+  .owner-docs-stat-detail {
+    color: #2563eb;
+    display: block;
+    font-size: 10.5px;
+    font-weight: 800;
+    margin-top: 8px;
+  }
+
+  .owner-docs-stat.accent .owner-docs-stat-detail {
+    color: rgba(255,255,255,.88);
   }
 
   .owner-docs-stat.accent {
@@ -1193,47 +1233,52 @@
 
   <div class="owner-docs-content">
     <div class="owner-docs-stats">
-      <div class="owner-docs-stat">
+      <a class="owner-docs-stat owner-docs-stat-link" href="{{ $ownerStatUrls['total'] }}">
         <div class="owner-docs-stat-label">Total Dokumen</div>
         <div class="owner-docs-stat-icon" style="background:#f0f4ff;color:#2563eb">
           <i class="far fa-file-alt"></i>
         </div>
         <div class="owner-docs-stat-value">{{ number_format($totalDokumen ?? 0, 0, ',', '.') }}</div>
         <div class="owner-docs-stat-sub">Total seluruh dokumen</div>
-      </div>
+        <span class="owner-docs-stat-detail">Lihat detail</span>
+      </a>
 
-      <div class="owner-docs-stat">
+      <a class="owner-docs-stat owner-docs-stat-link" href="{{ $ownerStatUrls['unpaid'] }}">
         <div class="owner-docs-stat-label">Belum Dibayar</div>
         <div class="owner-docs-stat-icon" style="background:#fffbeb;color:#f59e0b">
           <i class="far fa-clock"></i>
         </div>
         <div class="owner-docs-stat-value" style="color:#f59e0b">{{ number_format($dokumenProses ?? 0, 0, ',', '.') }}</div>
         <div class="owner-docs-stat-sub" style="font-weight:700;color:#f59e0b">Rp {{ number_format($nilaiBelumDibayar ?? 0, 0, ',', '.') }}</div>
-      </div>
+        <span class="owner-docs-stat-detail">Lihat belum dibayar</span>
+      </a>
 
-      <div class="owner-docs-stat">
+      <a class="owner-docs-stat owner-docs-stat-link" href="{{ $ownerStatUrls['ready'] }}">
         <div class="owner-docs-stat-label">Siap Dibayar</div>
         <div class="owner-docs-stat-icon" style="background:#eff4ff;color:#2563eb">
           <i class="fas fa-check"></i>
         </div>
         <div class="owner-docs-stat-value" style="color:#2563eb">{{ number_format($dokumenSiapBayar ?? 0, 0, ',', '.') }}</div>
         <div class="owner-docs-stat-sub">Rp {{ number_format($nilaiSiapDibayar ?? 0, 0, ',', '.') }}</div>
-      </div>
+        <span class="owner-docs-stat-detail">Lihat siap bayar</span>
+      </a>
 
-      <div class="owner-docs-stat">
+      <a class="owner-docs-stat owner-docs-stat-link" href="{{ $ownerStatUrls['paid'] }}">
         <div class="owner-docs-stat-label">Sudah Dibayar</div>
         <div class="owner-docs-stat-icon" style="background:#ecfdf5;color:#10b981">
           <i class="far fa-credit-card"></i>
         </div>
         <div class="owner-docs-stat-value" style="color:#10b981">{{ number_format($dokumenSelesai ?? 0, 0, ',', '.') }}</div>
         <div class="owner-docs-stat-sub" style="font-weight:700;color:#10b981">Rp {{ number_format($nilaiSudahDibayar ?? 0, 0, ',', '.') }}</div>
-      </div>
+        <span class="owner-docs-stat-detail">Lihat sudah dibayar</span>
+      </a>
 
-      <div class="owner-docs-stat accent">
+      <a class="owner-docs-stat owner-docs-stat-link accent" href="{{ $ownerStatUrls['total'] }}">
         <div class="owner-docs-stat-label">Total Nilai</div>
         <div class="owner-docs-stat-value">{{ $totalNilaiShort }}</div>
         <div class="owner-docs-stat-sub">Rp {{ number_format($totalNilaiNum, 0, ',', '.') }}</div>
-      </div>
+        <span class="owner-docs-stat-detail">Lihat semua dokumen</span>
+      </a>
     </div>
 
     <div class="owner-docs-section-head">

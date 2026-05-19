@@ -248,6 +248,9 @@
             <i class="fa-solid fa-magnifying-glass text-muted"></i>
           </span>
           <input type="text" class="form-control" name="search"
+            aria-label="Cari dokumen"
+            autocomplete="off"
+            data-document-search
             placeholder="Cari nomor agenda, SPP, nilai rupiah, atau field lainnya..."
             value="{{ request('search') }}">
         </div>
