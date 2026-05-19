@@ -124,6 +124,8 @@ tbody tr{transition:background .1s;border-bottom:1px solid var(--border)}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#fafbfd}
 tbody td{padding:10px 12px;font-size:12px;vertical-align:middle;text-align:center}
+thead th:nth-child(2),
+tbody td.doc-cell{text-align:left}
 .cb{width:14px;height:14px;accent-color:var(--accent);cursor:pointer}
 
 /* No. Dokumen cell */
@@ -159,11 +161,6 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle;text-align:cente
 .hari-warn{background:var(--yellow-bg);color:var(--yellow)}
 .hari-late{background:var(--red-bg);color:var(--red)}
 .hari-done{background:#f1f5f9;color:#64748b}
-
-/* Action btn */
-.action-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);transition:.15s;text-decoration:none}
-.action-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
-.action-btn svg{width:12px;height:12px}
 
 /* ── CARD VIEW ── */
 .card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px}
@@ -389,7 +386,6 @@ tbody td{padding:10px 12px;font-size:12px;vertical-align:middle;text-align:cente
               <th onclick="sortTable('tanggal_selesai')">Tgl Selesai</th>
               <th onclick="sortTable('elapsed_seconds')">Waktu Pengerjaan</th>
               <th>Status</th>
-              <th></th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -645,7 +641,7 @@ function renderTable(){
   if(currentView==='table'){
     const tbody = document.getElementById('tableBody');
     if(!paged.length){
-      tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:48px;color:#94a3b8">
+      tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:48px;color:#94a3b8">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;display:block;margin:0 auto 8px;opacity:.3"><circle cx="12" cy="12" r="10"/><path d="M9 9h.01M15 9h.01M8 14s1.5 2 4 2 4-2 4-2"/></svg>
         Tidak ada data</td></tr>`;
     } else {
@@ -654,7 +650,7 @@ function renderTable(){
         const selesaiDisplay = d.tanggal_selesai || '<span style="color:#94a3b8">—</span>';
         return `<tr data-doc-id="${d.id}">
           <td><input type="checkbox" class="cb"></td>
-          <td>
+          <td class="doc-cell">
             <div class="doc-no">${esc(d.nomor_spp||'-')}</div>
             <div class="doc-title">${esc(d.uraian_spp||'-')}</div>
           </td>
@@ -666,11 +662,6 @@ function renderTable(){
           <td class="date-cell ${d.tanggal_selesai?'highlight':''}">${selesaiDisplay}</td>
           <td>${hariLabel(d)}</td>
           <td class="status-cell">${statusPill(d.status)}</td>
-          <td>
-            <a href="/owner/workflow/${d.id}" class="action-btn" title="Lihat Detail">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </a>
-          </td>
         </tr>`;
       }).join('');
     }

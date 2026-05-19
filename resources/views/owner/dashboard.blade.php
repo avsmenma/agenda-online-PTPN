@@ -440,18 +440,18 @@
 
   .owner-docs-table {
     width: 100%;
-    min-width: 1240px;
+    min-width: 1500px;
     border-collapse: collapse;
     table-layout: fixed;
   }
 
-  .owner-docs-col-doc { width: 34%; }
+  .owner-docs-col-doc { width: 30%; }
   .owner-docs-col-value { width: 11%; }
   .owner-docs-col-from { width: 8%; }
-  .owner-docs-col-handler { width: 18%; }
-  .owner-docs-col-status { width: 13%; }
-  .owner-docs-col-duration { width: 8%; }
-  .owner-docs-col-age { width: 8%; }
+  .owner-docs-col-handler { width: 17%; }
+  .owner-docs-col-status { width: 12%; }
+  .owner-docs-col-duration { width: 11%; }
+  .owner-docs-col-age { width: 11%; }
 
   .owner-docs-table thead {
     background: #f8fafc;
@@ -484,6 +484,14 @@
 
   .owner-docs-table th:nth-child(4),
   .owner-docs-table td:nth-child(4) {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .owner-docs-table th:nth-child(6),
+  .owner-docs-table td:nth-child(6),
+  .owner-docs-table th:nth-child(7),
+  .owner-docs-table td:nth-child(7) {
     padding-left: 18px;
     padding-right: 18px;
   }
@@ -695,6 +703,7 @@
     font-weight: 800;
     white-space: nowrap;
     justify-content: center;
+    min-width: max-content;
   }
 
   .owner-docs-duration.safe {
@@ -714,11 +723,13 @@
   }
 
   .owner-docs-age {
+    display: inline-block;
     color: #475569;
     font-family: 'Sora', monospace;
     font-size: 11.5px;
     font-weight: 800;
     white-space: nowrap;
+    min-width: max-content;
   }
 
   .owner-docs-age.paid {
