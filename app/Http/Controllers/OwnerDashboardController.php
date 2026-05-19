@@ -3329,7 +3329,7 @@ class OwnerDashboardController extends Controller
             return $hours . ' jam' . ($minutes > 0 ? ' ' . $minutes . ' menit' : '');
         }
 
-        return max(1, $minutes) . ' menit';
+        return $minutes . ' menit';
     }
 
     private function getOwnerDocumentTabCounts(): array
