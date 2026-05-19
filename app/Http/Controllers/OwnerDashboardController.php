@@ -671,6 +671,17 @@ class OwnerDashboardController extends Controller
             $query->where('nilai_rupiah', '<=', (float) preg_replace('/[^0-9]/', '', (string) $request->filter_nilai_max));
         }
 
+        if ($request && $request->filled('filter_tanggal_masuk')) {
+            try {
+                $tanggalMasuk = Carbon::parse($request->filter_tanggal_masuk)->toDateString();
+                $query->whereDate('tanggal_masuk', $tanggalMasuk);
+            } catch (\Throwable $e) {
+                \Log::warning('Owner document filter ignored invalid tanggal_masuk', [
+                    'filter_tanggal_masuk' => $request->filter_tanggal_masuk,
+                ]);
+            }
+        }
+
         // Filter by umur dokumen â€” tampilkan semua dokumen belum dibayar berumur > X hari
         if ($request && $request->has('filter_umur') && !empty($request->filter_umur)) {
             $days = (int) $request->filter_umur;
@@ -3378,6 +3389,7 @@ class OwnerDashboardController extends Controller
             'filter_status_pembayaran',
             'filter_nilai_min',
             'filter_nilai_max',
+            'filter_tanggal_masuk',
             'filter_durasi_min',
             'filter_umur_min',
         ];

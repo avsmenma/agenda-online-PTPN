@@ -359,7 +359,7 @@
 
   .owner-docs-filter-grid {
     display: grid;
-    grid-template-columns: repeat(7, minmax(135px, 1fr));
+    grid-template-columns: repeat(8, minmax(130px, 1fr));
     gap: 10px;
     align-items: end;
   }
@@ -1310,6 +1310,11 @@
           </div>
 
           <div class="owner-docs-filter-group">
+            <label>Tanggal Masuk</label>
+            <input type="date" name="filter_tanggal_masuk" value="{{ request('filter_tanggal_masuk') }}">
+          </div>
+
+          <div class="owner-docs-filter-group">
             <label>Nilai Min</label>
             <input class="owner-docs-money-input" type="text" inputmode="numeric" name="filter_nilai_min" value="{{ $formatFilterMoney(request('filter_nilai_min')) }}" placeholder="0">
           </div>
@@ -1403,6 +1408,7 @@
                   </div>
                   <div class="owner-docs-docname" title="{{ $dokumen['uraian_spp'] ?: '-' }}">{{ $dokumen['uraian_spp'] ?: '-' }}</div>
                   <div class="owner-docs-payee" title="{{ ($dokumen['vendor'] ?? '') ?: '-' }}">Dibayar kepada: {{ ($dokumen['vendor'] ?? '') ?: '-' }}</div>
+                  <div class="owner-docs-payee">Tanggal masuk: {{ $dokumen['tanggal_masuk'] ?? '-' }}</div>
                 </td>
                 <td class="owner-docs-money" data-label="Nilai">
                   Rp {{ number_format((float)($dokumen['nilai_rupiah'] ?? 0), 0, ',', '.') }}
