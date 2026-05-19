@@ -539,6 +539,7 @@
   body.document-table-only-fullscreen header,
   body.document-table-only-fullscreen footer,
   body.document-table-only-fullscreen .vstat-grid,
+  body.document-table-only-fullscreen .vsummary-strip,
   body.document-table-only-fullscreen .search-box,
   body.document-table-only-fullscreen .alert,
   body.document-table-only-fullscreen .acn-indicator,
@@ -994,6 +995,7 @@
     html:fullscreen body:has(#documentTableContainer) header,
     html:fullscreen body:has(#documentTableContainer) footer,
     html:fullscreen body:has(#documentTableContainer) .vstat-grid,
+    html:fullscreen body:has(#documentTableContainer) .vsummary-strip,
     html:fullscreen body:has(#documentTableContainer) .search-box {
       display: none !important;
     }

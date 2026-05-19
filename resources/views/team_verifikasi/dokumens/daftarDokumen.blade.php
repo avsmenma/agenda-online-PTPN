@@ -3420,221 +3420,201 @@
 
   <h2 style="margin-bottom: 20px; font-weight: 700;">{{ $title }}</h2>
 
-  <!-- ===== PREMIUM BENTO GRID STATS ===== -->
+  <!-- ===== COMPACT SUMMARY METRICS ===== -->
   <style>
-    /* Bento Grid for Verifikasi Stats */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    .vstat-grid {
+    .vsummary-strip {
       display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 1.1rem;
-      margin-bottom: 1.5rem;
+      grid-template-columns: 1.25fr repeat(5, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 0.75rem;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    .vstat-card {
+
+    .vsummary-item {
+      min-height: 66px;
       background: #ffffff;
-      border-radius: 16px;
-      padding: 1.35rem 1.5rem;
-      border: 1px solid #f1f5f9;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      transition: 250ms cubic-bezier(0.4,0,0.2,1);
+      border: 1px solid #e8eef4;
+      border-radius: 12px;
+      box-shadow: 0 5px 18px rgba(15, 23, 42, 0.06);
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 0.68rem;
+      padding: 0.72rem 0.82rem;
       position: relative;
       overflow: hidden;
       text-decoration: none;
-      color: inherit;
-      display: flex;
-      flex-direction: row;
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .vsummary-item:hover {
+      color: #0f172a;
+      border-color: #cbd5e1;
+      box-shadow: 0 9px 24px rgba(15, 23, 42, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .vsummary-item--total {
+      background: linear-gradient(135deg, #083E40 0%, #0d5b59 100%);
+      border-color: transparent;
+      color: #ffffff;
+      box-shadow: 0 8px 24px rgba(8, 62, 64, 0.2);
+    }
+
+    .vsummary-item--total:hover,
+    .vsummary-item--total .vsummary-label,
+    .vsummary-item--total .vsummary-value,
+    .vsummary-item--total .vsummary-sub {
+      color: #ffffff;
+    }
+
+    .vsummary-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
       align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      grid-column: span 3;
+      background: rgba(8, 62, 64, 0.09);
+      color: #083E40;
+      display: flex;
+      flex: 0 0 auto;
+      font-size: 0.9rem;
+      justify-content: center;
     }
-    .vstat-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.08); transform: translateY(-2px); }
-    .vstat-card--total {
-      background: linear-gradient(135deg, #083E40 0%, #0a5254 100%);
-      border: none;
-      box-shadow: 0 4px 20px rgba(8,62,64,0.35);
+
+    .vsummary-item--total .vsummary-icon {
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
     }
-    .vstat-card--total:hover { box-shadow: 0 8px 30px rgba(8,62,64,0.45); transform: translateY(-3px); }
-    .vstat-card--total .vstat-label, .vstat-card--total .vstat-value, .vstat-card--total .vstat-sub { color: white; }
-    .vstat-card--total .vstat-label { opacity: 0.9; }
-    .vstat-card--total .vstat-sub { opacity: 0.85; }
-    .vstat-card--total .vstat-icon { background: rgba(255,255,255,0.2); color: white; }
-    .vstat-content { display: flex; flex-direction: column; }
-    .vstat-icon {
-      width: 52px; height: 52px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.25rem; flex-shrink: 0;
+
+    .vsummary-item--safe { border-left: 4px solid #10b981; }
+    .vsummary-item--warn { border-left: 4px solid #f59e0b; }
+    .vsummary-item--late { border-left: 4px solid #f43f5e; }
+    .vsummary-item--safe .vsummary-icon { background: rgba(16, 185, 129, 0.12); color: #059669; }
+    .vsummary-item--warn .vsummary-icon { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+    .vsummary-item--late .vsummary-icon { background: rgba(244, 63, 94, 0.12); color: #e11d48; }
+
+    .vsummary-item--active {
+      background: rgba(8, 62, 64, 0.06);
+      border-color: #0d5b59;
+      box-shadow: 0 0 0 2px rgba(8, 62, 64, 0.12), 0 9px 24px rgba(15, 23, 42, 0.08);
     }
-    .vstat-icon--verifikasi { background: rgba(8,62,64,0.1); color: #083E40; }
-    .vstat-icon--proses { background: rgba(245,158,11,0.12); color: #f59e0b; }
-    .vstat-icon--terkirim { background: rgba(59,130,246,0.12); color: #3b82f6; }
-    .vstat-label { font-size: 0.75rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
-    .vstat-value { font-size: 1.875rem; font-weight: 700; color: #0f172a; letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 0.2rem; }
-    .vstat-sub { font-size: 0.8125rem; color: #10b981; font-weight: 600; }
-    /* Deadline cards */
-    .vdeadline-card {
-      grid-column: span 4;
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 1.2rem 1.5rem;
-      border: 1px solid #f1f5f9;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      transition: 250ms cubic-bezier(0.4,0,0.2,1);
-      display: flex; align-items: center; gap: 1rem;
-      cursor: pointer; text-decoration: none; color: inherit;
-      position: relative; overflow: hidden;
+
+    .vsummary-item--safe.vsummary-item--active { background: rgba(16, 185, 129, 0.08); border-color: #10b981; }
+    .vsummary-item--warn.vsummary-item--active { background: rgba(245, 158, 11, 0.09); border-color: #f59e0b; }
+    .vsummary-item--late.vsummary-item--active { background: rgba(244, 63, 94, 0.08); border-color: #f43f5e; }
+
+    .vsummary-meta {
+      min-width: 0;
     }
-    .vdeadline-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; transition: 250ms; }
-    .vdeadline-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.1); transform: translateY(-2px); }
-    .vdeadline-card--aman::before { background: #10b981; }
-    .vdeadline-card--peringatan::before { background: #f59e0b; }
-    .vdeadline-card--terlambat::before { background: #f43f5e; }
-    .vdeadline-card--aman:hover { box-shadow: 0 0 20px rgba(16,185,129,0.2), 0 8px 32px rgba(0,0,0,0.08); }
-    .vdeadline-card--peringatan:hover { box-shadow: 0 0 20px rgba(245,158,11,0.2), 0 8px 32px rgba(0,0,0,0.08); }
-    .vdeadline-card--terlambat:hover { box-shadow: 0 0 20px rgba(244,63,94,0.2), 0 8px 32px rgba(0,0,0,0.08); }
-    .vdeadline-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
-    .vdeadline-card--aman .vdeadline-icon { background: rgba(16,185,129,0.12); color: #10b981; }
-    .vdeadline-card--peringatan .vdeadline-icon { background: rgba(245,158,11,0.12); color: #f59e0b; }
-    .vdeadline-card--terlambat .vdeadline-icon { background: rgba(244,63,94,0.12); color: #f43f5e; }
-    .vdeadline-content { flex: 1; }
-    .vdeadline-label { font-size: 0.8125rem; font-weight: 500; color: #94a3b8; margin-bottom: 0.2rem; }
-    .vdeadline-value { font-size: 1.5rem; font-weight: 700; color: #0f172a; }
-    .vdeadline-desc { font-size: 0.75rem; color: #94a3b8; margin-top: 0.2rem; }
-    /* Active state when card filter is applied */
-    .vdeadline-card.vdeadline-active { transform: translateY(-2px); }
-    .vdeadline-card--aman.vdeadline-active { background: rgba(16,185,129,0.1); border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.3), 0 6px 20px rgba(16,185,129,0.15); }
-    .vdeadline-card--aman.vdeadline-active::before { width: 6px; background: #10b981; }
-    .vdeadline-card--aman.vdeadline-active .vdeadline-value { color: #059669; }
-    .vdeadline-card--peringatan.vdeadline-active { background: rgba(245,158,11,0.1); border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.3), 0 6px 20px rgba(245,158,11,0.15); }
-    .vdeadline-card--peringatan.vdeadline-active::before { width: 6px; background: #f59e0b; }
-    .vdeadline-card--peringatan.vdeadline-active .vdeadline-value { color: #d97706; }
-    .vdeadline-card--terlambat.vdeadline-active { background: rgba(244,63,94,0.1); border-color: #f43f5e; box-shadow: 0 0 0 2px rgba(244,63,94,0.3), 0 6px 20px rgba(244,63,94,0.15); }
-    .vdeadline-card--terlambat.vdeadline-active::before { width: 6px; background: #f43f5e; }
-    .vdeadline-card--terlambat.vdeadline-active .vdeadline-value { color: #e11d48; }
+
+    .vsummary-label {
+      color: #94a3b8;
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.035em;
+      line-height: 1.15;
+      margin-bottom: 0.14rem;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .vsummary-value {
+      color: #0f172a;
+      font-size: clamp(1.18rem, 1.05vw, 1.42rem);
+      font-weight: 800;
+      letter-spacing: 0;
+      line-height: 1;
+    }
+
+    .vsummary-sub {
+      color: #10b981;
+      font-size: 0.66rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-top: 0.18rem;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .vsummary-item--warn .vsummary-sub { color: #d97706; }
+    .vsummary-item--late .vsummary-sub { color: #e11d48; }
+
     @media (max-width: 1280px) {
-      .vstat-card { grid-column: span 6; }
-      .vdeadline-card { grid-column: span 4; }
+      .vsummary-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
-    @media (max-width: 992px) { .vdeadline-card { grid-column: span 6; } }
+
     @media (max-width: 768px) {
-      .vstat-grid { gap: 0.75rem; }
-      .vstat-card, .vdeadline-card { grid-column: span 12; }
+      .vsummary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 520px) {
+      .vsummary-strip { grid-template-columns: 1fr; }
+      .vsummary-item { min-height: 62px; }
     }
   </style>
 
-
-  <div class="vstat-grid">
-    <!-- Card 1: Total Dokumen Agenda (hijau solid - besar) -->
-    <div class="vstat-card vstat-card--total">
-      <div class="vstat-content">
-        <div class="vstat-label">Total Dokumen Agenda</div>
-        <div class="vstat-value"
-          data-counter="{{ $totalDokumenAgenda ?? 0 }}"
-          data-duration="1400">0</div>
-        <div class="vstat-sub"
-          data-counter-rupiah="{{ $totalNilaiRupiah ?? 0 }}"
-          data-duration="1600">Rp 0</div>
-      </div>
-      <div class="vstat-icon" style="background:rgba(255,255,255,0.2);color:white;">
-        <i class="fas fa-layer-group"></i>
-      </div>
-    </div>
-
-    <!-- Card 2: Total Dokumen Verifikasi -->
-    <a href="{{ route('documents.verifikasi.index') }}" class="vstat-card">
-      <div class="vstat-content">
-        <div class="vstat-label">Total Dokumen Verifikasi</div>
-        <div class="vstat-value"
-          data-counter="{{ $totalDokumenVerifikasi ?? 0 }}"
-          data-duration="1200">0</div>
-        <div class="vstat-sub">Dokumen di verifikasi</div>
-      </div>
-      <div class="vstat-icon vstat-icon--verifikasi">
-        <i class="fas fa-folder-open"></i>
+  @php $filterKeterlambatan = request('keterlambatan'); @endphp
+  <div class="vsummary-strip" aria-label="Ringkasan dokumen verifikasi">
+    <a href="{{ route('documents.verifikasi.index') }}" class="vsummary-item vsummary-item--total">
+      <div class="vsummary-icon"><i class="fas fa-layer-group"></i></div>
+      <div class="vsummary-meta">
+        <div class="vsummary-label">Total Dokumen</div>
+        <div class="vsummary-value" data-counter="{{ $totalDokumenAgenda ?? 0 }}" data-duration="1400">0</div>
+        <div class="vsummary-sub" data-counter-rupiah="{{ $totalNilaiRupiah ?? 0 }}" data-duration="1600">Rp 0</div>
       </div>
     </a>
 
-    <!-- Card 3: Dokumen Diproses -->
-    <a href="{{ route('documents.verifikasi.index', ['status' => 'sedang_proses']) }}" class="vstat-card">
-      <div class="vstat-content">
-        <div class="vstat-label">Dokumen Diproses</div>
-        <div class="vstat-value"
-          data-counter="{{ $totalDokumenDiproses ?? 0 }}"
-          data-duration="1200">0</div>
-        <div class="vstat-sub">Sedang diproses</div>
-      </div>
-      <div class="vstat-icon vstat-icon--proses">
-        <i class="fas fa-clock"></i>
+    <a href="{{ route('documents.verifikasi.index') }}" class="vsummary-item">
+      <div class="vsummary-icon"><i class="fas fa-folder-open"></i></div>
+      <div class="vsummary-meta">
+        <div class="vsummary-label">Verifikasi</div>
+        <div class="vsummary-value" data-counter="{{ $totalDokumenVerifikasi ?? 0 }}" data-duration="1200">0</div>
+        <div class="vsummary-sub">di verifikasi</div>
       </div>
     </a>
 
-    <!-- Card 4: Total Terkirim -->
-    <a href="{{ route('documents.verifikasi.index', ['status' => 'terkirim']) }}" class="vstat-card">
-      <div class="vstat-content">
-        <div class="vstat-label">Total Terkirim</div>
-        <div class="vstat-value"
-          data-counter="{{ $totalTerkirim ?? 0 }}"
-          data-duration="1200">0</div>
-        <div class="vstat-sub">Dikirim ke tahap selanjutnya</div>
-      </div>
-      <div class="vstat-icon vstat-icon--terkirim">
-        <i class="fas fa-paper-plane"></i>
+    <a href="{{ route('documents.verifikasi.index', ['status' => 'terkirim']) }}" class="vsummary-item">
+      <div class="vsummary-icon"><i class="fas fa-paper-plane"></i></div>
+      <div class="vsummary-meta">
+        <div class="vsummary-label">Terkirim</div>
+        <div class="vsummary-value" data-counter="{{ $totalTerkirim ?? 0 }}" data-duration="1200">0</div>
+        <div class="vsummary-sub">tahap lanjut</div>
       </div>
     </a>
 
-    <!-- Deadline Card: Aman -->
-    @php $filterKeterlambatan = request('keterlambatan'); @endphp
     <a href="{{ route('documents.verifikasi.index', array_merge(request()->except('keterlambatan', 'page'), $filterKeterlambatan === 'aman' ? [] : ['keterlambatan' => 'aman'])) }}"
-      class="vdeadline-card vdeadline-card--aman {{ $filterKeterlambatan === 'aman' ? 'vdeadline-active' : '' }}">
-      <div class="vdeadline-icon"><i class="fas fa-shield-alt"></i></div>
-      <div class="vdeadline-content">
-        <div class="vdeadline-label">Aman</div>
-        <div class="vdeadline-value"
-          data-counter="{{ $dokumenLessThan24h ?? 0 }}"
-          data-duration="1000">0</div>
-        <div class="vdeadline-desc">Diterima &lt; 24 jam</div>
+      class="vsummary-item vsummary-item--safe {{ $filterKeterlambatan === 'aman' ? 'vsummary-item--active' : '' }}">
+      <div class="vsummary-icon"><i class="fas fa-shield-alt"></i></div>
+      <div class="vsummary-meta">
+        <div class="vsummary-label">Aman</div>
+        <div class="vsummary-value" data-counter="{{ $dokumenLessThan24h ?? 0 }}" data-duration="1000">0</div>
+        <div class="vsummary-sub">&lt; 24 jam</div>
       </div>
-      @if($filterKeterlambatan === 'aman')
-        <div style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);font-size:0.7rem;color:rgba(255,255,255,0.95);background:rgba(16,185,129,0.9);padding:3px 8px;border-radius:20px;font-weight:600;"><i class="fas fa-filter me-1"></i>Aktif</div>
-      @endif
     </a>
 
-    <!-- Deadline Card: Peringatan -->
     <a href="{{ route('documents.verifikasi.index', array_merge(request()->except('keterlambatan', 'page'), $filterKeterlambatan === 'peringatan' ? [] : ['keterlambatan' => 'peringatan'])) }}"
-      class="vdeadline-card vdeadline-card--peringatan {{ $filterKeterlambatan === 'peringatan' ? 'vdeadline-active' : '' }}">
-      <div class="vdeadline-icon"><i class="fas fa-exclamation-triangle"></i></div>
-      <div class="vdeadline-content">
-        <div class="vdeadline-label">Peringatan</div>
-        <div class="vdeadline-value"
-          data-counter="{{ $dokumen24to72h ?? 0 }}"
-          data-duration="1000">0</div>
-        <div class="vdeadline-desc">Diterima 1–3 hari lalu</div>
+      class="vsummary-item vsummary-item--warn {{ $filterKeterlambatan === 'peringatan' ? 'vsummary-item--active' : '' }}">
+      <div class="vsummary-icon"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="vsummary-meta">
+        <div class="vsummary-label">Peringatan</div>
+        <div class="vsummary-value" data-counter="{{ $dokumen24to72h ?? 0 }}" data-duration="1000">0</div>
+        <div class="vsummary-sub">1-3 hari</div>
       </div>
-      @if($filterKeterlambatan === 'peringatan')
-        <div style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);font-size:0.7rem;color:rgba(255,255,255,0.95);background:rgba(245,158,11,0.9);padding:3px 8px;border-radius:20px;font-weight:600;"><i class="fas fa-filter me-1"></i>Aktif</div>
-      @endif
     </a>
 
-    <!-- Deadline Card: Terlambat -->
     <a href="{{ route('documents.verifikasi.index', array_merge(request()->except('keterlambatan', 'page'), $filterKeterlambatan === 'terlambat' ? [] : ['keterlambatan' => 'terlambat'])) }}"
-      class="vdeadline-card vdeadline-card--terlambat {{ $filterKeterlambatan === 'terlambat' ? 'vdeadline-active' : '' }}">
-      <div class="vdeadline-icon"><i class="fas fa-times-circle"></i></div>
-      <div class="vdeadline-content">
-        <div class="vdeadline-label">Terlambat</div>
-        <div class="vdeadline-value"
-          data-counter="{{ $dokumenMoreThan72h ?? 0 }}"
-          data-duration="1000">0</div>
-        <div class="vdeadline-desc">Diterima &gt; 3 hari lalu</div>
+      class="vsummary-item vsummary-item--late {{ $filterKeterlambatan === 'terlambat' ? 'vsummary-item--active' : '' }}">
+      <div class="vsummary-icon"><i class="fas fa-times-circle"></i></div>
+      <div class="vsummary-meta">
+        <div class="vsummary-label">Terlambat</div>
+        <div class="vsummary-value" data-counter="{{ $dokumenMoreThan72h ?? 0 }}" data-duration="1000">0</div>
+        <div class="vsummary-sub">&gt; 3 hari</div>
       </div>
-      @if($filterKeterlambatan === 'terlambat')
-        <div style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);font-size:0.7rem;color:rgba(255,255,255,0.95);background:rgba(244,63,94,0.9);padding:3px 8px;border-radius:20px;font-weight:600;"><i class="fas fa-filter me-1"></i>Aktif</div>
-      @endif
     </a>
-
   </div>
-  <!-- ===== END BENTO GRID STATS ===== -->
-
+  <!-- ===== END COMPACT SUMMARY METRICS ===== -->
   <script>
     (function() {
       // Easing function: easeOutExpo
