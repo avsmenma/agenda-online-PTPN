@@ -415,24 +415,6 @@
       width: 100%;
     }
 
-    .data-table thead th {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: linear-gradient(135deg, #1a4d3e 0%, #0f3d2e 100%);
-      color: white;
-      font-weight: 600;
-      text-align: center;
-      vertical-align: middle;
-      border-bottom: 2px solid #1a4d3e;
-      padding: 18px 16px;
-      font-size: 13px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      border: none;
-      white-space: nowrap;
-    }
-
     /* Column Widths - Enhanced from perpajakan */
     .data-table .col-number {
       width: 60px;
@@ -1686,12 +1668,6 @@
         border-radius: 12px;
       }
 
-      .data-table thead th {
-        padding: 14px 8px;
-        font-size: 11px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      }
-
       .data-table td {
         padding: 12px 8px;
         font-size: 12px;
@@ -2048,11 +2024,6 @@
     @media (max-width: 768px) {
       .table-dokumen {
         padding: 15px;
-      }
-
-      .data-table thead th {
-        padding: 12px 8px;
-        font-size: 11px;
       }
 
       .data-table tbody td {
@@ -3181,84 +3152,8 @@
     </form>
   </div>
 
-  {{-- ===== REDESIGNED TABLE SECTION AKUTANSI ===== --}}
-
-  <style>
-    /* Override nested-table look — unified single card */
-    #documentTableContainer.table-dokumen {
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-      border: 1px solid #f1f5f9;
-      overflow: hidden;
-      padding: 0 !important;
-    }
-    .dtable-toolbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1rem 1.35rem; border-bottom: 1px solid #f1f5f9;
-      gap: 1rem; flex-wrap: wrap;
-    }
-    .dtable-toolbar-left { display: flex; align-items: center; gap: 0.65rem; }
-    .dtable-toolbar-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, #083E40 0%, #0a5254 100%);
-      border-radius: 10px; display: flex; align-items: center; justify-content: center;
-      color: white; font-size: 0.875rem; flex-shrink: 0;
-    }
-    .dtable-toolbar-title { font-size: 1rem; font-weight: 700; color: #0f172a; letter-spacing: -0.01em; }
-    .dtable-toolbar-subtitle { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
-    .dtable-toolbar-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-    .dtable-perpage-label { font-size: 0.8125rem; color: #64748b; white-space: nowrap; }
-    .dtable-perpage-select {
-      padding: 0.35rem 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0;
-      font-size: 0.8125rem; color: #334155; background: #f8fafc;
-      cursor: pointer; outline: none; transition: border-color 0.2s;
-    }
-    .dtable-perpage-select:focus { border-color: #083E40; }
-    /* Hide old pagination-perpage-top */
-    #documentTableContainer .pagination-perpage-top-wrapper { display: none !important; }
-    /* thead styling */
-    div#documentTableContainer thead tr { background: #f8fafc !important; }
-    div#documentTableContainer table thead th,
-    div#documentTableContainer table thead tr th {
-      background: #f8fafc !important;
-      color: #64748b !important;
-      font-size: 0.775rem !important; font-weight: 600 !important;
-      letter-spacing: 0.04em !important; text-transform: uppercase !important;
-      padding: 0.85rem 0.9rem !important; border: none !important; border-bottom: 1px solid #e2e8f0 !important; white-space: nowrap !important;
-    }
-
-    div#documentTableContainer table thead tr {
-      background: #f8fafc !important;
-    }
-    /* Zebra rows */
-    #documentTableContainer .data-table tbody tr.main-row:nth-child(even) { background: #f8fafc; }
-    #documentTableContainer .data-table tbody tr.main-row:nth-child(odd) { background: #ffffff; }
-    #documentTableContainer .data-table tbody tr.main-row:hover {
-      background: linear-gradient(90deg, rgba(8,62,64,0.04) 0%, transparent 100%) !important;
-      border-left: 3px solid #083E40;
-    }
-    #documentTableContainer .data-table td { border-top: 1px solid #f1f5f9 !important; border-bottom: none !important; }
-    #documentTableContainer .pagination-wrapper,
-    #documentTableContainer nav[aria-label],
-    #documentTableContainer .paginate-wrapper { padding: 0.75rem 1rem; border-top: 1px solid #f1f5f9; }
-  </style>
-
   <!-- Tabel Dokumen — Unified Card Design -->
   <div class="table-dokumen" id="documentTableContainer">
-    <!-- Unified toolbar: title + per-page selector -->
-    <div class="dtable-toolbar">
-      <div class="dtable-toolbar-left">
-        <div class="dtable-toolbar-icon"><i class="fa-solid fa-file-lines"></i></div>
-        <div>
-          <div class="dtable-toolbar-title">Daftar Dokumen Team Akutansi</div>
-          <div class="dtable-toolbar-subtitle">
-            Menampilkan {{ $dokumens->firstItem() ?? 0 }}–{{ $dokumens->lastItem() ?? 0 }} dari {{ number_format($dokumens->total()) }} hasil
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="table-responsive" style="overflow-x:auto;">
       @php
         $showActionColumn = false;

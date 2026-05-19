@@ -1429,28 +1429,6 @@
       table-layout: auto;
     }
 
-    .data-table thead th {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: #0d3b6e;
-      color: white;
-      font-weight: 600;
-      text-align: center;
-      vertical-align: middle;
-      white-space: normal;
-      line-height: 1.25;
-      overflow-wrap: normal;
-      word-break: keep-all;
-      background-clip: padding-box;
-      border: 1px solid #1a5276;
-      box-shadow: 0 2px 0 #1a5276;
-      padding: 9px 8px;
-      font-size: 11.5px;
-      min-width: 132px;
-      max-width: 320px;
-    }
-
 
     .data-table tbody tr {
       transition: all 0.2s ease;

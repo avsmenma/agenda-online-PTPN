@@ -161,21 +161,6 @@
       width: 100%;
     }
 
-    .data-table thead th {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-      color: white;
-      font-weight: 600;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 16px 12px;
-      border: none;
-      white-space: nowrap;
-    }
-
     .data-table tbody tr {
       transition: all 0.2s ease;
       border-left: 3px solid transparent;
