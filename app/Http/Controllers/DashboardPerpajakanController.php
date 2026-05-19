@@ -419,20 +419,7 @@ class DashboardPerpajakanController extends Controller
             ->excludeCsvImports()
             ->count();
 
-        // 3. Total Dokumen Diproses - sedang diproses di perpajakan
-        $totalDokumenDiproses = Dokumen::where('current_handler', 'perpajakan')
-            ->whereNotIn('status', [
-                'sent_to_akutansi',
-                'sent_to_pembayaran',
-                'pending_approval_akutansi',
-                'pending_approval_pembayaran',
-                'completed',
-                'selesai'
-            ])
-            ->excludeCsvImports()
-            ->count();
-
-        // 4. Total Terkirim - dikirim ke tahap selanjutnya
+        // 3. Total Terkirim - dikirim ke tahap selanjutnya
         $totalTerkirim = Dokumen::whereIn('status', ['sent_to_akutansi', 'sent_to_pembayaran', 'selesai'])
             ->where('current_handler', '!=', 'perpajakan')
             ->excludeCsvImports()
@@ -540,7 +527,6 @@ class DashboardPerpajakanController extends Controller
             'dokumens' => $dokumens,
             'totalDokumenAgenda' => $totalDokumenAgenda,
             'totalDokumenPerpajakan' => $totalDokumenPerpajakan,
-            'totalDokumenDiproses' => $totalDokumenDiproses,
             'totalTerkirim' => $totalTerkirim,
             'dokumenLessThan24h' => $dokumenLessThan24h,
             'dokumen24to72h' => $dokumen24to72h,

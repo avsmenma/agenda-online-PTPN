@@ -8,77 +8,6 @@
     letter-spacing: 0 !important;
   }
 
-  .vstat-grid {
-    gap: 0.65rem !important;
-    margin-bottom: 0.65rem !important;
-  }
-
-  .vstat-card {
-    min-height: 0 !important;
-    padding: 0.78rem 1rem !important;
-    border-radius: 12px !important;
-    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.07) !important;
-  }
-
-  .vstat-label {
-    font-size: 0.58rem !important;
-    line-height: 1.25 !important;
-    letter-spacing: 0.035em !important;
-    margin-bottom: 0.12rem !important;
-  }
-
-  .vstat-value {
-    font-size: clamp(1.28rem, 1.1vw, 1.55rem) !important;
-    line-height: 1 !important;
-    letter-spacing: 0 !important;
-    margin-bottom: 0.08rem !important;
-  }
-
-  .vstat-sub {
-    font-size: 0.68rem !important;
-    line-height: 1.25 !important;
-  }
-
-  .vstat-icon {
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
-    font-size: 0.78rem !important;
-    border-radius: 50% !important;
-  }
-
-  .vdeadline-card {
-    min-height: 0 !important;
-    padding: 0.58rem 0.9rem !important;
-    gap: 0.6rem !important;
-    border-radius: 12px !important;
-    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.06) !important;
-  }
-
-  .vdeadline-icon {
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    border-radius: 8px !important;
-    font-size: 0.76rem !important;
-  }
-
-  .vdeadline-label {
-    font-size: 0.66rem !important;
-    line-height: 1.2 !important;
-    margin-bottom: 0.05rem !important;
-  }
-
-  .vdeadline-value {
-    font-size: 1.05rem !important;
-    line-height: 1 !important;
-  }
-
-  .vdeadline-desc {
-    font-size: 0.62rem !important;
-    line-height: 1.2 !important;
-    margin-top: 0.04rem !important;
-  }
 
   .search-box {
     padding: 0.62rem 0.8rem !important;
@@ -538,7 +467,6 @@
   body.document-table-only-fullscreen .topbar,
   body.document-table-only-fullscreen header,
   body.document-table-only-fullscreen footer,
-  body.document-table-only-fullscreen .vstat-grid,
   body.document-table-only-fullscreen .vsummary-strip,
   body.document-table-only-fullscreen .search-box,
   body.document-table-only-fullscreen .alert,
@@ -904,36 +832,6 @@
   }
 
   @media (max-width: 1400px) {
-    .vstat-grid {
-      gap: 0.55rem !important;
-    }
-
-    .vstat-card {
-      padding: 0.68rem 0.85rem !important;
-    }
-
-    .vstat-value {
-      font-size: 1.22rem !important;
-    }
-
-    .vstat-icon {
-      width: 30px !important;
-      height: 30px !important;
-      min-width: 30px !important;
-      font-size: 0.7rem !important;
-    }
-
-    .vdeadline-card {
-      padding: 0.52rem 0.75rem !important;
-      gap: 0.5rem !important;
-    }
-
-    .vdeadline-icon {
-      width: 28px !important;
-      height: 28px !important;
-      min-width: 28px !important;
-      font-size: 0.68rem !important;
-    }
 
     .search-box {
       padding: 0.55rem 0.7rem !important;
@@ -994,7 +892,6 @@
     html:fullscreen body:has(#documentTableContainer) .topbar,
     html:fullscreen body:has(#documentTableContainer) header,
     html:fullscreen body:has(#documentTableContainer) footer,
-    html:fullscreen body:has(#documentTableContainer) .vstat-grid,
     html:fullscreen body:has(#documentTableContainer) .vsummary-strip,
     html:fullscreen body:has(#documentTableContainer) .search-box {
       display: none !important;

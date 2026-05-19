@@ -471,24 +471,13 @@ class DashboardAkutansiController extends Controller
             ->excludeCsvImports()
             ->count();
 
-        // 3. Total Dokumen Diproses - sedang diproses di akutansi
-        $totalDokumenDiproses = Dokumen::where('current_handler', 'akutansi')
-            ->whereNotIn('status', [
-                'sent_to_pembayaran',
-                'pending_approval_pembayaran',
-                'completed',
-                'selesai'
-            ])
-            ->excludeCsvImports()
-            ->count();
-
-        // 4. Total Terkirim - dikirim ke pembayaran atau selesai
+        // 3. Total Terkirim - dikirim ke pembayaran atau selesai
         $totalTerkirim = Dokumen::whereIn('status', ['sent_to_pembayaran', 'selesai'])
             ->where('current_handler', '!=', 'akutansi')
             ->excludeCsvImports()
             ->count();
 
-        // 5. Total Nilai Rupiah - sum semua dokumen yang dikerjakan akutansi
+        // 4. Total Nilai Rupiah - sum semua dokumen yang dikerjakan akutansi
         $totalNilaiRupiah = Dokumen::where(function ($query) {
             $query->where('current_handler', 'akutansi')
                 ->orWhereIn('status', ['sent_to_pembayaran', 'selesai']);
@@ -605,7 +594,6 @@ class DashboardAkutansiController extends Controller
             'dokumens' => $dokumens,
             'totalDokumenAgenda' => $totalDokumenAgenda,
             'totalDokumenAkutansi' => $totalDokumenAkutansi,
-            'totalDokumenDiproses' => $totalDokumenDiproses,
             'totalTerkirim' => $totalTerkirim,
             'totalNilaiRupiah' => $totalNilaiRupiah,
             'dokumenLessThan24h' => $dokumenLessThan24h,

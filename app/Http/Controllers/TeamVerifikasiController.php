@@ -523,18 +523,7 @@ class TeamVerifikasiController extends Controller
             })
             ->count();
 
-        // 3. Dokumen Diproses - dokumen yang sedang diproses oleh Team Verifikasi
-        $totalDokumenDiproses = Dokumen::whereIn('current_handler', ['team_verifikasi'])
-            ->whereIn('status', ['sent_to_team_verifikasi', 'sedang diproses', 'sedang_diproses', 'returned_to_bidang'])
-            ->when($hasImportedFromCsvColumn, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('imported_from_csv', false)
-                        ->orWhereNull('imported_from_csv');
-                });
-            })
-            ->count();
-
-        // 4. Total Terkirim - dokumen yang sudah dikirim ke tahap selanjutnya
+        // 3. Total Terkirim - dokumen yang sudah dikirim ke tahap selanjutnya
         $totalTerkirim = Dokumen::whereIn('status', ['sent_to_perpajakan', 'sent_to_akutansi', 'sent_to_pembayaran', 'completed', 'selesai'])
             ->where('current_handler', '!=', 'team_verifikasi')
             ->when($hasImportedFromCsvColumn, function ($query) {
@@ -760,7 +749,6 @@ class TeamVerifikasiController extends Controller
             'dokumens' => $dokumens,
             'totalDokumenAgenda' => $totalDokumenAgenda,
             'totalDokumenVerifikasi' => $totalDokumenVerifikasi,
-            'totalDokumenDiproses' => $totalDokumenDiproses,
             'totalTerkirim' => $totalTerkirim,
             'dokumenLessThan24h' => $dokumenLessThan24h,
             'dokumen24to72h' => $dokumen24to72h,
