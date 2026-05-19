@@ -285,6 +285,7 @@
     .document-qv-body {
       overflow: auto;
       padding: 1rem;
+      scroll-behavior: smooth;
     }
 
     .document-qv-section {
@@ -506,7 +507,7 @@
           '<div class="document-workbench-actions">',
             '<span class="document-active-filter-badge" id="documentActiveFilterBadge"><i class="fa-solid fa-filter"></i><span>0 filter aktif</span></span>',
             '<button type="button" class="document-quick-open-button" id="documentQuickOpenButton" disabled><i class="fa-solid fa-circle-info"></i> Detail Cepat</button>',
-            '<span class="document-shortcut-hint"><kbd>Ctrl</kbd> + <kbd>K</kbd> cari, <kbd>Ctrl</kbd> + <kbd>Enter</kbd> detail, <kbd>Enter</kbd> edit</span>',
+            '<span class="document-shortcut-hint"><kbd>Ctrl</kbd> + <kbd>K</kbd> cari, <kbd>Ctrl</kbd> + <kbd>Enter</kbd> buka/tutup detail, <kbd>Arrow</kbd> scroll detail</span>',
           '</div>',
           '<div class="document-density-toggle" role="group" aria-label="Tampilan tabel dokumen">',
             '<span class="document-density-toggle-label">Tampilan</span>',
@@ -531,8 +532,7 @@
           }
 
           if (event.target.closest('#documentQuickOpenButton')) {
-            const row = getSelectedRow();
-            if (row) openQuickView(row);
+            toggleQuickView();
           }
         });
 
@@ -582,7 +582,7 @@
           '</div>',
           '<div class="document-qv-body" id="documentQvBody"></div>',
           '<div class="document-qv-footer">',
-            '<span class="document-qv-muted">Klik baris lain untuk berpindah cepat.</span>',
+            '<span class="document-qv-muted">Ctrl + Enter untuk tutup, Arrow/PageUp/PageDown untuk scroll.</span>',
             '<button type="button" class="document-qv-action" id="documentQvDetailButton"><i class="fa-solid fa-up-right-from-square"></i> Detail lengkap</button>',
           '</div>'
         ].join('');
@@ -605,6 +605,35 @@
         if (!quickPanel) return;
         quickPanel.classList.remove('is-open');
         quickPanel.setAttribute('aria-hidden', 'true');
+      }
+
+      function isQuickViewOpen() {
+        return !!quickPanel && quickPanel.classList.contains('is-open');
+      }
+
+      function scrollQuickViewByKey(key) {
+        if (!isQuickViewOpen()) return false;
+        const body = quickPanel.querySelector('#documentQvBody');
+        if (!body) return false;
+
+        const line = 74;
+        const page = Math.max(180, Math.floor(body.clientHeight * 0.82));
+        const maxTop = Math.max(0, body.scrollHeight - body.clientHeight);
+        let nextTop = body.scrollTop;
+
+        if (key === 'ArrowDown') nextTop += line;
+        else if (key === 'ArrowUp') nextTop -= line;
+        else if (key === 'PageDown') nextTop += page;
+        else if (key === 'PageUp') nextTop -= page;
+        else if (key === 'Home') nextTop = 0;
+        else if (key === 'End') nextTop = maxTop;
+        else return false;
+
+        body.scrollTo({
+          top: Math.max(0, Math.min(maxTop, nextTop)),
+          behavior: 'smooth'
+        });
+        return true;
       }
 
       function headersFor(row) {
@@ -725,6 +754,16 @@
         renderQuickView(data);
       }
 
+      function toggleQuickView() {
+        if (isQuickViewOpen()) {
+          closeQuickView();
+          return;
+        }
+
+        const row = getSelectedRow();
+        if (row) openQuickView(row);
+      }
+
       function getSelectedRow() {
         if (selectedRow && document.body.contains(selectedRow)) return selectedRow;
         const activeCell = document.querySelector('#documentTableContainer td.acn-active');
@@ -749,6 +788,14 @@
       }
 
       function bindEvents() {
+        document.addEventListener('keydown', function (event) {
+          if (isTypingTarget(event.target)) return;
+          if (scrollQuickViewByKey(event.key)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }, true);
+
         document.addEventListener('click', function (event) {
           const row = closestElement(event.target, '#documentTableContainer tbody tr, .owner-docs-row');
           if (!row || shouldIgnoreRowClick(event.target)) return;
@@ -776,11 +823,8 @@
           }
 
           if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !isTypingTarget(event.target)) {
-            const row = getSelectedRow();
-            if (row) {
-              event.preventDefault();
-              openQuickView(row);
-            }
+            event.preventDefault();
+            toggleQuickView();
           }
         });
 
