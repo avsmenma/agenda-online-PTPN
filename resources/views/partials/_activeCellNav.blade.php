@@ -396,9 +396,11 @@
     setTimeout(function() {
       const cellRect = cell.getBoundingClientRect();
       const wrapperRect = wrapper.getBoundingClientRect();
+      const table = cell.closest('table');
+      const header = table?.querySelector('thead');
+      const headerRect = header?.getBoundingClientRect();
 
       // Calculate sticky column widths (left and right)
-      const table = cell.closest('table');
       let leftStickyWidth = 0;
       let rightStickyWidth = 0;
 
@@ -445,10 +447,38 @@
           behavior: 'smooth'
         });
       }
-    }, 10);
 
-    // Vertical scroll (standard behavior)
-    cell.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+      // Vertical visibility must account for sticky table headers. Native
+      // scrollIntoView can leave the active cell hidden underneath the header.
+      const headerOverlap = headerRect
+        ? Math.max(0, Math.min(headerRect.bottom, wrapperRect.bottom) - wrapperRect.top)
+        : 0;
+      const verticalPadding = 12;
+      const visibleTop = wrapperRect.top + headerOverlap + verticalPadding;
+      const visibleBottom = wrapperRect.bottom - verticalPadding;
+      let verticalAmount = 0;
+
+      if (cellRect.top < visibleTop) {
+        verticalAmount = cellRect.top - visibleTop;
+      } else if (cellRect.bottom > visibleBottom) {
+        verticalAmount = cellRect.bottom - visibleBottom;
+      }
+
+      if (verticalAmount !== 0) {
+        const canScrollWrapperY = wrapper.scrollHeight > wrapper.clientHeight + 1;
+        if (canScrollWrapperY) {
+          wrapper.scrollBy({
+            top: verticalAmount,
+            behavior: 'smooth'
+          });
+        } else {
+          window.scrollBy({
+            top: verticalAmount,
+            behavior: 'smooth'
+          });
+        }
+      }
+    }, 10);
   }
 
   function colIndexToLetter(index) {
