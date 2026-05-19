@@ -58,6 +58,35 @@
       color: #ffffff;
     }
 
+    .document-quick-open-button {
+      align-items: center;
+      background: #083E40;
+      border: 1px solid #083E40;
+      border-radius: 10px;
+      color: #ffffff;
+      display: inline-flex;
+      font-size: 0.78rem;
+      font-weight: 800;
+      gap: 0.42rem;
+      min-height: 34px;
+      padding: 0 0.78rem;
+      transition: opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+      white-space: nowrap;
+    }
+
+    .document-quick-open-button:disabled {
+      background: #e2e8f0;
+      border-color: #e2e8f0;
+      color: #94a3b8;
+      cursor: not-allowed;
+      opacity: 0.82;
+    }
+
+    .document-quick-open-button:not(:disabled):hover {
+      box-shadow: 0 6px 14px rgba(8, 62, 64, 0.22);
+      transform: translateY(-1px);
+    }
+
     .document-active-filter-badge {
       align-items: center;
       background: #ecfeff;
@@ -402,6 +431,7 @@
       let selectedRow = null;
       let quickPanel = null;
       let detailButton = null;
+      let quickOpenButton = null;
 
       const fieldAliases = {
         nomor: ['nomor agenda', 'nomor / uraian spp', 'nomor spp', 'no agenda'],
@@ -475,7 +505,8 @@
         bar.innerHTML = [
           '<div class="document-workbench-actions">',
             '<span class="document-active-filter-badge" id="documentActiveFilterBadge"><i class="fa-solid fa-filter"></i><span>0 filter aktif</span></span>',
-            '<span class="document-shortcut-hint"><kbd>Ctrl</kbd> + <kbd>K</kbd> fokus cari, <kbd>Esc</kbd> tutup detail</span>',
+            '<button type="button" class="document-quick-open-button" id="documentQuickOpenButton" disabled><i class="fa-solid fa-circle-info"></i> Detail Cepat</button>',
+            '<span class="document-shortcut-hint"><kbd>Ctrl</kbd> + <kbd>K</kbd> cari, <kbd>Ctrl</kbd> + <kbd>Enter</kbd> detail, <kbd>Enter</kbd> edit</span>',
           '</div>',
           '<div class="document-density-toggle" role="group" aria-label="Tampilan tabel dokumen">',
             '<span class="document-density-toggle-label">Tampilan</span>',
@@ -494,9 +525,18 @@
 
         bar.addEventListener('click', function (event) {
           const button = event.target.closest('[data-density-mode]');
-          if (!button) return;
-          setDensity(button.dataset.densityMode);
+          if (button) {
+            setDensity(button.dataset.densityMode);
+            return;
+          }
+
+          if (event.target.closest('#documentQuickOpenButton')) {
+            const row = getSelectedRow();
+            if (row) openQuickView(row);
+          }
         });
+
+        quickOpenButton = bar.querySelector('#documentQuickOpenButton');
 
         updateFilterBadge();
       }
@@ -565,8 +605,6 @@
         if (!quickPanel) return;
         quickPanel.classList.remove('is-open');
         quickPanel.setAttribute('aria-hidden', 'true');
-        if (selectedRow) selectedRow.classList.remove('document-qv-active-row');
-        selectedRow = null;
       }
 
       function headersFor(row) {
@@ -682,11 +720,28 @@
 
       function openQuickView(row) {
         if (!row) return;
+        selectRow(row);
+        const data = row.classList.contains('owner-docs-row') ? extractOwnerRow(row) : extractGenericRow(row);
+        renderQuickView(data);
+      }
+
+      function getSelectedRow() {
+        if (selectedRow && document.body.contains(selectedRow)) return selectedRow;
+        const activeCell = document.querySelector('#documentTableContainer td.acn-active');
+        const activeRow = activeCell?.closest('tr');
+        if (activeRow) {
+          selectRow(activeRow);
+          return activeRow;
+        }
+        return null;
+      }
+
+      function selectRow(row) {
+        if (!row) return;
         if (selectedRow && selectedRow !== row) selectedRow.classList.remove('document-qv-active-row');
         selectedRow = row;
         selectedRow.classList.add('document-qv-active-row');
-        const data = row.classList.contains('owner-docs-row') ? extractOwnerRow(row) : extractGenericRow(row);
-        renderQuickView(data);
+        if (quickOpenButton) quickOpenButton.disabled = false;
       }
 
       function shouldIgnoreRowClick(target) {
@@ -701,7 +756,7 @@
             event.preventDefault();
             event.stopImmediatePropagation();
           }
-          openQuickView(row);
+          selectRow(row);
         }, true);
 
         document.addEventListener('keydown', function (event) {
@@ -720,10 +775,9 @@
             return;
           }
 
-          if (event.key === 'Enter' && !isTypingTarget(event.target)) {
-            const active = document.activeElement;
-            const row = active?.closest?.('#documentTableContainer tbody tr, .owner-docs-row') || selectedRow;
-            if (row && !active?.classList?.contains('ie-cell')) {
+          if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !isTypingTarget(event.target)) {
+            const row = getSelectedRow();
+            if (row) {
               event.preventDefault();
               openQuickView(row);
             }

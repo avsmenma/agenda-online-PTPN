@@ -24,7 +24,7 @@
     box-shadow: inset 0 0 0 1px rgba(13, 91, 89, 0.24);
   }
   .ie-cell:not(.ie-editing):hover::after {
-    content: '2x klik Edit';
+    content: 'Enter Edit';
     background: #083E40;
     border-radius: 999px;
     color: #ffffff;

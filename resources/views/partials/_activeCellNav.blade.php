@@ -162,7 +162,7 @@
         <span id="acnColName" style="opacity:0.85; font-size:11px;"></span>
         <span class="acn-hint">
           <span class="acn-key">Arrow</span> navigasi &nbsp;
-          <span class="acn-key">Enter</span> edit
+          <span class="acn-key">Enter/F2</span> edit
         </span>`;
     }
 
@@ -315,8 +315,9 @@
       const activeTag = document.activeElement?.tagName?.toLowerCase();
       if (['input', 'textarea', 'select'].includes(activeTag)) return;
       if (document.querySelector('.ie-cell.ie-editing, .modal-overlay.show, .modal.show, .swal2-container.swal2-shown')) return;
+      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') return;
 
-      const navigationKeys = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Tab', 'Enter', 'Escape'];
+      const navigationKeys = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Tab', 'Enter', 'F2', 'Escape'];
       if (!navigationKeys.includes(event.key)) return;
 
       if (!activeCell || !document.body.contains(activeCell)) {
@@ -349,6 +350,7 @@
           moveCell(0, event.shiftKey ? -1 : 1);
           break;
         case 'Enter':
+        case 'F2':
           if (activeCell && activeCell.classList.contains('ie-cell')) {
             event.preventDefault();
             if (typeof window.ieActivateCell === 'function') {
