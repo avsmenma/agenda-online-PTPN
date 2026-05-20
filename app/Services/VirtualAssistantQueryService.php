@@ -40,6 +40,10 @@ class VirtualAssistantQueryService
         $normalized = $this->normalize($message);
         $limit = (int) config('asisten_virtual.limits.default_result_limit', 15);
 
+        if ($this->isGreeting($normalized)) {
+            return $this->greeting();
+        }
+
         if ($date = $this->extractDate($normalized)) {
             if ($this->containsAny($normalized, ['masuk', 'tanggal masuk', 'dokumen apa', 'dokumen yang masuk', 'hari ini'])) {
                 return $this->documentsByDate($date, $limit);
@@ -63,6 +67,10 @@ class VirtualAssistantQueryService
             return $this->unpaidDocuments($this->extractMonthYear($normalized), $amount, $limit);
         }
 
+        if ($this->containsAny($normalized, ['total dokumen', 'jumlah dokumen', 'berapa dokumen', 'berapa total dokumen', 'seluruh dokumen'])) {
+            return $this->documentSummary();
+        }
+
         if ($this->containsAny($normalized, ['paling lama', 'terlama', 'lama diproses', 'umur dokumen'])) {
             return $this->oldestDocuments($limit);
         }
@@ -82,6 +90,54 @@ class VirtualAssistantQueryService
             'data' => [],
             'link' => route('owner.dokumen'),
             'meta' => ['confidence' => 'low'],
+        ];
+    }
+
+    private function greeting(): array
+    {
+        return [
+            'intent' => 'greeting',
+            'answer' => 'Halo. Saya siap membantu membaca data Agenda Online, misalnya total dokumen, dokumen belum dibayar, dokumen masuk tanggal tertentu, dokumen terlambat, atau top bagian berdasarkan nilai dokumen.',
+            'data' => [
+                'contoh_pertanyaan' => [
+                    'Berapa total dokumen?',
+                    'Total belum dibayar bulan ini',
+                    'Dokumen apa saja yang masuk hari ini?',
+                    'Dokumen yang belum dibayar di atas 100 juta',
+                    'Bagian mana yang paling banyak mengirim dokumen?',
+                ],
+            ],
+            'link' => route('owner.dokumen'),
+            'meta' => ['confidence' => 'high'],
+        ];
+    }
+
+    private function documentSummary(): array
+    {
+        $totalDocuments = Dokumen::query()->count();
+        $totalValue = Dokumen::query()->sum('nilai_rupiah');
+        $paidCount = (clone $this->paidQuery())->count();
+        $paidValue = (clone $this->paidQuery())->sum('nilai_rupiah');
+        $unpaidCount = (clone $this->unpaidQuery())->count();
+        $unpaidValue = (clone $this->unpaidQuery())->sum('nilai_rupiah');
+
+        return [
+            'intent' => 'document_summary',
+            'answer' => "Total seluruh dokumen saat ini: {$totalDocuments} dokumen dengan nilai {$this->formatMoney($totalValue)}.",
+            'data' => [
+                'total_dokumen' => $totalDocuments,
+                'total_nilai' => $this->formatMoney($totalValue),
+                'sudah_dibayar' => [
+                    'jumlah_dokumen' => $paidCount,
+                    'total_nilai' => $this->formatMoney($paidValue),
+                ],
+                'belum_dibayar' => [
+                    'jumlah_dokumen' => $unpaidCount,
+                    'total_nilai' => $this->formatMoney($unpaidValue),
+                ],
+            ],
+            'link' => route('owner.dokumen'),
+            'meta' => ['confidence' => 'high'],
         ];
     }
 
@@ -471,6 +527,23 @@ class VirtualAssistantQueryService
         }
 
         return false;
+    }
+
+    private function isGreeting(string $text): bool
+    {
+        return in_array($text, [
+            'halo',
+            'hallo',
+            'hello',
+            'hai',
+            'hi',
+            'pagi',
+            'siang',
+            'sore',
+            'malam',
+            'assalamualaikum',
+            'asalamualaikum',
+        ], true);
     }
 
     private function normalize(string $text): string
