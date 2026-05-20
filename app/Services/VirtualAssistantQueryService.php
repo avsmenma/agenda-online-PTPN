@@ -248,7 +248,7 @@ class VirtualAssistantQueryService
 
         return [
             'intent' => 'payment_summary',
-            'answer' => "Total dokumen {$statusLabel}{$this->filterLabel($params)}: {$count} dokumen dengan nilai {$this->formatMoney($total)}.",
+            'answer' => "Total dokumen {$statusLabel}{$this->filterLabel($params, false)}: {$count} dokumen dengan nilai {$this->formatMoney($total)}.",
             'data' => [
                 'status_pembayaran' => $statusLabel,
                 'jumlah_dokumen' => $count,
@@ -826,11 +826,11 @@ class VirtualAssistantQueryService
         return array_filter($query, fn ($value) => $value !== null && $value !== '');
     }
 
-    private function filterLabel(array $params): string
+    private function filterLabel(array $params, bool $includeStatus = true): string
     {
         $parts = [];
 
-        if ($params['payment_statuses'] ?? []) {
+        if ($includeStatus && ($params['payment_statuses'] ?? [])) {
             $parts[] = 'status ' . $this->paymentStatusListLabel($params['payment_statuses']);
         }
 
@@ -874,11 +874,11 @@ class VirtualAssistantQueryService
     private function dateRangeLabel(array $range): string
     {
         if (($range['type'] ?? null) === 'date') {
-            return 'tanggal masuk ' . Carbon::parse($range['date'])->translatedFormat('d F Y');
+            return 'tanggal masuk ' . $this->formatIndonesianDate(Carbon::parse($range['date']));
         }
 
         if (($range['type'] ?? null) === 'month') {
-            return 'bulan ' . Carbon::createFromDate($range['year'], $range['month'], 1)->translatedFormat('F Y');
+            return 'bulan ' . $this->formatIndonesianMonth((int) $range['month']) . ' ' . $range['year'];
         }
 
         if (($range['type'] ?? null) === 'year') {
@@ -982,6 +982,29 @@ class VirtualAssistantQueryService
     private function formatMoney($value): string
     {
         return 'Rp ' . number_format((float) $value, 0, ',', '.');
+    }
+
+    private function formatIndonesianDate(Carbon $date): string
+    {
+        return $date->format('d') . ' ' . $this->formatIndonesianMonth((int) $date->format('n')) . ' ' . $date->format('Y');
+    }
+
+    private function formatIndonesianMonth(int $month): string
+    {
+        return [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ][$month] ?? (string) $month;
     }
 
     private function logDecision(string $question, string $intent, array $params, array $result): void
