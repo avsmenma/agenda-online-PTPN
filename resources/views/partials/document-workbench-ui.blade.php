@@ -16,17 +16,6 @@
       gap: 0.45rem;
     }
 
-    .document-density-toggle {
-      align-items: center;
-      background: #f8fafc;
-      border: 1px solid #dbe5ee;
-      border-radius: 10px;
-      display: inline-flex;
-      gap: 0.25rem;
-      padding: 0.22rem;
-    }
-
-    .document-density-toggle-label,
     .document-shortcut-hint,
     .document-active-filter-badge {
       color: #64748b;
@@ -34,57 +23,6 @@
       font-weight: 700;
       letter-spacing: 0;
       white-space: nowrap;
-    }
-
-    .document-density-toggle-label {
-      padding-left: 0.5rem;
-    }
-
-    .document-density-button {
-      background: transparent;
-      border: 0;
-      border-radius: 8px;
-      color: #475569;
-      font-size: 0.78rem;
-      font-weight: 800;
-      min-height: 32px;
-      padding: 0 0.72rem;
-      transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
-    }
-
-    .document-density-button.is-active {
-      background: #083E40;
-      box-shadow: 0 4px 10px rgba(8, 62, 64, 0.18);
-      color: #ffffff;
-    }
-
-    .document-quick-open-button {
-      align-items: center;
-      background: #083E40;
-      border: 1px solid #083E40;
-      border-radius: 10px;
-      color: #ffffff;
-      display: inline-flex;
-      font-size: 0.78rem;
-      font-weight: 800;
-      gap: 0.42rem;
-      min-height: 34px;
-      padding: 0 0.78rem;
-      transition: opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease;
-      white-space: nowrap;
-    }
-
-    .document-quick-open-button:disabled {
-      background: #e2e8f0;
-      border-color: #e2e8f0;
-      color: #94a3b8;
-      cursor: not-allowed;
-      opacity: 0.82;
-    }
-
-    .document-quick-open-button:not(:disabled):hover {
-      box-shadow: 0 6px 14px rgba(8, 62, 64, 0.22);
-      transform: translateY(-1px);
     }
 
     .document-active-filter-badge {
@@ -173,20 +111,6 @@
       text-align: right;
     }
 
-    body.document-density-normal #documentTableContainer .data-table th,
-    body.document-density-normal #documentTableContainer .data-table td,
-    body.document-density-normal #documentTableContainer table th,
-    body.document-density-normal #documentTableContainer table td {
-      font-size: 13.4px !important;
-      line-height: 1.45 !important;
-      padding: 11px 13px !important;
-    }
-
-    body.document-density-normal #documentTableContainer .data-table tbody tr,
-    body.document-density-normal #documentTableContainer table tbody tr {
-      min-height: 58px !important;
-    }
-
     body.document-density-compact .owner-docs-table th,
     body.document-density-compact .owner-docs-table td {
       font-size: 12px;
@@ -206,13 +130,6 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-
-    body.document-density-normal .owner-docs-table th,
-    body.document-density-normal .owner-docs-table td {
-      font-size: 13px;
-      padding-bottom: 18px;
-      padding-top: 18px;
     }
 
     .document-qv-active-row > td,
@@ -396,7 +313,6 @@
         width: 100%;
       }
 
-      .document-density-toggle,
       .document-shortcut-hint,
       .document-active-filter-badge {
         width: 100%;
@@ -428,11 +344,9 @@
     (function () {
       'use strict';
 
-      const densityKey = 'agenda.documentDensity';
       let selectedRow = null;
       let quickPanel = null;
       let detailButton = null;
-      let quickOpenButton = null;
 
       const fieldAliases = {
         nomor: ['nomor agenda', 'nomor / uraian spp', 'nomor spp', 'no agenda'],
@@ -506,13 +420,7 @@
         bar.innerHTML = [
           '<div class="document-workbench-actions">',
             '<span class="document-active-filter-badge" id="documentActiveFilterBadge"><i class="fa-solid fa-filter"></i><span>0 filter aktif</span></span>',
-            '<button type="button" class="document-quick-open-button" id="documentQuickOpenButton" disabled><i class="fa-solid fa-circle-info"></i> Detail Cepat</button>',
             '<span class="document-shortcut-hint"><kbd>Ctrl</kbd> + <kbd>K</kbd> cari, <kbd>Ctrl</kbd> + <kbd>Enter</kbd> buka/tutup detail, <kbd>Arrow</kbd> scroll detail</span>',
-          '</div>',
-          '<div class="document-density-toggle" role="group" aria-label="Tampilan tabel dokumen">',
-            '<span class="document-density-toggle-label">Tampilan</span>',
-            '<button type="button" class="document-density-button" data-density-mode="compact">Padat</button>',
-            '<button type="button" class="document-density-button" data-density-mode="normal">Normal</button>',
           '</div>'
         ].join('');
 
@@ -524,36 +432,13 @@
           target.parentNode.insertBefore(bar, target);
         }
 
-        bar.addEventListener('click', function (event) {
-          const button = event.target.closest('[data-density-mode]');
-          if (button) {
-            setDensity(button.dataset.densityMode);
-            return;
-          }
-
-          if (event.target.closest('#documentQuickOpenButton')) {
-            toggleQuickView();
-          }
-        });
-
-        quickOpenButton = bar.querySelector('#documentQuickOpenButton');
-
         updateFilterBadge();
       }
 
-      function setDensity(mode) {
-        const nextMode = mode === 'normal' ? 'normal' : 'compact';
-        document.body.classList.toggle('document-density-compact', nextMode === 'compact');
-        document.body.classList.toggle('document-density-normal', nextMode === 'normal');
-        localStorage.setItem(densityKey, nextMode);
-        document.querySelectorAll('[data-density-mode]').forEach((button) => {
-          button.classList.toggle('is-active', button.dataset.densityMode === nextMode);
-          button.setAttribute('aria-pressed', button.dataset.densityMode === nextMode ? 'true' : 'false');
-        });
-      }
-
-      function initDensity() {
-        setDensity(localStorage.getItem(densityKey) || 'compact');
+      function initCompactDensity() {
+        document.body.classList.add('document-density-compact');
+        document.body.classList.remove('document-density-normal');
+        localStorage.removeItem('agenda.documentDensity');
       }
 
       function updateFilterBadge() {
@@ -780,7 +665,6 @@
         if (selectedRow && selectedRow !== row) selectedRow.classList.remove('document-qv-active-row');
         selectedRow = row;
         selectedRow.classList.add('document-qv-active-row');
-        if (quickOpenButton) quickOpenButton.disabled = false;
       }
 
       function shouldIgnoreRowClick(target) {
@@ -853,7 +737,7 @@
       ready(function () {
         ensureWorkbenchBar();
         ensureQuickPanel();
-        initDensity();
+        initCompactDensity();
         bindEvents();
         updateFilterBadge();
       });
