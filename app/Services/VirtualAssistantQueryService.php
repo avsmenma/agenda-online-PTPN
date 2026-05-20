@@ -682,15 +682,15 @@ class VirtualAssistantQueryService
 
     private function extractAmountBound(string $text, string $bound): ?float
     {
-        if (preg_match('/antara\s+rp?\s*([\d\.\,]+)\s*(juta|miliar|ribu)?\s+(?:dan|sampai|-)\s+rp?\s*([\d\.\,]+)\s*(juta|miliar|ribu)?/u', $text, $matches)) {
+        if (preg_match('/antara\s+(?:rp\.?\s*)?([\d\.\,]+)\s*(juta|miliar|ribu)?\s+(?:dan|sampai|-)\s+(?:rp\.?\s*)?([\d\.\,]+)\s*(juta|miliar|ribu)?/u', $text, $matches)) {
             return $bound === 'min'
                 ? $this->parseAmount($matches[1], $matches[2] ?? '')
                 : $this->parseAmount($matches[3], $matches[4] ?? ($matches[2] ?? ''));
         }
 
         $patterns = $bound === 'min'
-            ? ['/(?:di atas|lebih dari|>=|minimal|min|lebih besar dari)\s*rp?\s*([\d\.\,]+)\s*(juta|miliar|ribu)?/u']
-            : ['/(?:di bawah|kurang dari|<=|maksimal|max|lebih kecil dari)\s*rp?\s*([\d\.\,]+)\s*(juta|miliar|ribu)?/u'];
+            ? ['/(?:di\s*atas|lebih dari|>=|minimal|min|lebih besar dari)\s*(?:rp\.?\s*)?([\d\.\,]+)\s*(juta|miliar|ribu)?/u']
+            : ['/(?:di\s*bawah|kurang dari|<=|maksimal|max|lebih kecil dari)\s*(?:rp\.?\s*)?([\d\.\,]+)\s*(juta|miliar|ribu)?/u'];
 
         foreach ($patterns as $pattern) {
             if (preg_match($pattern, $text, $matches)) {

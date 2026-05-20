@@ -16,7 +16,9 @@ class VirtualAssistantService
     {
         $result = $this->queryService->answer($message);
         $configuredProvider = (string) config('asisten_virtual.provider', 'local');
-        $aiAnswer = $this->aiProvider->refineAnswer($message, $result);
+        $aiAnswer = $this->shouldUseAiRefinement($result)
+            ? $this->aiProvider->refineAnswer($message, $result)
+            : null;
 
         if ($aiAnswer) {
             $result['answer'] = trim($aiAnswer);
@@ -25,6 +27,9 @@ class VirtualAssistantService
         } else {
             $result['meta']['ai_provider'] = 'local';
             $result['meta']['ai_called'] = false;
+            $result['meta']['ai_skipped_reason'] = $this->shouldUseAiRefinement($result)
+                ? null
+                : 'authoritative_structured_data';
         }
 
         Log::info('Virtual Assistant response completed', [
@@ -38,5 +43,25 @@ class VirtualAssistantService
         ]);
 
         return $result;
+    }
+
+    private function shouldUseAiRefinement(array $result): bool
+    {
+        $intent = (string) ($result['intent'] ?? '');
+
+        if (in_array($intent, ['clarification', 'greeting'], true)) {
+            return true;
+        }
+
+        $data = $result['data'] ?? [];
+        $firstRow = is_array($data) ? reset($data) : null;
+
+        // Keep database-backed lists and summaries authoritative so AI cannot
+        // accidentally change counts, totals, or which rows are shown.
+        if (is_array($firstRow) && (array_key_exists('nomor_agenda', $firstRow) || array_key_exists('total_nilai', $firstRow))) {
+            return false;
+        }
+
+        return false;
     }
 }
