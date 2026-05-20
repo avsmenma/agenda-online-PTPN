@@ -547,7 +547,7 @@ class VirtualAssistantQueryService
 
     private function documentEntryDatesSummary(array $params, int $limit): array
     {
-        $query = $this->baseQuery();
+        $query = Dokumen::query();
         $this->applyFilters($query, $params);
 
         $rows = $query
