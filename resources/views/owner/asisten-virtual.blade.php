@@ -235,6 +235,48 @@
     padding: 0;
   }
 
+  .va-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .va-feedback {
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #dce5f0;
+    border-radius: 999px;
+    color: #53627c;
+    display: inline-flex;
+    font-size: 11.5px;
+    font-weight: 800;
+    gap: 5px;
+    min-height: 30px;
+    padding: 0 10px;
+  }
+
+  .va-feedback:hover,
+  .va-feedback.saved {
+    background: #ecfdf5;
+    border-color: #99f6e4;
+    color: #0f766e;
+  }
+
+  .va-feedback.negative:hover,
+  .va-feedback.negative.saved {
+    background: #fff1f2;
+    border-color: #fecdd3;
+    color: #be123c;
+  }
+
+  .va-feedback-status {
+    color: #7d8ba6;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+
   .va-loading {
     align-items: center;
     color: #66758f;
@@ -391,6 +433,7 @@
 <script>
 (() => {
   const endpoint = @json(route('owner.asisten-virtual.chat'));
+  const feedbackEndpointTemplate = @json(route('owner.asisten-virtual.feedback', ['interaction' => '__ID__']));
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
   const messages = document.getElementById('vaMessages');
   const empty = document.getElementById('vaEmpty');
@@ -493,17 +536,74 @@
     const answer = reply?.answer || 'Maaf, saya belum mendapat jawaban.';
     const dataHtml = renderData(reply?.data);
     const linkHtml = reply?.link ? `<a class="va-result-link" href="${escapeHtml(reply.link)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat dokumen terkait</a>` : '';
+    const feedbackHtml = reply?.interaction_id ? `
+      <div class="va-actions" data-feedback-for="${escapeHtml(reply.interaction_id)}">
+        <button class="va-feedback" type="button" data-feedback="helpful"><i class="fa-solid fa-thumbs-up"></i> Membantu</button>
+        <button class="va-feedback negative" type="button" data-feedback="not_helpful"><i class="fa-solid fa-thumbs-down"></i> Tidak sesuai</button>
+        <button class="va-feedback negative" type="button" data-feedback="wrong_answer"><i class="fa-solid fa-triangle-exclamation"></i> Laporkan jawaban salah</button>
+        <span class="va-feedback-status" aria-live="polite"></span>
+      </div>` : '';
     row.innerHTML = `
       <div class="va-bubble">
         <div class="va-answer">${escapeHtml(answer)}</div>
         ${dataHtml}
         ${linkHtml}
-        <button class="va-copy" type="button">Copy jawaban</button>
+        <div class="va-actions">
+          <button class="va-copy" type="button">Copy jawaban</button>
+        </div>
+        ${feedbackHtml}
       </div>`;
     row.querySelector('.va-copy')?.addEventListener('click', () => navigator.clipboard?.writeText(answer));
+    row.querySelectorAll('.va-feedback').forEach((button) => {
+      button.addEventListener('click', () => sendFeedback(button, reply.interaction_id));
+    });
     messages.appendChild(row);
     updateConversationContext(reply);
     scrollToBottom();
+  }
+
+  async function sendFeedback(button, interactionId) {
+    if (!interactionId || button.disabled) return;
+
+    const feedback = button.dataset.feedback;
+    const container = button.closest('[data-feedback-for]');
+    const status = container?.querySelector('.va-feedback-status');
+    let reason = '';
+
+    if (feedback !== 'helpful') {
+      reason = window.prompt('Catatan opsional untuk programmer: apa yang kurang tepat dari jawaban ini?') || '';
+    }
+
+    container?.querySelectorAll('.va-feedback').forEach((item) => {
+      item.disabled = true;
+    });
+    if (status) status.textContent = 'Menyimpan feedback...';
+
+    try {
+      const url = feedbackEndpointTemplate.replace('__ID__', encodeURIComponent(interactionId));
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': token,
+        },
+        body: JSON.stringify({ feedback, reason }),
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message || 'Feedback gagal disimpan.');
+      }
+
+      button.classList.add('saved');
+      if (status) status.textContent = payload.message || 'Feedback tersimpan.';
+    } catch (error) {
+      container?.querySelectorAll('.va-feedback').forEach((item) => {
+        item.disabled = false;
+      });
+      if (status) status.textContent = 'Feedback gagal disimpan.';
+    }
   }
 
   function updateConversationContext(reply) {

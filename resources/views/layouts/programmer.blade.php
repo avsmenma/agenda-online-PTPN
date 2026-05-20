@@ -400,6 +400,10 @@
        class="{{ request()->routeIs('programmer.database-tools*') ? 'active' : '' }}">
       <i class="fas fa-database nav-icon"></i> Database Tools
     </a>
+    <a href="{{ route('programmer.assistant-evaluation') }}"
+       class="{{ request()->routeIs('programmer.assistant-evaluation*') ? 'active' : '' }}">
+      <i class="fas fa-robot nav-icon"></i> Evaluasi Asisten Virtual
+    </a>
     <a href="{{ route('programmer.programmer-audit-trail') }}"
        class="{{ request()->routeIs('programmer.programmer-audit-trail') ? 'active' : '' }}">
       <i class="fas fa-shield-alt nav-icon"></i> Audit Trail

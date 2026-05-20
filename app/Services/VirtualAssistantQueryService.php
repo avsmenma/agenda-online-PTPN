@@ -818,15 +818,34 @@ class VirtualAssistantQueryService
 
     private function clarification(string $message, array $params): array
     {
-        $suggestion = 'Apakah yang Anda maksud ingin mencari dokumen berdasarkan status pembayaran, tanggal masuk, bagian, pengurus, nilai, atau nomor SPP?';
+        $normalized = $this->normalize($message);
+        $suggestion = "Saya belum bisa memastikan maksud pertanyaan. Apakah yang Anda maksud:\n"
+            . "1. Dokumen berdasarkan status pembayaran?\n"
+            . "2. Dokumen berdasarkan tanggal masuk?\n"
+            . "3. Dokumen berdasarkan bagian/unit?\n"
+            . "4. Dokumen berdasarkan nilai minimum/maksimum?\n"
+            . "5. Dokumen berdasarkan nomor SPP atau nomor agenda?";
 
-        if (str_contains($this->normalize($message), 'bayar')) {
-            $suggestion = 'Apakah yang Anda maksud status pembayaran Siap Dibayar, Belum Dibayar, atau Sudah Dibayar?';
+        if (str_contains($normalized, 'bayar')) {
+            $suggestion = "Saya belum bisa memastikan status pembayaran yang Anda maksud. Apakah yang Anda maksud:\n"
+                . "1. Dokumen siap dibayar?\n"
+                . "2. Dokumen belum dibayar?\n"
+                . "3. Dokumen sudah dibayar?";
+        } elseif ($this->containsAny($normalized, ['besar', 'terbesar', 'nilai'])) {
+            $suggestion = "Saya belum bisa memastikan batas nilai yang Anda maksud. Apakah yang Anda maksud:\n"
+                . "1. Dokumen dengan nilai terbesar?\n"
+                . "2. Dokumen di atas nominal tertentu, misalnya di atas 100 juta?\n"
+                . "3. Top bagian berdasarkan total nilai dokumen?";
+        } elseif ($this->containsAny($normalized, ['tanggal', 'masuk', 'bulan', 'hari'])) {
+            $suggestion = "Saya belum bisa memastikan periode tanggal yang Anda maksud. Apakah yang Anda maksud:\n"
+                . "1. Dokumen masuk hari ini?\n"
+                . "2. Dokumen masuk tanggal tertentu, misalnya 5 Mei 2026?\n"
+                . "3. Dokumen masuk bulan tertentu, misalnya Mei 2026?";
         }
 
         return [
             'intent' => 'clarification',
-            'answer' => $suggestion . ' Contoh: "berikan saya dokumen siap dibayar" atau "dokumen belum dibayar di atas 100 juta".',
+            'answer' => $suggestion . "\n\nContoh pertanyaan yang bisa langsung dijawab: \"berikan saya dokumen siap dibayar\" atau \"dokumen belum dibayar di atas 100 juta\".",
             'data' => [],
             'link' => route('owner.dokumen'),
             'meta' => ['confidence' => 'low', 'service' => 'clarification', 'params' => $params],

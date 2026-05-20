@@ -115,6 +115,7 @@
         ['route'=>'programmer.user-management',            'icon'=>'fa-users-cog',      'color'=>'#10b981','bg'=>'#d1fae5','title'=>'User Management',           'desc'=>'Kelola user, username, password, dan role'],
         ['route'=>'programmer.activity-logs',              'icon'=>'fa-history',        'color'=>'#8b5cf6','bg'=>'#ede9fe','title'=>'Riwayat Aktivitas',         'desc'=>'Lihat seluruh log aktivitas dokumen per role'],
         ['route'=>'programmer.database-tools',             'icon'=>'fa-database',       'color'=>'#ef4444','bg'=>'#fee2e2','title'=>'Database Tools',            'desc'=>'Backup/export database SQL dan cleanup data dokumen'],
+        ['route'=>'programmer.assistant-evaluation',       'icon'=>'fa-robot',          'color'=>'#0f766e','bg'=>'#ccfbf1','title'=>'Evaluasi Asisten Virtual', 'desc'=>'Review pertanyaan gagal, feedback user, dan test case AI'],
         ['route'=>'programmer.programmer-audit-trail',     'icon'=>'fa-shield-alt',     'color'=>'#7c3aed','bg'=>'#ede9fe','title'=>'Audit Trail Programmer',    'desc'=>'Lihat log aktivitas sensitif yang dilakukan programmer'],
         ['route'=>'programmer.2fa-reset-requests.index',   'icon'=>'fa-unlock-alt',     'color'=>'#ef4444','bg'=>'#fee2e2','title'=>'2FA Reset Requests',        'desc'=>'Kelola pengajuan reset 2FA dari user'],
       ];
