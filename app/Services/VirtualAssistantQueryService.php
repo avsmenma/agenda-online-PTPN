@@ -6,6 +6,7 @@ use App\Models\Dokumen;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class VirtualAssistantQueryService
 {
@@ -26,70 +27,153 @@ class VirtualAssistantQueryService
 
     private const HANDLER_LABELS = [
         'operator' => 'Operator',
+        'bagian' => 'Bagian',
         'team_verifikasi' => 'Tim Verifikasi',
         'verifikasi' => 'Tim Verifikasi',
         'perpajakan' => 'Perpajakan',
         'akutansi' => 'Akuntansi',
         'akuntansi' => 'Akuntansi',
         'pembayaran' => 'Pembayaran',
-        'bagian' => 'Bagian',
+    ];
+
+    private const WORKFLOW_STATUS_ALIASES = [
+        'draft' => ['draft'],
+        'pending' => ['pending', 'menunggu', 'approval', 'approve'],
+        'processing' => ['proses', 'diproses', 'sedang diproses'],
+        'sent_to_verification' => ['verifikasi', 'sent_to_team_verifikasi', 'reviewer'],
+        'sent_to_tax' => ['perpajakan', 'pajak', 'sent_to_perpajakan'],
+        'sent_to_accounting' => ['akuntansi', 'akutansi', 'accounting', 'sent_to_akutansi'],
+        'sent_to_payment' => ['pembayaran', 'sent_to_pembayaran'],
+        'completed' => ['selesai', 'completed', 'tuntas'],
+        'returned' => ['dikembalikan', 'return', 'returned', 'ditolak'],
     ];
 
     public function answer(string $message): array
     {
         $normalized = $this->normalize($message);
-        $limit = (int) config('asisten_virtual.limits.default_result_limit', 15);
+        $limit = min((int) config('asisten_virtual.limits.default_result_limit', 15), 20);
+        $params = $this->parseParameters($message, $normalized);
+        $intent = $this->resolveIntent($normalized, $params);
 
-        if ($this->isGreeting($normalized)) {
-            return $this->greeting();
+        $result = match ($intent) {
+            'greeting' => $this->greeting(),
+            'cashbank_summary' => $this->cashbankSummary($params),
+            'document_summary' => $this->documentSummary($params),
+            'top_departments_by_value' => $this->topDepartments('value', $limit),
+            'top_departments_by_count' => $this->topDepartments('count', $limit),
+            'late_documents' => $this->lateDocuments($params, $limit),
+            'oldest_documents' => $this->oldestDocuments($params, $limit),
+            'payment_summary' => $this->paymentSummary($params),
+            'ready_to_pay_documents',
+            'unpaid_documents',
+            'paid_documents',
+            'documents_by_payment_status',
+            'documents_by_workflow_status',
+            'documents_by_department',
+            'documents_by_current_handler',
+            'documents_by_amount_range',
+            'documents_by_keyword',
+            'documents_by_month',
+            'documents_by_date',
+            'documents_filtered' => $this->documentsByFilters($intent, $params, $limit),
+            default => $this->clarification($message, $params),
+        };
+
+        $this->logDecision($message, $intent, $params, $result);
+
+        return $result;
+    }
+
+    private function resolveIntent(string $text, array $params): string
+    {
+        if ($this->isGreeting($text)) {
+            return 'greeting';
         }
 
-        if ($date = $this->extractDate($normalized)) {
-            if ($this->containsAny($normalized, ['masuk', 'tanggal masuk', 'dokumen apa', 'dokumen yang masuk', 'hari ini'])) {
-                return $this->documentsByDate($date, $limit);
+        if ($this->containsAny($text, ['cash bank', 'cashbank', 'saldo bank', 'saldo rekening', 'dropping', 'penerimaan cash'])) {
+            return 'cashbank_summary';
+        }
+
+        if ($this->containsAny($text, ['top bagian', 'bagian mana', 'paling banyak mengirim'])) {
+            return 'top_departments_by_count';
+        }
+
+        if ($this->containsAny($text, ['nilai dokumen terbesar', 'nilai terbesar', 'berdasarkan nilai', 'total nilai terbesar', 'bagian terbesar'])) {
+            return 'top_departments_by_value';
+        }
+
+        if ($this->containsAny($text, ['paling lama', 'terlama', 'lama diproses', 'umur dokumen paling'])) {
+            return 'oldest_documents';
+        }
+
+        if ($this->containsAny($text, ['tertahan', 'terlambat', 'terlalu lama', 'telat'])) {
+            return 'late_documents';
+        }
+
+        if ($params['payment_statuses'] !== []) {
+            if ($params['wants_total']) {
+                return 'payment_summary';
             }
-        }
 
-        if ($this->containsAny($normalized, ['top bagian', 'bagian mana', 'paling banyak mengirim', 'berdasarkan nilai', 'bagian terbesar'])) {
-            return $this->topDepartments($this->containsAny($normalized, ['nilai', 'rupiah']) ? 'value' : 'count', $limit);
-        }
-
-        if ($this->containsAny($normalized, ['total nilai']) && $this->containsAny($normalized, ['sudah dibayar', 'dibayar'])) {
-            return $this->paidSummary($this->extractMonthYear($normalized));
-        }
-
-        if ($this->containsAny($normalized, ['belum dibayar', 'pending pembayaran', 'belum bayar'])) {
-            $amount = $this->extractAmount($normalized);
-            if ($this->containsAny($normalized, ['total', 'berapa'])) {
-                return $this->unpaidSummary($this->extractMonthYear($normalized), $amount);
+            if ($params['payment_statuses'] === ['siap_dibayar']) {
+                return 'ready_to_pay_documents';
             }
 
-            return $this->unpaidDocuments($this->extractMonthYear($normalized), $amount, $limit);
+            if ($params['payment_statuses'] === ['belum_dibayar']) {
+                return 'unpaid_documents';
+            }
+
+            if ($params['payment_statuses'] === ['sudah_dibayar']) {
+                return 'paid_documents';
+            }
+
+            return 'documents_by_payment_status';
         }
 
-        if ($this->containsAny($normalized, ['total dokumen', 'jumlah dokumen', 'berapa dokumen', 'berapa total dokumen', 'seluruh dokumen'])) {
-            return $this->documentSummary();
+        if ($params['wants_total'] && !$this->hasDocumentFilters($params)) {
+            return 'document_summary';
         }
 
-        if ($this->containsAny($normalized, ['paling lama', 'terlama', 'lama diproses', 'umur dokumen'])) {
-            return $this->oldestDocuments($limit);
+        if ($params['date_range']) {
+            return $params['date_range']['type'] === 'month' ? 'documents_by_month' : 'documents_by_date';
         }
 
-        if ($this->containsAny($normalized, ['tertahan', 'terlambat', 'terlalu lama'])) {
-            $handler = $this->extractHandler($normalized) ?? ($this->containsAny($normalized, ['operator']) ? 'operator' : null);
-            return $this->lateDocuments($handler, $limit);
+        if ($params['workflow_status']) {
+            return 'documents_by_workflow_status';
         }
 
-        if (($department = $this->extractDepartment($message)) && $this->containsAny($normalized, ['belum selesai', 'belum tuntas', 'pending', 'belum dibayar'])) {
-            return $this->unfinishedDepartmentDocuments($department, $limit);
+        if ($params['department']) {
+            return 'documents_by_department';
         }
 
+        if ($params['handler']) {
+            return 'documents_by_current_handler';
+        }
+
+        if ($params['amount_min'] !== null || $params['amount_max'] !== null) {
+            return 'documents_by_amount_range';
+        }
+
+        if ($params['keyword']) {
+            return 'documents_by_keyword';
+        }
+
+        return 'clarification';
+    }
+
+    private function parseParameters(string $message, string $text): array
+    {
         return [
-            'intent' => 'clarification',
-            'answer' => 'Saya belum bisa memastikan maksud pertanyaan tersebut. Coba sertakan kriteria yang lebih spesifik, misalnya tanggal masuk, status pembayaran, bagian, nilai minimum, atau pengurus dokumen.',
-            'data' => [],
-            'link' => route('owner.dokumen'),
-            'meta' => ['confidence' => 'low'],
+            'date_range' => $this->extractDateRange($text),
+            'payment_statuses' => $this->extractPaymentStatuses($text),
+            'workflow_status' => $this->extractWorkflowStatus($text),
+            'department' => $this->extractDepartment($message),
+            'handler' => $this->extractHandler($text),
+            'amount_min' => $this->extractAmountBound($text, 'min'),
+            'amount_max' => $this->extractAmountBound($text, 'max'),
+            'keyword' => $this->extractKeyword($message, $text),
+            'wants_total' => $this->containsAny($text, ['berapa', 'total', 'jumlah', 'ringkasan', 'rekap']),
+            'wants_list' => $this->containsAny($text, ['dokumen', 'berikan', 'tampilkan', 'apa saja', 'daftar', 'cari']),
         ];
     }
 
@@ -97,151 +181,160 @@ class VirtualAssistantQueryService
     {
         return [
             'intent' => 'greeting',
-            'answer' => 'Halo. Saya siap membantu membaca data Agenda Online, misalnya total dokumen, dokumen belum dibayar, dokumen masuk tanggal tertentu, dokumen terlambat, atau top bagian berdasarkan nilai dokumen.',
+            'answer' => 'Halo. Saya siap membantu membaca data Agenda Online, misalnya total dokumen, dokumen siap dibayar, dokumen belum dibayar, dokumen masuk tanggal tertentu, dokumen terlambat, atau top bagian berdasarkan nilai dokumen.',
             'data' => [
                 'contoh_pertanyaan' => [
                     'Berapa total dokumen?',
-                    'Total belum dibayar bulan ini',
-                    'Dokumen apa saja yang masuk hari ini?',
-                    'Dokumen yang belum dibayar di atas 100 juta',
-                    'Bagian mana yang paling banyak mengirim dokumen?',
+                    'Berikan saya dokumen siap dibayar',
+                    'Dokumen belum dibayar di atas 100 juta',
+                    'Dokumen yang masuk tanggal 5 Mei 2026',
+                    'Bagian mana dengan nilai dokumen terbesar?',
                 ],
             ],
             'link' => route('owner.dokumen'),
-            'meta' => ['confidence' => 'high'],
+            'meta' => ['confidence' => 'high', 'service' => 'greeting'],
         ];
     }
 
-    private function documentSummary(): array
+    private function documentSummary(array $params = []): array
     {
-        $totalDocuments = Dokumen::query()->count();
-        $totalValue = Dokumen::query()->sum('nilai_rupiah');
-        $paidCount = (clone $this->paidQuery())->count();
-        $paidValue = (clone $this->paidQuery())->sum('nilai_rupiah');
-        $unpaidCount = (clone $this->unpaidQuery())->count();
-        $unpaidValue = (clone $this->unpaidQuery())->sum('nilai_rupiah');
+        $query = $this->baseQuery();
+        $this->applyFilters($query, $params, false);
+
+        $totalDocuments = (clone $query)->count();
+        $totalValue = (clone $query)->sum('nilai_rupiah');
+        $paidQuery = $this->baseQuery();
+        $unpaidQuery = $this->baseQuery();
+        $readyQuery = $this->baseQuery();
+        $this->applyFilters($paidQuery, $params, false);
+        $this->applyFilters($unpaidQuery, $params, false);
+        $this->applyFilters($readyQuery, $params, false);
+        $this->applyPaymentStatuses($paidQuery, ['sudah_dibayar']);
+        $this->applyPaymentStatuses($unpaidQuery, ['belum_dibayar']);
+        $this->applyPaymentStatuses($readyQuery, ['siap_dibayar']);
 
         return [
             'intent' => 'document_summary',
-            'answer' => "Total seluruh dokumen saat ini: {$totalDocuments} dokumen dengan nilai {$this->formatMoney($totalValue)}.",
+            'answer' => "Total dokumen{$this->filterLabel($params)}: {$totalDocuments} dokumen dengan nilai {$this->formatMoney($totalValue)}.",
             'data' => [
                 'total_dokumen' => $totalDocuments,
                 'total_nilai' => $this->formatMoney($totalValue),
+                'siap_dibayar' => [
+                    'jumlah_dokumen' => (clone $readyQuery)->count(),
+                    'total_nilai' => $this->formatMoney((clone $readyQuery)->sum('nilai_rupiah')),
+                ],
                 'sudah_dibayar' => [
-                    'jumlah_dokumen' => $paidCount,
-                    'total_nilai' => $this->formatMoney($paidValue),
+                    'jumlah_dokumen' => (clone $paidQuery)->count(),
+                    'total_nilai' => $this->formatMoney((clone $paidQuery)->sum('nilai_rupiah')),
                 ],
                 'belum_dibayar' => [
-                    'jumlah_dokumen' => $unpaidCount,
-                    'total_nilai' => $this->formatMoney($unpaidValue),
+                    'jumlah_dokumen' => (clone $unpaidQuery)->count(),
+                    'total_nilai' => $this->formatMoney((clone $unpaidQuery)->sum('nilai_rupiah')),
                 ],
             ],
-            'link' => route('owner.dokumen'),
-            'meta' => ['confidence' => 'high'],
+            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'meta' => ['confidence' => 'high', 'service' => 'document_summary', 'params' => $params],
         ];
     }
 
-    private function documentsByDate(Carbon $date, int $limit): array
+    private function paymentSummary(array $params): array
     {
-        $docs = $this->baseQuery()
-            ->whereDate('tanggal_masuk', $date->toDateString())
-            ->latest('tanggal_masuk')
+        $query = $this->baseQuery();
+        $this->applyFilters($query, $params);
+
+        $count = (clone $query)->count();
+        $total = (clone $query)->sum('nilai_rupiah');
+        $statusLabel = $this->paymentStatusListLabel($params['payment_statuses']);
+
+        return [
+            'intent' => 'payment_summary',
+            'answer' => "Total dokumen {$statusLabel}{$this->filterLabel($params)}: {$count} dokumen dengan nilai {$this->formatMoney($total)}.",
+            'data' => [
+                'status_pembayaran' => $statusLabel,
+                'jumlah_dokumen' => $count,
+                'total_nilai' => $this->formatMoney($total),
+            ],
+            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'meta' => ['confidence' => 'high', 'service' => 'payment_summary', 'params' => $params],
+        ];
+    }
+
+    private function documentsByFilters(string $intent, array $params, int $limit): array
+    {
+        $query = $this->baseQuery();
+        $this->applyFilters($query, $params);
+
+        $total = (clone $query)->count();
+        $docs = $query
+            ->orderByDesc('tanggal_masuk')
+            ->orderByDesc('id')
             ->limit($limit)
             ->get();
 
         if ($docs->isEmpty()) {
-            return $this->emptyResult("Tidak ditemukan dokumen yang masuk pada {$this->formatDate($date)}.", [
-                'filter_tanggal_masuk' => $date->toDateString(),
-            ]);
+            return $this->emptyResult("Tidak ditemukan dokumen{$this->filterLabel($params)}.", $params, $intent);
         }
 
-        return [
-            'intent' => 'documents_by_date',
-            'answer' => "Ditemukan {$docs->count()} dokumen yang masuk pada {$this->formatDate($date)}.",
-            'data' => $this->formatDocuments($docs),
-            'link' => route('owner.dokumen', ['status' => 'all', 'filter_tanggal_masuk' => $date->toDateString()]),
-            'meta' => ['date' => $date->toDateString(), 'limited' => $docs->count() >= $limit],
-        ];
-    }
-
-    private function unpaidSummary(?array $monthYear, ?float $minimumAmount): array
-    {
-        $query = $this->unpaidQuery();
-        $this->applyMonthYear($query, $monthYear);
-        if ($minimumAmount !== null) {
-            $query->where('nilai_rupiah', '>=', $minimumAmount);
-        }
-
-        $count = (clone $query)->count();
-        $total = (clone $query)->sum('nilai_rupiah');
-        $period = $this->periodLabel($monthYear);
+        $answer = $total > $docs->count()
+            ? "Ditemukan {$total} dokumen{$this->filterLabel($params)}, berikut {$docs->count()} teratas."
+            : "Ditemukan {$total} dokumen{$this->filterLabel($params)}.";
 
         return [
-            'intent' => 'unpaid_summary',
-            'answer' => "Total dokumen belum dibayar{$period}: {$count} dokumen dengan nilai {$this->formatMoney($total)}.",
-            'data' => [
-                'jumlah_dokumen' => $count,
-                'total_nilai' => $this->formatMoney($total),
-                'nilai_minimum' => $minimumAmount ? $this->formatMoney($minimumAmount) : null,
+            'intent' => $intent,
+            'answer' => $answer,
+            'data' => $this->formatDocuments($docs, $intent === 'late_documents'),
+            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'meta' => [
+                'limited' => $total > $docs->count(),
+                'total' => $total,
+                'shown' => $docs->count(),
+                'service' => 'documents_by_filters',
+                'params' => $params,
             ],
-            'link' => route('owner.dokumen', array_filter([
-                'status' => 'all',
-                'filter_status_pembayaran' => 'belum_dibayar',
-                'filter_nilai_min' => $minimumAmount ? (int) $minimumAmount : null,
-            ])),
-            'meta' => ['period' => $monthYear],
         ];
     }
 
-    private function unpaidDocuments(?array $monthYear, ?float $minimumAmount, int $limit): array
+    private function oldestDocuments(array $params, int $limit): array
     {
-        $query = $this->unpaidQuery();
-        $this->applyMonthYear($query, $monthYear);
-        if ($minimumAmount !== null) {
-            $query->where('nilai_rupiah', '>=', $minimumAmount);
-        }
+        $query = $this->baseQuery();
+        $params['payment_statuses'] = $params['payment_statuses'] ?: ['belum_dibayar'];
+        $this->applyFilters($query, $params);
 
-        $docs = $query->orderByDesc('nilai_rupiah')->limit($limit)->get();
+        $docs = $query->oldest('tanggal_masuk')->limit($limit)->get();
 
         if ($docs->isEmpty()) {
-            return $this->emptyResult('Tidak ditemukan dokumen belum dibayar dengan kriteria tersebut.', [
-                'filter_status_pembayaran' => 'belum_dibayar',
-            ]);
+            return $this->emptyResult('Tidak ditemukan dokumen aktif yang belum selesai/dibayar.', $params, 'oldest_documents');
         }
 
-        $period = $this->periodLabel($monthYear);
-        $minText = $minimumAmount ? ' di atas ' . $this->formatMoney($minimumAmount) : '';
-
         return [
-            'intent' => 'unpaid_documents',
-            'answer' => "Berikut {$docs->count()} dokumen belum dibayar{$minText}{$period}.",
-            'data' => $this->formatDocuments($docs),
-            'link' => route('owner.dokumen', array_filter([
-                'status' => 'all',
-                'filter_status_pembayaran' => 'belum_dibayar',
-                'filter_nilai_min' => $minimumAmount ? (int) $minimumAmount : null,
-            ])),
-            'meta' => ['limited' => $docs->count() >= $limit],
+            'intent' => 'oldest_documents',
+            'answer' => "Berikut dokumen yang paling lama diproses. Hasil dibatasi {$docs->count()} dokumen teratas.",
+            'data' => $this->formatDocuments($docs, true),
+            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'meta' => ['limited' => true, 'service' => 'oldest_documents', 'params' => $params],
         ];
     }
 
-    private function paidSummary(?array $monthYear): array
+    private function lateDocuments(array $params, int $limit): array
     {
-        $query = $this->paidQuery();
-        $this->applyMonthYear($query, $monthYear, 'tanggal_dibayar');
+        $query = $this->baseQuery();
+        $params['payment_statuses'] = $params['payment_statuses'] ?: ['belum_dibayar'];
+        $this->applyFilters($query, $params);
+        $query->where('tanggal_masuk', '<=', now()->subDays(3));
 
-        $count = (clone $query)->count();
-        $total = (clone $query)->sum('nilai_rupiah');
+        $total = (clone $query)->count();
+        $docs = $query->oldest('tanggal_masuk')->limit($limit)->get();
+
+        if ($docs->isEmpty()) {
+            return $this->emptyResult("Tidak ditemukan dokumen terlambat{$this->filterLabel($params)}.", $params, 'late_documents');
+        }
 
         return [
-            'intent' => 'paid_summary',
-            'answer' => "Total dokumen sudah dibayar{$this->periodLabel($monthYear)}: {$count} dokumen dengan nilai {$this->formatMoney($total)}.",
-            'data' => [
-                'jumlah_dokumen' => $count,
-                'total_nilai' => $this->formatMoney($total),
-            ],
-            'link' => route('owner.dokumen', ['status' => 'all', 'filter_status_pembayaran' => 'sudah_dibayar']),
-            'meta' => ['period' => $monthYear],
+            'intent' => 'late_documents',
+            'answer' => "Ada {$total} dokumen yang tertahan lebih dari 3 hari{$this->filterLabel($params)}. Berikut {$docs->count()} teratas.",
+            'data' => $this->formatDocuments($docs, true),
+            'link' => route('owner.dokumen', array_merge($this->linkParams($params), ['status' => 'urgent'])),
+            'meta' => ['total' => $total, 'shown' => $docs->count(), 'service' => 'late_documents', 'params' => $params],
         ];
     }
 
@@ -257,11 +350,11 @@ class VirtualAssistantQueryService
             ->get();
 
         if ($rows->isEmpty()) {
-            return $this->emptyResult('Belum ada data bagian yang bisa diringkas.');
+            return $this->emptyResult('Belum ada data bagian yang bisa diringkas.', [], 'top_departments');
         }
 
         return [
-            'intent' => 'top_departments',
+            'intent' => $mode === 'value' ? 'top_departments_by_value' : 'top_departments_by_count',
             'answer' => $mode === 'value'
                 ? 'Berikut bagian teratas berdasarkan total nilai dokumen.'
                 : 'Berikut bagian teratas berdasarkan jumlah dokumen.',
@@ -271,78 +364,177 @@ class VirtualAssistantQueryService
                 'total_nilai' => $this->formatMoney($row->total_nilai),
             ])->values()->all(),
             'link' => route('owner.dokumen'),
-            'meta' => ['mode' => $mode],
+            'meta' => ['mode' => $mode, 'service' => 'top_departments'],
         ];
     }
 
-    private function oldestDocuments(int $limit): array
+    private function cashbankSummary(array $params): array
     {
-        $docs = $this->unpaidQuery()
-            ->oldest('tanggal_masuk')
-            ->limit($limit)
-            ->get();
+        $range = $params['date_range'] ?? null;
+        $year = $range['year'] ?? now()->year;
+        $monthFrom = $range['month'] ?? 1;
+        $monthTo = $range['month'] ?? 12;
 
-        if ($docs->isEmpty()) {
-            return $this->emptyResult('Tidak ditemukan dokumen aktif yang belum selesai/dibayar.');
-        }
+        $summary = app(CashBankReportService::class)->getRingkasanUtama((int) $year, (int) $monthFrom, (int) $monthTo);
 
         return [
-            'intent' => 'oldest_documents',
-            'answer' => "Berikut dokumen yang paling lama diproses. Hasil dibatasi {$docs->count()} dokumen teratas.",
-            'data' => $this->formatDocuments($docs, true),
-            'link' => route('owner.dokumen', ['status' => 'pending']),
-            'meta' => ['limited' => true],
+            'intent' => 'cashbank_summary',
+            'answer' => "Ringkasan Cash Bank {$year}: saldo {$this->formatMoney($summary['total_saldo'] ?? 0)}, penerimaan {$this->formatMoney($summary['total_penerimaan'] ?? 0)}, permintaan {$this->formatMoney($summary['total_permintaan'] ?? 0)}, dropping {$this->formatMoney($summary['total_dropping'] ?? 0)}.",
+            'data' => [
+                'tahun' => $year,
+                'bulan_dari' => $monthFrom,
+                'bulan_sampai' => $monthTo,
+                'total_saldo' => $this->formatMoney($summary['total_saldo'] ?? 0),
+                'total_penerimaan' => $this->formatMoney($summary['total_penerimaan'] ?? 0),
+                'total_permintaan' => $this->formatMoney($summary['total_permintaan'] ?? 0),
+                'total_dropping' => $this->formatMoney($summary['total_dropping'] ?? 0),
+                'realisasi_pct' => $summary['realisasi_pct'] ?? 0,
+            ],
+            'link' => url('/owner/laporan-cash-bank'),
+            'meta' => ['service' => 'cashbank_summary', 'params' => $params],
         ];
     }
 
-    private function lateDocuments(?string $handler, int $limit): array
+    private function applyFilters(Builder $query, array $params, bool $includePayment = true): void
     {
-        $query = $this->unpaidQuery()
-            ->where('tanggal_masuk', '<=', now()->subDays(3));
-
-        if ($handler) {
-            $query->whereRaw('LOWER(current_handler) = ?', [strtolower($handler)]);
+        if ($includePayment && $params['payment_statuses'] !== []) {
+            $this->applyPaymentStatuses($query, $params['payment_statuses']);
         }
 
-        $docs = $query->oldest('tanggal_masuk')->limit($limit)->get();
-        $handlerText = $handler ? ' di ' . ($this->handlerLabel($handler)) : '';
-
-        if ($docs->isEmpty()) {
-            return $this->emptyResult("Tidak ditemukan dokumen yang tertahan lama{$handlerText}.");
+        if ($params['date_range']) {
+            $this->applyDateRange($query, $params['date_range']);
         }
 
-        return [
-            'intent' => 'late_documents',
-            'answer' => "Ada {$docs->count()} dokumen yang tertahan lebih dari 3 hari{$handlerText}.",
-            'data' => $this->formatDocuments($docs, true),
-            'link' => route('owner.dokumen', ['status' => 'urgent']),
-            'meta' => ['handler' => $handler],
-        ];
-    }
-
-    private function unfinishedDepartmentDocuments(string $department, int $limit): array
-    {
-        $docs = $this->unpaidQuery()
-            ->where(function (Builder $query) use ($department) {
-                $query->where('bagian', 'like', "%{$department}%")
+        if ($params['department']) {
+            $department = $params['department'];
+            $query->where(function (Builder $subQuery) use ($department) {
+                $subQuery->where('bagian', 'like', "%{$department}%")
                     ->orWhere('nama_pengirim', 'like', "%{$department}%")
                     ->orWhere('created_by', 'like', "%{$department}%");
-            })
-            ->latest('tanggal_masuk')
-            ->limit($limit)
-            ->get();
-
-        if ($docs->isEmpty()) {
-            return $this->emptyResult("Tidak ditemukan dokumen dari bagian {$department} yang belum selesai.");
+            });
         }
 
-        return [
-            'intent' => 'unfinished_department',
-            'answer' => "Berikut dokumen dari bagian {$department} yang belum selesai/dibayar.",
-            'data' => $this->formatDocuments($docs),
-            'link' => route('owner.dokumen', ['status' => 'pending', 'filter_bagian' => $department]),
-            'meta' => ['department' => $department],
-        ];
+        if ($params['handler']) {
+            $handler = $this->canonicalHandler($params['handler']);
+            $handlerAliases = array_unique([$handler, $params['handler']]);
+            if ($handler === 'team_verifikasi') {
+                $handlerAliases[] = 'verifikasi';
+            }
+            if ($handler === 'akutansi') {
+                $handlerAliases[] = 'akuntansi';
+            }
+            $query->whereIn('current_handler', $handlerAliases);
+        }
+
+        if ($params['workflow_status']) {
+            $this->applyWorkflowStatus($query, $params['workflow_status']);
+        }
+
+        if ($params['amount_min'] !== null) {
+            $query->where('nilai_rupiah', '>=', $params['amount_min']);
+        }
+
+        if ($params['amount_max'] !== null) {
+            $query->where('nilai_rupiah', '<=', $params['amount_max']);
+        }
+
+        if ($params['keyword']) {
+            $keyword = $params['keyword'];
+            $query->where(function (Builder $subQuery) use ($keyword) {
+                $subQuery->where('nomor_agenda', 'like', "%{$keyword}%")
+                    ->orWhere('nomor_spp', 'like', "%{$keyword}%")
+                    ->orWhere('uraian_spp', 'like', "%{$keyword}%")
+                    ->orWhere('dibayar_kepada', 'like', "%{$keyword}%")
+                    ->orWhere('nama_pengirim', 'like', "%{$keyword}%")
+                    ->orWhere('bagian', 'like', "%{$keyword}%")
+                    ->orWhere('keterangan', 'like', "%{$keyword}%");
+            });
+        }
+    }
+
+    private function applyPaymentStatuses(Builder $query, array $statuses): void
+    {
+        $statuses = array_values(array_unique($statuses));
+
+        $query->where(function (Builder $paymentQuery) use ($statuses) {
+            foreach ($statuses as $index => $status) {
+                $method = $index === 0 ? 'where' : 'orWhere';
+                $paymentQuery->{$method}(function (Builder $statusQuery) use ($status) {
+                    match ($status) {
+                        'sudah_dibayar' => $this->applyPaidCondition($statusQuery),
+                        'siap_dibayar' => $this->applyReadyToPayCondition($statusQuery),
+                        'belum_dibayar' => $this->applyUnpaidCondition($statusQuery),
+                        default => null,
+                    };
+                });
+            }
+        });
+    }
+
+    private function applyPaidCondition(Builder $query): void
+    {
+        $query->where(function (Builder $subQuery) {
+            $subQuery->whereNotNull('tanggal_dibayar')
+                ->orWhereIn('status_pembayaran', ['sudah_dibayar', 'SUDAH_DIBAYAR', 'SUDAH DIBAYAR'])
+                ->orWhereIn('status', ['completed', 'selesai']);
+        });
+    }
+
+    private function applyUnpaidCondition(Builder $query): void
+    {
+        $query->where(function (Builder $subQuery) {
+            $subQuery->whereNull('tanggal_dibayar')
+                ->where(function (Builder $paymentSubQuery) {
+                    $paymentSubQuery->whereNull('status_pembayaran')
+                        ->orWhereNotIn('status_pembayaran', ['sudah_dibayar', 'SUDAH_DIBAYAR', 'SUDAH DIBAYAR']);
+                });
+        });
+    }
+
+    private function applyReadyToPayCondition(Builder $query): void
+    {
+        $query->where(function (Builder $subQuery) {
+            $this->applyUnpaidCondition($subQuery);
+            $subQuery->where(function (Builder $readyQuery) {
+                $readyQuery->whereIn('status_pembayaran', ['siap_dibayar', 'siap_bayar', 'SIAP_DIBAYAR', 'SIAP DIBAYAR', 'pending', 'Pending'])
+                    ->orWhere('current_handler', 'pembayaran')
+                    ->orWhere('status', 'sent_to_pembayaran');
+            });
+        });
+    }
+
+    private function applyDateRange(Builder $query, array $range): void
+    {
+        if (($range['type'] ?? null) === 'date') {
+            $query->whereDate('tanggal_masuk', $range['date']);
+            return;
+        }
+
+        if (($range['type'] ?? null) === 'year') {
+            $query->whereYear('tanggal_masuk', $range['year']);
+            return;
+        }
+
+        if (isset($range['start'], $range['end'])) {
+            $query->whereBetween('tanggal_masuk', [$range['start'], $range['end']]);
+        }
+    }
+
+    private function applyWorkflowStatus(Builder $query, string $workflowStatus): void
+    {
+        $statusValues = match ($workflowStatus) {
+            'pending' => ['waiting_reviewer_approval', 'pending_approval_perpajakan', 'pending_approval_akutansi', 'pending_approval_pembayaran', 'menunggu_di_approve'],
+            'processing' => ['sedang diproses'],
+            'sent_to_verification' => ['sent_to_team_verifikasi', 'waiting_reviewer_approval'],
+            'sent_to_tax' => ['sent_to_perpajakan', 'pending_approval_perpajakan'],
+            'sent_to_accounting' => ['sent_to_akutansi', 'pending_approval_akutansi'],
+            'sent_to_payment' => ['sent_to_pembayaran', 'pending_approval_pembayaran'],
+            'completed' => ['completed', 'selesai'],
+            'returned' => ['returned_to_operator', 'returned_to_verifikasi', 'returned_to_team_verifikasi', 'returned_to_department'],
+            default => [$workflowStatus],
+        };
+
+        $query->whereIn('status', $statusValues);
     }
 
     private function baseQuery(): Builder
@@ -362,136 +554,106 @@ class VirtualAssistantQueryService
             'tanggal_masuk',
             'tanggal_dibayar',
             'dibayar_kepada',
+            'keterangan',
         ]);
     }
 
-    private function unpaidQuery(): Builder
-    {
-        return $this->baseQuery()
-            ->where(function (Builder $query) {
-                $query->whereNull('tanggal_dibayar')
-                    ->where(function (Builder $subQuery) {
-                        $subQuery->whereNull('status_pembayaran')
-                            ->orWhereRaw('LOWER(status_pembayaran) != ?', ['sudah_dibayar']);
-                    });
-            });
-    }
-
-    private function paidQuery(): Builder
-    {
-        return $this->baseQuery()
-            ->where(function (Builder $query) {
-                $query->whereNotNull('tanggal_dibayar')
-                    ->orWhereRaw('LOWER(status_pembayaran) = ?', ['sudah_dibayar'])
-                    ->orWhere('status', 'completed');
-            });
-    }
-
-    private function applyMonthYear(Builder $query, ?array $monthYear, string $column = 'tanggal_masuk'): void
-    {
-        if (!$monthYear) {
-            return;
-        }
-
-        $query->whereMonth($column, $monthYear['month'])
-            ->whereYear($column, $monthYear['year']);
-    }
-
-    private function formatDocuments(Collection $docs, bool $includeAge = false): array
-    {
-        return $docs->map(function (Dokumen $doc) use ($includeAge) {
-            $tanggalMasuk = $doc->tanggal_masuk ? Carbon::parse($doc->tanggal_masuk) : null;
-
-            return array_filter([
-                'id' => $doc->id,
-                'nomor_agenda' => $doc->nomor_agenda ?: '-',
-                'nomor_spp' => $doc->nomor_spp ?: '-',
-                'uraian' => (string) str($doc->uraian_spp ?: '-')->limit(130),
-                'nilai' => $this->formatMoney($doc->nilai_rupiah),
-                'bagian' => $doc->bagian ?: ($doc->nama_pengirim ?: ($doc->created_by ?: '-')),
-                'status' => $doc->status ?: '-',
-                'status_pembayaran' => $this->paymentLabel($doc->status_pembayaran, $doc->tanggal_dibayar),
-                'pengurus' => $this->handlerLabel($doc->current_handler),
-                'tanggal_masuk' => $tanggalMasuk ? $tanggalMasuk->format('d M Y H:i') : '-',
-                'umur' => $includeAge && $tanggalMasuk ? $tanggalMasuk->diffForHumans(null, true) : null,
-            ], fn ($value) => $value !== null);
-        })->values()->all();
-    }
-
-    private function paymentLabel(?string $status, $tanggalDibayar): string
-    {
-        if ($tanggalDibayar || strtolower((string) $status) === 'sudah_dibayar') {
-            return 'Sudah Dibayar';
-        }
-
-        if (in_array(strtolower((string) $status), ['siap_dibayar', 'siap_bayar'], true)) {
-            return 'Siap Dibayar';
-        }
-
-        return 'Belum Dibayar';
-    }
-
-    private function handlerLabel(?string $handler): string
-    {
-        $key = strtolower((string) $handler);
-        return self::HANDLER_LABELS[$key] ?? ($handler ? (string) str($handler)->replace('_', ' ')->title() : '-');
-    }
-
-    private function extractDate(string $text): ?Carbon
+    private function extractDateRange(string $text): ?array
     {
         if (str_contains($text, 'hari ini')) {
-            return today();
+            return $this->dateRange(today(), 'date');
         }
 
         if (str_contains($text, 'kemarin')) {
-            return today()->subDay();
+            return $this->dateRange(today()->subDay(), 'date');
+        }
+
+        if (str_contains($text, 'bulan ini')) {
+            $date = now();
+            return [
+                'type' => 'month',
+                'month' => $date->month,
+                'year' => $date->year,
+                'start' => $date->copy()->startOfMonth()->toDateTimeString(),
+                'end' => $date->copy()->endOfMonth()->toDateTimeString(),
+            ];
+        }
+
+        if (str_contains($text, 'tahun ini')) {
+            return ['type' => 'year', 'year' => now()->year];
         }
 
         if (preg_match('/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\b/', $text, $matches)) {
-            return Carbon::createFromDate((int) $matches[3], (int) $matches[2], (int) $matches[1])->startOfDay();
+            return $this->dateRange(Carbon::createFromDate((int) $matches[3], (int) $matches[2], (int) $matches[1]), 'date');
         }
 
         if (preg_match('/\b(\d{1,2})\s+([a-z]+)\s+(\d{4})\b/u', $text, $matches)) {
             $month = self::MONTHS[$matches[2]] ?? null;
             if ($month) {
-                return Carbon::createFromDate((int) $matches[3], $month, (int) $matches[1])->startOfDay();
+                return $this->dateRange(Carbon::createFromDate((int) $matches[3], $month, (int) $matches[1]), 'date');
             }
         }
 
-        return null;
-    }
-
-    private function extractMonthYear(string $text): ?array
-    {
-        if (str_contains($text, 'bulan ini')) {
-            return ['month' => now()->month, 'year' => now()->year];
-        }
-
-        if (preg_match('/\b([a-z]+)\s+(\d{4})\b/u', $text, $matches)) {
+        if (preg_match('/\b(?:bulan\s+)?([a-z]+)\s+(\d{4})\b/u', $text, $matches)) {
             $month = self::MONTHS[$matches[1]] ?? null;
             if ($month) {
-                return ['month' => $month, 'year' => (int) $matches[2]];
+                $date = Carbon::createFromDate((int) $matches[2], $month, 1);
+                return [
+                    'type' => 'month',
+                    'month' => $month,
+                    'year' => (int) $matches[2],
+                    'start' => $date->copy()->startOfMonth()->toDateTimeString(),
+                    'end' => $date->copy()->endOfMonth()->toDateTimeString(),
+                ];
             }
         }
 
         return null;
     }
 
-    private function extractAmount(string $text): ?float
+    private function dateRange(Carbon $date, string $type): array
     {
-        if (!preg_match('/(?:di atas|lebih dari|>=|minimal|min)\s*rp?\s*([\d\.\,]+)\s*(juta|miliar|ribu)?/u', $text, $matches)) {
-            return null;
+        return [
+            'type' => $type,
+            'date' => $date->toDateString(),
+            'start' => $date->copy()->startOfDay()->toDateTimeString(),
+            'end' => $date->copy()->endOfDay()->toDateTimeString(),
+        ];
+    }
+
+    private function extractPaymentStatuses(string $text): array
+    {
+        $statuses = [];
+
+        if ($this->containsAny($text, ['siap dibayar', 'siap bayar', 'pending pembayaran', 'menunggu pembayaran'])) {
+            $statuses[] = 'siap_dibayar';
         }
 
-        $number = (float) str_replace([',', '.'], ['', ''], $matches[1]);
-        $unit = $matches[2] ?? '';
+        if ($this->containsAny($text, ['sudah dibayar', 'sudah bayar', 'telah dibayar', 'lunas', 'terbayar'])) {
+            $statuses[] = 'sudah_dibayar';
+        }
 
-        return match ($unit) {
-            'miliar' => $number * 1_000_000_000,
-            'juta' => $number * 1_000_000,
-            'ribu' => $number * 1_000,
-            default => $number,
-        };
+        if ($this->containsAny($text, ['belum dibayar', 'belum bayar', 'belum lunas', 'tidak dibayar'])) {
+            $statuses[] = 'belum_dibayar';
+        }
+
+        if (preg_match('/sudah\s+(?:dan|atau)\s+belum\s+dibayar/u', $text) || preg_match('/belum\s+(?:dan|atau)\s+sudah\s+dibayar/u', $text)) {
+            $statuses[] = 'sudah_dibayar';
+            $statuses[] = 'belum_dibayar';
+        }
+
+        return array_values(array_unique($statuses));
+    }
+
+    private function extractWorkflowStatus(string $text): ?string
+    {
+        foreach (self::WORKFLOW_STATUS_ALIASES as $status => $aliases) {
+            if ($this->containsAny($text, $aliases)) {
+                return $status;
+            }
+        }
+
+        return null;
     }
 
     private function extractDepartment(string $text): ?string
@@ -511,11 +673,277 @@ class VirtualAssistantQueryService
     {
         foreach (array_keys(self::HANDLER_LABELS) as $handler) {
             if (str_contains($text, $handler)) {
-                return $handler;
+                return $this->canonicalHandler($handler);
             }
         }
 
         return null;
+    }
+
+    private function extractAmountBound(string $text, string $bound): ?float
+    {
+        if (preg_match('/antara\s+rp?\s*([\d\.\,]+)\s*(juta|miliar|ribu)?\s+(?:dan|sampai|-)\s+rp?\s*([\d\.\,]+)\s*(juta|miliar|ribu)?/u', $text, $matches)) {
+            return $bound === 'min'
+                ? $this->parseAmount($matches[1], $matches[2] ?? '')
+                : $this->parseAmount($matches[3], $matches[4] ?? ($matches[2] ?? ''));
+        }
+
+        $patterns = $bound === 'min'
+            ? ['/(?:di atas|lebih dari|>=|minimal|min|lebih besar dari)\s*rp?\s*([\d\.\,]+)\s*(juta|miliar|ribu)?/u']
+            : ['/(?:di bawah|kurang dari|<=|maksimal|max|lebih kecil dari)\s*rp?\s*([\d\.\,]+)\s*(juta|miliar|ribu)?/u'];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $matches)) {
+                return $this->parseAmount($matches[1], $matches[2] ?? '');
+            }
+        }
+
+        return null;
+    }
+
+    private function parseAmount(string $rawNumber, string $unit = ''): float
+    {
+        $number = (float) str_replace([',', '.'], ['', ''], $rawNumber);
+
+        return match ($unit) {
+            'miliar' => $number * 1_000_000_000,
+            'juta' => $number * 1_000_000,
+            'ribu' => $number * 1_000,
+            default => $number,
+        };
+    }
+
+    private function extractKeyword(string $message, string $text): ?string
+    {
+        if (preg_match('/nomor\s+spp\s+(.{3,80})$/iu', $message, $matches)) {
+            return $this->cleanKeyword($matches[1]);
+        }
+
+        if (preg_match('/nomor\s+agenda\s+(.{3,40})$/iu', $message, $matches)) {
+            return $this->cleanKeyword($matches[1]);
+        }
+
+        if (preg_match('/\b\d{2,6}[_\/\-]\d{4}\b/u', $message, $matches)) {
+            return $matches[0];
+        }
+
+        if (preg_match('/(?:cari|search|kata kunci|mengandung|berisi)\s+(.{3,80})$/iu', $message, $matches)) {
+            return $this->cleanKeyword($matches[1]);
+        }
+
+        return null;
+    }
+
+    private function cleanKeyword(string $keyword): ?string
+    {
+        $keyword = preg_replace('/\s+(apakah|apa|yang|statusnya|status|sudah|belum|siap)\b.*$/iu', '', $keyword) ?: $keyword;
+        $keyword = trim($keyword, " \t\n\r\0\x0B*?.,:;");
+
+        return strlen($keyword) >= 3 ? $keyword : null;
+    }
+
+    private function formatDocuments(Collection $docs, bool $includeAge = false): array
+    {
+        return $docs->map(function (Dokumen $doc) use ($includeAge) {
+            $tanggalMasuk = $doc->tanggal_masuk ? Carbon::parse($doc->tanggal_masuk) : null;
+
+            return array_filter([
+                'id' => $doc->id,
+                'nomor_agenda' => $doc->nomor_agenda ?: '-',
+                'nomor_spp' => $doc->nomor_spp ?: '-',
+                'uraian' => (string) str($doc->uraian_spp ?: '-')->limit(130),
+                'nilai' => $this->formatMoney($doc->nilai_rupiah),
+                'bagian' => $doc->bagian ?: ($doc->nama_pengirim ?: ($doc->created_by ?: '-')),
+                'status' => $this->workflowLabel($doc->status),
+                'status_pembayaran' => $this->paymentLabel($doc->status_pembayaran, $doc->tanggal_dibayar),
+                'pengurus' => $this->handlerLabel($doc->current_handler),
+                'tanggal_masuk' => $tanggalMasuk ? $tanggalMasuk->format('d M Y H:i') : '-',
+                'umur' => $includeAge && $tanggalMasuk ? $tanggalMasuk->diffForHumans(null, true) : null,
+            ], fn ($value) => $value !== null);
+        })->values()->all();
+    }
+
+    private function clarification(string $message, array $params): array
+    {
+        $suggestion = 'Apakah yang Anda maksud ingin mencari dokumen berdasarkan status pembayaran, tanggal masuk, bagian, pengurus, nilai, atau nomor SPP?';
+
+        if (str_contains($this->normalize($message), 'bayar')) {
+            $suggestion = 'Apakah yang Anda maksud status pembayaran Siap Dibayar, Belum Dibayar, atau Sudah Dibayar?';
+        }
+
+        return [
+            'intent' => 'clarification',
+            'answer' => $suggestion . ' Contoh: "berikan saya dokumen siap dibayar" atau "dokumen belum dibayar di atas 100 juta".',
+            'data' => [],
+            'link' => route('owner.dokumen'),
+            'meta' => ['confidence' => 'low', 'service' => 'clarification', 'params' => $params],
+        ];
+    }
+
+    private function emptyResult(string $answer, array $params = [], string $intent = 'empty'): array
+    {
+        return [
+            'intent' => $intent,
+            'answer' => $answer,
+            'data' => [],
+            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'meta' => ['service' => 'empty_result', 'params' => $params],
+        ];
+    }
+
+    private function linkParams(array $params): array
+    {
+        $query = ['status' => 'all'];
+
+        if (count($params['payment_statuses'] ?? []) === 1) {
+            $query['filter_status_pembayaran'] = $params['payment_statuses'][0];
+        }
+
+        if (($params['date_range']['type'] ?? null) === 'date') {
+            $query['filter_tanggal_masuk'] = $params['date_range']['date'];
+        }
+
+        if ($params['department'] ?? null) {
+            $query['filter_bagian'] = $params['department'];
+        }
+
+        if ($params['handler'] ?? null) {
+            $query['filter_pengurus'] = $this->canonicalHandler($params['handler']);
+        }
+
+        if ($params['amount_min'] ?? null) {
+            $query['filter_nilai_min'] = (int) $params['amount_min'];
+        }
+
+        if ($params['amount_max'] ?? null) {
+            $query['filter_nilai_max'] = (int) $params['amount_max'];
+        }
+
+        if ($params['keyword'] ?? null) {
+            $query['search'] = $params['keyword'];
+        }
+
+        return array_filter($query, fn ($value) => $value !== null && $value !== '');
+    }
+
+    private function filterLabel(array $params): string
+    {
+        $parts = [];
+
+        if ($params['payment_statuses'] ?? []) {
+            $parts[] = 'status ' . $this->paymentStatusListLabel($params['payment_statuses']);
+        }
+
+        if ($params['date_range'] ?? null) {
+            $parts[] = $this->dateRangeLabel($params['date_range']);
+        }
+
+        if ($params['department'] ?? null) {
+            $parts[] = 'bagian ' . $params['department'];
+        }
+
+        if ($params['handler'] ?? null) {
+            $parts[] = 'pengurus ' . $this->handlerLabel($params['handler']);
+        }
+
+        if ($params['amount_min'] ?? null) {
+            $parts[] = 'nilai minimal ' . $this->formatMoney($params['amount_min']);
+        }
+
+        if ($params['amount_max'] ?? null) {
+            $parts[] = 'nilai maksimal ' . $this->formatMoney($params['amount_max']);
+        }
+
+        if ($params['keyword'] ?? null) {
+            $parts[] = 'kata kunci "' . $params['keyword'] . '"';
+        }
+
+        return $parts ? ' dengan ' . implode(', ', $parts) : '';
+    }
+
+    private function paymentStatusListLabel(array $statuses): string
+    {
+        return implode(' dan ', array_map(fn ($status) => match ($status) {
+            'siap_dibayar' => 'Siap Dibayar',
+            'sudah_dibayar' => 'Sudah Dibayar',
+            'belum_dibayar' => 'Belum Dibayar',
+            default => (string) str($status)->replace('_', ' ')->title(),
+        }, $statuses));
+    }
+
+    private function dateRangeLabel(array $range): string
+    {
+        if (($range['type'] ?? null) === 'date') {
+            return 'tanggal masuk ' . Carbon::parse($range['date'])->translatedFormat('d F Y');
+        }
+
+        if (($range['type'] ?? null) === 'month') {
+            return 'bulan ' . Carbon::createFromDate($range['year'], $range['month'], 1)->translatedFormat('F Y');
+        }
+
+        if (($range['type'] ?? null) === 'year') {
+            return 'tahun ' . $range['year'];
+        }
+
+        return 'periode tertentu';
+    }
+
+    private function paymentLabel(?string $status, $tanggalDibayar): string
+    {
+        if ($tanggalDibayar || in_array((string) $status, ['sudah_dibayar', 'SUDAH_DIBAYAR', 'SUDAH DIBAYAR'], true)) {
+            return 'Sudah Dibayar';
+        }
+
+        if (in_array((string) $status, ['siap_dibayar', 'siap_bayar', 'SIAP_DIBAYAR', 'SIAP DIBAYAR', 'pending', 'Pending'], true)) {
+            return 'Siap Dibayar';
+        }
+
+        return 'Belum Dibayar';
+    }
+
+    private function workflowLabel(?string $status): string
+    {
+        return match ($status) {
+            'sent_to_team_verifikasi', 'waiting_reviewer_approval' => 'Menunggu Verifikasi',
+            'sent_to_perpajakan', 'pending_approval_perpajakan' => 'Perpajakan',
+            'sent_to_akutansi', 'pending_approval_akutansi' => 'Akuntansi',
+            'sent_to_pembayaran', 'pending_approval_pembayaran' => 'Pembayaran',
+            'completed', 'selesai' => 'Selesai',
+            'returned_to_operator', 'returned_to_verifikasi', 'returned_to_team_verifikasi', 'returned_to_department' => 'Dikembalikan',
+            default => $status ?: '-',
+        };
+    }
+
+    private function handlerLabel(?string $handler): string
+    {
+        $key = strtolower((string) $handler);
+        return self::HANDLER_LABELS[$key] ?? ($handler ? (string) str($handler)->replace('_', ' ')->title() : '-');
+    }
+
+    private function canonicalHandler(string $handler): string
+    {
+        $handler = strtolower($handler);
+
+        return match ($handler) {
+            'verifikasi' => 'team_verifikasi',
+            'akuntansi' => 'akutansi',
+            'bagian' => 'operator',
+            default => $handler,
+        };
+    }
+
+    private function hasDocumentFilters(array $params): bool
+    {
+        return (bool) (
+            ($params['date_range'] ?? null)
+            || ($params['payment_statuses'] ?? [])
+            || ($params['workflow_status'] ?? null)
+            || ($params['department'] ?? null)
+            || ($params['handler'] ?? null)
+            || ($params['amount_min'] ?? null)
+            || ($params['amount_max'] ?? null)
+            || ($params['keyword'] ?? null)
+        );
     }
 
     private function containsAny(string $text, array $needles): bool
@@ -551,34 +979,21 @@ class VirtualAssistantQueryService
         return (string) str($text)->lower()->replaceMatches('/\s+/', ' ')->trim();
     }
 
-    private function emptyResult(string $answer, array $query = []): array
-    {
-        return [
-            'intent' => 'empty',
-            'answer' => $answer,
-            'data' => [],
-            'link' => route('owner.dokumen', array_merge(['status' => 'all'], $query)),
-            'meta' => [],
-        ];
-    }
-
     private function formatMoney($value): string
     {
         return 'Rp ' . number_format((float) $value, 0, ',', '.');
     }
 
-    private function formatDate(Carbon $date): string
+    private function logDecision(string $question, string $intent, array $params, array $result): void
     {
-        return $date->translatedFormat('d F Y');
-    }
-
-    private function periodLabel(?array $monthYear): string
-    {
-        if (!$monthYear) {
-            return '';
-        }
-
-        $date = Carbon::createFromDate($monthYear['year'], $monthYear['month'], 1);
-        return ' pada ' . $date->translatedFormat('F Y');
+        Log::info('Virtual Assistant intent resolved', [
+            'question' => (string) str($question)->limit(300),
+            'intent' => $intent,
+            'params' => $params,
+            'service' => data_get($result, 'meta.service'),
+            'result_count' => is_array($result['data'] ?? null) ? count($result['data']) : 0,
+            'total' => data_get($result, 'meta.total'),
+            'ai_provider_configured' => config('asisten_virtual.provider'),
+        ]);
     }
 }
