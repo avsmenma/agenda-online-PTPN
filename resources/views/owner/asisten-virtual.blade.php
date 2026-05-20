@@ -568,11 +568,7 @@
     const feedback = button.dataset.feedback;
     const container = button.closest('[data-feedback-for]');
     const status = container?.querySelector('.va-feedback-status');
-    let reason = '';
-
-    if (feedback !== 'helpful') {
-      reason = window.prompt('Catatan opsional untuk programmer: apa yang kurang tepat dari jawaban ini?') || '';
-    }
+    const reason = '';
 
     container?.querySelectorAll('.va-feedback').forEach((item) => {
       item.disabled = true;
