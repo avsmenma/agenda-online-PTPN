@@ -633,7 +633,11 @@ class VirtualAssistantQueryService
             ->get();
 
         if ($rows->isEmpty()) {
-            return $this->emptyResult('Belum ada data bagian yang bisa diringkas.', [], 'top_departments');
+            return $this->emptyResult(
+                'Belum ada data bagian yang bisa diringkas' . $this->filterLabel($params) . '.',
+                $params,
+                $mode === 'value' ? 'top_departments_by_value' : 'top_departments_by_count'
+            );
         }
 
         return [
