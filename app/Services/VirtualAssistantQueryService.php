@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Dokumen;
+use App\Models\DokumenRoleData;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -60,8 +61,14 @@ class VirtualAssistantQueryService
             'greeting' => $this->greeting(),
             'cashbank_summary' => $this->cashbankSummary($params),
             'document_summary' => $this->documentSummary($params),
-            'top_departments_by_value' => $this->topDepartments('value', $limit),
-            'top_departments_by_count' => $this->topDepartments('count', $limit),
+            'document_entry_dates_summary' => $this->documentEntryDatesSummary($params, $limit),
+            'specific_document_age' => $this->specificDocumentAge($params),
+            'specific_document_position' => $this->specificDocumentPosition($params),
+            'role_average_duration' => $this->roleAverageDuration($params),
+            'documents_by_age' => $this->documentsByAge($params, $limit),
+            'recent_documents' => $this->recentDocuments($params, $limit),
+            'top_departments_by_value' => $this->topDepartments('value', $limit, $params),
+            'top_departments_by_count' => $this->topDepartments('count', $limit, $params),
             'late_documents' => $this->lateDocuments($params, $limit),
             'oldest_documents' => $this->oldestDocuments($params, $limit),
             'payment_summary' => $this->paymentSummary($params),
@@ -96,7 +103,39 @@ class VirtualAssistantQueryService
             return 'cashbank_summary';
         }
 
-        if ($this->containsAny($text, ['top bagian', 'bagian mana', 'paling banyak mengirim'])) {
+        if ($params['asks_average_duration']) {
+            return 'role_average_duration';
+        }
+
+        if ($params['context_document_id'] && $params['asks_age']) {
+            return 'specific_document_age';
+        }
+
+        if ($params['keyword'] && $params['asks_position']) {
+            return 'specific_document_position';
+        }
+
+        if ($params['keyword'] && $params['asks_age']) {
+            return 'specific_document_age';
+        }
+
+        if ($params['asks_entry_dates']) {
+            return 'document_entry_dates_summary';
+        }
+
+        if ($params['asks_recent']) {
+            return 'recent_documents';
+        }
+
+        if ($params['age_days_min'] !== null || $params['age_days_max'] !== null) {
+            return 'documents_by_age';
+        }
+
+        if ($params['keyword'] && $this->containsAny($text, ['uraian', 'nomor agenda dari dokumen', 'nomor agenda dokumen'])) {
+            return 'documents_by_keyword';
+        }
+
+        if ($this->containsAny($text, ['top bagian', 'bagian mana', 'bagian apa', 'paling banyak mengirim', 'paling banyak masuk'])) {
             return 'top_departments_by_count';
         }
 
@@ -178,10 +217,18 @@ class VirtualAssistantQueryService
             'amount_min' => $this->extractAmountBound($text, 'min'),
             'amount_max' => $this->extractAmountBound($text, 'max'),
             'keyword' => $this->extractKeyword($message, $text),
+            'keyword_focus' => $this->isKeywordFocused($message, $text),
+            'age_days_min' => $this->extractAgeDays($text, 'min'),
+            'age_days_max' => $this->extractAgeDays($text, 'max'),
             'context_document_id' => null,
             'context_document_label' => null,
             'wants_total' => $this->containsAny($text, ['berapa', 'total', 'jumlah', 'ringkasan', 'rekap']),
             'wants_list' => $this->containsAny($text, ['dokumen', 'berikan', 'tampilkan', 'apa saja', 'daftar', 'cari']),
+            'asks_average_duration' => $this->containsAny($text, ['rata rata', 'rata-rata', 'rerata', 'average']) && $this->containsAny($text, ['lama', 'durasi', 'waktu']),
+            'asks_age' => $this->containsAny($text, ['umur dokumen', 'berapa umur', 'usia dokumen']),
+            'asks_position' => $this->containsAny($text, ['posisi mana', 'posisi dokumen', 'sedang dimana', 'di mana', 'dimana', 'pengurus siapa', 'tahap mana']),
+            'asks_entry_dates' => $this->containsAny($text, ['tanggal berapa saja', 'tanggal apa saja']) && $this->containsAny($text, ['masuk', 'dokumen']),
+            'asks_recent' => $this->containsAny($text, ['akhir-akhir ini', 'akhir akhir ini', 'terbaru', 'baru masuk', 'recent']),
         ];
     }
 
@@ -272,6 +319,19 @@ class VirtualAssistantQueryService
         $count = (clone $query)->count();
         $total = (clone $query)->sum('nilai_rupiah');
         $statusLabel = $this->paymentStatusListLabel($params['payment_statuses']);
+        $breakdown = [];
+
+        foreach ($params['payment_statuses'] as $status) {
+            $statusQuery = $this->baseQuery();
+            $filteredParams = $params;
+            $filteredParams['payment_statuses'] = [$status];
+            $this->applyFilters($statusQuery, $filteredParams);
+            $breakdown[$status] = [
+                'status' => $this->paymentStatusListLabel([$status]),
+                'jumlah_dokumen' => (clone $statusQuery)->count(),
+                'total_nilai' => $this->formatMoney((clone $statusQuery)->sum('nilai_rupiah')),
+            ];
+        }
 
         return [
             'intent' => 'payment_summary',
@@ -280,6 +340,10 @@ class VirtualAssistantQueryService
                 'status_pembayaran' => $statusLabel,
                 'jumlah_dokumen' => $count,
                 'total_nilai' => $this->formatMoney($total),
+                'breakdown' => implode(' | ', array_map(
+                    fn ($item) => "{$item['status']}: {$item['jumlah_dokumen']} dokumen ({$item['total_nilai']})",
+                    $breakdown
+                )),
             ],
             'link' => route('owner.dokumen', $this->linkParams($params)),
             'meta' => ['confidence' => 'high', 'service' => 'payment_summary', 'params' => $params],
@@ -288,7 +352,7 @@ class VirtualAssistantQueryService
 
     private function specificDocumentPaymentStatus(array $params): array
     {
-        $doc = $this->baseQuery()->where('id', $params['context_document_id'])->first();
+        $doc = $this->findSpecificDocument($params);
 
         if (!$doc) {
             return $this->emptyResult('Saya tidak menemukan lagi dokumen yang dimaksud dari konteks chat sebelumnya.', $params, 'specific_document_payment_status');
@@ -312,9 +376,87 @@ class VirtualAssistantQueryService
         ];
     }
 
+    private function specificDocumentAge(array $params): array
+    {
+        $doc = $this->findSpecificDocument($params);
+
+        if (!$doc || !$doc->tanggal_masuk) {
+            return $this->emptyResult('Saya tidak menemukan dokumen yang dimaksud untuk menghitung umur dokumen.', $params, 'specific_document_age');
+        }
+
+        $tanggalMasuk = Carbon::parse($doc->tanggal_masuk);
+        $age = $tanggalMasuk->diffForHumans(null, true);
+
+        return [
+            'intent' => 'specific_document_age',
+            'answer' => "Umur dokumen {$doc->nomor_agenda} adalah {$age} sejak tanggal masuk {$tanggalMasuk->format('d M Y H:i')}.",
+            'data' => $this->formatDocuments(collect([$doc]), true),
+            'link' => route('owner.dokumen', ['status' => 'all', 'search' => $doc->nomor_agenda]),
+            'meta' => ['confidence' => 'high', 'service' => 'specific_document_age', 'params' => $params],
+        ];
+    }
+
+    private function specificDocumentPosition(array $params): array
+    {
+        $doc = $this->findSpecificDocument($params);
+
+        if (!$doc) {
+            return $this->emptyResult('Saya tidak menemukan dokumen dengan nomor atau kata kunci tersebut.', $params, 'specific_document_position');
+        }
+
+        $answer = "Dokumen {$doc->nomor_agenda} saat ini berada di pengurus {$this->handlerLabel($doc->current_handler)} dengan status {$this->workflowLabel($doc->status)} dan status pembayaran {$this->paymentLabel($doc->status_pembayaran, $doc->tanggal_dibayar)}.";
+
+        return [
+            'intent' => 'specific_document_position',
+            'answer' => $answer,
+            'data' => $this->formatDocuments(collect([$doc]), true),
+            'link' => route('owner.dokumen', ['status' => 'all', 'search' => $doc->nomor_agenda]),
+            'meta' => ['confidence' => 'high', 'service' => 'specific_document_position', 'params' => $params],
+        ];
+    }
+
+    private function roleAverageDuration(array $params): array
+    {
+        $role = $this->canonicalHandler($params['handler'] ?: $this->extractRoleFromWorkflow($params['workflow_status'] ?? null) ?: 'pembayaran');
+        $roleAliases = $role === 'team_verifikasi' ? ['team_verifikasi', 'verifikasi'] : [$role];
+
+        $rows = DokumenRoleData::query()
+            ->whereIn('role_code', $roleAliases)
+            ->whereNotNull('received_at')
+            ->whereNotNull('processed_at')
+            ->get(['dokumen_id', 'role_code', 'received_at', 'processed_at']);
+
+        if ($rows->isEmpty()) {
+            return $this->emptyResult("Belum ada data durasi selesai untuk {$this->handlerLabel($role)}.", $params, 'role_average_duration');
+        }
+
+        $minutes = $rows->map(fn ($row) => Carbon::parse($row->received_at)->diffInMinutes(Carbon::parse($row->processed_at)));
+        $averageMinutes = (int) round($minutes->avg());
+        $fastest = (int) $minutes->min();
+        $slowest = (int) $minutes->max();
+
+        return [
+            'intent' => 'role_average_duration',
+            'answer' => "Rata-rata durasi dokumen selesai oleh {$this->handlerLabel($role)} adalah {$this->formatDuration($averageMinutes)} dari {$rows->count()} dokumen yang memiliki timestamp lengkap.",
+            'data' => [
+                'role' => $this->handlerLabel($role),
+                'jumlah_dokumen_terhitung' => $rows->count(),
+                'rata_rata' => $this->formatDuration($averageMinutes),
+                'tercepat' => $this->formatDuration($fastest),
+                'terlama' => $this->formatDuration($slowest),
+            ],
+            'link' => route('owner.dokumen', ['filter_pengurus' => $role]),
+            'meta' => ['confidence' => 'high', 'service' => 'role_average_duration', 'params' => $params],
+        ];
+    }
+
     private function documentsByFilters(string $intent, array $params, int $limit): array
     {
         $query = $this->baseQuery();
+        if ($intent === 'documents_by_keyword' && ($params['keyword_focus'] ?? false)) {
+            $params['handler'] = null;
+            $params['workflow_status'] = null;
+        }
         $this->applyFilters($query, $params);
 
         $total = (clone $query)->count();
@@ -344,6 +486,91 @@ class VirtualAssistantQueryService
                 'service' => 'documents_by_filters',
                 'params' => $params,
             ],
+        ];
+    }
+
+    private function documentsByAge(array $params, int $limit): array
+    {
+        $query = $this->baseQuery();
+        $this->applyFilters($query, $params);
+
+        if ($params['age_days_min'] !== null) {
+            $query->where('tanggal_masuk', '<=', now()->subDays((int) $params['age_days_min']));
+        }
+
+        if ($params['age_days_max'] !== null) {
+            $query->where('tanggal_masuk', '>=', now()->subDays((int) $params['age_days_max']));
+        }
+
+        $total = (clone $query)->count();
+        $docs = $query->oldest('tanggal_masuk')->limit($limit)->get();
+
+        if ($docs->isEmpty()) {
+            return $this->emptyResult('Tidak ditemukan dokumen dengan umur yang dimaksud.', $params, 'documents_by_age');
+        }
+
+        return [
+            'intent' => 'documents_by_age',
+            'answer' => "Ditemukan {$total} dokumen dengan umur yang dimaksud. Berikut {$docs->count()} teratas.",
+            'data' => $this->formatDocuments($docs, true),
+            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'meta' => ['total' => $total, 'shown' => $docs->count(), 'service' => 'documents_by_age', 'params' => $params],
+        ];
+    }
+
+    private function recentDocuments(array $params, int $limit): array
+    {
+        $recentParams = $params;
+        $recentParams['date_range'] ??= [
+            'type' => 'recent',
+            'start' => now()->subDays(7)->startOfDay()->toDateTimeString(),
+            'end' => now()->endOfDay()->toDateTimeString(),
+        ];
+
+        $query = $this->baseQuery();
+        $this->applyFilters($query, $recentParams);
+        $total = (clone $query)->count();
+        $docs = $query->orderByDesc('tanggal_masuk')->limit($limit)->get();
+
+        if ($docs->isEmpty()) {
+            return $this->emptyResult('Tidak ditemukan dokumen yang masuk dalam 7 hari terakhir.', $recentParams, 'recent_documents');
+        }
+
+        return [
+            'intent' => 'recent_documents',
+            'answer' => "Ditemukan {$total} dokumen yang masuk akhir-akhir ini, berikut {$docs->count()} terbaru.",
+            'data' => $this->formatDocuments($docs),
+            'link' => route('owner.dokumen', $this->linkParams($recentParams)),
+            'meta' => ['total' => $total, 'shown' => $docs->count(), 'service' => 'recent_documents', 'params' => $recentParams],
+        ];
+    }
+
+    private function documentEntryDatesSummary(array $params, int $limit): array
+    {
+        $query = $this->baseQuery();
+        $this->applyFilters($query, $params);
+
+        $rows = $query
+            ->selectRaw('DATE(tanggal_masuk) as tanggal')
+            ->selectRaw('COUNT(*) as total_dokumen')
+            ->groupBy('tanggal')
+            ->orderByDesc('tanggal')
+            ->limit(min($limit, 20))
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return $this->emptyResult('Belum ada tanggal masuk dokumen yang bisa diringkas.', $params, 'document_entry_dates_summary');
+        }
+
+        return [
+            'intent' => 'document_entry_dates_summary',
+            'answer' => "Berikut tanggal masuk dokumen terbaru, dibatasi {$rows->count()} tanggal.",
+            'data' => $rows->map(fn ($row) => [
+                'tanggal_masuk' => Carbon::parse($row->tanggal)->format('d M Y'),
+                'jumlah_dokumen' => (int) $row->total_dokumen,
+            ])->values()->all(),
+            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'meta' => ['service' => 'document_entry_dates_summary', 'params' => $params],
         ];
     }
 
@@ -391,9 +618,12 @@ class VirtualAssistantQueryService
         ];
     }
 
-    private function topDepartments(string $mode, int $limit): array
+    private function topDepartments(string $mode, int $limit, array $params = []): array
     {
-        $rows = Dokumen::query()
+        $query = Dokumen::query();
+        $this->applyFilters($query, $params);
+
+        $rows = $query
             ->selectRaw("COALESCE(NULLIF(bagian, ''), NULLIF(nama_pengirim, ''), NULLIF(created_by, ''), 'Tidak diketahui') as bagian_label")
             ->selectRaw('COUNT(*) as total_dokumen')
             ->selectRaw('COALESCE(SUM(nilai_rupiah), 0) as total_nilai')
@@ -409,15 +639,15 @@ class VirtualAssistantQueryService
         return [
             'intent' => $mode === 'value' ? 'top_departments_by_value' : 'top_departments_by_count',
             'answer' => $mode === 'value'
-                ? 'Berikut bagian teratas berdasarkan total nilai dokumen.'
-                : 'Berikut bagian teratas berdasarkan jumlah dokumen.',
+                ? 'Berikut bagian teratas berdasarkan total nilai dokumen' . $this->filterLabel($params) . '.'
+                : 'Berikut bagian teratas berdasarkan jumlah dokumen' . $this->filterLabel($params) . '.',
             'data' => $rows->map(fn ($row) => [
                 'bagian' => $row->bagian_label,
                 'jumlah_dokumen' => (int) $row->total_dokumen,
                 'total_nilai' => $this->formatMoney($row->total_nilai),
             ])->values()->all(),
-            'link' => route('owner.dokumen'),
-            'meta' => ['mode' => $mode, 'service' => 'top_departments'],
+            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'meta' => ['mode' => $mode, 'service' => 'top_departments', 'params' => $params],
         ];
     }
 
@@ -611,6 +841,39 @@ class VirtualAssistantQueryService
         ]);
     }
 
+    private function findSpecificDocument(array $params): ?Dokumen
+    {
+        if ($params['context_document_id'] ?? null) {
+            return $this->baseQuery()->where('id', $params['context_document_id'])->first();
+        }
+
+        if (!($params['keyword'] ?? null)) {
+            return null;
+        }
+
+        $keyword = $params['keyword'];
+
+        return $this->baseQuery()
+            ->where(function (Builder $query) use ($keyword) {
+                $query->where('nomor_agenda', 'like', "%{$keyword}%")
+                    ->orWhere('nomor_spp', 'like', "%{$keyword}%")
+                    ->orWhere('uraian_spp', 'like', "%{$keyword}%");
+            })
+            ->orderByDesc('tanggal_masuk')
+            ->first();
+    }
+
+    private function extractRoleFromWorkflow(?string $workflowStatus): ?string
+    {
+        return match ($workflowStatus) {
+            'sent_to_verification' => 'team_verifikasi',
+            'sent_to_tax' => 'perpajakan',
+            'sent_to_accounting' => 'akutansi',
+            'sent_to_payment' => 'pembayaran',
+            default => null,
+        };
+    }
+
     private function extractDateRange(string $text): ?array
     {
         if (str_contains($text, 'hari ini')) {
@@ -715,6 +978,10 @@ class VirtualAssistantQueryService
             return strtoupper($matches[1]);
         }
 
+        if (preg_match('/bagian\s+(?:apa|mana)\b/i', $text)) {
+            return null;
+        }
+
         if (preg_match('/bagian\s+([a-z0-9\s\-]{2,40})/i', $text, $matches)) {
             return trim($matches[1]);
         }
@@ -726,11 +993,32 @@ class VirtualAssistantQueryService
     {
         foreach (array_keys(self::HANDLER_LABELS) as $handler) {
             if (str_contains($text, $handler)) {
+                if ($handler === 'bagian' && !$this->containsAny($text, ['pengurus bagian', 'handler bagian', 'di bagian operator'])) {
+                    continue;
+                }
+
                 return $this->canonicalHandler($handler);
             }
         }
 
         return null;
+    }
+
+    private function extractAgeDays(string $text, string $bound): ?int
+    {
+        if (!preg_match('/umur\s+(?:dokumen\s+)?(?:di\s*atas|lebih dari|>=|minimal|min)?\s*(\d+)\s*(hari|minggu|bulan|tahun)/u', $text, $matches)
+            && !preg_match('/(\d+)\s*(hari|minggu|bulan|tahun)\s+(?:terakhir|lamanya|usianya|umur)/u', $text, $matches)) {
+            return null;
+        }
+
+        $days = match ($matches[2]) {
+            'tahun' => (int) $matches[1] * 365,
+            'bulan' => (int) $matches[1] * 30,
+            'minggu' => (int) $matches[1] * 7,
+            default => (int) $matches[1],
+        };
+
+        return $bound === 'min' ? $days : null;
     }
 
     private function extractAmountBound(string $text, string $bound): ?float
@@ -768,6 +1056,10 @@ class VirtualAssistantQueryService
 
     private function extractKeyword(string $message, string $text): ?string
     {
+        if (preg_match('/["“”](.{3,160})["“”]/u', $message, $matches)) {
+            return $this->cleanKeyword($matches[1]);
+        }
+
         if (preg_match('/nomor\s+spp\s+(.{3,80})$/iu', $message, $matches)) {
             return $this->cleanKeyword($matches[1]);
         }
@@ -787,10 +1079,16 @@ class VirtualAssistantQueryService
         return null;
     }
 
+    private function isKeywordFocused(string $message, string $text): bool
+    {
+        return (bool) preg_match('/["“”].{3,160}["“”]/u', $message)
+            || $this->containsAny($text, ['uraian', 'kata kunci', 'mengandung', 'berisi', 'nomor agenda dari dokumen']);
+    }
+
     private function cleanKeyword(string $keyword): ?string
     {
         $keyword = preg_replace('/\s+(apakah|apa|yang|statusnya|status|sudah|belum|siap)\b.*$/iu', '', $keyword) ?: $keyword;
-        $keyword = trim($keyword, " \t\n\r\0\x0B*?.,:;");
+        $keyword = trim($keyword, " \t\n\r\0\x0B*?.,:;\"'“”");
 
         return strlen($keyword) >= 3 ? $keyword : null;
     }
@@ -1014,6 +1312,8 @@ class VirtualAssistantQueryService
             || ($params['handler'] ?? null)
             || ($params['amount_min'] ?? null)
             || ($params['amount_max'] ?? null)
+            || ($params['age_days_min'] ?? null)
+            || ($params['age_days_max'] ?? null)
             || ($params['keyword'] ?? null)
         );
     }
@@ -1054,6 +1354,32 @@ class VirtualAssistantQueryService
     private function formatMoney($value): string
     {
         return 'Rp ' . number_format((float) $value, 0, ',', '.');
+    }
+
+    private function formatDuration(int $minutes): string
+    {
+        if ($minutes < 60) {
+            return "{$minutes} menit";
+        }
+
+        $days = intdiv($minutes, 1440);
+        $hours = intdiv($minutes % 1440, 60);
+        $remainingMinutes = $minutes % 60;
+        $parts = [];
+
+        if ($days > 0) {
+            $parts[] = "{$days} hari";
+        }
+
+        if ($hours > 0) {
+            $parts[] = "{$hours} jam";
+        }
+
+        if ($remainingMinutes > 0 && $days === 0) {
+            $parts[] = "{$remainingMinutes} menit";
+        }
+
+        return implode(' ', $parts) ?: '0 menit';
     }
 
     private function formatIndonesianDate(Carbon $date): string
