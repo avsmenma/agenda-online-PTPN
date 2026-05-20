@@ -17,7 +17,6 @@ class ProgrammerAssistantEvaluationController extends Controller
     private const REVIEW_STATUSES = [
         VirtualAssistantInteraction::STATUS_AMBIGUOUS,
         VirtualAssistantInteraction::STATUS_UNSUPPORTED,
-        VirtualAssistantInteraction::STATUS_NO_DATA,
         VirtualAssistantInteraction::STATUS_ERROR,
         VirtualAssistantInteraction::STATUS_LOW_CONFIDENCE,
         VirtualAssistantInteraction::STATUS_NEEDS_REVIEW,
