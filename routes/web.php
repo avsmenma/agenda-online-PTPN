@@ -18,6 +18,7 @@ use App\Http\Controllers\AutocompleteController;
 use App\Http\Controllers\WelcomeMessageController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\OwnerDashboardController;
+use App\Http\Controllers\OwnerVirtualAssistantController;
 use App\Http\Controllers\BulkOperationController;
 
 /*
@@ -217,6 +218,14 @@ Route::get('owner/dokumen', [OwnerDashboardController::class, 'index'])
 Route::get('owner/dokumen/filter', [OwnerDashboardController::class, 'filterDocuments'])
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.dokumen.filter');
+
+Route::get('owner/asisten-virtual', [OwnerVirtualAssistantController::class, 'index'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.asisten-virtual');
+
+Route::post('owner/asisten-virtual/chat', [OwnerVirtualAssistantController::class, 'chat'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.asisten-virtual.chat');
 
 // Redirect old dashboard URL to home
 Route::get('owner/dashboard', fn() => redirect()->route('owner.home'))

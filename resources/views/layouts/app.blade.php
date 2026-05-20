@@ -4391,6 +4391,20 @@
           Dokumen
         </a>
         @php
+          $isAsistenVirtualActive = request()->routeIs('owner.asisten-virtual');
+        @endphp
+        <a href="{{ route('owner.asisten-virtual') }}" class="owner-nav-item {{ ($menuAsistenVirtual ?? '') ?: ($isAsistenVirtualActive ? 'active' : '') }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M12 8V4H8"/>
+            <rect x="4" y="8" width="16" height="12" rx="4"/>
+            <path d="M2 14h2M20 14h2"/>
+            <circle cx="9" cy="14" r="1"/>
+            <circle cx="15" cy="14" r="1"/>
+            <path d="M10 18h4"/>
+          </svg>
+          Asisten Virtual
+        </a>
+        @php
           $isRekapanKeterlambatanActive = request()->is('*rekapan-keterlambatan*') ||
             request()->routeIs('owner.rekapan-keterlambatan*') ||
             request()->routeIs('rekapan-keterlambatan.*') ||
