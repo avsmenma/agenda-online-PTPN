@@ -26,6 +26,11 @@ class OwnerVirtualAssistantController extends Controller
                 'min:3',
                 'max:' . (int) config('asisten_virtual.limits.max_message_length', 800),
             ],
+            'context' => ['nullable', 'array'],
+            'context.selected_document' => ['nullable', 'array'],
+            'context.selected_document.id' => ['nullable', 'integer'],
+            'context.selected_document.nomor_agenda' => ['nullable', 'string', 'max:80'],
+            'context.selected_document.nomor_spp' => ['nullable', 'string', 'max:160'],
         ], [
             'message.required' => 'Pertanyaan wajib diisi.',
             'message.min' => 'Pertanyaan terlalu pendek.',
@@ -35,7 +40,7 @@ class OwnerVirtualAssistantController extends Controller
         try {
             return response()->json([
                 'success' => true,
-                'reply' => $assistant->respond($validated['message']),
+                'reply' => $assistant->respond($validated['message'], $validated['context'] ?? []),
             ]);
         } catch (\Throwable $exception) {
             report($exception);

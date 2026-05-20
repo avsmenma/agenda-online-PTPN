@@ -48,11 +48,12 @@ class VirtualAssistantQueryService
         'returned' => ['dikembalikan', 'return', 'returned', 'ditolak'],
     ];
 
-    public function answer(string $message): array
+    public function answer(string $message, array $context = []): array
     {
         $normalized = $this->normalize($message);
         $limit = min((int) config('asisten_virtual.limits.default_result_limit', 15), 20);
         $params = $this->parseParameters($message, $normalized);
+        $params = $this->applyConversationContext($params, $normalized, $context);
         $intent = $this->resolveIntent($normalized, $params);
 
         $result = match ($intent) {
@@ -64,6 +65,7 @@ class VirtualAssistantQueryService
             'late_documents' => $this->lateDocuments($params, $limit),
             'oldest_documents' => $this->oldestDocuments($params, $limit),
             'payment_summary' => $this->paymentSummary($params),
+            'specific_document_payment_status' => $this->specificDocumentPaymentStatus($params),
             'ready_to_pay_documents',
             'unpaid_documents',
             'paid_documents',
@@ -108,6 +110,10 @@ class VirtualAssistantQueryService
 
         if ($this->containsAny($text, ['tertahan', 'terlambat', 'terlalu lama', 'telat'])) {
             return 'late_documents';
+        }
+
+        if ($params['context_document_id'] && $this->containsAny($text, ['bayar', 'dibayar', 'pembayaran', 'lunas'])) {
+            return 'specific_document_payment_status';
         }
 
         if ($params['payment_statuses'] !== []) {
@@ -172,9 +178,30 @@ class VirtualAssistantQueryService
             'amount_min' => $this->extractAmountBound($text, 'min'),
             'amount_max' => $this->extractAmountBound($text, 'max'),
             'keyword' => $this->extractKeyword($message, $text),
+            'context_document_id' => null,
+            'context_document_label' => null,
             'wants_total' => $this->containsAny($text, ['berapa', 'total', 'jumlah', 'ringkasan', 'rekap']),
             'wants_list' => $this->containsAny($text, ['dokumen', 'berikan', 'tampilkan', 'apa saja', 'daftar', 'cari']),
         ];
+    }
+
+    private function applyConversationContext(array $params, string $text, array $context): array
+    {
+        $selected = data_get($context, 'selected_document');
+        if (!is_array($selected) || !$this->containsAny($text, ['tersebut', 'itu', 'tadi', 'dokumen ini', 'dokumen tadi'])) {
+            return $params;
+        }
+
+        $documentId = data_get($selected, 'id');
+        $label = data_get($selected, 'nomor_agenda') ?: data_get($selected, 'nomor_spp');
+
+        if ($documentId) {
+            $params['context_document_id'] = (int) $documentId;
+            $params['context_document_label'] = $label;
+            $params['keyword'] = null;
+        }
+
+        return $params;
     }
 
     private function greeting(): array
@@ -256,6 +283,32 @@ class VirtualAssistantQueryService
             ],
             'link' => route('owner.dokumen', $this->linkParams($params)),
             'meta' => ['confidence' => 'high', 'service' => 'payment_summary', 'params' => $params],
+        ];
+    }
+
+    private function specificDocumentPaymentStatus(array $params): array
+    {
+        $doc = $this->baseQuery()->where('id', $params['context_document_id'])->first();
+
+        if (!$doc) {
+            return $this->emptyResult('Saya tidak menemukan lagi dokumen yang dimaksud dari konteks chat sebelumnya.', $params, 'specific_document_payment_status');
+        }
+
+        $paymentStatus = $this->paymentLabel($doc->status_pembayaran, $doc->tanggal_dibayar);
+        $paidDate = $doc->tanggal_dibayar ? Carbon::parse($doc->tanggal_dibayar)->format('d/m/Y') : null;
+        $paidText = $paidDate ? " pada {$paidDate}" : '';
+        $answer = "Dokumen {$doc->nomor_agenda} berstatus pembayaran {$paymentStatus}{$paidText}.";
+
+        return [
+            'intent' => 'specific_document_payment_status',
+            'answer' => $answer,
+            'data' => $this->formatDocuments(collect([$doc])),
+            'link' => route('owner.dokumen', ['status' => 'all', 'search' => $doc->nomor_agenda]),
+            'meta' => [
+                'service' => 'specific_document_payment_status',
+                'context_document_id' => $doc->id,
+                'params' => $params,
+            ],
         ];
     }
 

@@ -12,9 +12,9 @@ class VirtualAssistantService
     ) {
     }
 
-    public function respond(string $message): array
+    public function respond(string $message, array $context = []): array
     {
-        $result = $this->queryService->answer($message);
+        $result = $this->queryService->answer($message, $context);
         $configuredProvider = (string) config('asisten_virtual.provider', 'local');
         $aiAnswer = $this->shouldUseAiRefinement($result)
             ? $this->aiProvider->refineAnswer($message, $result)
@@ -35,6 +35,7 @@ class VirtualAssistantService
         Log::info('Virtual Assistant response completed', [
             'question' => (string) str($message)->limit(300),
             'intent' => $result['intent'] ?? null,
+            'has_context' => $context !== [],
             'configured_provider' => $configuredProvider,
             'answer_provider' => $result['meta']['ai_provider'] ?? null,
             'ai_called' => $result['meta']['ai_called'] ?? false,

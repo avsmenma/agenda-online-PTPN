@@ -6,15 +6,18 @@
     background: #f4f6fb;
     color: #1a2340;
     font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
-    min-height: calc(100vh - 72px);
+    height: calc(100vh - 104px);
+    min-height: 620px;
+    overflow: hidden;
     padding: 24px 28px 28px;
   }
 
   .va-shell {
     display: grid;
     gap: 18px;
-    grid-template-rows: auto 1fr;
-    min-height: calc(100vh - 120px);
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
   }
 
   .va-header {
@@ -59,6 +62,7 @@
     box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
     display: grid;
     grid-template-rows: auto 1fr auto;
+    height: 100%;
     min-height: 0;
     overflow: hidden;
   }
@@ -90,7 +94,7 @@
 
   .va-messages {
     background: linear-gradient(180deg, #fbfdff 0%, #f8fafc 100%);
-    min-height: 420px;
+    min-height: 0;
     overflow-y: auto;
     padding: 22px 18px;
   }
@@ -258,6 +262,9 @@
     background: #ffffff;
     border-top: 1px solid #eef2f7;
     padding: 14px 16px 16px;
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
   }
 
   .va-input-box {
@@ -310,6 +317,8 @@
 
   @media (max-width: 768px) {
     .va-page {
+      height: calc(100vh - 84px);
+      min-height: 520px;
       padding: 18px 14px;
     }
 
@@ -391,6 +400,7 @@
   const prompts = document.getElementById('vaPrompts');
   const newChat = document.getElementById('vaNewChat');
   let loadingNode = null;
+  let conversationContext = {};
 
   function escapeHtml(value) {
     const div = document.createElement('div');
@@ -492,7 +502,27 @@
       </div>`;
     row.querySelector('.va-copy')?.addEventListener('click', () => navigator.clipboard?.writeText(answer));
     messages.appendChild(row);
+    updateConversationContext(reply);
     scrollToBottom();
+  }
+
+  function updateConversationContext(reply) {
+    const data = Array.isArray(reply?.data) ? reply.data : [];
+    const documentRows = data.filter((item) => item && (item.id || item.nomor_agenda || item.nomor_spp));
+
+    conversationContext.last_intent = reply?.intent || null;
+    conversationContext.last_link = reply?.link || null;
+    conversationContext.last_documents = documentRows.slice(0, 5).map((item) => ({
+      id: item.id || null,
+      nomor_agenda: item.nomor_agenda || null,
+      nomor_spp: item.nomor_spp || null,
+      status_pembayaran: item.status_pembayaran || null,
+      status: item.status || null,
+    }));
+
+    conversationContext.selected_document = documentRows.length === 1
+      ? conversationContext.last_documents[0]
+      : null;
   }
 
   function setLoading(isLoading) {
@@ -518,7 +548,10 @@
           'Accept': 'application/json',
           'X-CSRF-TOKEN': token,
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({
+          message,
+          context: conversationContext,
+        }),
       });
       const payload = await response.json().catch(() => ({}));
       removeLoading();
@@ -561,6 +594,7 @@
     messages.innerHTML = '';
     messages.appendChild(empty);
     empty.style.display = 'flex';
+    conversationContext = {};
     input.value = '';
     input.focus();
   });
