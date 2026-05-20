@@ -35,8 +35,11 @@ class ProgrammerAssistantEvaluationController extends Controller
         $stats = [
             'total' => VirtualAssistantInteraction::count(),
             'needs_review' => VirtualAssistantInteraction::query()
-                ->whereIn('result_status', self::REVIEW_STATUSES)
-                ->orWhereIn('feedback', ['not_helpful', 'wrong_answer'])
+                ->whereNull('fixed_at')
+                ->where(function (Builder $query) {
+                    $query->whereIn('result_status', self::REVIEW_STATUSES)
+                        ->orWhereIn('feedback', ['not_helpful', 'wrong_answer']);
+                })
                 ->count(),
             'ambiguous' => VirtualAssistantInteraction::where('result_status', VirtualAssistantInteraction::STATUS_AMBIGUOUS)->count(),
             'error' => VirtualAssistantInteraction::where('result_status', VirtualAssistantInteraction::STATUS_ERROR)->count(),
@@ -177,10 +180,11 @@ class ProgrammerAssistantEvaluationController extends Controller
         $query = VirtualAssistantInteraction::query();
 
         if ($request->input('scope', 'review') === 'review') {
-            $query->where(function (Builder $subQuery) {
-                $subQuery->whereIn('result_status', self::REVIEW_STATUSES)
-                    ->orWhereIn('feedback', ['not_helpful', 'wrong_answer']);
-            });
+            $query->whereNull('fixed_at')
+                ->where(function (Builder $subQuery) {
+                    $subQuery->whereIn('result_status', self::REVIEW_STATUSES)
+                        ->orWhereIn('feedback', ['not_helpful', 'wrong_answer']);
+                });
         }
 
         if ($request->filled('status')) {
