@@ -117,6 +117,12 @@ class AssistantTestCommand extends Command
             $notes[] = $typeCheck['note'];
         }
 
+        $qualityCheck = $this->checkAnswerQuality((string) ($result['answer'] ?? ''));
+        if (!$qualityCheck['passed']) {
+            $passed = false;
+            $notes[] = $qualityCheck['note'];
+        }
+
         return [
             'passed' => $passed,
             'notes' => $notes ? implode('; ', $notes) : 'Sesuai ekspektasi',
@@ -167,6 +173,34 @@ class AssistantTestCommand extends Command
                 'note' => 'Tidak ada validasi tipe khusus',
             ],
         };
+    }
+
+    private function checkAnswerQuality(string $answer): array
+    {
+        $forbiddenPhrases = [
+            'pengurus Pembayaran dengan status Pembayaran dan status pembayaran',
+            'pengurus Perpajakan dengan status Perpajakan dan status pembayaran',
+            'pengurus Akuntansi dengan status Akuntansi dan status pembayaran',
+            'data bagian yang bisa diringkas dengan tanggal masuk',
+            'intent',
+            'query',
+            'database',
+            'JSON',
+        ];
+
+        foreach ($forbiddenPhrases as $phrase) {
+            if (stripos($answer, $phrase) !== false) {
+                return [
+                    'passed' => false,
+                    'note' => "Jawaban masih mengandung frasa teknis/kaku: {$phrase}",
+                ];
+            }
+        }
+
+        return [
+            'passed' => true,
+            'note' => 'Bahasa jawaban aman',
+        ];
     }
 
     private function recommendations(array $rows): array

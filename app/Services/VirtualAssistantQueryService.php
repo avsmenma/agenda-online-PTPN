@@ -115,6 +115,10 @@ class VirtualAssistantQueryService
             return 'specific_document_position';
         }
 
+        if ($params['keyword'] && $this->containsAny($text, ['status pembayaran', 'sudah dibayar', 'belum dibayar', 'siap dibayar', 'bayar', 'pembayaran', 'lunas'])) {
+            return 'specific_document_payment_status';
+        }
+
         if ($params['keyword'] && $params['asks_age']) {
             return 'specific_document_age';
         }
@@ -289,7 +293,7 @@ class VirtualAssistantQueryService
 
         return [
             'intent' => 'document_summary',
-            'answer' => "Total dokumen{$this->filterLabel($params)}: {$totalDocuments} dokumen dengan nilai {$this->formatMoney($totalValue)}.",
+            'answer' => "Total dokumen{$this->filterLabel($params)} adalah {$totalDocuments} dokumen dengan nilai {$this->formatMoney($totalValue)}.",
             'data' => [
                 'total_dokumen' => $totalDocuments,
                 'total_nilai' => $this->formatMoney($totalValue),
@@ -335,7 +339,7 @@ class VirtualAssistantQueryService
 
         return [
             'intent' => 'payment_summary',
-            'answer' => "Total dokumen {$statusLabel}{$this->filterLabel($params, false)}: {$count} dokumen dengan nilai {$this->formatMoney($total)}.",
+            'answer' => "Total dokumen {$statusLabel}{$this->filterLabel($params, false)} adalah {$count} dokumen dengan nilai {$this->formatMoney($total)}.",
             'data' => [
                 'status_pembayaran' => $statusLabel,
                 'jumlah_dokumen' => $count,
@@ -355,7 +359,7 @@ class VirtualAssistantQueryService
         $doc = $this->findSpecificDocument($params);
 
         if (!$doc) {
-            return $this->emptyResult('Saya tidak menemukan lagi dokumen yang dimaksud dari konteks chat sebelumnya.', $params, 'specific_document_payment_status');
+            return $this->emptyResult($this->documentNotFoundAnswer($params, true), $params, 'specific_document_payment_status', false);
         }
 
         $paymentStatus = $this->paymentLabel($doc->status_pembayaran, $doc->tanggal_dibayar);
@@ -381,7 +385,7 @@ class VirtualAssistantQueryService
         $doc = $this->findSpecificDocument($params);
 
         if (!$doc || !$doc->tanggal_masuk) {
-            return $this->emptyResult('Saya tidak menemukan dokumen yang dimaksud untuk menghitung umur dokumen.', $params, 'specific_document_age');
+            return $this->emptyResult($this->documentNotFoundAnswer($params), $params, 'specific_document_age', false);
         }
 
         $tanggalMasuk = Carbon::parse($doc->tanggal_masuk);
@@ -401,10 +405,10 @@ class VirtualAssistantQueryService
         $doc = $this->findSpecificDocument($params);
 
         if (!$doc) {
-            return $this->emptyResult('Saya tidak menemukan dokumen dengan nomor atau kata kunci tersebut.', $params, 'specific_document_position');
+            return $this->emptyResult($this->documentNotFoundAnswer($params), $params, 'specific_document_position', false);
         }
 
-        $answer = "Dokumen {$doc->nomor_agenda} saat ini berada di pengurus {$this->handlerLabel($doc->current_handler)} dengan status {$this->workflowLabel($doc->status)} dan status pembayaran {$this->paymentLabel($doc->status_pembayaran, $doc->tanggal_dibayar)}.";
+        $answer = $this->formatDocumentPositionAnswer($doc);
 
         return [
             'intent' => 'specific_document_position',
@@ -467,12 +471,10 @@ class VirtualAssistantQueryService
             ->get();
 
         if ($docs->isEmpty()) {
-            return $this->emptyResult("Tidak ditemukan dokumen{$this->filterLabel($params)}.", $params, $intent);
+            return $this->emptyResult($this->formatNoDataAnswer($intent, $params), $params, $intent);
         }
 
-        $answer = $total > $docs->count()
-            ? "Ditemukan {$total} dokumen{$this->filterLabel($params)}, berikut {$docs->count()} teratas."
-            : "Ditemukan {$total} dokumen{$this->filterLabel($params)}.";
+        $answer = $this->formatDocumentListAnswer($total, $docs->count(), $params);
 
         return [
             'intent' => $intent,
@@ -634,7 +636,7 @@ class VirtualAssistantQueryService
 
         if ($rows->isEmpty()) {
             return $this->emptyResult(
-                'Belum ada data bagian yang bisa diringkas' . $this->filterLabel($params) . '.',
+                $this->formatTopDepartmentsEmptyAnswer($mode, $params),
                 $params,
                 $mode === 'value' ? 'top_departments_by_value' : 'top_departments_by_count'
             );
@@ -642,9 +644,7 @@ class VirtualAssistantQueryService
 
         return [
             'intent' => $mode === 'value' ? 'top_departments_by_value' : 'top_departments_by_count',
-            'answer' => $mode === 'value'
-                ? 'Berikut bagian teratas berdasarkan total nilai dokumen' . $this->filterLabel($params) . '.'
-                : 'Berikut bagian teratas berdasarkan jumlah dokumen' . $this->filterLabel($params) . '.',
+            'answer' => $this->formatTopDepartmentsAnswer($rows, $mode, $params),
             'data' => $rows->map(fn ($row) => [
                 'bagian' => $row->bagian_label,
                 'jumlah_dokumen' => (int) $row->total_dokumen,
@@ -680,6 +680,139 @@ class VirtualAssistantQueryService
             'link' => url('/owner/laporan-cash-bank'),
             'meta' => ['service' => 'cashbank_summary', 'params' => $params],
         ];
+    }
+
+    private function formatDocumentPositionAnswer(Dokumen $doc): string
+    {
+        $position = $this->handlerLabel($doc->current_handler);
+        $paymentStatus = $this->paymentLabel($doc->status_pembayaran, $doc->tanggal_dibayar);
+
+        return "Dokumen {$doc->nomor_agenda} saat ini berada di {$position} dengan status pembayaran {$paymentStatus}.";
+    }
+
+    private function formatDocumentListAnswer(int $total, int $shown, array $params): string
+    {
+        $criteria = $this->filterLabel($params);
+
+        if ($total > $shown) {
+            $remaining = max($total - $shown, 0);
+
+            return "Ditemukan {$total} dokumen{$criteria}. Berikut {$shown} dokumen teratas. Masih ada {$remaining} dokumen lainnya yang bisa dilihat melalui daftar dokumen terkait.";
+        }
+
+        return "Ditemukan {$total} dokumen{$criteria}.";
+    }
+
+    private function formatNoDataAnswer(string $intent, array $params): string
+    {
+        if (($params['keyword'] ?? null) && in_array($intent, ['documents_by_keyword', 'specific_document_position', 'specific_document_payment_status'], true)) {
+            return $this->documentNotFoundAnswer($params);
+        }
+
+        if ($params['date_range'] ?? null) {
+            return 'Belum ada dokumen yang masuk' . $this->periodSentenceLabel($params) . '.';
+        }
+
+        if ($params['payment_statuses'] ?? []) {
+            return 'Tidak ditemukan dokumen dengan status pembayaran ' . $this->paymentStatusListLabel($params['payment_statuses']) . $this->filterLabelWithout(['payment_statuses'], $params) . '.';
+        }
+
+        if ($params['department'] ?? null) {
+            return 'Tidak ditemukan dokumen dari bagian ' . $params['department'] . $this->filterLabelWithout(['department'], $params) . '.';
+        }
+
+        if ($params['handler'] ?? null) {
+            return 'Tidak ditemukan dokumen yang sedang ditangani oleh ' . $this->handlerLabel($params['handler']) . $this->filterLabelWithout(['handler'], $params) . '.';
+        }
+
+        if (($params['amount_min'] ?? null) || ($params['amount_max'] ?? null)) {
+            return 'Tidak ada dokumen dengan kriteria nilai tersebut.';
+        }
+
+        return 'Tidak ditemukan dokumen yang sesuai dengan kriteria tersebut.';
+    }
+
+    private function formatTopDepartmentsAnswer(Collection $rows, string $mode, array $params): string
+    {
+        $top = $rows->first();
+        $period = $this->periodSentenceLabel($params);
+        $lines = $rows->take(5)->values()->map(function ($row, int $index) use ($mode) {
+            $rank = $index + 1;
+            $value = $mode === 'value'
+                ? $this->formatMoney($row->total_nilai)
+                : ((int) $row->total_dokumen) . ' dokumen';
+
+            return "{$rank}. {$row->bagian_label} - {$value}";
+        })->implode("\n");
+
+        if ($mode === 'value') {
+            $headline = "Bagian dengan total nilai dokumen terbesar{$period} adalah {$top->bagian_label} dengan nilai {$this->formatMoney($top->total_nilai)}.";
+        } else {
+            $headline = "Bagian yang paling banyak mengirim dokumen{$period} adalah {$top->bagian_label} dengan {$top->total_dokumen} dokumen.";
+        }
+
+        return "{$headline}\n\nBerikut ringkasannya:\n{$lines}";
+    }
+
+    private function formatTopDepartmentsEmptyAnswer(string $mode, array $params): string
+    {
+        $period = $this->periodSentenceLabel($params);
+
+        if ($params['date_range'] ?? null) {
+            $reason = $mode === 'value'
+                ? 'sehingga belum ada nilai dokumen bagian yang bisa dirangking'
+                : 'sehingga belum ada bagian yang bisa dirangking';
+
+            return "Belum ada dokumen yang masuk{$period}, {$reason}.";
+        }
+
+        return $mode === 'value'
+            ? 'Belum ada data nilai dokumen per bagian yang bisa dirangking.'
+            : 'Belum ada data dokumen per bagian yang bisa dirangking.';
+    }
+
+    private function documentNotFoundAnswer(array $params, bool $fromContext = false): string
+    {
+        if ($fromContext && empty($params['keyword'])) {
+            return 'Saya tidak menemukan lagi dokumen yang dimaksud dari konteks chat sebelumnya.';
+        }
+
+        if ($params['keyword'] ?? null) {
+            return 'Saya tidak menemukan dokumen dengan nomor atau kata kunci "' . $params['keyword'] . '". Coba periksa kembali nomor agenda atau nomor SPP.';
+        }
+
+        return 'Saya tidak menemukan dokumen yang dimaksud. Coba sertakan nomor agenda atau nomor SPP agar pencarian lebih tepat.';
+    }
+
+    private function periodSentenceLabel(array $params): string
+    {
+        $range = $params['date_range'] ?? null;
+        if (!$range) {
+            return '';
+        }
+
+        if (($range['type'] ?? null) === 'date') {
+            return ' pada tanggal ' . $this->formatIndonesianDate(Carbon::parse($range['date']));
+        }
+
+        if (($range['type'] ?? null) === 'month') {
+            return ' pada bulan ' . $this->formatIndonesianMonth((int) $range['month']) . ' ' . $range['year'];
+        }
+
+        if (($range['type'] ?? null) === 'year') {
+            return ' pada tahun ' . $range['year'];
+        }
+
+        return ' pada periode tersebut';
+    }
+
+    private function filterLabelWithout(array $keys, array $params): string
+    {
+        foreach ($keys as $key) {
+            $params[$key] = null;
+        }
+
+        return $this->filterLabel($params, !in_array('payment_statuses', $keys, true));
     }
 
     private function applyFilters(Builder $query, array $params, bool $includePayment = true): void
@@ -1154,15 +1287,20 @@ class VirtualAssistantQueryService
         ];
     }
 
-    private function emptyResult(string $answer, array $params = [], string $intent = 'empty'): array
+    private function emptyResult(string $answer, array $params = [], string $intent = 'empty', bool $includeLink = false): array
     {
-        return [
+        $result = [
             'intent' => $intent,
             'answer' => $answer,
             'data' => [],
-            'link' => route('owner.dokumen', $this->linkParams($params)),
             'meta' => ['service' => 'empty_result', 'params' => $params],
         ];
+
+        if ($includeLink) {
+            $result['link'] = route('owner.dokumen', $this->linkParams($params));
+        }
+
+        return $result;
     }
 
     private function linkParams(array $params): array
