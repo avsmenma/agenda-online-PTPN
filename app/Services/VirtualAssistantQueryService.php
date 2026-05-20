@@ -115,6 +115,10 @@ class VirtualAssistantQueryService
             return 'specific_document_position';
         }
 
+        if ($params['keyword'] && $this->containsAny($text, ['uraian', 'nomor agenda dari dokumen', 'nomor agenda dokumen'])) {
+            return 'documents_by_keyword';
+        }
+
         if ($params['keyword'] && $this->containsAny($text, ['status pembayaran', 'sudah dibayar', 'belum dibayar', 'siap dibayar', 'bayar', 'pembayaran', 'lunas'])) {
             return 'specific_document_payment_status';
         }
@@ -133,10 +137,6 @@ class VirtualAssistantQueryService
 
         if ($params['age_days_min'] !== null || $params['age_days_max'] !== null) {
             return 'documents_by_age';
-        }
-
-        if ($params['keyword'] && $this->containsAny($text, ['uraian', 'nomor agenda dari dokumen', 'nomor agenda dokumen'])) {
-            return 'documents_by_keyword';
         }
 
         if ($this->containsAny($text, ['top bagian', 'bagian mana', 'bagian apa', 'paling banyak mengirim', 'paling banyak masuk'])) {
