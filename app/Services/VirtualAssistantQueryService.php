@@ -64,6 +64,7 @@ class VirtualAssistantQueryService
             'document_entry_dates_summary' => $this->documentEntryDatesSummary($params, $limit),
             'specific_document_age' => $this->specificDocumentAge($params),
             'specific_document_position' => $this->specificDocumentPosition($params),
+            'documents_by_exact_amount' => $this->documentsByExactAmount($params, $limit),
             'role_average_duration' => $this->roleAverageDuration($params),
             'documents_by_age' => $this->documentsByAge($params, $limit),
             'recent_documents' => $this->recentDocuments($params, $limit),
@@ -137,6 +138,10 @@ class VirtualAssistantQueryService
 
         if ($params['age_days_min'] !== null || $params['age_days_max'] !== null) {
             return 'documents_by_age';
+        }
+
+        if ($params['amount_exact'] !== null) {
+            return 'documents_by_exact_amount';
         }
 
         if ($this->containsAny($text, ['top bagian', 'bagian mana', 'bagian apa', 'paling banyak mengirim', 'paling banyak masuk'])) {
@@ -218,6 +223,7 @@ class VirtualAssistantQueryService
             'workflow_status' => $this->extractWorkflowStatus($text),
             'department' => $this->extractDepartment($message),
             'handler' => $this->extractHandler($text),
+            'amount_exact' => $this->extractExactAmount($text),
             'amount_min' => $this->extractAmountBound($text, 'min'),
             'amount_max' => $this->extractAmountBound($text, 'max'),
             'keyword' => $this->extractKeyword($message, $text),
@@ -416,6 +422,52 @@ class VirtualAssistantQueryService
             'data' => $this->formatDocuments(collect([$doc]), true),
             'link' => route('owner.dokumen', ['status' => 'all', 'search' => $doc->nomor_agenda]),
             'meta' => ['confidence' => 'high', 'service' => 'specific_document_position', 'params' => $params],
+        ];
+    }
+
+    private function documentsByExactAmount(array $params, int $limit): array
+    {
+        $amount = (int) round((float) $params['amount_exact']);
+        $query = $this->baseQuery();
+        $filterParams = $params;
+        $filterParams['keyword'] = null;
+        $filterParams['amount_min'] = null;
+        $filterParams['amount_max'] = null;
+        $this->applyFilters($query, $filterParams);
+        $query->where('nilai_rupiah', $amount);
+
+        $total = (clone $query)->count();
+        $docs = $query
+            ->orderByDesc('tanggal_masuk')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+
+        if ($docs->isEmpty()) {
+            return $this->emptyResult(
+                'Tidak ditemukan dokumen dengan nilai ' . $this->formatMoney($amount) . '.',
+                $filterParams,
+                'documents_by_exact_amount'
+            );
+        }
+
+        $answer = $this->formatExactAmountAnswer($docs, $total, $amount, $params);
+
+        return [
+            'intent' => 'documents_by_exact_amount',
+            'answer' => $answer,
+            'data' => $this->formatDocuments($docs, $params['asks_position']),
+            'link' => route('owner.dokumen', $this->linkParams(array_merge($filterParams, [
+                'amount_min' => $amount,
+                'amount_max' => $amount,
+            ]))),
+            'meta' => [
+                'limited' => $total > $docs->count(),
+                'total' => $total,
+                'shown' => $docs->count(),
+                'service' => 'documents_by_exact_amount',
+                'params' => $params,
+            ],
         ];
     }
 
@@ -688,6 +740,26 @@ class VirtualAssistantQueryService
         $paymentStatus = $this->paymentLabel($doc->status_pembayaran, $doc->tanggal_dibayar);
 
         return "Dokumen {$doc->nomor_agenda} saat ini berada di {$position} dengan status pembayaran {$paymentStatus}.";
+    }
+
+    private function formatExactAmountAnswer(Collection $docs, int $total, float $amount, array $params): string
+    {
+        $amountLabel = $this->formatMoney($amount);
+
+        if ($params['asks_position'] && $total === 1) {
+            return 'Ditemukan 1 dokumen dengan nilai ' . $amountLabel . '. ' . $this->formatDocumentPositionAnswer($docs->first());
+        }
+
+        if ($params['asks_position']) {
+            $shown = $docs->count();
+            $suffix = $total > $shown ? " Berikut {$shown} dokumen teratas." : '';
+
+            return "Ditemukan {$total} dokumen dengan nilai {$amountLabel}. Berikut posisi masing-masing dokumen yang ditemukan.{$suffix}";
+        }
+
+        return $this->formatDocumentListAnswer($total, $docs->count(), array_merge($params, [
+            'amount_exact_label' => $amountLabel,
+        ]));
     }
 
     private function formatDocumentListAnswer(int $total, int $shown, array $params): string
@@ -1158,6 +1230,20 @@ class VirtualAssistantQueryService
         return $bound === 'min' ? $days : null;
     }
 
+    private function extractExactAmount(string $text): ?float
+    {
+        $boundedTerms = ['di atas', 'lebih dari', 'minimal', 'min', 'di bawah', 'kurang dari', 'maksimal', 'max', 'antara'];
+        if ($this->containsAny($text, $boundedTerms)) {
+            return null;
+        }
+
+        if (preg_match('/(?:nilai|nominal|rupiah|rp\.?)\s*(?:dokumen\s*)?(?:sebesar|senilai|adalah|=|:)?\s*["\']?\s*([\d\.\,]{4,})\s*(juta|miliar|ribu)?/u', $text, $matches)) {
+            return $this->parseAmount($matches[1], $matches[2] ?? '');
+        }
+
+        return null;
+    }
+
     private function extractAmountBound(string $text, string $bound): ?float
     {
         if (preg_match('/antara\s+(?:rp\.?\s*)?([\d\.\,]+)\s*(juta|miliar|ribu)?\s+(?:dan|sampai|-)\s+(?:rp\.?\s*)?([\d\.\,]+)\s*(juta|miliar|ribu)?/u', $text, $matches)) {
@@ -1358,6 +1444,10 @@ class VirtualAssistantQueryService
             $parts[] = 'pengurus ' . $this->handlerLabel($params['handler']);
         }
 
+        if ($params['amount_exact'] ?? null) {
+            $parts[] = 'nilai ' . $this->formatMoney($params['amount_exact']);
+        }
+
         if ($params['amount_min'] ?? null) {
             $parts[] = 'nilai minimal ' . $this->formatMoney($params['amount_min']);
         }
@@ -1452,6 +1542,7 @@ class VirtualAssistantQueryService
             || ($params['workflow_status'] ?? null)
             || ($params['department'] ?? null)
             || ($params['handler'] ?? null)
+            || ($params['amount_exact'] ?? null)
             || ($params['amount_min'] ?? null)
             || ($params['amount_max'] ?? null)
             || ($params['age_days_min'] ?? null)
