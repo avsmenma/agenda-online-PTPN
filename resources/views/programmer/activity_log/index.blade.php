@@ -49,12 +49,12 @@
 
                 {{-- Filter Programmer --}}
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold text-muted">Programmer</label>
+                    <label class="form-label small fw-semibold text-muted">Dilakukan Oleh</label>
                     <select name="programmer_id" class="form-select form-select-sm">
-                        <option value="">-- Semua Programmer --</option>
+                        <option value="">-- Semua Pelaku --</option>
                         @foreach ($programmers as $prog)
                             <option value="{{ $prog->id }}" @selected(request('programmer_id') == $prog->id)>
-                                {{ $prog->name }}
+                                {{ $prog->name }} - {{ \App\Models\User::ROLES[$prog->role] ?? ucfirst(str_replace('_', ' ', $prog->role ?? '')) }}
                             </option>
                         @endforeach
                     </select>
@@ -247,7 +247,7 @@
                                             {{ $log->programmer->name ?? '(Dihapus)' }}
                                         </div>
                                         <div class="text-muted" style="font-size:0.78rem;">
-                                            @{{ $log->programmer->username ?? '-' }}
+                                            {{ $log->programmer ? (\App\Models\User::ROLES[$log->programmer->role] ?? ucfirst(str_replace('_', ' ', $log->programmer->role ?? ''))) : 'Pengguna dihapus' }}
                                         </div>
                                     </div>
                                 </div>

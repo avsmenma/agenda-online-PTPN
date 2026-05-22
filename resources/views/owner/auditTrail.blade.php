@@ -344,10 +344,10 @@ function friendlyAction(string $action): array {
         <div class="at-filter-group">
           <label>Dilakukan Oleh</label>
           <select name="programmer_id">
-            <option value="">-- Semua Teknisi --</option>
+            <option value="">-- Semua Pelaku --</option>
             @foreach ($programmers as $prog)
               <option value="{{ $prog->id }}" @selected(request('programmer_id') == $prog->id)>
-                {{ $prog->name }}
+                {{ $prog->name }} - {{ labelRole($prog->role ?? '') }}
               </option>
             @endforeach
           </select>
@@ -440,7 +440,7 @@ function friendlyAction(string $action): array {
                   </div>
                   <div>
                     <div class="prog-name">{{ $log->programmer->name ?? '(Pengguna telah dihapus)' }}</div>
-                    <div class="prog-role">Tim Teknis / Programmer</div>
+                    <div class="prog-role">{{ $log->programmer ? labelRole($log->programmer->role ?? '') : 'Pengguna telah dihapus' }}</div>
                   </div>
                 </div>
               </td>

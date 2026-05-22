@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\ProgrammerActivityLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -47,10 +48,13 @@ final class ProgrammerLogController extends Controller
             ->orderBy('action')
             ->pluck('action');
 
-        // Ambil daftar programmer untuk dropdown filter
-        $programmers = \App\Models\User::where('role', 'programmer')
+        // Ambil semua user yang pernah tercatat sebagai pelaku log.
+        $programmers = User::query()
+            ->whereIn('id', ProgrammerActivityLog::query()
+                ->select('programmer_id')
+                ->whereNotNull('programmer_id'))
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'role']);
 
         return view('programmer.activity_log.index', compact('logs', 'actions', 'programmers'));
     }
@@ -87,9 +91,12 @@ final class ProgrammerLogController extends Controller
             ->orderBy('action')
             ->pluck('action');
 
-        $programmers = \App\Models\User::where('role', 'programmer')
+        $programmers = User::query()
+            ->whereIn('id', ProgrammerActivityLog::query()
+                ->select('programmer_id')
+                ->whereNotNull('programmer_id'))
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'role']);
 
         // Pass owner module so layout/sidebar renders correctly
         return view('owner.auditTrail', compact('logs', 'actions', 'programmers'))
