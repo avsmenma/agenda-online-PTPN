@@ -3838,13 +3838,17 @@
     }
     .dark .owner-sidebar-logo { border-bottom-color: #334155; }
     .owner-logo-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, #0f766e, #10b981);
+      width: 44px; height: 44px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
+      padding: 4px;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
     }
-    .owner-logo-icon svg { width: 20px; height: 20px; color: white; }
+    .owner-logo-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .dark .owner-logo-icon { background: #f8fafc; border-color: #475569; }
     .owner-logo-text { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 13px; color: #1a2340; line-height: 1.2; }
     .owner-logo-sub { font-size: 10px; color: #a0aec0; font-weight: 400; }
     .dark .owner-logo-text { color: #f1f5f9; }
@@ -4363,9 +4367,7 @@
       {{-- Logo / Brand --}}
       <div class="owner-sidebar-logo">
         <div class="owner-logo-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:white">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-          </svg>
+          <img src="{{ asset('images/logoPTPNNew.png') }}" alt="Logo PTPN">
         </div>
         <div>
           <div class="owner-logo-text">Agenda Online</div>
