@@ -4167,17 +4167,22 @@
 
 @php
   $layoutUserRoleLower = auth()->check() ? strtolower(auth()->user()->role ?? '') : '';
+  $layoutModuleLower = strtolower($module ?? '');
+  $modernWorkflowRoles = ['team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi', 'akuntansi'];
+  $modernWorkflowModules = ['team_verifikasi', 'perpajakan', 'akutansi'];
   $usesOwnerShell = in_array($layoutUserRoleLower, ['owner', 'admin'], true);
   $usesPaymentShell = $layoutUserRoleLower === 'pembayaran' || (($module ?? null) === 'pembayaran');
-  $usesModernSidebarShell = $usesOwnerShell || $usesPaymentShell;
+  $usesWorkflowShell = in_array($layoutUserRoleLower, $modernWorkflowRoles, true) || in_array($layoutModuleLower, $modernWorkflowModules, true);
+  $usesModernSidebarShell = $usesOwnerShell || $usesPaymentShell || $usesWorkflowShell;
 @endphp
-<body class="{{ $usesModernSidebarShell ? 'owner-layout' : '' }} {{ $usesPaymentShell ? 'payment-layout' : '' }}">
+<body class="{{ $usesModernSidebarShell ? 'owner-layout' : '' }} {{ $usesPaymentShell ? 'payment-layout' : '' }} {{ $usesWorkflowShell ? 'workflow-layout' : '' }}">
   @php
     // Pre-calculate shouldShowSecondarySidebar for header
     // Check if user is owner
     $userRoleLower = $layoutUserRoleLower;
     $isOwner = $usesOwnerShell;
     $isPaymentShell = $usesPaymentShell;
+    $isWorkflowShell = $usesWorkflowShell;
     $isModernSidebarShell = $usesModernSidebarShell;
 
     $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
@@ -4365,7 +4370,7 @@
     </div>
 
   {{-- ═══════ OTHER ROLES — standard header with topbar ═══════ --}}
-  @elseif(!in_array(($module ?? ''), ['owner', 'pembayaran'], true))
+  @elseif(!$isModernSidebarShell)
     <header>
       <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
         <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
@@ -4523,6 +4528,105 @@
             <path d="M7 15l4-4 3 3 5-7"/>
           </svg>
           Laporan
+        </a>
+        @elseif($isWorkflowShell)
+        @php
+          $workflowRoleCode = match ($module ?? null) {
+            'team_verifikasi', 'perpajakan', 'akutansi' => $module,
+            default => match ($layoutUserRoleLower) {
+              'verifikasi', 'team_verifikasi' => 'team_verifikasi',
+              'perpajakan' => 'perpajakan',
+              'akuntansi', 'akutansi' => 'akutansi',
+              default => 'team_verifikasi',
+            },
+          };
+
+          $workflowMenu = [
+            'team_verifikasi' => [
+              'document_label' => 'Daftar Dokumen',
+              'document_route' => route('documents.verifikasi.index'),
+              'document_active' => request()->routeIs('documents.verifikasi.*') || request()->is('*documents/verifikasi*'),
+              'return_label' => 'Pengembalian Ke Bagian',
+              'return_route' => route('returns.verifikasi.bagian'),
+              'return_active' => request()->routeIs('returns.verifikasi.bagian'),
+              'report_label' => 'Rekapan',
+              'report_route' => route('reports.verifikasi.index'),
+              'report_active' => request()->routeIs('reports.verifikasi.*'),
+              'delay_route' => route('rekapan-keterlambatan.role', 'team_verifikasi'),
+              'delay_active' => request()->is('*rekapan-keterlambatan/team_verifikasi*'),
+              'badge_id' => 'notification-badge',
+            ],
+            'perpajakan' => [
+              'document_label' => 'Daftar Perpajakan',
+              'document_route' => route('documents.perpajakan.index'),
+              'document_active' => request()->routeIs('documents.perpajakan.*') || request()->is('*documents/perpajakan*'),
+              'return_label' => null,
+              'return_route' => null,
+              'return_active' => false,
+              'report_label' => 'Rekapan',
+              'report_route' => route('reports.perpajakan.index'),
+              'report_active' => request()->routeIs('reports.perpajakan.index'),
+              'delay_route' => route('rekapan-keterlambatan.role', 'perpajakan'),
+              'delay_active' => request()->is('*rekapan-keterlambatan/perpajakan*'),
+              'badge_id' => 'perpajakan-notification-badge',
+            ],
+            'akutansi' => [
+              'document_label' => 'Daftar Akutansi',
+              'document_route' => route('documents.akutansi.index'),
+              'document_active' => request()->routeIs('documents.akutansi.*') || request()->is('*documents/akutansi*'),
+              'return_label' => null,
+              'return_route' => null,
+              'return_active' => false,
+              'report_label' => 'Rekapan Akutansi',
+              'report_route' => route('reports.akutansi.index'),
+              'report_active' => request()->routeIs('reports.akutansi.*'),
+              'delay_route' => route('rekapan-keterlambatan.role', 'akutansi'),
+              'delay_active' => request()->is('*rekapan-keterlambatan/akutansi*'),
+              'badge_id' => 'akutansi-notification-badge',
+            ],
+          ];
+
+          $menu = $workflowMenu[$workflowRoleCode] ?? $workflowMenu['team_verifikasi'];
+          $isWorkflowInboxActive = request()->is('inbox') || request()->routeIs('inbox.*');
+        @endphp
+        <a href="{{ url('/inbox') }}" class="owner-nav-item {{ $isWorkflowInboxActive ? 'active' : '' }}" title="Inbox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
+            <path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/>
+          </svg>
+          Inbox
+        </a>
+        <a href="{{ $menu['document_route'] }}" class="owner-nav-item {{ $menu['document_active'] ? 'active' : '' }}" title="{{ $menu['document_label'] }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+          </svg>
+          {{ $menu['document_label'] }}
+          <span class="menu-notification-badge" id="{{ $menu['badge_id'] }}" style="display:none;margin-left:auto;">0</span>
+        </a>
+        @if($menu['return_route'])
+        <a href="{{ $menu['return_route'] }}" class="owner-nav-item {{ $menu['return_active'] ? 'active' : '' }}" title="{{ $menu['return_label'] }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M9 14l-4-4 4-4"/>
+            <path d="M5 10h11a4 4 0 010 8h-1"/>
+          </svg>
+          {{ $menu['return_label'] }}
+          <span class="menu-notification-badge" id="pengembalian-ke-bidang-badge" style="display:none;margin-left:auto;">0</span>
+        </a>
+        @endif
+        <a href="{{ $menu['report_route'] }}" class="owner-nav-item {{ $menu['report_active'] ? 'active' : '' }}" title="{{ $menu['report_label'] }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M3 3v18h18"/>
+            <path d="M7 15l4-4 3 3 5-7"/>
+          </svg>
+          {{ $menu['report_label'] }}
+        </a>
+        <a href="{{ $menu['delay_route'] }}" class="owner-nav-item {{ $menu['delay_active'] ? 'active' : '' }}" title="Rekap Keterlambatan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v6l4 2"/>
+          </svg>
+          Rekap Keterlambatan
         </a>
         @else
         <a href="{{ url('/owner/home') }}" class="owner-nav-item {{ $menuHome ?? '' }}" title="Dashboard">
@@ -4833,9 +4937,6 @@
                 <a href="{{ route('documents.akutansi.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
                   <i class="fa-solid fa-list"></i> Daftar Akutansi
                 </a>
-                <a href="{{ route('returns.akutansi.index') }}" class="{{ $isReturnsActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-rotate-left"></i> Daftar Pengembalian Akutansi
-                </a>
                 <a href="{{ route('reports.akutansi.index') }}" class="{{ $isReportsActive ? 'active' : '' }}">
                   <i class="fa-solid fa-chart-bar"></i> Rekapan Akutansi
                 </a>
@@ -4847,15 +4948,8 @@
                 <a href="{{ route('documents.perpajakan.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
                   <i class="fa-solid fa-list"></i> Daftar Perpajakan
                 </a>
-                <a href="{{ route('returns.perpajakan.index') }}" class="{{ $isReturnsActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-rotate-left"></i> Daftar Pengembalian Perpajakan
-                </a>
                 <a href="{{ route('reports.perpajakan.index') }}" class="{{ $isReportsActive ? 'active' : '' }}">
                   <i class="fa-solid fa-chart-bar"></i> Rekapan
-                </a>
-                <a href="{{ route('reports.perpajakan.export') }}"
-                  class="{{ request()->routeIs('reports.perpajakan.export*') ? 'active' : '' }}">
-                  <i class="fa-solid fa-file-export"></i> Export Data
                 </a>
                 <a href="{{ route('rekapan-keterlambatan.role', 'perpajakan') }}"
                   class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
@@ -4868,10 +4962,6 @@
                 <a href="{{ route('returns.verifikasi.bagian') }}"
                   class="{{ request()->routeIs('returns.verifikasi.bagian') ? 'active' : '' }}">
                   <i class="fa-solid fa-arrow-left"></i> Pengembalian Ke Bagian
-                </a>
-                <a href="{{ route('returns.verifikasi.index') }}"
-                  class="{{ request()->routeIs('returns.verifikasi.index') ? 'active' : '' }}">
-                  <i class="fa-solid fa-arrow-right"></i> Pengembalian Dari Bidang
                 </a>
                 <a href="{{ route('reports.verifikasi.index') }}" class="{{ $isReportsActive ? 'active' : '' }}">
                   <i class="fa-solid fa-chart-bar"></i> Rekapan
@@ -4902,22 +4992,17 @@
 
       @endunless
 
-      <!-- Tracking Dokumen Menu - Untuk semua role -->
+      <!-- Tracking Dokumen Menu -->
       @unless($isBagianUser)
       @php
-        $trackingUrl = match ($module) {
-          'operator', 'operator' => '/tracking-dokumen',
-          'team_verifikasi', 'team_verifikasi' => '/tracking-dokumen',
-          'pembayaran' => '/tracking-dokumen',
-          'akutansi' => '/tracking-dokumen',
-          'perpajakan' => '/tracking-dokumen',
-          default => '/tracking-dokumen'
-        };
+        $trackingUrl = $module === 'operator' ? '/tracking-dokumen' : null;
         $isTrackingActive = request()->is('*tracking-dokumen*');
       @endphp
+      @if($trackingUrl)
       <a href="{{ url($trackingUrl) }}" class="{{ $isTrackingActive ? 'active' : '' }}">
         <i class="fa-solid fa-route"></i> Tracking Dokumen
       </a>
+      @endif
       @endif
     </div>
 
@@ -4999,9 +5084,6 @@
           <span class="menu-notification-badge" id="akutansi-notification-badge"
             style="display: none; margin-left: auto;">0</span>
         </a>
-        <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
-          <i class="fa-solid fa-inbox me-2"></i> Dokumen Kembali Akuntansi
-        </a>
         <a href="{{ route('reports.akutansi.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Akutansi
         </a>
@@ -5015,15 +5097,8 @@
           <span class="menu-notification-badge" id="perpajakan-notification-badge"
             style="display: none; margin-left: auto;">0</span>
         </a>
-        <a href="{{ url($pengembalianUrl) }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
-          <i class="fa-solid fa-inbox me-2"></i> Dokumen Kembali Perpajakan
-        </a>
         <a href="{{ route('reports.perpajakan.index') }}" class="{{ $menuRekapan ?? '' }}">
           <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
-        </a>
-        <a href="{{ route('reports.perpajakan.export') }}"
-          class="{{ request()->routeIs('reports.perpajakan.export*') ? 'active' : '' }}">
-          <i class="fa-solid fa-file-export me-2"></i> Export Data
         </a>
         <a href="{{ route('rekapan-keterlambatan.role', 'perpajakan') }}"
           class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
@@ -5037,11 +5112,6 @@
         <a href="{{ route('returns.verifikasi.bagian') }}" class="{{ $menuPengembalianKeBidang ?? '' }}">
           <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian Ke Bagian
           <span class="menu-notification-badge" id="pengembalian-ke-bidang-badge"
-            style="display: none; margin-left: auto;">0</span>
-        </a>
-        <a href="{{ route('returns.verifikasi.index') }}" class="{{ $menuDaftarDokumenDikembalikan ?? '' }}">
-          <i class="fa-solid fa-arrow-right me-2"></i> Pengembalian Dari Bidang
-          <span class="menu-notification-badge" id="pengembalian-ke-bagian-badge"
             style="display: none; margin-left: auto;">0</span>
         </a>
         <a href="{{ route('reports.verifikasi.index') }}" class="{{ $menuRekapan ?? '' }}">
