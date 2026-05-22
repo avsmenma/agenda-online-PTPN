@@ -14,6 +14,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script>
+    (function() {
+      try {
+        if (localStorage.getItem('sidebar_collapsed') === '1') {
+          document.documentElement.classList.add('sidebar-collapsed');
+        }
+      } catch (error) {
+        // Ignore storage failures; sidebar will use expanded mode.
+      }
+    })();
+  </script>
 
   <style>
     /* ═══════════════════════════════════════════
@@ -59,6 +70,7 @@
       flex-direction: column;
       z-index: 100;
       overflow: hidden;
+      transition: width .22s ease;
     }
 
     /* Logo / Brand */
@@ -67,9 +79,10 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 0 20px;
+      padding: 0 54px 0 20px;
       border-bottom: 1px solid rgba(255,255,255,.06);
       flex-shrink: 0;
+      position: relative;
     }
     .prog-brand-icon {
       width: 36px;
@@ -98,6 +111,34 @@
       color: #475569;
       line-height: 1.2;
     }
+    .prog-sidebar-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(148,163,184,.22);
+      border-radius: 10px;
+      background: rgba(255,255,255,.06);
+      color: #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background .16s ease, border-color .16s ease, color .16s ease;
+    }
+    .prog-sidebar-toggle:hover {
+      background: rgba(99,102,241,.22);
+      border-color: rgba(129,140,248,.45);
+      color: #fff;
+    }
+    .prog-sidebar-toggle:focus-visible {
+      outline: 2px solid #818cf8;
+      outline-offset: 2px;
+    }
+    .prog-sidebar-toggle i { font-size: 13px; }
+    .prog-sidebar-toggle .prog-toggle-expand { display: none; }
 
     /* Nav items */
     .prog-nav {
@@ -241,6 +282,7 @@
       justify-content: space-between;
       padding: 0 24px;
       z-index: 50;
+      transition: left .22s ease;
     }
     .prog-topbar-left { display: flex; align-items: center; gap: 12px; }
     .prog-topbar-right { display: flex; align-items: center; gap: 6px; }
@@ -271,6 +313,7 @@
       margin-left: var(--sidebar-w);
       padding-top: var(--topbar-h);
       min-height: 100vh;
+      transition: margin-left .22s ease;
     }
     .prog-content-inner {
       padding: 28px 28px;
@@ -345,6 +388,70 @@
     .prog-welcome-bar i { font-size: 22px; opacity: .8; }
     .prog-welcome-bar strong { font-size: 15px; }
     .prog-welcome-bar small { opacity: .8; font-size: 12px; }
+
+    .sidebar-collapsed .prog-sidebar {
+      width: 84px;
+    }
+    .sidebar-collapsed .prog-brand {
+      padding: 0 8px 0 10px;
+      gap: 0;
+    }
+    .sidebar-collapsed .prog-brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .sidebar-collapsed .prog-brand-text,
+    .sidebar-collapsed .prog-nav-label,
+    .sidebar-collapsed .prog-user-name,
+    .sidebar-collapsed .prog-user-role {
+      display: none;
+    }
+    .sidebar-collapsed .prog-sidebar-toggle {
+      right: 7px;
+      width: 30px;
+      height: 30px;
+    }
+    .sidebar-collapsed .prog-sidebar-toggle .prog-toggle-collapse { display: none; }
+    .sidebar-collapsed .prog-sidebar-toggle .prog-toggle-expand { display: inline-block; }
+    .sidebar-collapsed .prog-nav {
+      padding: 12px 8px 0;
+    }
+    .sidebar-collapsed .prog-nav a {
+      justify-content: center;
+      gap: 0;
+      padding: 12px 10px;
+      font-size: 0;
+    }
+    .sidebar-collapsed .prog-nav a .nav-icon {
+      width: 20px;
+      font-size: 15px;
+    }
+    .sidebar-collapsed .prog-sidebar-footer {
+      padding: 10px 8px;
+    }
+    .sidebar-collapsed .prog-user-tile {
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      margin: 0 auto 8px;
+    }
+    .sidebar-collapsed .prog-logout {
+      justify-content: center;
+      width: 44px;
+      height: 40px;
+      padding: 0;
+      margin: 4px auto 0;
+      font-size: 0;
+    }
+    .sidebar-collapsed .prog-topbar {
+      left: 84px;
+    }
+    .sidebar-collapsed .prog-content {
+      margin-left: 84px;
+    }
   </style>
 
   @yield('styles')
@@ -361,6 +468,10 @@
       <span class="prog-brand-title">Programmer Panel</span>
       <span class="prog-brand-sub">PTPN Agenda Online</span>
     </div>
+    <button type="button" class="prog-sidebar-toggle" data-sidebar-toggle aria-label="Kecilkan sidebar" title="Kecilkan sidebar">
+      <i class="fas fa-angles-left prog-toggle-collapse" aria-hidden="true"></i>
+      <i class="fas fa-angles-right prog-toggle-expand" aria-hidden="true"></i>
+    </button>
   </div>
 
   {{-- Nav --}}
@@ -368,57 +479,57 @@
 
     <div class="prog-nav-label">Overview</div>
     <a href="{{ route('programmer.dashboard') }}"
-       class="{{ request()->routeIs('programmer.dashboard') ? 'active' : '' }}">
+       class="{{ request()->routeIs('programmer.dashboard') ? 'active' : '' }}" title="Dashboard">
       <i class="fas fa-tachometer-alt nav-icon"></i> Dashboard
     </a>
 
     <div class="prog-nav-label">Dokumen</div>
     <a href="{{ route('programmer.bulk-to-payment.form') }}"
-       class="{{ request()->routeIs('programmer.bulk-to-payment*') ? 'active' : '' }}">
+       class="{{ request()->routeIs('programmer.bulk-to-payment*') ? 'active' : '' }}" title="Bulk to Payment">
       <i class="fas fa-fast-forward nav-icon"></i> Bulk to Payment
     </a>
     <a href="{{ route('programmer.bulk-send-to-role.form') }}"
-       class="{{ request()->routeIs('programmer.bulk-send-to-role*') ? 'active' : '' }}">
+       class="{{ request()->routeIs('programmer.bulk-send-to-role*') ? 'active' : '' }}" title="Bulk Send to Role">
       <i class="fas fa-share-square nav-icon"></i> Bulk Send to Role
     </a>
     <a href="{{ route('programmer.bulk-set-date-payment.form') }}"
-       class="{{ request()->routeIs('programmer.bulk-set-date-payment*') ? 'active' : '' }}">
+       class="{{ request()->routeIs('programmer.bulk-set-date-payment*') ? 'active' : '' }}" title="Bulk Set Date Payment">
       <i class="fas fa-calendar-check nav-icon"></i> Bulk Set Date Payment
     </a>
     <a href="{{ route('programmer.document-tools') }}"
-       class="{{ request()->routeIs('programmer.document-tools*') ? 'active' : '' }}">
+       class="{{ request()->routeIs('programmer.document-tools*') ? 'active' : '' }}" title="Document Tools">
       <i class="fas fa-tools nav-icon"></i> Document Tools
     </a>
     <a href="{{ route('programmer.activity-logs') }}"
-       class="{{ request()->routeIs('programmer.activity-logs') ? 'active' : '' }}">
+       class="{{ request()->routeIs('programmer.activity-logs') ? 'active' : '' }}" title="Riwayat Aktivitas">
       <i class="fas fa-history nav-icon"></i> Riwayat Aktivitas
     </a>
 
     <div class="prog-nav-label">Users & Keamanan</div>
     <a href="{{ route('programmer.user-management') }}"
-       class="{{ request()->routeIs('programmer.user-management*') ? 'active' : '' }}">
+       class="{{ request()->routeIs('programmer.user-management*') ? 'active' : '' }}" title="User Management">
       <i class="fas fa-users-cog nav-icon"></i> User Management
     </a>
     <a href="{{ route('programmer.2fa-reset-requests.index') }}"
-       class="{{ request()->routeIs('programmer.2fa-reset-requests*') ? 'active' : '' }}">
+       class="{{ request()->routeIs('programmer.2fa-reset-requests*') ? 'active' : '' }}" title="2FA Reset Requests">
       <i class="fas fa-unlock-alt nav-icon"></i> 2FA Reset Requests
     </a>
     <a href="{{ route('profile.account') }}"
-       class="{{ request()->routeIs('profile.account') ? 'active' : '' }}">
+       class="{{ request()->routeIs('profile.account') ? 'active' : '' }}" title="Profil Saya">
       <i class="fas fa-user-circle nav-icon"></i> Profil Saya
     </a>
 
     <div class="prog-nav-label">Sistem</div>
     <a href="{{ route('programmer.database-tools') }}"
-       class="{{ request()->routeIs('programmer.database-tools*') ? 'active' : '' }}">
+       class="{{ request()->routeIs('programmer.database-tools*') ? 'active' : '' }}" title="Database Tools">
       <i class="fas fa-database nav-icon"></i> Database Tools
     </a>
     <a href="{{ route('programmer.assistant-evaluation') }}"
-       class="{{ request()->routeIs('programmer.assistant-evaluation*') ? 'active' : '' }}">
+       class="{{ request()->routeIs('programmer.assistant-evaluation*') ? 'active' : '' }}" title="Evaluasi Asisten Virtual">
       <i class="fas fa-robot nav-icon"></i> Evaluasi Asisten Virtual
     </a>
     <a href="{{ route('programmer.programmer-audit-trail') }}"
-       class="{{ request()->routeIs('programmer.programmer-audit-trail') ? 'active' : '' }}">
+       class="{{ request()->routeIs('programmer.programmer-audit-trail') ? 'active' : '' }}" title="Audit Trail">
       <i class="fas fa-shield-alt nav-icon"></i> Audit Trail
     </a>
 
@@ -443,7 +554,7 @@
         <div class="prog-user-role">{{ $programmerUser->role ?? 'programmer' }}</div>
       </div>
     </a>
-    <a href="{{ route('logout.get') }}" class="prog-logout">
+    <a href="{{ route('logout.get') }}" class="prog-logout" title="Keluar">
       <i class="fas fa-sign-out-alt nav-icon"></i> Keluar
     </a>
   </div>
@@ -472,6 +583,39 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const sidebarStorageKey = 'sidebar_collapsed';
+    const sidebarToggleButtons = document.querySelectorAll('[data-sidebar-toggle]');
+
+    function syncSidebarToggleState() {
+      const isCollapsed = document.documentElement.classList.contains('sidebar-collapsed');
+
+      sidebarToggleButtons.forEach(function(button) {
+        button.setAttribute('aria-label', isCollapsed ? 'Tampilkan sidebar penuh' : 'Kecilkan sidebar');
+        button.setAttribute('title', isCollapsed ? 'Tampilkan sidebar penuh' : 'Kecilkan sidebar');
+        button.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+      });
+    }
+
+    sidebarToggleButtons.forEach(function(button) {
+      button.addEventListener('click', function() {
+        const shouldCollapse = !document.documentElement.classList.contains('sidebar-collapsed');
+        document.documentElement.classList.toggle('sidebar-collapsed', shouldCollapse);
+
+        try {
+          localStorage.setItem(sidebarStorageKey, shouldCollapse ? '1' : '0');
+        } catch (error) {
+          // Sidebar tetap berjalan meski browser menolak localStorage.
+        }
+
+        syncSidebarToggleState();
+      });
+    });
+
+    syncSidebarToggleState();
+  });
+</script>
 @yield('scripts')
 
 </body>

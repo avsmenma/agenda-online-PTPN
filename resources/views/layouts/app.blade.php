@@ -3821,7 +3821,7 @@
       padding: 0 0 16px;
       overflow: hidden;
       font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
-      transition: background-color 0.3s ease, border-color 0.3s ease;
+      transition: width 0.22s ease, background-color 0.3s ease, border-color 0.3s ease;
     }
 
 
@@ -3833,8 +3833,10 @@
     /* Owner sidebar logo */
     .owner-sidebar-logo {
       display: flex; align-items: center; gap: 10px;
-      padding: 20px 20px 16px;
+      padding: 20px 52px 16px 20px;
       border-bottom: 1px solid #e8ecf4;
+      position: relative;
+      min-height: 82px;
     }
     .dark .owner-sidebar-logo { border-bottom-color: #334155; }
     .owner-logo-icon {
@@ -3853,6 +3855,40 @@
     .owner-logo-sub { font-size: 10px; color: #a0aec0; font-weight: 400; }
     .dark .owner-logo-text { color: #f1f5f9; }
     .dark .owner-logo-sub { color: #94a3b8; }
+    .owner-sidebar-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      border: 1px solid #dbe3ef;
+      border-radius: 10px;
+      background: #ffffff;
+      color: #64748b;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+      transition: background-color .16s ease, color .16s ease, border-color .16s ease, transform .16s ease;
+    }
+    .owner-sidebar-toggle:hover {
+      background: #eff4ff;
+      border-color: #bfdbfe;
+      color: #2563eb;
+    }
+    .owner-sidebar-toggle:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 2px;
+    }
+    .owner-sidebar-toggle i { font-size: 13px; line-height: 1; }
+    .owner-sidebar-toggle .owner-toggle-expand { display: none; }
+    .dark .owner-sidebar-toggle {
+      background: #1f2937;
+      border-color: #334155;
+      color: #cbd5e1;
+    }
 
     /* Owner sidebar nav section */
     .owner-sidebar-section { padding: 16px 12px 4px; }
@@ -3944,9 +3980,74 @@
     /* Owner content area — wider margin for fixed sidebar */
     body.owner-layout .content {
       margin-left: 240px !important;
+      transition: margin-left 0.22s ease;
     }
     body.owner-layout .topbar {
       margin-left: 240px !important;
+      transition: margin-left 0.22s ease;
+    }
+
+    .sidebar-collapsed body.owner-layout .sidebar-owner {
+      width: 84px !important;
+    }
+    .sidebar-collapsed body.owner-layout .owner-sidebar-logo {
+      padding: 16px 8px 14px 10px;
+      gap: 0;
+    }
+    .sidebar-collapsed body.owner-layout .owner-logo-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      padding: 3px;
+    }
+    .sidebar-collapsed body.owner-layout .owner-logo-text,
+    .sidebar-collapsed body.owner-layout .owner-logo-sub,
+    .sidebar-collapsed body.owner-layout .owner-sidebar-label,
+    .sidebar-collapsed body.owner-layout .owner-user-info,
+    .sidebar-collapsed body.owner-layout .owner-profile-icon {
+      display: none;
+    }
+    .sidebar-collapsed body.owner-layout .owner-sidebar-toggle {
+      right: 7px;
+      width: 30px;
+      height: 30px;
+    }
+    .sidebar-collapsed body.owner-layout .owner-sidebar-toggle .owner-toggle-collapse { display: none; }
+    .sidebar-collapsed body.owner-layout .owner-sidebar-toggle .owner-toggle-expand { display: inline-block; }
+    .sidebar-collapsed body.owner-layout .owner-sidebar-section {
+      padding: 12px 8px 4px;
+    }
+    .sidebar-collapsed body.owner-layout .sidebar-owner .owner-nav-item {
+      justify-content: center;
+      padding: 12px 10px;
+      font-size: 0;
+      gap: 0;
+    }
+    .sidebar-collapsed body.owner-layout .sidebar-owner .owner-nav-item svg {
+      width: 20px !important;
+      height: 20px !important;
+    }
+    .sidebar-collapsed body.owner-layout .owner-sidebar-bottom {
+      padding: 10px 8px;
+    }
+    .sidebar-collapsed body.owner-layout .owner-user-actions {
+      flex-direction: column;
+      gap: 8px;
+    }
+    .sidebar-collapsed body.owner-layout .owner-user-card {
+      justify-content: center;
+      flex: 0 0 auto;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+    }
+    .sidebar-collapsed body.owner-layout .owner-logout-btn {
+      width: 40px;
+      height: 40px;
+    }
+    .sidebar-collapsed body.owner-layout .content,
+    .sidebar-collapsed body.owner-layout .topbar {
+      margin-left: 84px !important;
     }
 
     @media (max-width: 768px) {
@@ -3955,6 +4056,9 @@
       }
       body.owner-layout .owner-sidebar-logo {
         justify-content: center; padding: 16px 0 12px;
+      }
+      body.owner-layout .owner-sidebar-toggle {
+        display: none;
       }
       body.owner-layout .owner-logo-text,
       body.owner-layout .owner-logo-sub,
@@ -4013,6 +4117,14 @@
   <!-- Dark Mode Toggle Script - Run Immediately -->
   <script>
     (function () {
+      try {
+        if (localStorage.getItem('sidebar_collapsed') === '1') {
+          document.documentElement.classList.add('sidebar-collapsed');
+        }
+      } catch (error) {
+        // Ignore storage failures; sidebar will use expanded mode.
+      }
+
       // Check localStorage for saved theme preference
       const savedTheme = localStorage.getItem('theme');
       const htmlElement = document.documentElement;
@@ -4375,19 +4487,23 @@
           <div class="owner-logo-text">Agenda Online</div>
           <div class="owner-logo-sub">PTPN IV Regional V</div>
         </div>
+        <button type="button" class="owner-sidebar-toggle" data-sidebar-toggle aria-label="Kecilkan sidebar" title="Kecilkan sidebar">
+          <i class="fa-solid fa-angles-left owner-toggle-collapse" aria-hidden="true"></i>
+          <i class="fa-solid fa-angles-right owner-toggle-expand" aria-hidden="true"></i>
+        </button>
       </div>
 
       {{-- MENU Section --}}
       <div class="owner-sidebar-section" style="flex:0 0 auto;">
         <div class="owner-sidebar-label">Menu</div>
-        <a href="{{ url('/owner/home') }}" class="owner-nav-item {{ $menuHome ?? '' }}">
+        <a href="{{ url('/owner/home') }}" class="owner-nav-item {{ $menuHome ?? '' }}" title="Dashboard">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
             <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
           </svg>
           Dashboard
         </a>
-        <a href="{{ url('/owner/dokumen') }}" class="owner-nav-item {{ $menuDokumen ?? '' }}">
+        <a href="{{ url('/owner/dokumen') }}" class="owner-nav-item {{ $menuDokumen ?? '' }}" title="Dokumen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
             <polyline points="14,2 14,8 20,8"/>
@@ -4397,7 +4513,7 @@
         @php
           $isAsistenVirtualActive = request()->routeIs('owner.asisten-virtual');
         @endphp
-        <a href="{{ route('owner.asisten-virtual') }}" class="owner-nav-item {{ ($menuAsistenVirtual ?? '') ?: ($isAsistenVirtualActive ? 'active' : '') }}">
+        <a href="{{ route('owner.asisten-virtual') }}" class="owner-nav-item {{ ($menuAsistenVirtual ?? '') ?: ($isAsistenVirtualActive ? 'active' : '') }}" title="Asisten Virtual">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <path d="M12 8V4H8"/>
             <rect x="4" y="8" width="16" height="12" rx="4"/>
@@ -4416,7 +4532,7 @@
             request()->routeIs('analytics.index');
         @endphp
         <a href="{{ route('rekapan-keterlambatan.index') }}"
-          class="owner-nav-item {{ $menuRekapanKeterlambatan ?? '' }} {{ $isRekapanKeterlambatanActive ? 'active' : '' }}">
+          class="owner-nav-item {{ $menuRekapanKeterlambatan ?? '' }} {{ $isRekapanKeterlambatanActive ? 'active' : '' }}" title="Rekapan & Analisis Kerja">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
           </svg>
@@ -4429,7 +4545,7 @@
             request()->routeIs('owner.programmer-logs') ||
             ($menuAuditTrail ?? '') === 'active';
         @endphp
-        <a href="{{ url('/owner/programmer-logs') }}" class="owner-nav-item {{ $isAuditTrailActive ? 'active' : '' }}">
+        <a href="{{ url('/owner/programmer-logs') }}" class="owner-nav-item {{ $isAuditTrailActive ? 'active' : '' }}" title="Audit Trail">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
@@ -4440,7 +4556,7 @@
           $isCashBankActive = request()->is('*owner/cashbank*') || request()->routeIs('owner.cashbank.*');
         @endphp
         <a href="{{ route('owner.cashbank.index') }}"
-           class="owner-nav-item {{ $isCashBankActive ? 'active' : '' }}">
+           class="owner-nav-item {{ $isCashBankActive ? 'active' : '' }}" title="Laporan Cash Bank">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <rect x="2" y="3" width="20" height="14" rx="2"/>
             <path d="M8 21h8M12 17v4"/>
@@ -5211,8 +5327,35 @@
         });
       }
 
-      // Sidebar now uses floating drawer effect - no need to adjust margins
-      // Content stays fixed at 72px margin, sidebar overlays on hover
+      const sidebarStorageKey = 'sidebar_collapsed';
+      const sidebarToggleButtons = document.querySelectorAll('[data-sidebar-toggle]');
+
+      function syncSidebarToggleState() {
+        const isCollapsed = document.documentElement.classList.contains('sidebar-collapsed');
+
+        sidebarToggleButtons.forEach(function(button) {
+          button.setAttribute('aria-label', isCollapsed ? 'Tampilkan sidebar penuh' : 'Kecilkan sidebar');
+          button.setAttribute('title', isCollapsed ? 'Tampilkan sidebar penuh' : 'Kecilkan sidebar');
+          button.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+        });
+      }
+
+      sidebarToggleButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+          const shouldCollapse = !document.documentElement.classList.contains('sidebar-collapsed');
+          document.documentElement.classList.toggle('sidebar-collapsed', shouldCollapse);
+
+          try {
+            localStorage.setItem(sidebarStorageKey, shouldCollapse ? '1' : '0');
+          } catch (error) {
+            // Sidebar tetap berjalan meski browser menolak localStorage.
+          }
+
+          syncSidebarToggleState();
+        });
+      });
+
+      syncSidebarToggleState();
     });
   </script>
 
