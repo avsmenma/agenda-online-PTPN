@@ -493,6 +493,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        try {
+            Object.keys(localStorage)
+                .filter(function (key) { return key.indexOf('virtual_assistant_chat_') === 0; })
+                .forEach(function (key) { localStorage.removeItem(key); });
+        } catch (error) {
+            // Ignore storage cleanup failures on the login page.
+        }
+
         // ── Toggle password visibility ──────────────────────────────────
         const togglePassword = document.getElementById('togglePassword');
         const passwordInput  = document.getElementById('password');
