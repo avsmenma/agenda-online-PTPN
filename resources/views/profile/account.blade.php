@@ -1,4 +1,8 @@
-@extends('layouts/app')
+@extends(strtolower(auth()->user()->role ?? '') === 'programmer' ? 'layouts.programmer' : 'layouts/app')
+
+@section('title', 'Profil Saya')
+@section('page_title', 'Profil Saya')
+@section('page_breadcrumb', 'Programmer - Profil Saya')
 
 @section('content')
 @php

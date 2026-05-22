@@ -168,6 +168,13 @@
       padding: 10px 12px;
       border-radius: 8px;
       background: rgba(255,255,255,.05);
+      color: inherit;
+      text-decoration: none;
+      transition: background .15s;
+    }
+    .prog-user-tile:hover {
+      background: rgba(99,102,241,.18);
+      color: inherit;
     }
     .prog-avatar {
       width: 34px;
@@ -181,7 +188,9 @@
       font-weight: 700;
       color: #fff;
       flex-shrink: 0;
+      overflow: hidden;
     }
+    .prog-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .prog-user-name {
       font-size: 13px;
       font-weight: 600;
@@ -394,6 +403,10 @@
        class="{{ request()->routeIs('programmer.2fa-reset-requests*') ? 'active' : '' }}">
       <i class="fas fa-unlock-alt nav-icon"></i> 2FA Reset Requests
     </a>
+    <a href="{{ route('profile.account') }}"
+       class="{{ request()->routeIs('profile.account') ? 'active' : '' }}">
+      <i class="fas fa-user-circle nav-icon"></i> Profil Saya
+    </a>
 
     <div class="prog-nav-label">Sistem</div>
     <a href="{{ route('programmer.database-tools') }}"
@@ -413,13 +426,23 @@
 
   {{-- Footer --}}
   <div class="prog-sidebar-footer">
-    <div class="prog-user-tile">
-      <div class="prog-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'P', 0, 1)) }}</div>
-      <div style="overflow:hidden;">
-        <div class="prog-user-name">{{ Auth::user()->name ?? 'Programmer' }}</div>
-        <div class="prog-user-role">{{ Auth::user()->role ?? 'programmer' }}</div>
+    @php
+      $programmerUser = Auth::user();
+      $programmerPhotoUrl = $programmerUser?->profile_photo_url;
+    @endphp
+    <a class="prog-user-tile" href="{{ route('profile.account') }}" title="Buka profil saya">
+      <div class="prog-avatar">
+        @if($programmerPhotoUrl)
+          <img src="{{ $programmerPhotoUrl }}" alt="Foto profil {{ $programmerUser->name ?? 'Programmer' }}">
+        @else
+          {{ strtoupper(substr($programmerUser->name ?? 'P', 0, 1)) }}
+        @endif
       </div>
-    </div>
+      <div style="overflow:hidden;">
+        <div class="prog-user-name">{{ $programmerUser->name ?? 'Programmer' }}</div>
+        <div class="prog-user-role">{{ $programmerUser->role ?? 'programmer' }}</div>
+      </div>
+    </a>
     <a href="{{ route('logout.get') }}" class="prog-logout">
       <i class="fas fa-sign-out-alt nav-icon"></i> Keluar
     </a>
