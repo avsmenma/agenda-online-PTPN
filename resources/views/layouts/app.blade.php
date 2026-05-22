@@ -8190,6 +8190,36 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
+<script>
+(function () {
+  function clearVirtualAssistantChatStorage() {
+    try {
+      Object.keys(localStorage)
+        .filter(function (key) { return key.indexOf('virtual_assistant_chat_') === 0; })
+        .forEach(function (key) { localStorage.removeItem(key); });
+    } catch (error) {
+      // Ignore storage failures; logout must never be blocked by UI cleanup.
+    }
+  }
+
+  document.addEventListener('submit', function (event) {
+    var form = event.target;
+    if (!form || !form.action) return;
+    if (String(form.action).indexOf('/logout') !== -1) {
+      clearVirtualAssistantChatStorage();
+    }
+  }, true);
+
+  document.addEventListener('click', function (event) {
+    var link = event.target && event.target.closest ? event.target.closest('a[href]') : null;
+    if (!link) return;
+    if (String(link.href).indexOf('/logout') !== -1) {
+      clearVirtualAssistantChatStorage();
+    }
+  }, true);
+})();
+</script>
+
 @stack('scripts')
 
 </body>

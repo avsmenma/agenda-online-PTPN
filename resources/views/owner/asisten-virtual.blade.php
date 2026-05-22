@@ -6,10 +6,10 @@
     background: #f4f6fb;
     color: #1a2340;
     font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
-    height: calc(100vh - 104px);
-    min-height: 620px;
+    height: calc(100dvh - 56px);
+    min-height: 680px;
     overflow: hidden;
-    padding: 24px 28px 28px;
+    padding: 22px 28px 18px;
   }
 
   .va-shell {
@@ -61,42 +61,17 @@
     border-radius: 18px;
     box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
     display: grid;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: minmax(0, 1fr) auto;
     height: 100%;
     min-height: 0;
     overflow: hidden;
-  }
-
-  .va-prompts {
-    border-bottom: 1px solid #eef2f7;
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding: 14px 16px;
-  }
-
-  .va-prompt {
-    background: #f8fafc;
-    border: 1px solid #dce5f0;
-    border-radius: 999px;
-    color: #40506c;
-    flex: 0 0 auto;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 8px 12px;
-  }
-
-  .va-prompt:hover {
-    background: #ecfdf5;
-    border-color: #bbf7d0;
-    color: #0f766e;
   }
 
   .va-messages {
     background: linear-gradient(180deg, #fbfdff 0%, #f8fafc 100%);
     min-height: 0;
     overflow-y: auto;
-    padding: 22px 18px;
+    padding: 24px 20px;
   }
 
   .va-empty {
@@ -303,20 +278,18 @@
   .va-input-wrap {
     background: #ffffff;
     border-top: 1px solid #eef2f7;
-    padding: 14px 16px 16px;
-    position: sticky;
-    bottom: 0;
+    padding: 10px 16px 12px;
     z-index: 5;
   }
 
   .va-input-box {
-    align-items: flex-end;
+    align-items: center;
     background: #f8fafc;
     border: 1px solid #dce5f0;
-    border-radius: 14px;
+    border-radius: 13px;
     display: flex;
     gap: 10px;
-    padding: 10px;
+    padding: 7px 8px 7px 12px;
   }
 
   .va-input {
@@ -325,9 +298,9 @@
     color: #14213d;
     flex: 1;
     font-size: 13.5px;
-    line-height: 1.5;
-    max-height: 140px;
-    min-height: 42px;
+    line-height: 1.45;
+    max-height: 96px;
+    min-height: 30px;
     outline: none;
     resize: none;
   }
@@ -342,8 +315,8 @@
     font-size: 13px;
     font-weight: 800;
     gap: 8px;
-    min-height: 42px;
-    padding: 0 16px;
+    min-height: 38px;
+    padding: 0 15px;
   }
 
   .va-send:disabled {
@@ -353,15 +326,15 @@
 
   .va-input-help {
     color: #8a99b5;
-    font-size: 11px;
-    margin-top: 8px;
+    font-size: 10.5px;
+    margin-top: 7px;
   }
 
   @media (max-width: 768px) {
     .va-page {
-      height: calc(100vh - 84px);
+      height: calc(100dvh - 72px);
       min-height: 520px;
-      padding: 18px 14px;
+      padding: 16px 12px 12px;
     }
 
     .va-header {
@@ -373,13 +346,13 @@
     }
 
     .va-input-box {
-      align-items: stretch;
-      flex-direction: column;
+      align-items: center;
+      flex-direction: row;
     }
 
     .va-send {
       justify-content: center;
-      width: 100%;
+      width: auto;
     }
   }
 </style>
@@ -398,14 +371,6 @@
     </div>
 
     <section class="va-chat-card" aria-label="Chat Asisten Virtual">
-      <div class="va-prompts" id="vaPrompts">
-        <button class="va-prompt" type="button">Dokumen masuk hari ini</button>
-        <button class="va-prompt" type="button">Total belum dibayar bulan ini</button>
-        <button class="va-prompt" type="button">Dokumen terlambat</button>
-        <button class="va-prompt" type="button">Top bagian berdasarkan nilai dokumen</button>
-        <button class="va-prompt" type="button">Dokumen pending pembayaran</button>
-      </div>
-
       <div class="va-messages" id="vaMessages">
         <div class="va-empty" id="vaEmpty">
           <div class="va-empty-icon">
@@ -440,10 +405,13 @@
   const form = document.getElementById('vaForm');
   const input = document.getElementById('vaInput');
   const send = document.getElementById('vaSend');
-  const prompts = document.getElementById('vaPrompts');
   const newChat = document.getElementById('vaNewChat');
+  const currentUserId = @json(auth()->id());
+  const storageKey = `virtual_assistant_chat_${currentUserId || 'guest'}`;
+  const maxStoredMessages = 80;
   let loadingNode = null;
   let conversationContext = {};
+  let chatHistory = [];
 
   function escapeHtml(value) {
     const div = document.createElement('div');
@@ -451,21 +419,46 @@
     return div.innerHTML;
   }
 
-  function scrollToBottom() {
-    messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
+  function scrollToBottom(force = false) {
+    const distanceFromBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight;
+    if (!force && distanceFromBottom > 140) return;
+    messages.scrollTo({ top: messages.scrollHeight, behavior: force ? 'auto' : 'smooth' });
   }
 
   function ensureStarted() {
     if (empty) empty.style.display = 'none';
   }
 
-  function addUserMessage(text) {
+  function saveChatHistory() {
+    try {
+      const trimmed = chatHistory.slice(-maxStoredMessages);
+      chatHistory = trimmed;
+      localStorage.setItem(storageKey, JSON.stringify({
+        version: 1,
+        user_id: currentUserId,
+        saved_at: new Date().toISOString(),
+        messages: trimmed,
+        context: conversationContext,
+      }));
+    } catch (error) {
+      // Storage can fail in private mode or when the quota is full. Chat still works without persistence.
+    }
+  }
+
+  function rememberMessage(entry) {
+    chatHistory.push(entry);
+    saveChatHistory();
+  }
+
+  function addUserMessage(text, options = {}) {
+    const { persist = true, scroll = true } = options;
     ensureStarted();
     const row = document.createElement('div');
     row.className = 'va-message user';
     row.innerHTML = `<div class="va-bubble">${escapeHtml(text)}</div>`;
     messages.appendChild(row);
-    scrollToBottom();
+    if (persist) rememberMessage({ role: 'user', text });
+    if (scroll) scrollToBottom(true);
   }
 
   function addLoading() {
@@ -480,7 +473,7 @@
         </span>
       </div>`;
     messages.appendChild(loadingNode);
-    scrollToBottom();
+    scrollToBottom(true);
   }
 
   function removeLoading() {
@@ -529,7 +522,18 @@
     return '';
   }
 
-  function addAssistantMessage(reply) {
+  function compactStoredReply(reply) {
+    return {
+      intent: reply?.intent || null,
+      answer: reply?.answer || '',
+      data: Array.isArray(reply?.data) ? reply.data.slice(0, 20) : (reply?.data || []),
+      link: reply?.link || null,
+      interaction_id: reply?.interaction_id || null,
+    };
+  }
+
+  function addAssistantMessage(reply, options = {}) {
+    const { persist = true, scroll = true } = options;
     ensureStarted();
     const row = document.createElement('div');
     row.className = 'va-message assistant';
@@ -559,7 +563,8 @@
     });
     messages.appendChild(row);
     updateConversationContext(reply);
-    scrollToBottom();
+    if (persist) rememberMessage({ role: 'assistant', reply: compactStoredReply(reply) });
+    if (scroll) scrollToBottom(true);
   }
 
   async function sendFeedback(button, interactionId) {
@@ -621,6 +626,46 @@
       : null;
   }
 
+  function restoreChatHistory() {
+    let saved = null;
+
+    try {
+      saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+    } catch (error) {
+      saved = null;
+    }
+
+    if (!saved || !Array.isArray(saved.messages) || saved.messages.length === 0) {
+      return;
+    }
+
+    chatHistory = saved.messages.slice(-maxStoredMessages);
+    conversationContext = saved.context && typeof saved.context === 'object' ? saved.context : {};
+    chatHistory.forEach((entry) => {
+      if (entry?.role === 'user') {
+        addUserMessage(entry.text || '', { persist: false, scroll: false });
+      } else if (entry?.role === 'assistant') {
+        addAssistantMessage(entry.reply || {}, { persist: false, scroll: false });
+      }
+    });
+    scrollToBottom(true);
+  }
+
+  function clearStoredChat() {
+    chatHistory = [];
+    conversationContext = {};
+    try {
+      localStorage.removeItem(storageKey);
+    } catch (error) {
+      // Ignore storage failures.
+    }
+  }
+
+  function resizeInput() {
+    input.style.height = 'auto';
+    input.style.height = `${Math.min(input.scrollHeight, 96)}px`;
+  }
+
   function setLoading(isLoading) {
     send.disabled = isLoading;
     input.disabled = isLoading;
@@ -634,6 +679,7 @@
 
     addUserMessage(message);
     input.value = '';
+    resizeInput();
     setLoading(true);
 
     try {
@@ -679,21 +725,20 @@
     }
   });
 
-  prompts.addEventListener('click', (event) => {
-    const prompt = event.target.closest('.va-prompt');
-    if (!prompt) return;
-    input.value = prompt.textContent.trim();
-    form.requestSubmit();
-  });
+  input.addEventListener('input', resizeInput);
 
   newChat.addEventListener('click', () => {
     messages.innerHTML = '';
     messages.appendChild(empty);
     empty.style.display = 'flex';
-    conversationContext = {};
+    clearStoredChat();
     input.value = '';
+    resizeInput();
     input.focus();
   });
+
+  restoreChatHistory();
+  resizeInput();
 })();
 </script>
 @endsection
