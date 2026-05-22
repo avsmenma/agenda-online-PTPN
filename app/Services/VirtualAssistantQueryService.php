@@ -1232,8 +1232,7 @@ class VirtualAssistantQueryService
 
     private function extractExactAmount(string $text): ?float
     {
-        $boundedTerms = ['di atas', 'lebih dari', 'minimal', 'min', 'di bawah', 'kurang dari', 'maksimal', 'max', 'antara'];
-        if ($this->containsAny($text, $boundedTerms)) {
+        if (preg_match('/\b(di\s*atas|lebih\s+dari|minimal|min|di\s*bawah|kurang\s+dari|maksimal|max|antara)\b/u', $text)) {
             return null;
         }
 
