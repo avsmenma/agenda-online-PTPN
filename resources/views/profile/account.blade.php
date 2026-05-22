@@ -3,6 +3,7 @@
 @section('content')
 @php
     $displayName = trim((string) ($user->name ?? 'User'));
+    $profilePhotoUrl = $user->profile_photo_url;
     $initials = collect(explode(' ', $displayName))
         ->filter()
         ->take(2)
@@ -64,6 +65,66 @@
         font-size: 38px;
         font-weight: 800;
         box-shadow: 0 14px 30px rgba(12, 73, 59, 0.24);
+        overflow: hidden;
+    }
+
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .profile-photo-form {
+        margin: 18px 0 0;
+        display: grid;
+        gap: 10px;
+    }
+
+    .profile-photo-input {
+        width: 100%;
+        border: 1px dashed #cbd5e1;
+        border-radius: 10px;
+        padding: 10px;
+        color: #34415c;
+        background: #f8fafc;
+        font-size: 13px;
+    }
+
+    .profile-photo-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .btn-photo-profile {
+        min-height: 42px;
+        border-radius: 10px;
+        border: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: #0c493b;
+        color: #fff;
+        padding: 0 14px;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .btn-photo-profile:hover {
+        background: #0a3d33;
+    }
+
+    .btn-photo-remove {
+        min-height: 40px;
+        border-radius: 10px;
+        border: 1px solid #fecaca;
+        background: #fff;
+        color: #dc2626;
+        padding: 0 14px;
+        font-size: 13px;
+        font-weight: 800;
     }
 
     .profile-name {
@@ -394,6 +455,10 @@
             font-size: 32px;
         }
 
+        .profile-photo-actions {
+            grid-template-columns: 1fr;
+        }
+
         .profile-name {
             font-size: 20px;
         }
@@ -414,12 +479,42 @@
 <div class="profile-page">
     <div class="profile-grid">
         <aside class="profile-card profile-sidebar">
-            <div class="profile-avatar">{{ $initials }}</div>
+            <div class="profile-avatar">
+                @if($profilePhotoUrl)
+                    <img src="{{ $profilePhotoUrl }}" alt="Foto profil {{ $displayName }}">
+                @else
+                    {{ $initials }}
+                @endif
+            </div>
             <div class="profile-name">{{ $displayName }}</div>
             <div class="profile-email">{{ $user->email }}</div>
             <div class="text-center">
                 <span class="role-pill"><i class="fa-solid fa-id-badge"></i>{{ $user->getRoleDisplayName() }}</span>
             </div>
+
+            <form class="profile-photo-form" method="POST" action="{{ route('profile.update-photo') }}" enctype="multipart/form-data">
+                @csrf
+                <label for="profile_photo" class="field-label mb-0">Foto Profil</label>
+                <input id="profile_photo" name="profile_photo" type="file" accept="image/png,image/jpeg,image/webp" class="profile-photo-input @error('profile_photo') is-invalid @enderror" required>
+                <span class="field-hint">Format JPG, PNG, atau WebP. Maksimal 2 MB.</span>
+                <div class="profile-photo-actions">
+                    <button type="submit" class="btn-photo-profile">
+                        <i class="fa-solid fa-camera"></i>
+                        {{ $profilePhotoUrl ? 'Ganti Foto' : 'Upload Foto' }}
+                    </button>
+                </div>
+            </form>
+
+            @if($profilePhotoUrl)
+                <form class="profile-photo-form" method="POST" action="{{ route('profile.delete-photo') }}">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn-photo-remove" onclick="return confirm('Hapus foto profil saat ini?');">
+                        <i class="fa-solid fa-trash"></i>
+                        Hapus Foto
+                    </button>
+                </form>
+            @endif
 
             <nav class="profile-menu" aria-label="Menu profil">
                 <a href="#account-info" class="profile-menu-item active">

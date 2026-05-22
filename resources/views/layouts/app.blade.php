@@ -3911,7 +3911,9 @@
       background: linear-gradient(135deg, #0f766e, #10b981);
       display: flex; align-items: center; justify-content: center;
       font-size: 13px; font-weight: 700; color: white; flex-shrink: 0;
+      overflow: hidden;
     }
+    .owner-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .owner-user-info { flex: 1; min-width: 0; }
     .owner-user-name { font-weight: 600; font-size: 12.5px; color: #1a2340; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .owner-user-role-text { font-size: 11px; color: #a0aec0; }
@@ -4452,11 +4454,18 @@
       <div class="owner-sidebar-bottom">
         @php
           $authUser = auth()->user();
+          $authUserPhotoUrl = $authUser?->profile_photo_url;
           $initials = $authUser ? strtoupper(substr($authUser->name ?? 'U', 0, 1) . (strpos($authUser->name ?? '', ' ') !== false ? substr($authUser->name, strpos($authUser->name, ' ') + 1, 1) : '')) : 'U';
         @endphp
         <div class="owner-user-actions">
           <a class="owner-user-card" href="{{ route('profile.account') }}" title="Buka pengaturan profil">
-            <div class="owner-avatar">{{ $initials }}</div>
+            <div class="owner-avatar">
+              @if($authUserPhotoUrl)
+                <img src="{{ $authUserPhotoUrl }}" alt="Foto profil {{ $authUser->name ?? 'Pengguna' }}">
+              @else
+                {{ $initials }}
+              @endif
+            </div>
             <div class="owner-user-info">
               <div class="owner-user-name">{{ $authUser->name ?? 'Pengguna' }}</div>
               <div class="owner-user-role-text">{{ ucfirst(str_replace('_', ' ', $authUser->role ?? 'Owner')) }}</div>

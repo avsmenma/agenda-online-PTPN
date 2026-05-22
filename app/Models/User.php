@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 final class User extends Authenticatable
 {
@@ -87,6 +88,7 @@ final class User extends Authenticatable
         'role',
         'bagian_code',
         'phone_number',
+        'profile_photo_path',
         'table_columns_preferences',
         'two_factor_enabled',
         'two_factor_secret',
@@ -183,6 +185,15 @@ final class User extends Authenticatable
         return self::ROLES[$this->role] ?? 'Unknown';
     }
 
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        if (!$this->profile_photo_path) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->profile_photo_path);
+    }
+
     /**
      * Scope to get users by role.
      */
@@ -202,7 +213,6 @@ final class User extends Authenticatable
             ->all();
     }
 }
-
 
 
 

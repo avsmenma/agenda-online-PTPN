@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Illuminate\Validation\ValidationException;
 
@@ -71,6 +72,58 @@ final class ProfileController extends Controller
 
         return redirect()->route('profile.account')
             ->with('success', 'Informasi akun berhasil disimpan.');
+    }
+
+    public function updatePhoto(Request $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'profile_photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ], [
+            'profile_photo.required' => 'Pilih foto profil terlebih dahulu.',
+            'profile_photo.image' => 'File harus berupa gambar.',
+            'profile_photo.mimes' => 'Foto profil harus berformat JPG, PNG, atau WebP.',
+            'profile_photo.max' => 'Ukuran foto profil maksimal 2 MB.',
+        ]);
+
+        $oldPath = $user->profile_photo_path;
+        $path = $request->file('profile_photo')->store('profile-photos', 'public');
+
+        $user->profile_photo_path = $path;
+        $user->save();
+
+        if ($oldPath && $oldPath !== $path) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
+        Log::info('User profile photo updated', [
+            'user_id' => $user->id,
+            'old_path_exists' => (bool) $oldPath,
+        ]);
+
+        return redirect()->route('profile.account')
+            ->with('success', 'Foto profil berhasil diperbarui.');
+    }
+
+    public function deletePhoto(): RedirectResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if ($user->profile_photo_path) {
+            Storage::disk('public')->delete($user->profile_photo_path);
+            $user->profile_photo_path = null;
+            $user->save();
+        }
+
+        Log::info('User profile photo removed', [
+            'user_id' => $user->id,
+        ]);
+
+        return redirect()->route('profile.account')
+            ->with('success', 'Foto profil berhasil dihapus.');
     }
 
     /**
@@ -194,7 +247,6 @@ final class ProfileController extends Controller
             ->with('success', 'Username berhasil diubah.');
     }
 }
-
 
 
 
