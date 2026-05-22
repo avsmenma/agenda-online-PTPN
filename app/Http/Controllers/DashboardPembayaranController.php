@@ -2009,16 +2009,9 @@ class DashboardPembayaranController extends Controller
         return redirect()->route('dashboard.pembayaran')->with('info', 'Halaman pengembalian diarahkan ke dashboard pembayaran');
     }
 
-    public function rekapanKeterlambatan()
+    public function rekapanKeterlambatan(Request $request)
     {
-        $data = array(
-            "title" => "Rekap Keterlambatan",
-            "module" => "pembayaran",
-            "menuDashboard" => "",
-            'menuDokumen' => 'Active',
-            'menuRekapKeterlambatan' => 'Active',
-        );
-        return view('pembayaranNEW.coming-soon', $data);
+        return app(OwnerDashboardController::class)->rekapanKeterlambatanByRole($request, 'pembayaran');
     }
 
     /**

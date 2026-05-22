@@ -4493,10 +4493,8 @@
         @if($isPaymentShell)
         @php
           $isPaymentDashboardActive = request()->routeIs('dashboard.pembayaran') || request()->routeIs('dashboard.pembayaran.data') || request()->is('*dashboard/pembayaran*');
-          $isPaymentImportActive = request()->routeIs('csv.import.*') || request()->is('*csv-import*');
           $isPaymentDelayActive = request()->routeIs('reports.pembayaran.delays') || request()->is('*rekapan-keterlambatan*');
           $isPaymentReportActive = request()->routeIs('reports.pembayaran.*') || request()->is('*reports/pembayaran*');
-          $isPaymentReturnActive = request()->routeIs('returns.pembayaran.*') || request()->is('*returns/pembayaran*');
         @endphp
         <a href="{{ route('dashboard.pembayaran') }}" class="owner-nav-item {{ $isPaymentDashboardActive ? 'active' : '' }}" title="Dashboard Pembayaran">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
@@ -4512,14 +4510,6 @@
           </svg>
           Daftar Pembayaran
         </a>
-        <a href="{{ route('csv.import.index') }}" class="owner-nav-item {{ $isPaymentImportActive ? 'active' : '' }}" title="Import Data">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
-            <path d="M12 3v12"/>
-            <path d="M8 7l4-4 4 4"/>
-            <path d="M4 15v4a2 2 0 002 2h12a2 2 0 002-2v-4"/>
-          </svg>
-          Import Data
-        </a>
         <a href="{{ route('reports.pembayaran.delays') }}" class="owner-nav-item {{ $isPaymentDelayActive ? 'active' : '' }}" title="Rekap Keterlambatan">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <circle cx="12" cy="12" r="9"/>
@@ -4533,13 +4523,6 @@
             <path d="M7 15l4-4 3 3 5-7"/>
           </svg>
           Laporan
-        </a>
-        <a href="{{ route('returns.pembayaran.index') }}" class="owner-nav-item {{ $isPaymentReturnActive ? 'active' : '' }}" title="Dokumen Pengembalian">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
-            <path d="M9 14l-4-4 4-4"/>
-            <path d="M5 10h11a4 4 0 010 8h-1"/>
-          </svg>
-          Pengembalian
         </a>
         @else
         <a href="{{ url('/owner/home') }}" class="owner-nav-item {{ $menuHome ?? '' }}" title="Dashboard">
