@@ -5,13 +5,10 @@
   <link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.4.3/css/scroller.dataTables.min.css">
 
   <style>
-    /* ===== IMPORT GOOGLE FONTS ===== */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
     /* ===== PREMIUM SAAS DESIGN SYSTEM ===== */
     :root {
       /* Core Colors */
-      --bg-primary: #fafbfc;
+      --bg-primary: #f5f7fb;
       --bg-secondary: #f8fafc;
       --bg-tertiary: #ffffff;
 
@@ -22,9 +19,9 @@
       --text-muted: #cbd5e1;
 
       /* Brand Colors - Soft Pastels */
-      --brand-primary: #10b981;
-      --brand-primary-soft: rgba(16, 185, 129, 0.1);
-      --brand-primary-glow: rgba(16, 185, 129, 0.2);
+      --brand-primary: #0f766e;
+      --brand-primary-soft: rgba(15, 118, 110, 0.1);
+      --brand-primary-glow: rgba(15, 118, 110, 0.18);
 
       /* Status Colors - Refined */
       --status-emerald: #10b981;
@@ -65,7 +62,7 @@
       /* Radius */
       --radius-sm: 8px;
       --radius-md: 12px;
-      --radius-lg: 16px;
+      --radius-lg: 14px;
       --radius-xl: 20px;
       --radius-2xl: 24px;
 
@@ -77,10 +74,10 @@
 
     /* ===== BASE STYLES ===== */
     .premium-dashboard {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Plus Jakarta Sans', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg-primary);
       min-height: 100vh;
-      padding: 2rem;
+      padding: 1.75rem 2rem 2.25rem;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
@@ -90,7 +87,7 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
       flex-wrap: wrap;
       gap: 1.5rem;
     }
@@ -100,10 +97,10 @@
     }
 
     .header-title {
-      font-size: 1.875rem;
+      font-size: 1.45rem;
       font-weight: 700;
       color: var(--text-primary);
-      letter-spacing: -0.025em;
+      letter-spacing: 0;
       margin: 0 0 0.5rem 0;
       display: flex;
       align-items: center;
@@ -111,9 +108,9 @@
     }
 
     .header-title-icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, var(--brand-primary) 0%, #059669 100%);
+      width: 38px;
+      height: 38px;
+      background: #0f766e;
       border-radius: var(--radius-md);
       display: flex;
       align-items: center;
@@ -123,8 +120,8 @@
     }
 
     .header-subtitle {
-      font-size: 0.9375rem;
-      color: var(--text-secondary);
+      font-size: 0.875rem;
+      color: #94a3b8;
       font-weight: 400;
       margin: 0;
     }
@@ -167,17 +164,17 @@
     .bento-grid {
       display: grid;
       grid-template-columns: repeat(12, 1fr);
-      gap: 1.25rem;
+      gap: 1rem;
       margin-bottom: 2rem;
     }
 
     /* Main Stats Row */
     .stat-card {
       background: var(--bg-tertiary);
-      border-radius: var(--radius-lg);
-      padding: 1.5rem;
-      border: 1px solid var(--border-lighter);
-      box-shadow: var(--shadow-sm);
+      border-radius: 14px;
+      padding: 1.25rem 1.35rem;
+      border: 1px solid #e8ecf4;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
       transition: var(--transition-base);
       position: relative;
       overflow: hidden;
@@ -188,12 +185,13 @@
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
+      min-height: 116px;
     }
 
     .stat-card:hover {
-      box-shadow: var(--shadow-lg);
+      box-shadow: 0 16px 34px rgba(15, 23, 42, 0.10);
       transform: translateY(-2px);
-      border-color: var(--border-light);
+      border-color: #dbe3ef;
     }
 
     .stat-card.active {
@@ -219,13 +217,13 @@
 
     /* Total Card - Solid Green Gradient */
     .stat-card--total {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: linear-gradient(135deg, #0f766e 0%, #079669 100%);
       border: none;
-      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 12px 28px rgba(15, 118, 110, 0.22);
     }
 
     .stat-card--total:hover {
-      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+      box-shadow: 0 16px 34px rgba(15, 118, 110, 0.28);
       transform: translateY(-3px);
     }
 
@@ -258,9 +256,9 @@
     }
 
     .stat-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -290,15 +288,15 @@
 
     .stat-label {
       font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-tertiary);
+      font-weight: 700;
+      color: #9aa8c0;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-bottom: 0.375rem;
     }
 
     .stat-value {
-      font-size: 1.875rem;
+      font-size: 1.75rem;
       font-weight: 700;
       color: var(--text-primary);
       letter-spacing: -0.025em;
@@ -314,7 +312,7 @@
 
     .stat-subvalue-link {
       font-size: 0.75rem;
-      color: var(--text-tertiary);
+      color: #94a3b8;
       font-weight: 500;
       display: flex;
       align-items: center;
@@ -330,10 +328,10 @@
     .deadline-card {
       grid-column: span 4;
       background: var(--bg-tertiary);
-      border-radius: var(--radius-lg);
+      border-radius: 14px;
       padding: 1.25rem 1.5rem;
-      border: 1px solid var(--border-lighter);
-      box-shadow: var(--shadow-sm);
+      border: 1px solid #e8ecf4;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
       transition: var(--transition-base);
       display: flex;
       align-items: center;
@@ -356,7 +354,7 @@
     }
 
     .deadline-card:hover {
-      box-shadow: var(--shadow-lg);
+      box-shadow: 0 16px 34px rgba(15, 23, 42, 0.10);
       transform: translateY(-2px);
     }
 
@@ -385,8 +383,8 @@
     }
 
     .deadline-icon {
-      width: 48px;
-      height: 48px;
+      width: 46px;
+      height: 46px;
       border-radius: var(--radius-md);
       display: flex;
       align-items: center;
@@ -416,20 +414,20 @@
 
     .deadline-label {
       font-size: 0.8125rem;
-      font-weight: 500;
-      color: var(--text-tertiary);
+      font-weight: 600;
+      color: #94a3b8;
       margin-bottom: 0.25rem;
     }
 
     .deadline-value {
-      font-size: 1.5rem;
+      font-size: 1.625rem;
       font-weight: 700;
       color: var(--text-primary);
     }
 
     .deadline-desc {
       font-size: 0.75rem;
-      color: var(--text-tertiary);
+      color: #94a3b8;
       margin-top: 0.25rem;
     }
 

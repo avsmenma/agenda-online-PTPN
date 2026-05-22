@@ -4168,31 +4168,25 @@
 @php
   $layoutUserRoleLower = auth()->check() ? strtolower(auth()->user()->role ?? '') : '';
   $usesOwnerShell = in_array($layoutUserRoleLower, ['owner', 'admin'], true);
+  $usesPaymentShell = $layoutUserRoleLower === 'pembayaran' || (($module ?? null) === 'pembayaran');
+  $usesModernSidebarShell = $usesOwnerShell || $usesPaymentShell;
 @endphp
-<body class="{{ $usesOwnerShell ? 'owner-layout' : '' }}">
+<body class="{{ $usesModernSidebarShell ? 'owner-layout' : '' }} {{ $usesPaymentShell ? 'payment-layout' : '' }}">
   @php
     // Pre-calculate shouldShowSecondarySidebar for header
     // Check if user is owner
     $userRoleLower = $layoutUserRoleLower;
     $isOwner = $usesOwnerShell;
+    $isPaymentShell = $usesPaymentShell;
+    $isModernSidebarShell = $usesModernSidebarShell;
 
     $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
     $isSubmenuPageForHeader = false;
 
     // Owner pages use the dedicated owner sidebar only. The legacy secondary
     // sidebar is reserved for non-owner workflow modules.
-    if (!$isOwner && isset($module)) {
-      if ($module === 'pembayaran') {
-        $isSubmenuPageForHeader = request()->routeIs('dokumensPembayaran.*') ||
-          request()->routeIs('pembayaran.*') ||
-          request()->routeIs('rekapanKeterlambatan.*') ||
-          request()->routeIs('csv.import.*') ||
-          request()->is('*dokumensPembayaran*') ||
-          request()->is('*rekapan-pembayaran*') ||
-          request()->is('*rekapan-keterlambatan*') ||
-          request()->is('*csv-import*') ||
-          request()->is('*pengembalian-dokumensPembayaran*');
-      } elseif ($module === 'akutansi') {
+    if (!$isModernSidebarShell && isset($module)) {
+      if ($module === 'akutansi') {
         $isSubmenuPageForHeader = request()->routeIs('dokumensAkutansi.*') ||
           request()->routeIs('akutansi.*') ||
           request()->is('*dokumensAkutansi*') ||
@@ -4213,7 +4207,7 @@
           request()->is('*pengembalian*');
       }
     }
-    $shouldShowSecondarySidebarForHeader = !$isOwner && ($hasSubmenu || $isSubmenuPageForHeader);
+    $shouldShowSecondarySidebarForHeader = !$isModernSidebarShell && ($hasSubmenu || $isSubmenuPageForHeader);
 
     // Define $isBagianUser early so it's available everywhere (not just inside sidebar block)
     $isBagianUser = false;
@@ -4371,7 +4365,7 @@
     </div>
 
   {{-- ═══════ OTHER ROLES — standard header with topbar ═══════ --}}
-  @elseif(($module ?? '') !== 'owner')
+  @elseif(!in_array(($module ?? ''), ['owner', 'pembayaran'], true))
     <header>
       <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
         <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
@@ -4414,8 +4408,8 @@
 
   <!-- Sidebar (hidden for operator spreadsheet mode via CSS) -->
   @if(!($isOperatorSpreadsheet ?? false))
-  <div class="{{ $isOwner ? 'sidebar-owner' : 'sidebar' }}">
-    @if(!$isOwner)
+  <div class="{{ $isModernSidebarShell ? 'sidebar-owner' : 'sidebar' }}">
+    @if(!$isModernSidebarShell)
     <h4 class="text-center mb-4"><img src="{{ asset('images/logo_ptpn.png') }}" alt="Logo PTPN" class="sidebar-logo-img"> Agenda Online</h4>
     <hr>
     @endif
@@ -4475,8 +4469,8 @@
 
     <script>window._userModule = @json($module);</script>
 
-    @if($isOwner)
-      {{-- ═══ NEW OWNER SIDEBAR (matches reference mockup) ═══ --}}
+    @if($isModernSidebarShell)
+      {{-- Modern role sidebar (Owner/Admin/Pembayaran) --}}
 
       {{-- Logo / Brand --}}
       <div class="owner-sidebar-logo">
@@ -4496,6 +4490,58 @@
       {{-- MENU Section --}}
       <div class="owner-sidebar-section" style="flex:0 0 auto;">
         <div class="owner-sidebar-label">Menu</div>
+        @if($isPaymentShell)
+        @php
+          $isPaymentDashboardActive = request()->routeIs('dashboard.pembayaran') || request()->routeIs('dashboard.pembayaran.data') || request()->is('*dashboard/pembayaran*');
+          $isPaymentImportActive = request()->routeIs('csv.import.*') || request()->is('*csv-import*');
+          $isPaymentDelayActive = request()->routeIs('reports.pembayaran.delays') || request()->is('*rekapan-keterlambatan*');
+          $isPaymentReportActive = request()->routeIs('reports.pembayaran.*') || request()->is('*reports/pembayaran*');
+          $isPaymentReturnActive = request()->routeIs('returns.pembayaran.*') || request()->is('*returns/pembayaran*');
+        @endphp
+        <a href="{{ route('dashboard.pembayaran') }}" class="owner-nav-item {{ $isPaymentDashboardActive ? 'active' : '' }}" title="Dashboard Pembayaran">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
+        </a>
+        <a href="{{ route('documents.pembayaran.index') }}" class="owner-nav-item {{ request()->routeIs('documents.pembayaran.*') ? 'active' : '' }}" title="Daftar Pembayaran">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+          </svg>
+          Daftar Pembayaran
+        </a>
+        <a href="{{ route('csv.import.index') }}" class="owner-nav-item {{ $isPaymentImportActive ? 'active' : '' }}" title="Import Data">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M12 3v12"/>
+            <path d="M8 7l4-4 4 4"/>
+            <path d="M4 15v4a2 2 0 002 2h12a2 2 0 002-2v-4"/>
+          </svg>
+          Import Data
+        </a>
+        <a href="{{ route('reports.pembayaran.delays') }}" class="owner-nav-item {{ $isPaymentDelayActive ? 'active' : '' }}" title="Rekap Keterlambatan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v6l4 2"/>
+          </svg>
+          Rekap Keterlambatan
+        </a>
+        <a href="{{ route('reports.pembayaran.analytics') }}" class="owner-nav-item {{ ($isPaymentReportActive && !$isPaymentDelayActive) ? 'active' : '' }}" title="Laporan Pembayaran">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M3 3v18h18"/>
+            <path d="M7 15l4-4 3 3 5-7"/>
+          </svg>
+          Laporan
+        </a>
+        <a href="{{ route('returns.pembayaran.index') }}" class="owner-nav-item {{ $isPaymentReturnActive ? 'active' : '' }}" title="Dokumen Pengembalian">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M9 14l-4-4 4-4"/>
+            <path d="M5 10h11a4 4 0 010 8h-1"/>
+          </svg>
+          Pengembalian
+        </a>
+        @else
         <a href="{{ url('/owner/home') }}" class="owner-nav-item {{ $menuHome ?? '' }}" title="Dashboard">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -4563,6 +4609,7 @@
           </svg>
           Laporan Cash Bank
         </a>
+        @endif
       </div>
 
 
@@ -4736,7 +4783,6 @@
           @php
             // Determine route based on module — gunakan route() helper sesuai web.php
             $menuRoute = match ($module) {
-              'pembayaran'      => route('dashboard.pembayaran'),
               'akutansi'        => route('documents.akutansi.index'),
               'perpajakan'      => route('documents.perpajakan.index'),
               'team_verifikasi' => route('documents.verifikasi.index'),
@@ -4745,20 +4791,6 @@
 
             // Check if current route is within this module
             $isModuleActive = match ($module) {
-              'pembayaran' => request()->routeIs('dashboard.pembayaran') ||
-              request()->routeIs('dashboard.pembayaran.data') ||
-              request()->routeIs('documents.pembayaran.detail') ||
-              request()->routeIs('documents.pembayaran.payment-data') ||
-              request()->routeIs('documents.pembayaran.set-deadline') ||
-              request()->routeIs('documents.pembayaran.update-status') ||
-              request()->routeIs('documents.pembayaran.upload-proof') ||
-              request()->routeIs('reports.pembayaran.*') ||
-              request()->routeIs('returns.pembayaran.*') ||
-              request()->routeIs('csv.import.*') ||
-              request()->is('*dashboard/pembayaran*') ||
-              request()->is('*reports/pembayaran*') ||
-              request()->is('*rekapan-keterlambatan*') ||
-              request()->is('*csv-import*'),
               'akutansi' => request()->routeIs('documents.akutansi.*') ||
               request()->routeIs('reports.akutansi.*') ||
               request()->routeIs('returns.akutansi.*') ||
@@ -4778,24 +4810,19 @@
             };
 
             $isDaftarDokumenActive = match ($module) {
-              'pembayaran' => request()->routeIs('dashboard.pembayaran') || request()->routeIs('dashboard.pembayaran.data') || request()->is('*dashboard/pembayaran*'),
               'akutansi' => request()->routeIs('documents.akutansi.*') || request()->is('*documents/akutansi*'),
               'perpajakan' => request()->routeIs('documents.perpajakan.*') || request()->is('*documents/perpajakan*'),
               'team_verifikasi' => request()->routeIs('documents.verifikasi.*') || request()->is('*documents/verifikasi*'),
               default => request()->routeIs('documents.index') || request()->routeIs('documents.create') || request()->routeIs('documents.edit') || request()->is('documents') || request()->is('documents/create') || request()->is('documents/*/edit')
             };
-            $isImportActive = ($module === 'pembayaran')
-              ? (request()->routeIs('csv.import.*') || request()->is('*csv-import*'))
-              : request()->routeIs('documents.import.*') || request()->is('*documents/import*');
+            $isImportActive = request()->routeIs('documents.import.*') || request()->is('*documents/import*');
             $isReportsActive = match ($module) {
-              'pembayaran' => request()->routeIs('reports.pembayaran.*') || request()->is('*reports/pembayaran*') || request()->is('*rekapan-keterlambatan*'),
               'akutansi' => request()->routeIs('reports.akutansi.*') || request()->is('*rekapan-keterlambatan/akutansi*'),
               'perpajakan' => request()->routeIs('reports.perpajakan.*') || request()->is('*rekapan-keterlambatan/perpajakan*'),
               'team_verifikasi' => request()->routeIs('reports.verifikasi.*') || request()->is('*rekapan-keterlambatan*'),
               default => request()->routeIs('reports.*') || request()->is('*reports*')
             };
             $isReturnsActive = match ($module) {
-              'pembayaran' => request()->routeIs('returns.pembayaran.*') || request()->is('*returns/pembayaran*'),
               'akutansi' => request()->routeIs('returns.akutansi.*') || request()->is('*returns/akutansi*'),
               'perpajakan' => request()->routeIs('returns.perpajakan.*') || request()->is('*returns/perpajakan*'),
               'team_verifikasi' => request()->routeIs('returns.verifikasi.*') || request()->is('*returns/verifikasi*'),
@@ -4807,9 +4834,7 @@
               class="{{ ($menuDokumen ?? '') . ($isModuleActive ? ' active' : '') }} agenda-tree-toggle sidebar-menu-trigger"
               data-submenu="dokumen" id="btn-pembayaran" aria-expanded="{{ $isModuleActive ? 'true' : 'false' }}">
               <i class="fa-solid fa-file-lines"></i>
-              @if($module === 'pembayaran')
-                Pembayaran
-              @elseif($module === 'akutansi')
+              @if($module === 'akutansi')
                 Akutansi
               @elseif($module === 'perpajakan')
                 Perpajakan
@@ -4821,17 +4846,7 @@
               <i class="right fa-solid fa-angle-left"></i>
             </a>
             <div class="nav-treeview">
-              @if($module === 'pembayaran')
-                <a href="{{ route('dashboard.pembayaran') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-list"></i> Daftar Dokumen
-                </a>
-                <a href="{{ route('csv.import.index') }}" class="{{ $isImportActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-file-import"></i> Import Data
-                </a>
-                <a href="{{ route('reports.pembayaran.delays') }}" class="{{ $isReportsActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-clock-rotate-left"></i> Rekap Keterlambatan
-                </a>
-              @elseif($module === 'akutansi')
+              @if($module === 'akutansi')
                 <a href="{{ route('documents.akutansi.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
                   <i class="fa-solid fa-list"></i> Daftar Akutansi
                 </a>
@@ -4940,30 +4955,15 @@
   @endif {{-- end !isOperatorSpreadsheet --}}
 
   <!-- Secondary Sidebar (Submenu Panel) - Mekari Style -->
-  @if($isOwner)
-    {{-- Owner layout intentionally uses only the dedicated owner sidebar. --}}
+  @if($isModernSidebarShell)
+    {{-- Modern sidebar layouts intentionally use only the primary sidebar. --}}
   @else
   @php
     // Check if user is on a submenu page or menu dokumen is active
     $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
 
-    // Enhanced detection for pembayaran module
     $isSubmenuPage = false;
-    if ($module === 'pembayaran') {
-      $isSubmenuPage = request()->routeIs('dashboard.pembayaran') ||
-        request()->routeIs('dashboard.pembayaran.data') ||
-        request()->routeIs('documents.pembayaran.detail') ||
-        request()->routeIs('documents.pembayaran.payment-data') ||
-        request()->routeIs('documents.pembayaran.set-deadline') ||
-        request()->routeIs('documents.pembayaran.update-status') ||
-        request()->routeIs('documents.pembayaran.upload-proof') ||
-        request()->routeIs('reports.pembayaran.*') ||
-        request()->routeIs('returns.pembayaran.*') ||
-        request()->routeIs('csv.import.*') ||
-        request()->is('*dashboard/pembayaran*') ||
-        request()->is('*rekapan-keterlambatan*') ||
-        request()->is('*csv-import*');
-    } elseif ($module === 'akutansi') {
+    if ($module === 'akutansi') {
       $isSubmenuPage = request()->routeIs('documents.akutansi.*') ||
         request()->routeIs('reports.akutansi.*') ||
         request()->routeIs('returns.akutansi.*') ||
@@ -4991,9 +4991,7 @@
     $shouldShowSecondarySidebar = $hasSubmenu || $isSubmenuPage;
 
     $submenuTitle = '';
-    if ($module === 'pembayaran') {
-      $submenuTitle = 'MENU PEMBAYARAN';
-    } elseif ($module === 'akutansi') {
+    if ($module === 'akutansi') {
       $submenuTitle = 'MENU AKUTANSI';
     } elseif ($module === 'perpajakan') {
       $submenuTitle = 'MENU PERPAJAKAN';
@@ -5012,31 +5010,7 @@
       {{ $submenuTitle }}
     </div>
     <div class="secondary-sidebar-content">
-      @if($module === 'pembayaran')
-        @php
-          // Determine active state for each submenu item (combine controller class + route detection)
-          $isDaftarActive = ($menuDaftarDokumen ?? '') === 'Active' ||
-            request()->routeIs('dashboard.pembayaran') ||
-            request()->routeIs('dashboard.pembayaran.data') ||
-            request()->is('*dashboard/pembayaran*');
-          $isRekapanActive = ($menuRekapanDokumen ?? '') === 'Active' ||
-            request()->routeIs('pembayaran.rekapan') ||
-            request()->is('*rekapan-pembayaran*');
-          $isKeterlambatanActive = ($menuRekapKeterlambatan ?? '') === 'Active' ||
-            request()->routeIs('rekapanKeterlambatan.*') ||
-            request()->is('*rekapan-keterlambatan*');
-        @endphp
-        <a href="{{ route('dashboard.pembayaran') }}" class="{{ $isDaftarActive ? 'active' : '' }}">
-          <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
-        </a>
-        <a href="{{ route('csv.import.index') }}"
-          class="{{ request()->routeIs('csv.import.*') || request()->is('*csv-import*') ? 'active' : '' }}">
-          <i class="fa-solid fa-file-import me-2"></i> Import Data
-        </a>
-        <a href="{{ url($pengembalianUrl) }}" class="{{ $isKeterlambatanActive ? 'active' : '' }}">
-          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
-        </a>
-      @elseif($module === 'akutansi')
+      @if($module === 'akutansi')
         <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
           <i class="fa-solid fa-list me-2"></i> Daftar Akutansi
           <span class="menu-notification-badge" id="akutansi-notification-badge"
