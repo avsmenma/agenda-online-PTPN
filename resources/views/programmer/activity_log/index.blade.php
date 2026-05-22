@@ -233,8 +233,14 @@
                             <td>
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                                         style="width:32px;height:32px;background:linear-gradient(135deg,#667eea,#764ba2);font-size:0.75rem;flex-shrink:0;">
-                                        {{ strtoupper(substr($log->programmer->name ?? '?', 0, 1)) }}
+                                         style="width:32px;height:32px;background:linear-gradient(135deg,#667eea,#764ba2);font-size:0.75rem;flex-shrink:0;overflow:hidden;">
+                                        @if($log->programmer?->profile_photo_url)
+                                            <img src="{{ $log->programmer->profile_photo_url }}"
+                                                 alt="Foto profil {{ $log->programmer->name ?? 'Pengguna' }}"
+                                                 style="width:100%;height:100%;object-fit:cover;display:block;">
+                                        @else
+                                            {{ strtoupper(substr($log->programmer->name ?? '?', 0, 1)) }}
+                                        @endif
                                     </div>
                                     <div>
                                         <div class="fw-semibold text-dark" style="font-size:0.875rem;">

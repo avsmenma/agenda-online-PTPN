@@ -113,7 +113,9 @@ table.at-table tbody td{padding:11px 14px;vertical-align:middle}
 .prog-avatar{
   width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);
   display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;flex-shrink:0;
+  overflow:hidden;
 }
+.prog-avatar img{width:100%;height:100%;object-fit:cover;display:block}
 .prog-name{font-size:12px;font-weight:600;color:var(--primary)}
 .prog-role{font-size:11px;color:var(--muted)}
 
@@ -430,7 +432,11 @@ function friendlyAction(string $action): array {
               <td>
                 <div style="display:flex;align-items:center;gap:10px">
                   <div class="prog-avatar">
-                    {{ strtoupper(substr($log->programmer->name ?? '?', 0, 1)) }}
+                    @if($log->programmer?->profile_photo_url)
+                      <img src="{{ $log->programmer->profile_photo_url }}" alt="Foto profil {{ $log->programmer->name ?? 'Pengguna' }}">
+                    @else
+                      {{ strtoupper(substr($log->programmer->name ?? '?', 0, 1)) }}
+                    @endif
                   </div>
                   <div>
                     <div class="prog-name">{{ $log->programmer->name ?? '(Pengguna telah dihapus)' }}</div>
