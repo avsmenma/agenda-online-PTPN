@@ -112,6 +112,10 @@ class VirtualAssistantQueryService
             return 'specific_document_age';
         }
 
+        if ($params['amount_exact'] !== null) {
+            return 'documents_by_exact_amount';
+        }
+
         if ($params['keyword'] && $params['asks_position']) {
             return 'specific_document_position';
         }
@@ -138,10 +142,6 @@ class VirtualAssistantQueryService
 
         if ($params['age_days_min'] !== null || $params['age_days_max'] !== null) {
             return 'documents_by_age';
-        }
-
-        if ($params['amount_exact'] !== null) {
-            return 'documents_by_exact_amount';
         }
 
         if ($this->containsAny($text, ['top bagian', 'bagian mana', 'bagian apa', 'paling banyak mengirim', 'paling banyak masuk'])) {
