@@ -4171,16 +4171,18 @@
   $modernWorkflowRoles = ['team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi', 'akuntansi'];
   $modernWorkflowModules = ['team_verifikasi', 'perpajakan', 'akutansi'];
   $usesOwnerShell = in_array($layoutUserRoleLower, ['owner', 'admin'], true);
+  $usesOperatorShell = $layoutUserRoleLower === 'operator' || $layoutModuleLower === 'operator';
   $usesPaymentShell = $layoutUserRoleLower === 'pembayaran' || (($module ?? null) === 'pembayaran');
   $usesWorkflowShell = in_array($layoutUserRoleLower, $modernWorkflowRoles, true) || in_array($layoutModuleLower, $modernWorkflowModules, true);
-  $usesModernSidebarShell = $usesOwnerShell || $usesPaymentShell || $usesWorkflowShell;
+  $usesModernSidebarShell = $usesOwnerShell || $usesOperatorShell || $usesPaymentShell || $usesWorkflowShell;
 @endphp
-<body class="{{ $usesModernSidebarShell ? 'owner-layout' : '' }} {{ $usesPaymentShell ? 'payment-layout' : '' }} {{ $usesWorkflowShell ? 'workflow-layout' : '' }}">
+<body class="{{ $usesModernSidebarShell ? 'owner-layout' : '' }} {{ $usesOperatorShell ? 'operator-layout' : '' }} {{ $usesPaymentShell ? 'payment-layout' : '' }} {{ $usesWorkflowShell ? 'workflow-layout' : '' }}">
   @php
     // Pre-calculate shouldShowSecondarySidebar for header
     // Check if user is owner
     $userRoleLower = $layoutUserRoleLower;
     $isOwner = $usesOwnerShell;
+    $isOperatorShell = $usesOperatorShell;
     $isPaymentShell = $usesPaymentShell;
     $isWorkflowShell = $usesWorkflowShell;
     $isModernSidebarShell = $usesModernSidebarShell;
@@ -4495,7 +4497,63 @@
       {{-- MENU Section --}}
       <div class="owner-sidebar-section" style="flex:0 0 auto;">
         <div class="owner-sidebar-label">Menu</div>
-        @if($isPaymentShell)
+        @if($isOperatorShell)
+        @php
+          $isOperatorInboxActive = request()->is('inbox') || request()->routeIs('inbox.*');
+          $isOperatorDocumentsActive = request()->routeIs('documents.index') ||
+            request()->routeIs('documents.edit') ||
+            request()->is('documents') ||
+            request()->is('documents/*/edit');
+          $isOperatorCreateActive = request()->routeIs('documents.create') || request()->is('documents/create');
+          $isOperatorImportActive = request()->routeIs('documents.import.*') || request()->is('documents/import*');
+          $isOperatorReportActive = request()->routeIs('reports.analytics') || request()->is('reports/analytics');
+          try {
+            $operatorInboxCount = \App\Models\Dokumen::where('inbox_approval_for', 'operator')
+              ->where('inbox_approval_status', 'pending')
+              ->count();
+          } catch (\Exception $e) {
+            $operatorInboxCount = 0;
+          }
+        @endphp
+        <a href="{{ url('/inbox') }}" class="owner-nav-item {{ $isOperatorInboxActive ? 'active' : '' }}" title="Inbox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
+            <path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/>
+          </svg>
+          Inbox
+          @if($operatorInboxCount > 0)
+            <span class="menu-notification-badge" style="margin-left:auto;">{{ $operatorInboxCount }}</span>
+          @endif
+        </a>
+        <a href="{{ route('documents.index') }}" class="owner-nav-item {{ $isOperatorDocumentsActive ? 'active' : '' }}" title="Daftar Dokumen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+          </svg>
+          Daftar Dokumen
+        </a>
+        <a href="{{ route('documents.create') }}" class="owner-nav-item {{ $isOperatorCreateActive ? 'active' : '' }}" title="Tambah Dokumen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Tambah Dokumen
+        </a>
+        <a href="{{ route('documents.import.index') }}" class="owner-nav-item {{ $isOperatorImportActive ? 'active' : '' }}" title="Import CSV">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M12 3v12"/>
+            <path d="M8 11l4 4 4-4"/>
+            <path d="M4 21h16"/>
+          </svg>
+          Import CSV
+        </a>
+        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ $isOperatorReportActive ? 'active' : '' }}" title="Rekapan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M3 3v18h18"/>
+            <path d="M7 15l4-4 3 3 5-7"/>
+          </svg>
+          Rekapan
+        </a>
+        @elseif($isPaymentShell)
         @php
           $isPaymentDashboardActive = request()->routeIs('dashboard.pembayaran') || request()->routeIs('dashboard.pembayaran.data') || request()->is('*dashboard/pembayaran*');
           $isPaymentDelayActive = request()->routeIs('reports.pembayaran.delays') || request()->is('*rekapan-keterlambatan*');
@@ -4748,7 +4806,7 @@
         <a href="{{ route('bagian.dashboard') }}" class="{{ $isBagianDashboardActive ? 'active' : '' }}"><i
             class="fa-solid fa-house"></i> Home</a>
       @else
-        @if(!in_array($module, ['team_verifikasi', 'perpajakan', 'akutansi']))
+        @if(!in_array($module, ['operator', 'team_verifikasi', 'perpajakan', 'akutansi']))
           <a href="{{ url($dashboardUrl) }}" class="{{ $menuDashboard ?? '' }}"><i class="fa-solid fa-house"></i> Home</a>
         @endif
       @endif
@@ -4992,18 +5050,6 @@
 
       @endunless
 
-      <!-- Tracking Dokumen Menu -->
-      @unless($isBagianUser)
-      @php
-        $trackingUrl = $module === 'operator' ? '/tracking-dokumen' : null;
-        $isTrackingActive = request()->is('*tracking-dokumen*');
-      @endphp
-      @if($trackingUrl)
-      <a href="{{ url($trackingUrl) }}" class="{{ $isTrackingActive ? 'active' : '' }}">
-        <i class="fa-solid fa-route"></i> Tracking Dokumen
-      </a>
-      @endif
-      @endif
     </div>
 
     <!-- Logout Button - Pindahkan ke paling bawah -->
