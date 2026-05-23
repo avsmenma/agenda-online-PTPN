@@ -139,7 +139,19 @@
   function getDataRows() {
     if (!tbodyEl) return [];
     return Array.from(tbodyEl.querySelectorAll('tr:not(.detail-row)'))
-      .filter(row => row.querySelectorAll('td').length > 0);
+      .filter(row => {
+        if (row.classList.contains('virtual-scroll-spacer')) return false;
+        if (row.dataset.acnIgnore === 'true') return false;
+        if (row.hidden || row.getAttribute('aria-hidden') === 'true') return false;
+
+        const cells = row.querySelectorAll('td');
+        if (cells.length === 0) return false;
+
+        const rowStyle = window.getComputedStyle(row);
+        if (rowStyle.display === 'none' || rowStyle.visibility === 'hidden') return false;
+
+        return true;
+      });
   }
 
   function getCells(row) {
@@ -379,9 +391,19 @@
     let nextRow = activeRow + deltaRow;
     nextRow = Math.max(0, Math.min(nextRow, rows.length - 1));
 
+    if (nextRow === activeRow && deltaRow !== 0 && activeCell && document.body.contains(activeCell)) {
+      scrollCellIntoView(activeCell);
+      return;
+    }
+
     const maxCol = getCells(rows[nextRow]).length - 1;
     let nextCol = activeCol + deltaCol;
     nextCol = Math.max(0, Math.min(nextCol, maxCol));
+
+    if (nextCol === activeCol && deltaCol !== 0 && nextRow === activeRow && activeCell && document.body.contains(activeCell)) {
+      scrollCellIntoView(activeCell);
+      return;
+    }
 
     setActiveCell(nextRow, nextCol);
   }
