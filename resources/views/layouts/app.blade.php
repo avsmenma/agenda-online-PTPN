@@ -4555,7 +4555,8 @@
         </a>
         @elseif($isPaymentShell)
         @php
-          $isPaymentDashboardActive = request()->routeIs('dashboard.pembayaran') || request()->routeIs('dashboard.pembayaran.data') || request()->is('*dashboard/pembayaran*');
+          $isPaymentAssistantActive = request()->routeIs('pembayaran.asisten-virtual*');
+          $isPaymentDashboardActive = !$isPaymentAssistantActive && (request()->routeIs('dashboard.pembayaran') || request()->routeIs('dashboard.pembayaran.data') || request()->is('*dashboard/pembayaran*'));
           $isPaymentDelayActive = request()->routeIs('reports.pembayaran.delays') || request()->is('*rekapan-keterlambatan*');
           $isPaymentReportActive = request()->routeIs('reports.pembayaran.*') || request()->is('*reports/pembayaran*');
         @endphp
@@ -4572,6 +4573,15 @@
             <polyline points="14,2 14,8 20,8"/>
           </svg>
           Daftar Pembayaran
+        </a>
+        <a href="{{ route('pembayaran.asisten-virtual') }}" class="owner-nav-item {{ $isPaymentAssistantActive ? 'active' : '' }}" title="Asisten Virtual">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <rect x="7" y="8" width="10" height="8" rx="3"/>
+            <path d="M12 4v4"/>
+            <path d="M8.5 12h.01M15.5 12h.01"/>
+            <path d="M9 16v2h6v-2"/>
+          </svg>
+          Asisten Virtual
         </a>
         <a href="{{ route('reports.pembayaran.delays') }}" class="owner-nav-item {{ $isPaymentDelayActive ? 'active' : '' }}" title="Rekap Keterlambatan">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">

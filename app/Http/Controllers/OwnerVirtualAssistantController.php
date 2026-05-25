@@ -16,6 +16,36 @@ class OwnerVirtualAssistantController extends Controller
         return view('owner.asisten-virtual', [
             'module' => 'owner',
             'menuAsistenVirtual' => 'active',
+            'assistantContext' => 'owner',
+            'assistantSubtitle' => 'Tanyakan data dokumen, pembayaran, status, dan laporan kepada asisten AI',
+            'assistantPlaceholder' => 'Contoh: Tampilkan dokumen yang belum dibayar di atas 100 juta',
+            'assistantEmptyTitle' => 'Mulai tanya data Agenda Online',
+            'assistantEmptyText' => 'Asisten hanya membaca data melalui query aman yang sudah dibatasi aplikasi.',
+            'assistantChatUrl' => route('owner.asisten-virtual.chat'),
+            'assistantFeedbackUrlTemplate' => route('owner.asisten-virtual.feedback', ['interaction' => '__ID__']),
+            'assistantQuickPrompts' => [],
+        ]);
+    }
+
+    public function pembayaranIndex(): View
+    {
+        return view('owner.asisten-virtual', [
+            'module' => 'pembayaran',
+            'menuAsistenVirtual' => 'active',
+            'assistantContext' => 'pembayaran',
+            'assistantSubtitle' => 'Tanyakan data pembayaran, status dokumen, dan laporan pembayaran kepada asisten AI',
+            'assistantPlaceholder' => 'Contoh: Tampilkan dokumen siap dibayar di atas 100 juta',
+            'assistantEmptyTitle' => 'Mulai tanya data pembayaran',
+            'assistantEmptyText' => 'Asisten Pembayaran membaca data dokumen melalui query aman yang dibatasi aplikasi.',
+            'assistantChatUrl' => route('pembayaran.asisten-virtual.chat'),
+            'assistantFeedbackUrlTemplate' => route('pembayaran.asisten-virtual.feedback', ['interaction' => '__ID__']),
+            'assistantQuickPrompts' => [
+                'Dokumen siap dibayar',
+                'Total belum siap bayar bulan ini',
+                'Dokumen sudah dibayar hari ini',
+                'Dokumen pembayaran terlambat',
+                'Total nilai sudah dibayar',
+            ],
         ]);
     }
 
@@ -42,7 +72,10 @@ class OwnerVirtualAssistantController extends Controller
         ]);
 
         try {
-            $reply = $assistant->respond($validated['message'], $validated['context'] ?? []);
+            $context = $validated['context'] ?? [];
+            $context['assistant_scope'] = $this->assistantContext($request);
+
+            $reply = $assistant->respond($validated['message'], $context);
             try {
                 $log = $this->storeInteraction($request, $validated['message'], $reply, (int) round((microtime(true) - $startedAt) * 1000));
                 $reply['interaction_id'] = $log->id;
@@ -127,6 +160,7 @@ class OwnerVirtualAssistantController extends Controller
             'ai_called' => (bool) data_get($meta, 'ai_called', false),
             'ai_skipped_reason' => data_get($meta, 'ai_skipped_reason'),
             'latency_ms' => $latencyMs,
+            'source_context' => $this->assistantContext($request),
         ]);
     }
 
@@ -146,7 +180,15 @@ class OwnerVirtualAssistantController extends Controller
             'ai_model' => $this->aiModelName((string) config('asisten_virtual.provider')),
             'ai_called' => false,
             'latency_ms' => $latencyMs,
+            'source_context' => $this->assistantContext($request),
         ]);
+    }
+
+    private function assistantContext(Request $request): string
+    {
+        return str_starts_with((string) $request->route()?->getName(), 'pembayaran.')
+            ? 'pembayaran'
+            : 'owner';
     }
 
     private function classifyStatus(array $reply): string

@@ -18,6 +18,7 @@ class VirtualAssistantInteraction extends Model
     protected $fillable = [
         'user_id',
         'user_role',
+        'source_context',
         'question',
         'normalized_question',
         'intent',

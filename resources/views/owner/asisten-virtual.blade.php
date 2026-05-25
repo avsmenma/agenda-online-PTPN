@@ -67,6 +67,33 @@
     overflow: hidden;
   }
 
+  .va-prompts {
+    align-items: center;
+    background: #ffffff;
+    border-bottom: 1px solid #eef2f7;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 20px;
+  }
+
+  .va-prompt {
+    background: #f8fafc;
+    border: 1px solid #dce5f0;
+    border-radius: 999px;
+    color: #26344d;
+    font-size: 12px;
+    font-weight: 750;
+    min-height: 34px;
+    padding: 0 14px;
+  }
+
+  .va-prompt:hover {
+    background: #ecfdf5;
+    border-color: #99f6e4;
+    color: #0f766e;
+  }
+
   .va-messages {
     background: linear-gradient(180deg, #fbfdff 0%, #f8fafc 100%);
     min-height: 0;
@@ -362,7 +389,7 @@
     <div class="va-header">
       <div>
         <h1 class="va-title">Asisten Virtual</h1>
-        <div class="va-subtitle">Tanyakan data dokumen, pembayaran, status, dan laporan kepada asisten AI</div>
+        <div class="va-subtitle">{{ $assistantSubtitle ?? 'Tanyakan data dokumen, pembayaran, status, dan laporan kepada asisten AI' }}</div>
       </div>
       <button class="va-new-chat" type="button" id="vaNewChat">
         <i class="fa-solid fa-plus"></i>
@@ -371,19 +398,27 @@
     </div>
 
     <section class="va-chat-card" aria-label="Chat Asisten Virtual">
+      @if(!empty($assistantQuickPrompts ?? []))
+        <div class="va-prompts" aria-label="Pertanyaan cepat Asisten Virtual">
+          @foreach($assistantQuickPrompts as $prompt)
+            <button class="va-prompt" type="button" data-prompt="{{ $prompt }}">{{ $prompt }}</button>
+          @endforeach
+        </div>
+      @endif
+
       <div class="va-messages" id="vaMessages">
         <div class="va-empty" id="vaEmpty">
           <div class="va-empty-icon">
             <i class="fa-solid fa-robot"></i>
           </div>
-          <div class="va-empty-title">Mulai tanya data Agenda Online</div>
-          <div>Asisten hanya membaca data melalui query aman yang sudah dibatasi aplikasi.</div>
+          <div class="va-empty-title">{{ $assistantEmptyTitle ?? 'Mulai tanya data Agenda Online' }}</div>
+          <div>{{ $assistantEmptyText ?? 'Asisten hanya membaca data melalui query aman yang sudah dibatasi aplikasi.' }}</div>
         </div>
       </div>
 
       <form class="va-input-wrap" id="vaForm">
         <div class="va-input-box">
-          <textarea class="va-input" id="vaInput" name="message" maxlength="{{ config('asisten_virtual.limits.max_message_length', 800) }}" placeholder="Contoh: Tampilkan dokumen yang belum dibayar di atas 100 juta"></textarea>
+          <textarea class="va-input" id="vaInput" name="message" maxlength="{{ config('asisten_virtual.limits.max_message_length', 800) }}" placeholder="{{ $assistantPlaceholder ?? 'Contoh: Tampilkan dokumen yang belum dibayar di atas 100 juta' }}"></textarea>
           <button class="va-send" type="submit" id="vaSend">
             <i class="fa-solid fa-paper-plane"></i>
             Kirim
@@ -397,8 +432,9 @@
 
 <script>
 (() => {
-  const endpoint = @json(route('owner.asisten-virtual.chat'));
-  const feedbackEndpointTemplate = @json(route('owner.asisten-virtual.feedback', ['interaction' => '__ID__']));
+  const endpoint = @json($assistantChatUrl ?? route('owner.asisten-virtual.chat'));
+  const feedbackEndpointTemplate = @json($assistantFeedbackUrlTemplate ?? route('owner.asisten-virtual.feedback', ['interaction' => '__ID__']));
+  const assistantContext = @json($assistantContext ?? 'owner');
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
   const messages = document.getElementById('vaMessages');
   const empty = document.getElementById('vaEmpty');
@@ -407,7 +443,7 @@
   const send = document.getElementById('vaSend');
   const newChat = document.getElementById('vaNewChat');
   const currentUserId = @json(auth()->id());
-  const storageKey = `virtual_assistant_chat_${currentUserId || 'guest'}`;
+  const storageKey = `virtual_assistant_chat_${assistantContext}_${currentUserId || 'guest'}`;
   const maxStoredMessages = 80;
   let loadingNode = null;
   let conversationContext = {};
@@ -631,6 +667,9 @@
 
     try {
       saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+      if (!saved && assistantContext === 'owner') {
+        saved = JSON.parse(localStorage.getItem(`virtual_assistant_chat_${currentUserId || 'guest'}`) || 'null');
+      }
     } catch (error) {
       saved = null;
     }
@@ -726,6 +765,10 @@
   });
 
   input.addEventListener('input', resizeInput);
+
+  document.querySelectorAll('.va-prompt').forEach((button) => {
+    button.addEventListener('click', () => submitMessage(button.dataset.prompt || button.textContent || ''));
+  });
 
   newChat.addEventListener('click', () => {
     messages.innerHTML = '';

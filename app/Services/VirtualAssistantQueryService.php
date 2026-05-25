@@ -55,10 +55,11 @@ class VirtualAssistantQueryService
         $limit = min((int) config('asisten_virtual.limits.default_result_limit', 15), 20);
         $params = $this->parseParameters($message, $normalized);
         $params = $this->applyConversationContext($params, $normalized, $context);
+        $params['assistant_scope'] = $this->assistantScope($context);
         $intent = $this->resolveIntent($normalized, $params);
 
         $result = match ($intent) {
-            'greeting' => $this->greeting(),
+            'greeting' => $this->greeting($params),
             'cashbank_summary' => $this->cashbankSummary($params),
             'document_summary' => $this->documentSummary($params),
             'document_entry_dates_summary' => $this->documentEntryDatesSummary($params, $limit),
@@ -100,7 +101,8 @@ class VirtualAssistantQueryService
             return 'greeting';
         }
 
-        if ($this->containsAny($text, ['cash bank', 'cashbank', 'saldo bank', 'saldo rekening', 'dropping', 'penerimaan cash'])) {
+        if (($params['assistant_scope'] ?? 'owner') === 'owner'
+            && $this->containsAny($text, ['cash bank', 'cashbank', 'saldo bank', 'saldo rekening', 'dropping', 'penerimaan cash'])) {
             return 'cashbank_summary';
         }
 
@@ -261,7 +263,7 @@ class VirtualAssistantQueryService
         return $params;
     }
 
-    private function greeting(): array
+    private function greeting(array $params = []): array
     {
         return [
             'intent' => 'greeting',
@@ -275,7 +277,7 @@ class VirtualAssistantQueryService
                     'Bagian mana dengan nilai dokumen terbesar?',
                 ],
             ],
-            'link' => route('owner.dokumen'),
+            'link' => url('/owner/laporan-cash-bank'),
             'meta' => ['confidence' => 'high', 'service' => 'greeting'],
         ];
     }
@@ -316,7 +318,7 @@ class VirtualAssistantQueryService
                     'total_nilai' => $this->formatMoney((clone $unpaidQuery)->sum('nilai_rupiah')),
                 ],
             ],
-            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'link' => $this->documentListUrl($params),
             'meta' => ['confidence' => 'high', 'service' => 'document_summary', 'params' => $params],
         ];
     }
@@ -355,7 +357,7 @@ class VirtualAssistantQueryService
                     $breakdown
                 )),
             ],
-            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'link' => $this->documentListUrl($params),
             'meta' => ['confidence' => 'high', 'service' => 'payment_summary', 'params' => $params],
         ];
     }
@@ -377,7 +379,7 @@ class VirtualAssistantQueryService
             'intent' => 'specific_document_payment_status',
             'answer' => $answer,
             'data' => $this->formatDocuments(collect([$doc])),
-            'link' => route('owner.dokumen', ['status' => 'all', 'search' => $doc->nomor_agenda]),
+            'link' => $this->documentListUrl($params, ['search' => $doc->nomor_agenda]),
             'meta' => [
                 'service' => 'specific_document_payment_status',
                 'context_document_id' => $doc->id,
@@ -401,7 +403,7 @@ class VirtualAssistantQueryService
             'intent' => 'specific_document_age',
             'answer' => "Umur dokumen {$doc->nomor_agenda} adalah {$age} sejak tanggal masuk {$tanggalMasuk->format('d M Y H:i')}.",
             'data' => $this->formatDocuments(collect([$doc]), true),
-            'link' => route('owner.dokumen', ['status' => 'all', 'search' => $doc->nomor_agenda]),
+            'link' => $this->documentListUrl($params, ['search' => $doc->nomor_agenda]),
             'meta' => ['confidence' => 'high', 'service' => 'specific_document_age', 'params' => $params],
         ];
     }
@@ -420,7 +422,7 @@ class VirtualAssistantQueryService
             'intent' => 'specific_document_position',
             'answer' => $answer,
             'data' => $this->formatDocuments(collect([$doc]), true),
-            'link' => route('owner.dokumen', ['status' => 'all', 'search' => $doc->nomor_agenda]),
+            'link' => $this->documentListUrl($params, ['search' => $doc->nomor_agenda]),
             'meta' => ['confidence' => 'high', 'service' => 'specific_document_position', 'params' => $params],
         ];
     }
@@ -457,10 +459,10 @@ class VirtualAssistantQueryService
             'intent' => 'documents_by_exact_amount',
             'answer' => $answer,
             'data' => $this->formatDocuments($docs, $params['asks_position']),
-            'link' => route('owner.dokumen', $this->linkParams(array_merge($filterParams, [
+            'link' => $this->documentListUrl(array_merge($filterParams, [
                 'amount_min' => $amount,
                 'amount_max' => $amount,
-            ]))),
+            ])),
             'meta' => [
                 'limited' => $total > $docs->count(),
                 'total' => $total,
@@ -501,7 +503,7 @@ class VirtualAssistantQueryService
                 'tercepat' => $this->formatDuration($fastest),
                 'terlama' => $this->formatDuration($slowest),
             ],
-            'link' => route('owner.dokumen', ['filter_pengurus' => $role]),
+            'link' => $this->documentListUrl($params, ['filter_pengurus' => $role]),
             'meta' => ['confidence' => 'high', 'service' => 'role_average_duration', 'params' => $params],
         ];
     }
@@ -532,7 +534,7 @@ class VirtualAssistantQueryService
             'intent' => $intent,
             'answer' => $answer,
             'data' => $this->formatDocuments($docs, $intent === 'late_documents'),
-            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'link' => $this->documentListUrl($params),
             'meta' => [
                 'limited' => $total > $docs->count(),
                 'total' => $total,
@@ -567,7 +569,7 @@ class VirtualAssistantQueryService
             'intent' => 'documents_by_age',
             'answer' => "Ditemukan {$total} dokumen dengan umur yang dimaksud. Berikut {$docs->count()} teratas.",
             'data' => $this->formatDocuments($docs, true),
-            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'link' => $this->documentListUrl($params),
             'meta' => ['total' => $total, 'shown' => $docs->count(), 'service' => 'documents_by_age', 'params' => $params],
         ];
     }
@@ -594,7 +596,7 @@ class VirtualAssistantQueryService
             'intent' => 'recent_documents',
             'answer' => "Ditemukan {$total} dokumen yang masuk akhir-akhir ini, berikut {$docs->count()} terbaru.",
             'data' => $this->formatDocuments($docs),
-            'link' => route('owner.dokumen', $this->linkParams($recentParams)),
+            'link' => $this->documentListUrl($recentParams),
             'meta' => ['total' => $total, 'shown' => $docs->count(), 'service' => 'recent_documents', 'params' => $recentParams],
         ];
     }
@@ -623,7 +625,7 @@ class VirtualAssistantQueryService
                 'tanggal_masuk' => Carbon::parse($row->tanggal)->format('d M Y'),
                 'jumlah_dokumen' => (int) $row->total_dokumen,
             ])->values()->all(),
-            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'link' => $this->documentListUrl($params),
             'meta' => ['service' => 'document_entry_dates_summary', 'params' => $params],
         ];
     }
@@ -644,7 +646,7 @@ class VirtualAssistantQueryService
             'intent' => 'oldest_documents',
             'answer' => "Berikut dokumen yang paling lama diproses. Hasil dibatasi {$docs->count()} dokumen teratas.",
             'data' => $this->formatDocuments($docs, true),
-            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'link' => $this->documentListUrl($params),
             'meta' => ['limited' => true, 'service' => 'oldest_documents', 'params' => $params],
         ];
     }
@@ -667,7 +669,7 @@ class VirtualAssistantQueryService
             'intent' => 'late_documents',
             'answer' => "Ada {$total} dokumen yang tertahan lebih dari 3 hari{$this->filterLabel($params)}. Berikut {$docs->count()} teratas.",
             'data' => $this->formatDocuments($docs, true),
-            'link' => route('owner.dokumen', array_merge($this->linkParams($params), ['status' => 'urgent'])),
+            'link' => $this->documentListUrl($params, ['status' => 'urgent']),
             'meta' => ['total' => $total, 'shown' => $docs->count(), 'service' => 'late_documents', 'params' => $params],
         ];
     }
@@ -702,7 +704,7 @@ class VirtualAssistantQueryService
                 'jumlah_dokumen' => (int) $row->total_dokumen,
                 'total_nilai' => $this->formatMoney($row->total_nilai),
             ])->values()->all(),
-            'link' => route('owner.dokumen', $this->linkParams($params)),
+            'link' => $this->documentListUrl($params),
             'meta' => ['mode' => $mode, 'service' => 'top_departments', 'params' => $params],
         ];
     }
@@ -729,7 +731,7 @@ class VirtualAssistantQueryService
                 'total_dropping' => $this->formatMoney($summary['total_dropping'] ?? 0),
                 'realisasi_pct' => $summary['realisasi_pct'] ?? 0,
             ],
-            'link' => url('/owner/laporan-cash-bank'),
+            'link' => $this->documentListUrl($params),
             'meta' => ['service' => 'cashbank_summary', 'params' => $params],
         ];
     }
@@ -889,6 +891,8 @@ class VirtualAssistantQueryService
 
     private function applyFilters(Builder $query, array $params, bool $includePayment = true): void
     {
+        $this->applyAssistantScope($query, $params);
+
         if ($includePayment && $params['payment_statuses'] !== []) {
             $this->applyPaymentStatuses($query, $params['payment_statuses']);
         }
@@ -955,6 +959,7 @@ class VirtualAssistantQueryService
                     match ($status) {
                         'sudah_dibayar' => $this->applyPaidCondition($statusQuery),
                         'siap_dibayar' => $this->applyReadyToPayCondition($statusQuery),
+                        'belum_siap_bayar' => $this->applyNotReadyToPayCondition($statusQuery),
                         'belum_dibayar' => $this->applyUnpaidCondition($statusQuery),
                         default => null,
                     };
@@ -991,6 +996,22 @@ class VirtualAssistantQueryService
                 $readyQuery->whereIn('status_pembayaran', ['siap_dibayar', 'siap_bayar', 'SIAP_DIBAYAR', 'SIAP DIBAYAR', 'pending', 'Pending'])
                     ->orWhere('current_handler', 'pembayaran')
                     ->orWhere('status', 'sent_to_pembayaran');
+            });
+        });
+    }
+
+    private function applyNotReadyToPayCondition(Builder $query): void
+    {
+        $query->where(function (Builder $subQuery) {
+            $this->applyUnpaidCondition($subQuery);
+            $subQuery->where(function (Builder $notReadyQuery) {
+                $notReadyQuery->whereNotIn('status_pembayaran', ['siap_dibayar', 'siap_bayar', 'SIAP_DIBAYAR', 'SIAP DIBAYAR', 'pending', 'Pending'])
+                    ->orWhereNull('status_pembayaran');
+            });
+            $subQuery->whereNotIn('status', ['sent_to_pembayaran', 'processed_by_pembayaran']);
+            $subQuery->where(function (Builder $handlerQuery) {
+                $handlerQuery->whereNull('current_handler')
+                    ->orWhere('current_handler', '!=', 'pembayaran');
             });
         });
     }
@@ -1050,10 +1071,21 @@ class VirtualAssistantQueryService
         ]);
     }
 
+    private function applyAssistantScope(Builder $query, array $params): void
+    {
+        // Pembayaran currently has access to the same document set shown in
+        // its dashboard/table. Role safety is enforced by the route
+        // middleware; this hook keeps the query layer context-aware without
+        // sending raw SQL or extra data to the AI provider.
+    }
+
     private function findSpecificDocument(array $params): ?Dokumen
     {
         if ($params['context_document_id'] ?? null) {
-            return $this->baseQuery()->where('id', $params['context_document_id'])->first();
+            $contextQuery = $this->baseQuery()->where('id', $params['context_document_id']);
+            $this->applyAssistantScope($contextQuery, $params);
+
+            return $contextQuery->first();
         }
 
         if (!($params['keyword'] ?? null)) {
@@ -1062,8 +1094,10 @@ class VirtualAssistantQueryService
 
         $keyword = $params['keyword'];
 
-        return $this->baseQuery()
-            ->where(function (Builder $query) use ($keyword) {
+        $query = $this->baseQuery();
+        $this->applyAssistantScope($query, $params);
+
+        return $query->where(function (Builder $query) use ($keyword) {
                 $query->where('nomor_agenda', 'like', "%{$keyword}%")
                     ->orWhere('nomor_spp', 'like', "%{$keyword}%")
                     ->orWhere('uraian_spp', 'like', "%{$keyword}%");
@@ -1156,6 +1190,10 @@ class VirtualAssistantQueryService
 
         if ($this->containsAny($text, ['sudah dibayar', 'sudah bayar', 'telah dibayar', 'lunas', 'terbayar'])) {
             $statuses[] = 'sudah_dibayar';
+        }
+
+        if ($this->containsAny($text, ['belum siap dibayar', 'belum siap bayar'])) {
+            $statuses[] = 'belum_siap_bayar';
         }
 
         if ($this->containsAny($text, ['belum dibayar', 'belum bayar', 'belum lunas', 'tidak dibayar'])) {
@@ -1367,7 +1405,7 @@ class VirtualAssistantQueryService
             'intent' => 'clarification',
             'answer' => $suggestion . "\n\nContoh pertanyaan yang bisa langsung dijawab: \"berikan saya dokumen siap dibayar\" atau \"dokumen belum dibayar di atas 100 juta\".",
             'data' => [],
-            'link' => route('owner.dokumen'),
+            'link' => $this->documentListUrl($params),
             'meta' => ['confidence' => 'low', 'service' => 'clarification', 'params' => $params],
         ];
     }
@@ -1382,10 +1420,43 @@ class VirtualAssistantQueryService
         ];
 
         if ($includeLink) {
-            $result['link'] = route('owner.dokumen', $this->linkParams($params));
+            $result['link'] = $this->documentListUrl($params);
         }
 
         return $result;
+    }
+
+    private function assistantScope(array $context): string
+    {
+        return data_get($context, 'assistant_scope') === 'pembayaran' ? 'pembayaran' : 'owner';
+    }
+
+    private function documentListUrl(array $params, array $extra = []): string
+    {
+        $query = array_merge($this->linkParams($params), $extra);
+
+        if (($params['assistant_scope'] ?? 'owner') === 'pembayaran') {
+            unset($query['status']);
+
+            if (isset($query['filter_status_pembayaran'])) {
+                $query['status_pembayaran'] = match ($query['filter_status_pembayaran']) {
+                    'belum_siap_bayar' => 'belum_siap_bayar',
+                    'belum_dibayar' => 'belum_siap_bayar',
+                    'siap_dibayar' => 'siap_bayar',
+                    default => $query['filter_status_pembayaran'],
+                };
+                unset($query['filter_status_pembayaran']);
+            }
+
+            if (isset($query['filter_tanggal_masuk'])) {
+                $query['date'] = $query['filter_tanggal_masuk'];
+                unset($query['filter_tanggal_masuk']);
+            }
+
+            return route('dashboard.pembayaran', $query);
+        }
+
+        return route('owner.dokumen', $query);
     }
 
     private function linkParams(array $params): array
@@ -1466,6 +1537,7 @@ class VirtualAssistantQueryService
     {
         return implode(' dan ', array_map(fn ($status) => match ($status) {
             'siap_dibayar' => 'Siap Dibayar',
+            'belum_siap_bayar' => 'Belum Siap Bayar',
             'sudah_dibayar' => 'Sudah Dibayar',
             'belum_dibayar' => 'Belum Dibayar',
             default => (string) str($status)->replace('_', ' ')->title(),

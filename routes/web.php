@@ -171,6 +171,18 @@ Route::get('dashboard/pembayaran/data', [DashboardPembayaranController::class, '
     ->middleware('auth', 'role:admin,pembayaran')
     ->name('dashboard.pembayaran.data');
 
+Route::get('dashboard/pembayaran/asisten-virtual', [OwnerVirtualAssistantController::class, 'pembayaranIndex'])
+    ->middleware('auth', 'role:admin,pembayaran')
+    ->name('pembayaran.asisten-virtual');
+
+Route::post('dashboard/pembayaran/asisten-virtual/chat', [OwnerVirtualAssistantController::class, 'chat'])
+    ->middleware('auth', 'role:admin,pembayaran')
+    ->name('pembayaran.asisten-virtual.chat');
+
+Route::post('dashboard/pembayaran/asisten-virtual/{interaction}/feedback', [OwnerVirtualAssistantController::class, 'feedback'])
+    ->middleware('auth', 'role:admin,pembayaran')
+    ->name('pembayaran.asisten-virtual.feedback');
+
 
 
 
