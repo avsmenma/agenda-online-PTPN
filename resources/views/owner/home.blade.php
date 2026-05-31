@@ -32,6 +32,8 @@
     color: var(--text-primary);
     background: var(--bg);
     min-height: 100vh;
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   /* â”€â”€ TOPBAR â”€â”€ */
@@ -67,16 +69,20 @@
   .badge-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
   /* â”€â”€ CONTENT AREA â”€â”€ */
-  .owner-content { padding: 24px 28px; }
+  .owner-content {
+    padding: 24px 28px;
+    max-width: 100%;
+    min-width: 0;
+  }
 
   /* â”€â”€ STAT CARDS â”€â”€ */
   .stats-row {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 20px;
   }
-  @media (max-width: 1200px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 1200px) { .stats-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 768px)  { .stats-row { grid-template-columns: 1fr 1fr; } }
 
   .stat-card {
@@ -149,7 +155,7 @@
   /* â”€â”€ CHARTS ROW â”€â”€ */
   .charts-row {
     display: grid;
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
     gap: 14px; margin-bottom: 20px;
   }
   @media (max-width: 1024px) { .charts-row { grid-template-columns: 1fr; } }
@@ -190,8 +196,11 @@
   /* â”€â”€ BOTTOM ROW â”€â”€ */
   .bottom-row {
     display: grid;
-    grid-template-columns: 1.3fr 1fr 1fr;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
     gap: 14px; margin-bottom: 20px;
+  }
+  .bottom-row-compact {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 300px);
   }
   @media (max-width: 1100px) { .bottom-row { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 768px)  { .bottom-row { grid-template-columns: 1fr; } }
@@ -526,7 +535,7 @@
     </div>{{-- /.charts-row --}}
 
     {{-- BOTTOM ROW --}}
-    <div class="bottom-row" style="grid-template-columns: 1fr 300px;">
+    <div class="bottom-row bottom-row-compact">
 
       {{-- Dokumen Terbaru (Real-time) - Extended --}}
       <div class="dash-card">

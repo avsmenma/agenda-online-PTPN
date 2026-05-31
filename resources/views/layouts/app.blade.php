@@ -3809,8 +3809,14 @@
     /* ========================================
        OWNER SIDEBAR - Fixed 240px Modern Design
        ======================================== */
+    body.owner-layout {
+      --modern-sidebar-width: 240px;
+      --modern-content-width: calc(100vw - var(--modern-sidebar-width));
+      overflow-x: hidden;
+    }
+
     .sidebar-owner {
-      width: 240px !important;
+      width: var(--modern-sidebar-width) !important;
       background: #ffffff;
       border-right: 1px solid #e8ecf4;
       display: flex;
@@ -3979,16 +3985,28 @@
 
     /* Owner content area — wider margin for fixed sidebar */
     body.owner-layout .content {
-      margin-left: 240px !important;
-      transition: margin-left 0.22s ease;
+      margin-left: var(--modern-sidebar-width) !important;
+      width: var(--modern-content-width);
+      max-width: var(--modern-content-width);
+      min-width: 0;
+      box-sizing: border-box;
+      overflow-x: clip;
+      transition: margin-left 0.22s ease, width 0.22s ease, max-width 0.22s ease;
     }
     body.owner-layout .topbar {
-      margin-left: 240px !important;
-      transition: margin-left 0.22s ease;
+      margin-left: var(--modern-sidebar-width) !important;
+      width: var(--modern-content-width);
+      max-width: var(--modern-content-width);
+      box-sizing: border-box;
+      transition: margin-left 0.22s ease, width 0.22s ease, max-width 0.22s ease;
+    }
+
+    .sidebar-collapsed body.owner-layout {
+      --modern-sidebar-width: 84px;
     }
 
     .sidebar-collapsed body.owner-layout .sidebar-owner {
-      width: 84px !important;
+      width: var(--modern-sidebar-width) !important;
     }
     .sidebar-collapsed body.owner-layout .owner-sidebar-logo {
       padding: 16px 8px 14px 10px;
@@ -4047,12 +4065,16 @@
     }
     .sidebar-collapsed body.owner-layout .content,
     .sidebar-collapsed body.owner-layout .topbar {
-      margin-left: 84px !important;
+      margin-left: var(--modern-sidebar-width) !important;
     }
 
     @media (max-width: 768px) {
+      body.owner-layout {
+        --modern-sidebar-width: 72px;
+      }
+
       body.owner-layout .sidebar-owner {
-        width: 72px !important;
+        width: var(--modern-sidebar-width) !important;
       }
       body.owner-layout .owner-sidebar-logo {
         justify-content: center; padding: 16px 0 12px;
@@ -4090,7 +4112,7 @@
       }
       body.owner-layout .content,
       body.owner-layout .topbar {
-        margin-left: 72px !important;
+        margin-left: var(--modern-sidebar-width) !important;
       }
     }
   </style>
