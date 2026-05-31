@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="description" content="Login Agenda Online PTPN untuk pengelolaan agenda dan dokumen perusahaan.">
     <title>Agenda Online - PTPN</title>
 
     <!-- Bootstrap CSS -->
@@ -52,6 +53,23 @@
             height: auto;
             transform: translate(-50%, -50%);
             object-fit: cover;
+        }
+
+        .video-background .background-poster {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-background video {
+            opacity: 0;
+            transition: opacity 0.35s ease;
+        }
+
+        .video-background video.is-ready {
+            opacity: 1;
         }
 
         /* ==================== LOGIN WRAPPER ==================== */
@@ -270,7 +288,7 @@
         .btn-login {
             width: 100%;
             height: 48px;
-            background: #28a745;
+            background: #187a34;
             border: none;
             border-radius: 8px;
             color: #ffffff;
@@ -283,14 +301,14 @@
             justify-content: center;
             gap: 8px;
             font-family: 'Poppins', sans-serif;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+            box-shadow: 0 4px 15px rgba(24, 122, 52, 0.42);
             letter-spacing: 0.3px;
         }
 
         .btn-login:hover {
-            background: #218838;
+            background: #146c2e;
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.55);
+            box-shadow: 0 8px 25px rgba(20, 108, 46, 0.55);
         }
 
         .btn-login:active {
@@ -375,9 +393,16 @@
 
 <body>
     <!-- Video Background -->
-    <div class="video-background">
-        <video autoplay muted loop playsinline preload="auto">
-            <source src="{{ asset('videos/landing-bg.mp4') }}" type="video/mp4">
+    <div class="video-background" aria-hidden="true">
+        <img
+            class="background-poster"
+            src="{{ asset('images/landing-bg-poster.jpg') }}"
+            width="1600"
+            height="679"
+            alt=""
+            fetchpriority="high">
+        <video muted loop playsinline preload="none" poster="{{ asset('images/landing-bg-poster.jpg') }}" aria-hidden="true">
+            <source data-src="{{ asset('videos/landing-bg.mp4') }}" type="video/mp4">
         </video>
     </div>
 
@@ -389,7 +414,7 @@
                 <!-- Header -->
                 <div class="login-header">
                     <div class="logo-wrap">
-                        <img src="{{ asset('images/logoPTPNNew.png') }}" alt="Logo PTPN">
+                        <img src="{{ asset('images/logoPTPNNew-128.png') }}" width="128" height="128" alt="Logo PTPN">
                     </div>
                     <h1>Agenda Online PTPN</h1>
                     <p>Sistem Manajemen Dokumen</p>
@@ -455,7 +480,7 @@
                                     id="password"
                                     placeholder="Masukkan password"
                                     required>
-                                <button type="button" class="password-toggle" id="togglePassword" tabindex="-1">
+                                <button type="button" class="password-toggle" id="togglePassword" aria-label="Tampilkan password" aria-controls="password" aria-pressed="false" title="Tampilkan password">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
@@ -510,6 +535,44 @@
             passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
             this.querySelector('i').classList.toggle('fa-eye');
             this.querySelector('i').classList.toggle('fa-eye-slash');
+            const label = isPassword ? 'Sembunyikan password' : 'Tampilkan password';
+            this.setAttribute('aria-label', label);
+            this.setAttribute('title', label);
+            this.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+        });
+
+        window.addEventListener('load', function () {
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            if (prefersReducedMotion) {
+                return;
+            }
+
+            const backgroundVideo = document.querySelector('.video-background video');
+            const backgroundSource = backgroundVideo ? backgroundVideo.querySelector('source[data-src]') : null;
+
+            if (!backgroundVideo || !backgroundSource) {
+                return;
+            }
+
+            setTimeout(function () {
+                backgroundSource.src = backgroundSource.dataset.src;
+                backgroundVideo.load();
+
+                const playPromise = backgroundVideo.play();
+
+                if (playPromise && typeof playPromise.then === 'function') {
+                    playPromise
+                        .then(function () {
+                            backgroundVideo.classList.add('is-ready');
+                        })
+                        .catch(function () {
+                            // Keep the poster image visible when autoplay is blocked.
+                        });
+                } else {
+                    backgroundVideo.classList.add('is-ready');
+                }
+            }, 5000);
         });
 
         // ── Form submission loading state ───────────────────────────────
