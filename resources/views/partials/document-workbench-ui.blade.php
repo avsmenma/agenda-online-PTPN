@@ -282,13 +282,6 @@
       color: #ffffff;
     }
 
-    .document-qv-muted {
-      color: #64748b;
-      font-size: 0.78rem;
-      line-height: 1.45;
-      margin-right: auto;
-    }
-
     @media (max-width: 780px) {
       .document-workbench-bar {
         align-items: stretch;
@@ -451,7 +444,6 @@
           '</div>',
           '<div class="document-qv-body" id="documentQvBody"></div>',
           '<div class="document-qv-footer">',
-            '<span class="document-qv-muted">Esc untuk tutup, Arrow/PageUp/PageDown untuk scroll.</span>',
             '<button type="button" class="document-qv-action" id="documentQvDetailButton"><i class="fa-solid fa-up-right-from-square"></i> Detail lengkap</button>',
           '</div>'
         ].join('');
@@ -530,6 +522,9 @@
 
       function extractOwnerRow(row) {
         const idMatch = (row.getAttribute('onclick') || '').match(/openOwnerDocModal\((\d+)\)/);
+        const handlerName = clean(row.querySelector('.owner-docs-handler-name')?.textContent);
+        const handlerSub = clean(row.querySelector('.owner-docs-handler-sub')?.textContent);
+        const handlerValue = [handlerName, handlerSub].filter(Boolean).join(' ');
         return {
           ownerId: idMatch ? idMatch[1] : '',
           title: clean(row.querySelector('.owner-docs-docno')?.textContent) || 'Dokumen',
@@ -540,7 +535,7 @@
             { label: 'Dari', value: textForCell(row.children[2]) },
             { label: 'Umur Dokumen', value: textForCell(row.children[3]) },
             { label: 'Status Pembayaran', value: textForCell(row.children[4]) },
-            { label: 'Pengurus Dokumen', value: textForCell(row.children[5]) },
+            { label: 'Pengurus Dokumen', value: handlerValue },
             { label: 'Durasi Peran', value: textForCell(row.children[6]) },
             { label: 'Tanggal Masuk', value: clean(Array.from(row.querySelectorAll('.owner-docs-payee')).find((el) => el.textContent.includes('Tanggal masuk'))?.textContent.replace('Tanggal masuk:', '')) }
           ].filter((field) => field.value)

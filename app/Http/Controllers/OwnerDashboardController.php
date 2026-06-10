@@ -4566,7 +4566,20 @@ class OwnerDashboardController extends Controller
         $scores = [];
         foreach ($teamLabels as $code => $label) {
             $docs  = $classified->where('tim_code', $code);
-            $total = $docs->count() ?: 1;
+            $total = $docs->count();
+
+            // Teams with no activity yet have no performance to score: show 0.
+            if ($total === 0) {
+                $scores[$code] = [
+                    'label' => $label,
+                    'score' => 0,
+                    'aman'  => 0,
+                    'warn'  => 0,
+                    'late'  => 0,
+                ];
+                continue;
+            }
+
             $aman  = $docs->where('status', 'aman')->count();
             $warn  = $docs->where('status', 'warn')->count();
             $late  = $docs->where('status', 'late')->count();

@@ -130,6 +130,33 @@
     font-weight: 800;
   }
 
+  .va-empty-typewriter {
+    align-items: center;
+    color: #5b6b8c;
+    display: flex;
+    font-size: 15px;
+    justify-content: center;
+    min-height: 24px;
+    gap: 2px;
+  }
+
+  .va-tw-text {
+    font-style: italic;
+  }
+
+  .va-tw-caret {
+    background: #0f766e;
+    display: inline-block;
+    height: 18px;
+    width: 2px;
+    animation: vaTwBlink 1s step-end infinite;
+  }
+
+  @keyframes vaTwBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
   .va-message {
     display: flex;
     margin-bottom: 16px;
@@ -412,7 +439,9 @@
             <i class="fa-solid fa-robot"></i>
           </div>
           <div class="va-empty-title">{{ $assistantEmptyTitle ?? 'Mulai tanya data Agenda Online' }}</div>
-          <div>{{ $assistantEmptyText ?? 'Asisten hanya membaca data melalui query aman yang sudah dibatasi aplikasi.' }}</div>
+          <div class="va-empty-typewriter" aria-live="polite">
+            <span class="va-tw-text" id="vaTwText"></span><span class="va-tw-caret" aria-hidden="true"></span>
+          </div>
         </div>
       </div>
 
@@ -782,6 +811,55 @@
 
   restoreChatHistory();
   resizeInput();
+})();
+</script>
+
+<script>
+(() => {
+  const target = document.getElementById('vaTwText');
+  if (!target) return;
+
+  const examples = @json($assistantTypewriterExamples ?? []);
+  if (!Array.isArray(examples) || examples.length === 0) return;
+
+  const TYPE_SPEED = 45;   // ms per character while typing
+  const ERASE_SPEED = 25;  // ms per character while erasing
+  const HOLD_TIME = 1800;  // ms to keep a full sentence on screen
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (prefersReducedMotion) {
+    target.textContent = examples[0];
+    return;
+  }
+
+  let phrase = 0;
+  let char = 0;
+  let erasing = false;
+
+  function tick() {
+    const current = examples[phrase];
+
+    if (!erasing) {
+      char++;
+      target.textContent = current.slice(0, char);
+      if (char >= current.length) {
+        erasing = true;
+        return window.setTimeout(tick, HOLD_TIME);
+      }
+      return window.setTimeout(tick, TYPE_SPEED);
+    }
+
+    char--;
+    target.textContent = current.slice(0, char);
+    if (char <= 0) {
+      erasing = false;
+      phrase = (phrase + 1) % examples.length;
+      return window.setTimeout(tick, TYPE_SPEED * 4);
+    }
+    return window.setTimeout(tick, ERASE_SPEED);
+  }
+
+  window.setTimeout(tick, 400);
 })();
 </script>
 @endsection

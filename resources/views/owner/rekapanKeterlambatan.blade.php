@@ -62,6 +62,9 @@
 .score-card:nth-child(5){animation-delay:.25s}
 .score-card.card-active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12),0 6px 20px rgba(0,0,0,.09);transform:translateY(-3px)}
 .score-card.card-active::after{content:'✓ Dipilih';position:absolute;top:8px;right:8px;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--accent);color:#fff}
+.score-formula{display:flex;align-items:center;gap:9px;margin:-4px 0 18px;padding:9px 14px;background:#f8fafc;border:1px solid var(--border);border-radius:9px;font-size:12px;color:var(--muted);line-height:1.45}
+.score-formula svg{width:15px;height:15px;flex-shrink:0;color:#0f766e}
+.score-formula strong{color:var(--primary);font-weight:700}
 .active-filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 14px;background:#eff4ff;border:1px solid #bfdbfe;border-radius:9px;font-size:12px;color:var(--accent);font-weight:600}
 .active-filter-bar .clear-filter{margin-left:auto;cursor:pointer;font-size:11px;color:var(--accent);text-decoration:underline;white-space:nowrap}
 .active-filter-bar svg{width:14px;height:14px;flex-shrink:0}
@@ -126,7 +129,6 @@ tbody tr:hover{background:#fafbfd}
 tbody td{padding:10px 12px;font-size:12px;vertical-align:middle;text-align:center}
 thead th:nth-child(2),
 tbody td.doc-cell{text-align:left}
-.cb{width:14px;height:14px;accent-color:var(--accent);cursor:pointer}
 
 /* No. Dokumen cell */
 .doc-no{font-weight:700;color:var(--primary);font-size:11.5px;line-height:1.2}
@@ -308,6 +310,12 @@ tbody td.doc-cell{text-align:left}
 
   </div>
 
+  {{-- RUMUS SKOR --}}
+  <div class="score-formula">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    <span><strong>Rumus Skor:</strong> 100 − ((Terlambat × 2 + Peringatan × 0,5) ÷ Total Dokumen) × 100, dibatasi 0–100. Tim tanpa aktivitas (belum ada dokumen) otomatis berskor 0.</span>
+  </div>
+
   {{-- SECTION TOOLBAR --}}
   <div class="section-toolbar">
     <div class="view-toggle">
@@ -376,7 +384,6 @@ tbody td.doc-cell{text-align:left}
         <table id="mainTable">
           <thead>
             <tr>
-              <th><input type="checkbox" class="cb" onchange="toggleAll(this)"></th>
               <th onclick="sortTable('nomor_spp')">No. Dokumen</th>
               <th onclick="sortTable('bagian')">Bagian</th>
               <th onclick="sortTable('vendor')">Dibayar Kepada/Vendor</th>
@@ -547,11 +554,6 @@ function sortTable(key){
   renderTable();
 }
 
-/* ─── TOGGLE ALL ─── */
-function toggleAll(cb){
-  document.querySelectorAll('#tableBody .cb').forEach(c=>c.checked=cb.checked);
-}
-
 /* ─── FILTER BY TEAM (card click) ─── */
 function filterByTeam(cardEl, teamValue, teamLabel){
   // deactivate all cards
@@ -641,7 +643,7 @@ function renderTable(){
   if(currentView==='table'){
     const tbody = document.getElementById('tableBody');
     if(!paged.length){
-      tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:48px;color:#94a3b8">
+      tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:48px;color:#94a3b8">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;display:block;margin:0 auto 8px;opacity:.3"><circle cx="12" cy="12" r="10"/><path d="M9 9h.01M15 9h.01M8 14s1.5 2 4 2 4-2 4-2"/></svg>
         Tidak ada data</td></tr>`;
     } else {
@@ -649,7 +651,6 @@ function renderTable(){
         const bColor = BAGIAN_COLOR[d.bagian]||'#94a3b8';
         const selesaiDisplay = d.tanggal_selesai || '<span style="color:#94a3b8">—</span>';
         return `<tr data-doc-id="${d.id}">
-          <td><input type="checkbox" class="cb"></td>
           <td class="doc-cell">
             <div class="doc-no">${esc(d.nomor_spp||'-')}</div>
             <div class="doc-title">${esc(d.uraian_spp||'-')}</div>

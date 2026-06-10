@@ -24,6 +24,13 @@ class OwnerVirtualAssistantController extends Controller
             'assistantChatUrl' => route('owner.asisten-virtual.chat'),
             'assistantFeedbackUrlTemplate' => route('owner.asisten-virtual.feedback', ['interaction' => '__ID__']),
             'assistantQuickPrompts' => [],
+            'assistantTypewriterExamples' => [
+                'Tampilkan dokumen yang belum dibayar di atas 100 juta',
+                'Berapa total nilai dokumen yang sudah dibayar?',
+                'Dokumen apa saja yang dikembalikan ke bidang?',
+                'Tampilkan dokumen terlambat lebih dari 3 hari',
+                'Berapa total dokumen masuk bulan ini?',
+            ],
         ]);
     }
 
@@ -45,6 +52,13 @@ class OwnerVirtualAssistantController extends Controller
                 'Dokumen sudah dibayar hari ini',
                 'Dokumen pembayaran terlambat',
                 'Total nilai sudah dibayar',
+            ],
+            'assistantTypewriterExamples' => [
+                'Tampilkan dokumen siap dibayar di atas 100 juta',
+                'Berapa total nilai yang sudah dibayar?',
+                'Dokumen pembayaran yang terlambat',
+                'Total dokumen sudah dibayar hari ini',
+                'Berapa total belum siap bayar bulan ini?',
             ],
         ]);
     }

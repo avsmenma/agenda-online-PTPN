@@ -1408,6 +1408,9 @@
               <option value="3" {{ request('filter_umur_min') == '3' ? 'selected' : '' }}>Lebih dari 3 hari</option>
               <option value="7" {{ request('filter_umur_min') == '7' ? 'selected' : '' }}>Lebih dari 7 hari</option>
               <option value="30" {{ request('filter_umur_min') == '30' ? 'selected' : '' }}>Lebih dari 30 hari</option>
+              <option value="60" {{ request('filter_umur_min') == '60' ? 'selected' : '' }}>Lebih dari 60 hari</option>
+              <option value="90" {{ request('filter_umur_min') == '90' ? 'selected' : '' }}>Lebih dari 90 hari</option>
+              <option value="120" {{ request('filter_umur_min') == '120' ? 'selected' : '' }}>Lebih dari 120 hari</option>
             </select>
           </div>
         </div>
