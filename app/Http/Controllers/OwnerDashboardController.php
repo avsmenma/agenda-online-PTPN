@@ -1206,6 +1206,13 @@ class OwnerDashboardController extends Controller
 
     private function resolveDocumentAgeStartTime($dokumen): ?Carbon
     {
+        // Returned documents measure their age from the moment they were
+        // returned (e.g. dikembalikan ke bidang/bagian), not from the original
+        // entry date. Everything else counts from when it entered the system.
+        if (!empty($dokumen->returned_at)) {
+            return Carbon::parse($dokumen->returned_at);
+        }
+
         $startTime = $dokumen->tanggal_masuk ?? $dokumen->created_at;
 
         return $startTime ? Carbon::parse($startTime) : null;

@@ -477,6 +477,16 @@
 
   .owner-docs-table-wrap {
     overflow-x: auto;
+    cursor: grab;
+  }
+
+  .owner-docs-table-wrap.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+  }
+
+  .owner-docs-table-wrap.is-dragging .owner-docs-row {
+    cursor: grabbing;
   }
 
   .owner-docs-table {
@@ -558,8 +568,8 @@
     text-align: right;
   }
 
+  .owner-docs-table td:nth-child(4),
   .owner-docs-table td:nth-child(5),
-  .owner-docs-table td:nth-child(6),
   .owner-docs-table td:nth-child(7) {
     text-align: center;
   }
@@ -1425,20 +1435,20 @@
             <col class="owner-docs-col-doc">
             <col class="owner-docs-col-value">
             <col class="owner-docs-col-from">
-            <col class="owner-docs-col-handler">
-            <col class="owner-docs-col-status">
-            <col class="owner-docs-col-duration">
             <col class="owner-docs-col-age">
+            <col class="owner-docs-col-status">
+            <col class="owner-docs-col-handler">
+            <col class="owner-docs-col-duration">
           </colgroup>
           <thead>
             <tr>
               <th><span class="owner-docs-th-label">Nomor / Uraian SPP</span></th>
               <th><span class="owner-docs-th-label">Nilai</span></th>
               <th><span class="owner-docs-th-label">Dari</span></th>
-              <th><span class="owner-docs-th-label">Pengurus Dokumen</span></th>
-              <th><span class="owner-docs-th-label">Status Pembayaran</span></th>
-              <th><span class="owner-docs-th-label">Durasi Peran</span></th>
               <th><span class="owner-docs-th-label">Umur Dokumen</span></th>
+              <th><span class="owner-docs-th-label">Status Pembayaran</span></th>
+              <th><span class="owner-docs-th-label">Pengurus Dokumen</span></th>
+              <th><span class="owner-docs-th-label">Durasi Peran</span></th>
             </tr>
           </thead>
           <tbody>
@@ -1477,6 +1487,14 @@
                     </span>
                   </span>
                 </td>
+                <td data-label="Umur Dokumen">
+                  <span class="owner-docs-age {{ $umurPaid ? 'paid' : '' }}">{{ $umurText }}</span>
+                </td>
+                <td data-label="Status Pembayaran">
+                  <span class="owner-docs-status {{ $dokumen['status_pembayaran_class'] ?? 'waiting' }}">
+                    {{ $dokumen['status_pembayaran_label'] ?? 'Belum Dibayar' }}
+                  </span>
+                </td>
                 <td data-label="Pengurus Dokumen">
                   <div class="owner-docs-handler">
                     <span class="owner-docs-avatar">{{ strtoupper(substr($dokumen['current_handler_display'] ?? '-', 0, 1)) }}</span>
@@ -1486,19 +1504,11 @@
                     </span>
                   </div>
                 </td>
-                <td data-label="Status Pembayaran">
-                  <span class="owner-docs-status {{ $dokumen['status_pembayaran_class'] ?? 'waiting' }}">
-                    {{ $dokumen['status_pembayaran_label'] ?? 'Belum Dibayar' }}
-                  </span>
-                </td>
                 <td data-label="Durasi Peran">
                   <span class="owner-docs-duration {{ $durasi['class'] ?? 'muted' }}">
                     <i class="far fa-clock"></i>
                     {{ $durasi['text'] ?? '-' }}
                   </span>
-                </td>
-                <td data-label="Umur Dokumen">
-                  <span class="owner-docs-age {{ $umurPaid ? 'paid' : '' }}">{{ $umurText }}</span>
                 </td>
               </tr>
             @empty
@@ -1703,5 +1713,57 @@
       }
     }
   });
+
+  // Hold-click-and-drag to pan the documents table horizontally/vertically.
+  (function () {
+    const wrap = document.querySelector('.owner-docs-table-wrap');
+    if (!wrap) return;
+
+    const DRAG_THRESHOLD = 5; // px before a press counts as a drag, not a click
+    let isDown = false;
+    let didDrag = false;
+    let startX = 0, startY = 0, startScrollLeft = 0, startScrollTop = 0;
+
+    wrap.addEventListener('mousedown', function (e) {
+      if (e.button !== 0) return; // left button only
+      // Don't hijack interactive controls inside the table.
+      if (e.target.closest('a, button, input, select, textarea')) return;
+      isDown = true;
+      didDrag = false;
+      startX = e.pageX;
+      startY = e.pageY;
+      startScrollLeft = wrap.scrollLeft;
+      startScrollTop = wrap.scrollTop;
+    });
+
+    window.addEventListener('mousemove', function (e) {
+      if (!isDown) return;
+      const dx = e.pageX - startX;
+      const dy = e.pageY - startY;
+      if (!didDrag && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
+        didDrag = true;
+        wrap.classList.add('is-dragging');
+      }
+      if (didDrag) {
+        e.preventDefault();
+        wrap.scrollLeft = startScrollLeft - dx;
+        wrap.scrollTop = startScrollTop - dy;
+      }
+    });
+
+    window.addEventListener('mouseup', function () {
+      isDown = false;
+      wrap.classList.remove('is-dragging');
+    });
+
+    // Swallow the click that follows a drag so rows don't open the modal.
+    wrap.addEventListener('click', function (e) {
+      if (didDrag) {
+        e.stopPropagation();
+        e.preventDefault();
+        didDrag = false;
+      }
+    }, true);
+  })();
 </script>
 @endsection
