@@ -461,6 +461,20 @@
     background: #ffffff !important;
   }
 
+  /*
+   * Native fullscreen (element.requestFullscreen) paints a default BLACK
+   * ::backdrop behind the fullscreen element. Any element promoted to its own
+   * stacking context inside the table (e.g. the active navigation cell with
+   * position: relative + z-index and a semi-transparent background) composites
+   * against that black backdrop instead of the table's white background,
+   * turning the active cell black in fullscreen. Force the backdrop to white
+   * so transparent/semi-transparent content composites correctly.
+   */
+  #documentTableContainer:fullscreen::backdrop,
+  #documentTableContainer:-webkit-full-screen::backdrop {
+    background: #ffffff !important;
+  }
+
   body.document-table-only-fullscreen .sidebar,
   body.document-table-only-fullscreen .secondary-sidebar,
   body.document-table-only-fullscreen .navbar,
@@ -506,7 +520,7 @@
     border-radius: 0 !important;
     box-shadow: none !important;
     overflow: hidden !important;
-    background: transparent !important;
+    background: #ffffff !important;
     display: flex !important;
     flex-direction: column !important;
   }
