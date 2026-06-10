@@ -3421,7 +3421,7 @@ class OwnerDashboardController extends Controller
         $keys = [
             'search',
             'filter_bagian',
-            'filter_pengurus',
+            'filter_vendor',
             'filter_status_pembayaran',
             'filter_nilai_min',
             'filter_nilai_max',

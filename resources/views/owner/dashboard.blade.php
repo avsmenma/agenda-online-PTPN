@@ -295,6 +295,15 @@
     outline: none;
   }
 
+  .owner-docs-tabs-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
   .owner-docs-tabs {
     background: #fff;
     border: 1px solid var(--od-border);
@@ -303,9 +312,43 @@
     box-shadow: var(--od-shadow);
     display: inline-flex;
     gap: 4px;
-    margin-bottom: 14px;
     max-width: 100%;
     overflow-x: auto;
+  }
+
+  .owner-docs-age-shortcuts {
+    display: inline-flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .owner-docs-age-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--od-border);
+    background: #fff;
+    box-shadow: var(--od-shadow);
+    color: var(--od-sub);
+    font-weight: 800;
+    font-size: 12px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .15s ease, color .15s ease, border-color .15s ease, transform .15s ease;
+  }
+
+  .owner-docs-age-chip:hover {
+    border-color: #93c5fd;
+    color: #0369a1;
+    background: #f8fafc;
+    transform: translateY(-1px);
+  }
+
+  .owner-docs-age-chip.active {
+    background: linear-gradient(135deg, #0f766e 0%, #059669 100%);
+    border-color: transparent;
+    color: #fff;
   }
 
   .owner-docs-tab {
@@ -1320,17 +1363,30 @@
       </div>
     </div>
 
-    <div class="owner-docs-tabs" aria-label="Filter status dokumen">
-      @foreach($tabs as $tab)
-        @php
-          $tabUrl = url('/owner/dokumen') . '?' . http_build_query(array_merge($queryWithoutStatus, ['status' => $tab['id']]));
-          $tabActive = $activeStatus === $tab['id'];
-        @endphp
-        <a class="owner-docs-tab {{ $tabActive ? 'active' : '' }} {{ ($tab['danger'] ?? false) ? 'danger' : '' }}" href="{{ $tabUrl }}">
-          {{ $tab['label'] }}
-          <span class="owner-docs-tab-count">{{ number_format($tab['count'], 0, ',', '.') }}</span>
-        </a>
-      @endforeach
+    <div class="owner-docs-tabs-row">
+      <div class="owner-docs-tabs" aria-label="Filter status dokumen">
+        @foreach($tabs as $tab)
+          @php
+            $tabUrl = url('/owner/dokumen') . '?' . http_build_query(array_merge($queryWithoutStatus, ['status' => $tab['id']]));
+            $tabActive = $activeStatus === $tab['id'];
+          @endphp
+          <a class="owner-docs-tab {{ $tabActive ? 'active' : '' }} {{ ($tab['danger'] ?? false) ? 'danger' : '' }}" href="{{ $tabUrl }}">
+            {{ $tab['label'] }}
+            <span class="owner-docs-tab-count">{{ number_format($tab['count'], 0, ',', '.') }}</span>
+          </a>
+        @endforeach
+      </div>
+
+      <div class="owner-docs-age-shortcuts" aria-label="Pintasan filter umur dokumen">
+        @php $ageShortcuts = [7 => '&gt; 7 Hari', 30 => '&gt; 30 Hari', 60 => '&gt; 60 Hari', 120 => '&gt; 120 Hari']; @endphp
+        @foreach($ageShortcuts as $days => $label)
+          @php
+            $ageUrl = url('/owner/dokumen') . '?' . http_build_query(array_merge($queryWithoutStatus, ['status' => $activeStatus, 'filter_umur_min' => $days]));
+            $ageActive = (string) request('filter_umur_min') === (string) $days;
+          @endphp
+          <a class="owner-docs-age-chip {{ $ageActive ? 'active' : '' }}" href="{{ $ageUrl }}" title="Dokumen berumur lebih dari {{ $days }} hari">{!! $label !!}</a>
+        @endforeach
+      </div>
     </div>
 
     <form method="GET" action="{{ url('/owner/dokumen') }}" id="ownerDocsFilterForm">
@@ -1356,11 +1412,11 @@
           </div>
 
           <div class="owner-docs-filter-group">
-            <label>Pengurus</label>
-            <select name="filter_pengurus">
-              <option value="">Semua Pengurus</option>
-              @foreach($filterData['pengurus'] ?? [] as $key => $value)
-                <option value="{{ $key }}" {{ request('filter_pengurus') == $key ? 'selected' : '' }}>{{ $value }}</option>
+            <label>Vendor</label>
+            <select name="filter_vendor">
+              <option value="">Semua Vendor</option>
+              @foreach($filterData['vendor'] ?? [] as $key => $value)
+                <option value="{{ $key }}" {{ request('filter_vendor') == $key ? 'selected' : '' }}>{{ $value }}</option>
               @endforeach
             </select>
           </div>

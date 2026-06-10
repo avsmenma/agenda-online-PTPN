@@ -827,12 +827,21 @@
   const HOLD_TIME = 1800;  // ms to keep a full sentence on screen
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  let phrase = 0;
+
+  // Respect reduced motion, but still rotate through the examples so the
+  // sentence keeps changing — just swap whole sentences instead of typing.
   if (prefersReducedMotion) {
     target.textContent = examples[0];
+    if (examples.length > 1) {
+      window.setInterval(() => {
+        phrase = (phrase + 1) % examples.length;
+        target.textContent = examples[phrase];
+      }, 2600);
+    }
     return;
   }
 
-  let phrase = 0;
   let char = 0;
   let erasing = false;
 
