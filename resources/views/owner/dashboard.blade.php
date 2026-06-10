@@ -31,6 +31,7 @@
     'unpaid' => $ownerDocsBaseUrl . '?' . http_build_query(['status' => 'all', 'filter_status_pembayaran' => 'belum_dibayar']),
     'ready' => $ownerDocsBaseUrl . '?' . http_build_query(['status' => 'all', 'filter_status_pembayaran' => 'siap_dibayar']),
     'paid' => $ownerDocsBaseUrl . '?' . http_build_query(['status' => 'all', 'filter_status_pembayaran' => 'sudah_dibayar']),
+    'returned' => $ownerDocsBaseUrl . '?' . http_build_query(['status' => 'returned']),
   ];
   $formatFilterMoney = fn ($value) => trim((string) $value) === ''
     ? ''
@@ -134,7 +135,7 @@
 
   .owner-docs-stats {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 20px;
   }
@@ -1271,6 +1272,16 @@
         <div class="owner-docs-stat-value" style="color:#10b981">{{ number_format($dokumenSelesai ?? 0, 0, ',', '.') }}</div>
         <div class="owner-docs-stat-sub" style="font-weight:700;color:#10b981">Rp {{ number_format($nilaiSudahDibayar ?? 0, 0, ',', '.') }}</div>
         <span class="owner-docs-stat-detail">Lihat sudah dibayar</span>
+      </a>
+
+      <a class="owner-docs-stat owner-docs-stat-link" href="{{ $ownerStatUrls['returned'] }}">
+        <div class="owner-docs-stat-label">Dikembalikan</div>
+        <div class="owner-docs-stat-icon" style="background:#fef2f2;color:#ef4444">
+          <i class="fas fa-undo"></i>
+        </div>
+        <div class="owner-docs-stat-value" style="color:#ef4444">{{ number_format($dokumenDikembalikan ?? 0, 0, ',', '.') }}</div>
+        <div class="owner-docs-stat-sub" style="font-weight:700;color:#ef4444">Rp {{ number_format($nilaiDikembalikan ?? 0, 0, ',', '.') }}</div>
+        <span class="owner-docs-stat-detail">Lihat dikembalikan</span>
       </a>
 
       <a class="owner-docs-stat owner-docs-stat-link accent" href="{{ $ownerStatUrls['total'] }}">

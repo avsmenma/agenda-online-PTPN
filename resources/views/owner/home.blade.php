@@ -78,7 +78,7 @@
   /* â”€â”€ STAT CARDS â”€â”€ */
   .stats-row {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 20px;
   }
@@ -105,6 +105,7 @@
   .stat-card:nth-child(3) { animation-delay: .15s; }
   .stat-card:nth-child(4) { animation-delay: .2s; }
   .stat-card:nth-child(5) { animation-delay: .25s; }
+  .stat-card:nth-child(6) { animation-delay: .3s; }
 
   .stat-label {
     font-size: 10.5px; font-weight: 600;
@@ -454,6 +455,21 @@
         <div class="stat-value" style="color:#10b981">{{ number_format($dokumenSelesai) }}</div>
         <div class="stat-sub" style="font-weight:600;color:#10b981">
           Rp {{ number_format($nilaiSudahDibayar, 0, ',', '.') }}
+        </div>
+      </div>
+
+      {{-- Dikembalikan --}}
+      <div class="stat-card">
+        <div class="stat-label">Dikembalikan</div>
+        <div class="stat-icon" style="background:#fef2f2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+            <polyline points="9 14 4 9 9 4"/>
+            <path d="M20 20v-7a4 4 0 00-4-4H4"/>
+          </svg>
+        </div>
+        <div class="stat-value" style="color:#ef4444">{{ number_format($dokumenDikembalikan) }}</div>
+        <div class="stat-sub" style="font-weight:600;color:#ef4444">
+          Rp {{ number_format($nilaiDikembalikan, 0, ',', '.') }}
         </div>
       </div>
 

@@ -104,6 +104,16 @@ class OwnerDashboardController extends Controller
             ->whereNull('tanggal_dibayar')
             ->count();
 
+        // Dokumen Dikembalikan: dikembalikan ke bidang/bagian (sama dengan tab "Dikembalikan")
+        $returnedScope = function ($q) {
+            $q->whereNotNull('returned_at')
+                ->orWhere('status', 'like', 'returned%')
+                ->orWhere('status', 'like', '%dikembalikan%')
+                ->orWhereNotNull('return_source');
+        };
+        $dokumenDikembalikan = Dokumen::where($returnedScope)->count();
+        $nilaiDikembalikan = Dokumen::where($returnedScope)->sum('nilai_rupiah') ?? 0;
+
         // Total Nilai (Rp)
         $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
 
@@ -214,6 +224,8 @@ class OwnerDashboardController extends Controller
             'dokumenProses',
             'dokumenSiapBayar',
             'dokumenSelesai',
+            'dokumenDikembalikan',
+            'nilaiDikembalikan',
             'totalNilai',
             'nilaiBelumSiapBayar',
             'nilaiBelumDibayar',
@@ -336,6 +348,21 @@ class OwnerDashboardController extends Controller
             ->whereNull('tanggal_dibayar')
             ->count();
 
+        // Dokumen Dikembalikan: dikembalikan ke bidang/bagian (sama dengan tab "Dikembalikan")
+        $dokumenDikembalikan = Dokumen::where(function ($q) {
+            $q->whereNotNull('returned_at')
+                ->orWhere('status', 'like', 'returned%')
+                ->orWhere('status', 'like', '%dikembalikan%')
+                ->orWhereNotNull('return_source');
+        })->count();
+
+        $nilaiDikembalikan = Dokumen::where(function ($q) {
+            $q->whereNotNull('returned_at')
+                ->orWhere('status', 'like', 'returned%')
+                ->orWhere('status', 'like', '%dikembalikan%')
+                ->orWhereNotNull('return_source');
+        })->sum('nilai_rupiah') ?? 0;
+
         $totalNilai = Dokumen::sum('nilai_rupiah') ?? 0;
 
         // === NILAI RUPIAH PER STATUS ===
@@ -436,6 +463,8 @@ class OwnerDashboardController extends Controller
             'dokumenProses',
             'dokumenSiapBayar',
             'dokumenSelesai',
+            'dokumenDikembalikan',
+            'nilaiDikembalikan',
             'totalNilai',
             'nilaiBelumDibayar',
             'nilaiSiapDibayar',
