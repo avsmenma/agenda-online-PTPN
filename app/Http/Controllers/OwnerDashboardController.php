@@ -211,11 +211,18 @@ class OwnerDashboardController extends Controller
             ->where('created_at', '<', now()->subDays(30))
             ->count();
 
-        // Counts for the umur-dokumen shortcut chips (matches the
-        // filter_umur_min filter, which compares against created_at).
+        // Counts for the umur-dokumen shortcut chips. These follow the active
+        // status/payment context (the cards above the table) so clicking a
+        // chip shows a matching number. Paid documents (Sudah Dibayar /
+        // Selesai) have no waiting age to track, so they are forced to 0.
+        $isPaidContext = $request->get('filter_status_pembayaran') === 'sudah_dibayar'
+            || in_array($request->get('status'), ['done', 'selesai', 'sudah_dibayar'], true);
+        $umurBaseQuery = $this->applyOwnerDocumentFilters($request, false);
         $umurShortcutCounts = [];
         foreach ([7, 30, 60, 120] as $thresholdDays) {
-            $umurShortcutCounts[$thresholdDays] = Dokumen::where('created_at', '<=', now()->subDays($thresholdDays))->count();
+            $umurShortcutCounts[$thresholdDays] = $isPaidContext
+                ? 0
+                : (clone $umurBaseQuery)->where('created_at', '<=', now()->subDays($thresholdDays))->count();
         }
 
         // Aliases used by the shared owner summary card design.
@@ -629,9 +636,12 @@ class OwnerDashboardController extends Controller
     }
 
     /**
-     * Get documents with their latest tracking status
+     * Build the /owner/dokumen query with the active status tab and all
+     * advanced filters applied. Pass $applyUmurMin = false to omit the
+     * umur-dokumen filter (used to count documents per umur threshold within
+     * the current context).
      */
-    private function getDocumentsWithTracking(Request $request = null, $perPage = 10)
+    private function applyOwnerDocumentFilters(Request $request = null, bool $applyUmurMin = true)
     {
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData', 'roleStatuses']);
 
@@ -730,7 +740,7 @@ class OwnerDashboardController extends Controller
                   });
         }
 
-        if ($request && $request->has('filter_umur_min') && !empty($request->filter_umur_min)) {
+        if ($applyUmurMin && $request && $request->has('filter_umur_min') && !empty($request->filter_umur_min)) {
             $query->where('created_at', '<=', now()->subDays((int) $request->filter_umur_min));
         }
 
@@ -877,6 +887,16 @@ class OwnerDashboardController extends Controller
                     });
             });
         }
+
+        return $query;
+    }
+
+    /**
+     * Get documents with their latest tracking status
+     */
+    private function getDocumentsWithTracking(Request $request = null, $perPage = 10)
+    {
+        $query = $this->applyOwnerDocumentFilters($request);
 
         // Paginate the query
         $paginatedDocuments = $query->orderBy('created_at', 'desc')
