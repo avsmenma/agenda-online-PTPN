@@ -211,6 +211,13 @@ class OwnerDashboardController extends Controller
             ->where('created_at', '<', now()->subDays(30))
             ->count();
 
+        // Counts for the umur-dokumen shortcut chips (matches the
+        // filter_umur_min filter, which compares against created_at).
+        $umurShortcutCounts = [];
+        foreach ([7, 30, 60, 120] as $thresholdDays) {
+            $umurShortcutCounts[$thresholdDays] = Dokumen::where('created_at', '<=', now()->subDays($thresholdDays))->count();
+        }
+
         // Aliases used by the shared owner summary card design.
         $dokumenProses = $dokumenBelumSiapBayar;
         $nilaiBelumDibayar = $nilaiBelumSiapBayar;
@@ -240,6 +247,7 @@ class OwnerDashboardController extends Controller
             'filterData',
             'documentTabs',
             'activeFilterCount',
+            'umurShortcutCounts',
             'allDokumenUmur',
             'belumBayarUmur3',
             'belumBayarUmur7',

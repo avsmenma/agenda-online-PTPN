@@ -351,6 +351,21 @@
     color: #fff;
   }
 
+  .owner-docs-age-chip-count {
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 10.5px;
+    font-weight: 800;
+  }
+
+  .owner-docs-age-chip.active .owner-docs-age-chip-count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+  }
+
   .owner-docs-tab {
     display: inline-flex;
     align-items: center;
@@ -469,6 +484,83 @@
     padding: 0 11px;
     font-size: 12px;
     outline: none;
+  }
+
+  /* Searchable vendor combobox */
+  .owner-vendor-combo {
+    position: relative;
+  }
+
+  .owner-vendor-control {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--od-border);
+    border-radius: 8px;
+    background: #fff;
+    min-height: 38px;
+    padding-right: 6px;
+  }
+
+  .owner-vendor-combo .owner-vendor-input {
+    border: 0 !important;
+    min-height: 36px !important;
+    flex: 1 1 auto;
+    border-radius: 8px !important;
+    text-overflow: ellipsis;
+  }
+
+  .owner-vendor-clear {
+    border: 0;
+    background: transparent;
+    color: var(--od-muted);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+    display: none;
+  }
+
+  .owner-vendor-combo.has-value .owner-vendor-clear {
+    display: inline-block;
+  }
+
+  .owner-vendor-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 60;
+    max-height: 260px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--od-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+    padding: 4px;
+  }
+
+  .owner-vendor-opt {
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--od-text);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .owner-vendor-opt:hover,
+  .owner-vendor-opt.is-active {
+    background: var(--od-sky-soft);
+    color: #0369a1;
+  }
+
+  .owner-vendor-empty {
+    padding: 10px;
+    font-size: 12px;
+    color: var(--od-muted);
+    text-align: center;
   }
 
   .owner-docs-filter-actions {
@@ -1383,8 +1475,11 @@
           @php
             $ageUrl = url('/owner/dokumen') . '?' . http_build_query(array_merge($queryWithoutStatus, ['status' => $activeStatus, 'filter_umur_min' => $days]));
             $ageActive = (string) request('filter_umur_min') === (string) $days;
+            $ageCount = $umurShortcutCounts[$days] ?? 0;
           @endphp
-          <a class="owner-docs-age-chip {{ $ageActive ? 'active' : '' }}" href="{{ $ageUrl }}" title="Dokumen berumur lebih dari {{ $days }} hari">{!! $label !!}</a>
+          <a class="owner-docs-age-chip {{ $ageActive ? 'active' : '' }}" href="{{ $ageUrl }}" title="Dokumen berumur lebih dari {{ $days }} hari">
+            {!! $label !!}<span class="owner-docs-age-chip-count">{{ number_format($ageCount, 0, ',', '.') }}</span>
+          </a>
         @endforeach
       </div>
     </div>
@@ -1413,12 +1508,15 @@
 
           <div class="owner-docs-filter-group">
             <label>Vendor</label>
-            <select name="filter_vendor">
-              <option value="">Semua Vendor</option>
-              @foreach($filterData['vendor'] ?? [] as $key => $value)
-                <option value="{{ $key }}" {{ request('filter_vendor') == $key ? 'selected' : '' }}>{{ $value }}</option>
-              @endforeach
-            </select>
+            <div class="owner-vendor-combo" data-vendor-combo>
+              <input type="hidden" name="filter_vendor" value="{{ request('filter_vendor', '') }}" data-vendor-value>
+              <div class="owner-vendor-control">
+                <input type="text" class="owner-vendor-input" placeholder="Semua Vendor" autocomplete="off"
+                  value="{{ request('filter_vendor', '') }}" data-vendor-display aria-label="Cari vendor">
+                <button type="button" class="owner-vendor-clear" data-vendor-clear aria-label="Reset vendor" title="Reset">&times;</button>
+              </div>
+              <div class="owner-vendor-menu" data-vendor-menu hidden></div>
+            </div>
           </div>
 
           <div class="owner-docs-filter-group">
@@ -1823,6 +1921,90 @@
         didDrag = false;
       }
     }, true);
+  })();
+
+  // Searchable vendor filter (replaces the oversized native dropdown).
+  (function () {
+    const combo = document.querySelector('[data-vendor-combo]');
+    if (!combo) return;
+
+    const vendors = @json(array_values($filterData['vendor'] ?? []));
+    const hidden = combo.querySelector('[data-vendor-value]');
+    const display = combo.querySelector('[data-vendor-display]');
+    const menu = combo.querySelector('[data-vendor-menu]');
+    const clearBtn = combo.querySelector('[data-vendor-clear]');
+    const MAX_RESULTS = 50;
+
+    function syncHasValue() {
+      combo.classList.toggle('has-value', (hidden.value || '').trim() !== '');
+    }
+
+    function renderMenu(query) {
+      const q = (query || '').trim().toLowerCase();
+      const matches = q
+        ? vendors.filter((v) => String(v).toLowerCase().includes(q))
+        : vendors;
+      const shown = matches.slice(0, MAX_RESULTS);
+
+      let html = '<div class="owner-vendor-opt" data-value="">Semua Vendor</div>';
+      html += shown.map((v) => {
+        const esc = String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        return `<div class="owner-vendor-opt" data-value="${esc}" title="${esc}">${esc}</div>`;
+      }).join('');
+
+      if (q && shown.length === 0) {
+        html += '<div class="owner-vendor-empty">Vendor tidak ditemukan</div>';
+      } else if (matches.length > shown.length) {
+        html += `<div class="owner-vendor-empty">+${matches.length - shown.length} vendor lain, ketik untuk mempersempit</div>`;
+      }
+      menu.innerHTML = html;
+    }
+
+    function openMenu() {
+      renderMenu(display.value === hidden.value ? '' : display.value);
+      menu.hidden = false;
+    }
+
+    function closeMenu() {
+      menu.hidden = true;
+      // Always reflect the committed value in the text field.
+      display.value = hidden.value;
+    }
+
+    function selectValue(value) {
+      hidden.value = value;
+      display.value = value;
+      syncHasValue();
+      menu.hidden = true;
+    }
+
+    display.addEventListener('focus', openMenu);
+    display.addEventListener('input', function () {
+      menu.hidden = false;
+      renderMenu(display.value);
+    });
+
+    menu.addEventListener('mousedown', function (event) {
+      const opt = event.target.closest('.owner-vendor-opt');
+      if (!opt) return;
+      event.preventDefault();
+      selectValue(opt.getAttribute('data-value') || '');
+    });
+
+    clearBtn.addEventListener('click', function () {
+      selectValue('');
+      display.focus();
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!combo.contains(event.target)) closeMenu();
+    });
+
+    display.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') { closeMenu(); display.blur(); }
+    });
+
+    syncHasValue();
   })();
 </script>
 @endsection
