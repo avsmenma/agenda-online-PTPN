@@ -16,7 +16,6 @@
       gap: 0.45rem;
     }
 
-    .document-shortcut-hint,
     .document-active-filter-badge {
       color: #64748b;
       font-size: 0.74rem;
@@ -39,24 +38,6 @@
 
     .document-active-filter-badge.is-visible {
       display: inline-flex;
-    }
-
-    .document-shortcut-hint {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 999px;
-      padding: 0.42rem 0.7rem;
-    }
-
-    .document-shortcut-hint kbd {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-bottom-width: 2px;
-      border-radius: 5px;
-      color: #0f172a;
-      font-size: 0.68rem;
-      font-weight: 800;
-      padding: 0.06rem 0.28rem;
     }
 
     body.document-density-compact #documentTableContainer .data-table th,
@@ -135,6 +116,11 @@
     .document-qv-active-row > td,
     .owner-docs-row.document-qv-active-row > td {
       background: #f0fdfa !important;
+      border-left-color: transparent !important;
+    }
+
+    .document-qv-active-row > td:first-child,
+    .owner-docs-row.document-qv-active-row > td:first-child {
       box-shadow: inset 3px 0 0 #0f766e;
     }
 
@@ -313,7 +299,6 @@
         width: 100%;
       }
 
-      .document-shortcut-hint,
       .document-active-filter-badge {
         width: 100%;
       }
@@ -420,7 +405,6 @@
         bar.innerHTML = [
           '<div class="document-workbench-actions">',
             '<span class="document-active-filter-badge" id="documentActiveFilterBadge"><i class="fa-solid fa-filter"></i><span>0 filter aktif</span></span>',
-            '<span class="document-shortcut-hint"><kbd>Ctrl</kbd> + <kbd>K</kbd> cari, <kbd>Ctrl</kbd> + <kbd>Enter</kbd> buka/tutup detail, <kbd>Arrow</kbd> scroll detail</span>',
           '</div>'
         ].join('');
 
@@ -467,7 +451,7 @@
           '</div>',
           '<div class="document-qv-body" id="documentQvBody"></div>',
           '<div class="document-qv-footer">',
-            '<span class="document-qv-muted">Ctrl + Enter untuk tutup, Arrow/PageUp/PageDown untuk scroll.</span>',
+            '<span class="document-qv-muted">Esc untuk tutup, Arrow/PageUp/PageDown untuk scroll.</span>',
             '<button type="button" class="document-qv-action" id="documentQvDetailButton"><i class="fa-solid fa-up-right-from-square"></i> Detail lengkap</button>',
           '</div>'
         ].join('');
@@ -554,10 +538,10 @@
             { label: 'Uraian SPP', value: clean(row.querySelector('.owner-docs-docname')?.textContent), wide: true },
             { label: 'Nilai', value: textForCell(row.children[1]), money: true },
             { label: 'Dari', value: textForCell(row.children[2]) },
-            { label: 'Pengurus Dokumen', value: textForCell(row.children[3]) },
+            { label: 'Umur Dokumen', value: textForCell(row.children[3]) },
             { label: 'Status Pembayaran', value: textForCell(row.children[4]) },
-            { label: 'Durasi Peran', value: textForCell(row.children[5]) },
-            { label: 'Umur Dokumen', value: textForCell(row.children[6]) },
+            { label: 'Pengurus Dokumen', value: textForCell(row.children[5]) },
+            { label: 'Durasi Peran', value: textForCell(row.children[6]) },
             { label: 'Tanggal Masuk', value: clean(Array.from(row.querySelectorAll('.owner-docs-payee')).find((el) => el.textContent.includes('Tanggal masuk'))?.textContent.replace('Tanggal masuk:', '')) }
           ].filter((field) => field.value)
         };
@@ -639,27 +623,6 @@
         renderQuickView(data);
       }
 
-      function toggleQuickView() {
-        if (isQuickViewOpen()) {
-          closeQuickView();
-          return;
-        }
-
-        const row = getSelectedRow();
-        if (row) openQuickView(row);
-      }
-
-      function getSelectedRow() {
-        if (selectedRow && document.body.contains(selectedRow)) return selectedRow;
-        const activeCell = document.querySelector('#documentTableContainer td.acn-active');
-        const activeRow = activeCell?.closest('tr');
-        if (activeRow) {
-          selectRow(activeRow);
-          return activeRow;
-        }
-        return null;
-      }
-
       function selectRow(row) {
         if (!row) return;
         if (selectedRow && selectedRow !== row) selectedRow.classList.remove('document-qv-active-row');
@@ -690,6 +653,16 @@
           selectRow(row);
         }, true);
 
+        // Double-click a row to open the quick detail panel.
+        document.addEventListener('dblclick', function (event) {
+          const row = closestElement(event.target, '#documentTableContainer tbody tr, .owner-docs-row');
+          if (!row || shouldIgnoreRowClick(event.target)) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          window.getSelection?.()?.removeAllRanges();
+          openQuickView(row);
+        }, true);
+
         document.addEventListener('keydown', function (event) {
           if ((event.ctrlKey || event.metaKey) && (event.key.toLowerCase() === 'k' || event.key.toLowerCase() === 'f') && !isTypingTarget(event.target)) {
             const input = getSearchInput();
@@ -704,11 +677,6 @@
           if (event.key === 'Escape' && !isTypingTarget(event.target)) {
             closeQuickView();
             return;
-          }
-
-          if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !isTypingTarget(event.target)) {
-            event.preventDefault();
-            toggleQuickView();
           }
         });
 
