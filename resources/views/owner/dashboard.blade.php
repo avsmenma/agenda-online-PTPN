@@ -1470,15 +1470,32 @@
       </div>
 
       <div class="owner-docs-age-shortcuts" aria-label="Pintasan filter umur dokumen">
-        @php $ageShortcuts = [7 => '&gt; 7 Hari', 30 => '&gt; 30 Hari', 60 => '&gt; 60 Hari', 120 => '&gt; 120 Hari']; @endphp
-        @foreach($ageShortcuts as $days => $label)
+        @php
+          $ageShortcuts = [
+            ['min' => 7,   'max' => 30,   'label' => '7&ndash;30 Hari'],
+            ['min' => 30,  'max' => 60,   'label' => '30&ndash;60 Hari'],
+            ['min' => 60,  'max' => 120,  'label' => '60&ndash;120 Hari'],
+            ['min' => 120, 'max' => null, 'label' => '&gt; 120 Hari'],
+          ];
+        @endphp
+        @foreach($ageShortcuts as $bucket)
           @php
-            $ageUrl = url('/owner/dokumen') . '?' . http_build_query(array_merge($queryWithoutStatus, ['status' => $activeStatus, 'filter_umur_min' => $days]));
-            $ageActive = (string) request('filter_umur_min') === (string) $days;
-            $ageCount = $umurShortcutCounts[$days] ?? 0;
+            $ageParams = array_merge($queryWithoutStatus, ['status' => $activeStatus, 'filter_umur_min' => $bucket['min']]);
+            if (!is_null($bucket['max'])) {
+              $ageParams['filter_umur_max'] = $bucket['max'];
+            } else {
+              unset($ageParams['filter_umur_max']);
+            }
+            $ageUrl = url('/owner/dokumen') . '?' . http_build_query($ageParams);
+            $ageActive = (string) request('filter_umur_min') === (string) $bucket['min']
+              && (string) request('filter_umur_max', '') === (string) ($bucket['max'] ?? '');
+            $ageCount = $umurShortcutCounts[$bucket['min']] ?? 0;
+            $ageTitle = is_null($bucket['max'])
+              ? "Dokumen berumur lebih dari {$bucket['min']} hari"
+              : "Dokumen berumur {$bucket['min']}-{$bucket['max']} hari";
           @endphp
-          <a class="owner-docs-age-chip {{ $ageActive ? 'active' : '' }}" href="{{ $ageUrl }}" title="Dokumen berumur lebih dari {{ $days }} hari">
-            {!! $label !!}<span class="owner-docs-age-chip-count">{{ number_format($ageCount, 0, ',', '.') }}</span>
+          <a class="owner-docs-age-chip {{ $ageActive ? 'active' : '' }}" href="{{ $ageUrl }}" title="{{ $ageTitle }}">
+            {!! $bucket['label'] !!}<span class="owner-docs-age-chip-count">{{ number_format($ageCount, 0, ',', '.') }}</span>
           </a>
         @endforeach
       </div>

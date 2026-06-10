@@ -213,18 +213,33 @@ class OwnerDashboardController extends Controller
 
         // Counts for the umur-dokumen shortcut chips. These follow the active
         // status/payment context (the cards above the table) so clicking a
-        // chip shows a matching number. Paid documents (Sudah Dibayar /
+        // chip shows a matching number. Each chip is a non-overlapping age
+        // bucket so the numbers don't double-count (a > 30 day document is not
+        // also counted under > 7 day). Paid documents (Sudah Dibayar /
         // Selesai) have no waiting age to track, so they are forced to 0.
         $isPaidContext = $request->get('filter_status_pembayaran') === 'sudah_dibayar'
             || in_array($request->get('status'), ['done', 'selesai', 'sudah_dibayar'], true);
         $umurBaseQuery = $this->applyOwnerDocumentFilters($request, false);
+        $umurBuckets = [
+            ['min' => 7,   'max' => 30],
+            ['min' => 30,  'max' => 60],
+            ['min' => 60,  'max' => 120],
+            ['min' => 120, 'max' => null],
+        ];
         $umurShortcutCounts = [];
-        foreach ([7, 30, 60, 120] as $thresholdDays) {
-            $umurShortcutCounts[$thresholdDays] = $isPaidContext
-                ? 0
-                : (clone $umurBaseQuery)
-                    ->whereRaw($this->ownerUmurStartExpr() . ' <= ?', [now()->subDays($thresholdDays)->toDateTimeString()])
-                    ->count();
+        foreach ($umurBuckets as $bucket) {
+            if ($isPaidContext) {
+                $umurShortcutCounts[$bucket['min']] = 0;
+                continue;
+            }
+            // age >= min  =>  start time <= now - min days
+            $q = (clone $umurBaseQuery)
+                ->whereRaw($this->ownerUmurStartExpr() . ' <= ?', [now()->subDays($bucket['min'])->toDateTimeString()]);
+            // age < max   =>  start time > now - max days
+            if (!is_null($bucket['max'])) {
+                $q->whereRaw($this->ownerUmurStartExpr() . ' > ?', [now()->subDays($bucket['max'])->toDateTimeString()]);
+            }
+            $umurShortcutCounts[$bucket['min']] = $q->count();
         }
 
         // Aliases used by the shared owner summary card design.
@@ -774,6 +789,11 @@ class OwnerDashboardController extends Controller
 
         if ($applyUmurMin && $request && $request->has('filter_umur_min') && !empty($request->filter_umur_min)) {
             $query->whereRaw($this->ownerUmurStartExpr() . ' <= ?', [now()->subDays((int) $request->filter_umur_min)->toDateTimeString()]);
+        }
+
+        // Upper bound for the umur shortcut buckets (age < filter_umur_max days).
+        if ($applyUmurMin && $request && $request->filled('filter_umur_max')) {
+            $query->whereRaw($this->ownerUmurStartExpr() . ' > ?', [now()->subDays((int) $request->filter_umur_max)->toDateTimeString()]);
         }
 
         if ($request && $request->has('filter_durasi_min') && !empty($request->filter_durasi_min)) {
