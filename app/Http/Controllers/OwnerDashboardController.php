@@ -539,15 +539,10 @@ class OwnerDashboardController extends Controller
             $baseQuery = Dokumen::where('bagian', $code);
             $count = (clone $baseQuery)->count();
 
-            // Terlambat: dokumen > 3 hari dan belum selesai
-            $terlambat = (clone $baseQuery)
-                ->where('created_at', '<', now()->subDays(3))
-                ->whereNull('tanggal_dibayar')
-                ->where('current_handler', '!=', 'operator')
-                ->where(function($q) {
-                    $q->whereNull('status_pembayaran')
-                      ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                })->count();
+            // Terlambat: same definition as the Urgent tab on /owner/dokumen
+            // (active documents overdue in their current role), so the numbers
+            // stay consistent across pages.
+            $terlambat = $this->scopeOwnerDeadlineUrgency((clone $baseQuery), true)->count();
 
             $stats[] = [
                 'code'      => $code,
