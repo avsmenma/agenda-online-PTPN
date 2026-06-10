@@ -222,7 +222,9 @@ class OwnerDashboardController extends Controller
         foreach ([7, 30, 60, 120] as $thresholdDays) {
             $umurShortcutCounts[$thresholdDays] = $isPaidContext
                 ? 0
-                : (clone $umurBaseQuery)->where('created_at', '<=', now()->subDays($thresholdDays))->count();
+                : (clone $umurBaseQuery)
+                    ->whereRaw($this->ownerUmurStartExpr() . ' <= ?', [now()->subDays($thresholdDays)->toDateTimeString()])
+                    ->count();
         }
 
         // Aliases used by the shared owner summary card design.
@@ -636,6 +638,52 @@ class OwnerDashboardController extends Controller
     }
 
     /**
+     * SQL expression for a document's effective age start time. Returned
+     * documents are measured from returned_at; everything else from
+     * tanggal_masuk (falling back to created_at). Mirrors
+     * resolveDocumentAgeStartTime() so the umur filter/chips match the
+     * Umur Dokumen column.
+     */
+    private function ownerUmurStartExpr(): string
+    {
+        return 'COALESCE(dokumens.returned_at, dokumens.tanggal_masuk, dokumens.created_at)';
+    }
+
+    /**
+     * Restrict a query to documents still in process (not paid, not completed).
+     */
+    private function scopeOwnerActiveUnpaid($query)
+    {
+        return $query->whereNull('tanggal_dibayar')
+            ->where(function ($q) {
+                $q->whereNull('status_pembayaran')
+                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+            })
+            ->where(function ($q) {
+                $q->whereNull('status')
+                    ->orWhereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed']);
+            });
+    }
+
+    /**
+     * Split active documents by deadline status for the Menunggu/Urgent tabs.
+     * Elapsed time in the current role mirrors calculateActiveRoleDuration()
+     * (late at >= 3 days / 259200s). $late = false keeps the within-deadline
+     * documents (aman + peringatan), $late = true keeps the overdue ones.
+     */
+    private function scopeOwnerDeadlineUrgency($query, bool $late)
+    {
+        $this->scopeOwnerActiveUnpaid($query);
+
+        $startExpr = 'COALESCE((SELECT drd.received_at FROM dokumen_role_data drd '
+            . 'WHERE drd.dokumen_id = dokumens.id AND drd.role_code = dokumens.current_handler '
+            . 'AND drd.received_at IS NOT NULL ORDER BY drd.received_at DESC LIMIT 1), dokumens.created_at)';
+        $threshold = now()->subDays(3)->toDateTimeString();
+
+        return $query->whereRaw($startExpr . ($late ? ' <= ?' : ' > ?'), [$threshold]);
+    }
+
+    /**
      * Build the /owner/dokumen query with the active status tab and all
      * advanced filters applied. Pass $applyUmurMin = false to omit the
      * umur-dokumen filter (used to count documents per umur threshold within
@@ -652,27 +700,11 @@ class OwnerDashboardController extends Controller
         }
 
         if ($status === 'pending' || $status === 'menunggu' || $status === 'belum_siap') {
-            $query->where(function ($q) {
-                $q->whereNull('status_pembayaran')
-                    ->orWhereNotIn('status_pembayaran', ['sudah_dibayar']);
-            })
-                ->whereNull('tanggal_dibayar')
-                ->where(function ($q) {
-                    $q->whereNull('status')
-                        ->orWhereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed']);
-                });
+            // Menunggu: documents still within deadline (aman + peringatan).
+            $this->scopeOwnerDeadlineUrgency($query, false);
         } elseif ($status === 'urgent') {
-            $query->where(function ($q) {
-                $q->where('urgency_active', true)
-                    ->orWhere(function ($subQ) {
-                        $subQ->where('created_at', '<', now()->subDays(3))
-                            ->whereNull('tanggal_dibayar')
-                            ->where(function ($payQ) {
-                                $payQ->whereNull('status_pembayaran')
-                                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                            });
-                    });
-            });
+            // Urgent: overdue documents (terlambat).
+            $this->scopeOwnerDeadlineUrgency($query, true);
         } elseif ($status === 'returned' || $status === 'dikembalikan') {
             $query->where(function ($q) {
                 $q->whereNotNull('returned_at')
@@ -741,7 +773,7 @@ class OwnerDashboardController extends Controller
         }
 
         if ($applyUmurMin && $request && $request->has('filter_umur_min') && !empty($request->filter_umur_min)) {
-            $query->where('created_at', '<=', now()->subDays((int) $request->filter_umur_min));
+            $query->whereRaw($this->ownerUmurStartExpr() . ' <= ?', [now()->subDays((int) $request->filter_umur_min)->toDateTimeString()]);
         }
 
         if ($request && $request->has('filter_durasi_min') && !empty($request->filter_durasi_min)) {
@@ -3402,30 +3434,8 @@ class OwnerDashboardController extends Controller
 
         return [
             'all' => (clone $base)->count(),
-            'pending' => (clone $base)
-                ->where(function ($q) {
-                    $q->whereNull('status_pembayaran')
-                        ->orWhereNotIn('status_pembayaran', ['sudah_dibayar']);
-                })
-                ->whereNull('tanggal_dibayar')
-                ->where(function ($q) {
-                    $q->whereNull('status')
-                        ->orWhereNotIn('status', ['selesai', 'approved_data_sudah_terkirim', 'completed']);
-                })
-                ->count(),
-            'urgent' => (clone $base)
-                ->where(function ($q) {
-                    $q->where('urgency_active', true)
-                        ->orWhere(function ($subQ) {
-                            $subQ->where('created_at', '<', now()->subDays(3))
-                                ->whereNull('tanggal_dibayar')
-                                ->where(function ($payQ) {
-                                    $payQ->whereNull('status_pembayaran')
-                                        ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                                });
-                        });
-                })
-                ->count(),
+            'pending' => $this->scopeOwnerDeadlineUrgency((clone $base), false)->count(),
+            'urgent' => $this->scopeOwnerDeadlineUrgency((clone $base), true)->count(),
             'returned' => (clone $base)
                 ->where(function ($q) {
                     $q->whereNotNull('returned_at')
