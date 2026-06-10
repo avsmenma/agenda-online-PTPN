@@ -660,6 +660,27 @@ class OwnerDashboardController extends Controller
     }
 
     /**
+     * SQL expressions for the current-role duration (Durasi Peran), mirroring
+     * calculateActiveRoleDuration(): start = when the current role received
+     * the document, end = when it processed it (or the payment date, or now
+     * for documents still in process).
+     */
+    private function ownerDurasiStartExpr(): string
+    {
+        return 'COALESCE((SELECT drd.received_at FROM dokumen_role_data drd '
+            . 'WHERE drd.dokumen_id = dokumens.id AND drd.role_code = dokumens.current_handler '
+            . 'AND drd.received_at IS NOT NULL ORDER BY drd.received_at DESC LIMIT 1), dokumens.created_at)';
+    }
+
+    private function ownerDurasiEndExpr(): string
+    {
+        return 'COALESCE((SELECT drd.processed_at FROM dokumen_role_data drd '
+            . 'WHERE drd.dokumen_id = dokumens.id AND drd.role_code = dokumens.current_handler '
+            . 'AND drd.processed_at IS NOT NULL ORDER BY drd.processed_at DESC LIMIT 1), '
+            . 'dokumens.tanggal_dibayar, NOW())';
+    }
+
+    /**
      * Restrict a query to documents still in process (not paid, not completed).
      */
     private function scopeOwnerActiveUnpaid($query)
@@ -792,17 +813,15 @@ class OwnerDashboardController extends Controller
         }
 
         if ($request && $request->has('filter_durasi_min') && !empty($request->filter_durasi_min)) {
-            $durationDays = (int) $request->filter_durasi_min;
-            $query->where(function ($q) use ($durationDays) {
-                $q->whereHas('roleData', function ($roleQ) use ($durationDays) {
-                    $roleQ->whereColumn('role_code', 'dokumens.current_handler')
-                        ->whereNotNull('received_at')
-                        ->where('received_at', '<=', now()->subDays($durationDays));
-                })->orWhere(function ($fallbackQ) use ($durationDays) {
-                    $fallbackQ->whereNull('current_handler')
-                        ->where('created_at', '<=', now()->subDays($durationDays));
-                });
-            });
+            // Compare the actual time spent in the current role (end - start),
+            // not just how long ago the role received it. Otherwise a document
+            // received days ago but processed/paid instantly (0 menit) would
+            // wrongly match a "lebih dari N hari" filter.
+            $durationSeconds = (int) $request->filter_durasi_min * 86400;
+            $query->whereRaw(
+                'TIMESTAMPDIFF(SECOND, ' . $this->ownerDurasiStartExpr() . ', ' . $this->ownerDurasiEndExpr() . ') >= ?',
+                [$durationSeconds]
+            );
         }
 
         // Filter by vendor/dibayar_kepada
