@@ -220,22 +220,77 @@
         width: 100%;
       }
     }
+
+    /* Floating exit control shown while the table fills the website viewport. */
+    .document-table-fullscreen-exit {
+      position: fixed;
+      top: 16px;
+      right: 18px;
+      z-index: 2147483600;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border: 0;
+      border-radius: 10px;
+      background: #083E40;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(8, 62, 64, 0.35);
+    }
+
+    .document-table-fullscreen-exit:hover {
+      background: #0a5f52;
+    }
   </style>
 
   <script>
-    function toggleDocumentTableFullscreen() {
-      const table = document.getElementById('documentTableContainer');
-      if (!table) return;
+    // Fullscreen that fills only the website viewport (not the OS/native
+    // fullscreen). Reuses the shared `document-table-only-fullscreen` layout.
+    (function () {
+      const FS_CLASS = 'document-table-only-fullscreen';
 
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-        return;
+      function ensureExitButton() {
+        let btn = document.getElementById('documentTableFullscreenExit');
+        if (!btn) {
+          btn = document.createElement('button');
+          btn.id = 'documentTableFullscreenExit';
+          btn.type = 'button';
+          btn.className = 'document-table-fullscreen-exit';
+          btn.innerHTML = '<i class="fa-solid fa-compress"></i> Keluar Fullscreen';
+          btn.style.display = 'none';
+          btn.addEventListener('click', function () {
+            window.setDocumentTableFullscreen(false);
+          });
+          document.body.appendChild(btn);
+        }
+        return btn;
       }
 
-      if (table.requestFullscreen) {
-        table.requestFullscreen();
-      }
-    }
+      window.setDocumentTableFullscreen = function (enabled) {
+        const btn = ensureExitButton();
+        if (enabled) {
+          document.body.classList.add(FS_CLASS);
+          btn.style.display = 'inline-flex';
+        } else {
+          btn.style.display = 'none';
+          document.body.classList.remove(FS_CLASS);
+        }
+      };
+
+      window.toggleDocumentTableFullscreen = function () {
+        const table = document.getElementById('documentTableContainer');
+        if (!table) return;
+        window.setDocumentTableFullscreen(!document.body.classList.contains(FS_CLASS));
+      };
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && document.body.classList.contains(FS_CLASS)) {
+          window.setDocumentTableFullscreen(false);
+        }
+      });
+    })();
   </script>
 @endonce
 
