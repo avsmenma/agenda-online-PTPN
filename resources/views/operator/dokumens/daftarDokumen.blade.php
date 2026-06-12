@@ -7734,4 +7734,5 @@
     max-width: none;
   }
 </style>
+@include('partials._compactDocumentTable')
 @endsection

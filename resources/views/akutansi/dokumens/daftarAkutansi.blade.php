@@ -6041,4 +6041,5 @@
 @include('partials._activeCellNav', ['tableSelector' => '.data-table'])
 @include('partials._documentTableStickyCells')
 @include('partials.auto-refresh-documents')
+@include('partials._compactDocumentTable')
 @endsection

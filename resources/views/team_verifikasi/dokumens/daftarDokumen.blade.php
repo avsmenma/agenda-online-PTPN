@@ -7755,5 +7755,6 @@
   })();
 </script>
 @include('partials.auto-refresh-documents')
+@include('partials._compactDocumentTable')
 
 @endsection
