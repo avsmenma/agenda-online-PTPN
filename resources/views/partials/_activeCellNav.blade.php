@@ -131,6 +131,9 @@
   let activeRow = 0;
   let activeCol = 0;
   let activeDocId = null;
+  // Highlight sel hanya muncul setelah user benar-benar berinteraksi
+  // (klik sel atau navigasi keyboard) — bukan otomatis saat halaman dimuat.
+  let userEngaged = false;
 
   function findTable() {
     return document.querySelector(TABLE_SELECTOR);
@@ -271,7 +274,14 @@
       return setActiveCell(activeRow, activeCol, options);
     }
 
-    return autoSelectFirstCell(options);
+    // Jangan auto-pilih sel pertama sebelum user berinteraksi — agar tidak
+    // muncul highlight hijau yang mengganggu saat halaman baru dimuat.
+    if (userEngaged) {
+      return autoSelectFirstCell(options);
+    }
+
+    clearHighlightOnly();
+    return false;
   }
 
   function updateIndicator(rowIdx, colIdx) {
@@ -313,6 +323,7 @@
       const colIdx = cells.indexOf(td);
 
       if (rowIdx >= 0 && colIdx >= 0) {
+        userEngaged = true;
         setActiveCell(rowIdx, colIdx);
       }
     });
@@ -331,6 +342,8 @@
 
       const navigationKeys = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Tab', 'Enter', 'F2', 'Escape'];
       if (!navigationKeys.includes(event.key)) return;
+
+      userEngaged = true;
 
       if (!activeCell || !document.body.contains(activeCell)) {
         rebind({ restore: true, noPulse: true, preventScroll: true });
