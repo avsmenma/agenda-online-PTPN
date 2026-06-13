@@ -1,9 +1,10 @@
 @php
-  static $handlerBagianOptions = null;
-
-  if ($handlerBagianOptions === null) {
-      $handlerBagianOptions = \App\Models\Bagian::active()->ordered()->get(['kode', 'nama']);
+  // Memoize per-request via container: hindari query `bagians` berulang tiap baris (N+1)
+  // saat partial ini di-@include di dalam loop tabel. `static` tidak persist antar @include.
+  if (!app()->bound('__handlerBagianOptions')) {
+      app()->instance('__handlerBagianOptions', \App\Models\Bagian::active()->ordered()->get(['kode', 'nama']));
   }
+  $handlerBagianOptions = app('__handlerBagianOptions');
 
   $normalizeHandler = function ($value) {
       $value = strtolower(trim((string) $value));
