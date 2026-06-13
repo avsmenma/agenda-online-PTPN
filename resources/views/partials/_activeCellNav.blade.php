@@ -134,14 +134,19 @@
   // Highlight sel hanya muncul setelah user benar-benar berinteraksi
   // (klik sel atau navigasi keyboard) — bukan otomatis saat halaman dimuat.
   let userEngaged = false;
+  // Cache baris agar getComputedStyle tidak dihitung ulang tiap navigasi/keystroke (anti-jank pada data banyak).
+  // Cache di-reset hanya saat tabel berubah (mutation/rebind).
+  let rowsCache = null;
+  function invalidateRowsCache() { rowsCache = null; }
 
   function findTable() {
     return document.querySelector(TABLE_SELECTOR);
   }
 
   function getDataRows() {
+    if (rowsCache) return rowsCache;
     if (!tbodyEl) return [];
-    return Array.from(tbodyEl.querySelectorAll('tr:not(.detail-row)'))
+    rowsCache = Array.from(tbodyEl.querySelectorAll('tr:not(.detail-row)'))
       .filter(row => {
         if (row.classList.contains('virtual-scroll-spacer')) return false;
         if (row.dataset.acnIgnore === 'true') return false;
@@ -155,6 +160,7 @@
 
         return true;
       });
+    return rowsCache;
   }
 
   function getCells(row) {
@@ -543,6 +549,7 @@
   }
 
   function scheduleRebind() {
+    invalidateRowsCache(); // tabel berubah -> cache baris harus dihitung ulang
     if (document.querySelector('.ie-editing, .ie-saving, .ie-overlay-popup, .ie-overlay-backdrop')) return;
 
     clearTimeout(rebindTimer);
@@ -559,6 +566,7 @@
     tbodyEl = tableEl.querySelector('tbody');
     theadEl = tableEl.querySelector('thead');
     wrapperEl = tableEl.closest('.table-wrapper, .table-responsive') || tableEl.parentElement;
+    invalidateRowsCache(); // tbody mungkin berganti -> cache baris tidak valid lagi
 
     createIndicator();
     attachCellListeners();
