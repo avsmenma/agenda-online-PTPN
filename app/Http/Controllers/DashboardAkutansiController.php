@@ -19,6 +19,20 @@ use App\Models\DocumentTracking;
 
 class DashboardAkutansiController extends Controller
 {
+    use \App\Http\Controllers\Concerns\BuildsRoleDashboard;
+
+    /**
+     * Halaman dashboard Team Akutansi.
+     */
+    public function dashboard()
+    {
+        $data = $this->buildRoleDashboardData('akutansi');
+        $data['title'] = 'Dashboard Team Akutansi';
+        $data['module'] = 'akutansi';
+        $data['menuDashboard'] = 'Active';
+
+        return view('dashboard.workflow', $data);
+    }
 
     /**
      * Check for new documents assigned to akutansi

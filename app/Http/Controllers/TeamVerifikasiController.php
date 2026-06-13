@@ -33,6 +33,21 @@ use Exception;
 
 class TeamVerifikasiController extends Controller
 {
+    use \App\Http\Controllers\Concerns\BuildsRoleDashboard;
+
+    /**
+     * Halaman dashboard Team Verifikasi.
+     */
+    public function dashboard()
+    {
+        $data = $this->buildRoleDashboardData('team_verifikasi');
+        $data['title'] = 'Dashboard Team Verifikasi';
+        $data['module'] = 'team_verifikasi';
+        $data['menuDashboard'] = 'Active';
+
+        return view('dashboard.workflow', $data);
+    }
+
     public function dokumens(Request $request)
     {
         // Team Verifikasi sees ALL documents (cross-role visibility)

@@ -157,10 +157,9 @@ Route::get('dashboard', [DashboardController::class, 'index'])
     ->middleware('auth', 'role:admin,operator')
     ->name('dashboard.main');
 
-// dashboard/verifikasi removed - redirected to documents/verifikasi
-Route::get('dashboard/verifikasi', function () {
-    return redirect()->route('documents.verifikasi.index', [], 301);
-})->middleware('auth', 'role:admin,team_verifikasi,verifikasi')
+// Dashboard Team Verifikasi
+Route::get('dashboard/verifikasi', [TeamVerifikasiController::class, 'dashboard'])
+    ->middleware('auth', 'role:admin,team_verifikasi,verifikasi')
     ->name('dashboard.verifikasi');
 
 Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'index'])
@@ -188,15 +187,13 @@ Route::post('dashboard/pembayaran/asisten-virtual/{interaction}/feedback', [Owne
 
 
 
-// Dashboard sub-routes for roles that redirect to document views
-Route::get('dashboard/akutansi', function () {
-    return redirect()->route('documents.akutansi.index', [], 301);
-})->middleware('auth', 'role:admin,akutansi')
+// Dashboard Team Akutansi & Perpajakan
+Route::get('dashboard/akutansi', [DashboardAkutansiController::class, 'dashboard'])
+    ->middleware('auth', 'role:admin,akutansi')
   ->name('dashboard.akutansi');
 
-Route::get('dashboard/perpajakan', function () {
-    return redirect()->route('documents.perpajakan.index', [], 301);
-})->middleware('auth', 'role:admin,perpajakan')
+Route::get('dashboard/perpajakan', [DashboardPerpajakanController::class, 'dashboard'])
+    ->middleware('auth', 'role:admin,perpajakan')
   ->name('dashboard.perpajakan');
 
 // Backward compatibility routes removed — old dashboard URLs (Phase 2 cleanup)

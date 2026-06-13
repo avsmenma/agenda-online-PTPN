@@ -4633,6 +4633,8 @@
 
           $workflowMenu = [
             'team_verifikasi' => [
+              'dashboard_route' => route('dashboard.verifikasi'),
+              'dashboard_active' => request()->routeIs('dashboard.verifikasi'),
               'document_label' => 'Daftar Dokumen',
               'document_route' => route('documents.verifikasi.index'),
               'document_active' => request()->routeIs('documents.verifikasi.*') || request()->is('*documents/verifikasi*'),
@@ -4647,6 +4649,8 @@
               'badge_id' => 'notification-badge',
             ],
             'perpajakan' => [
+              'dashboard_route' => route('dashboard.perpajakan'),
+              'dashboard_active' => request()->routeIs('dashboard.perpajakan'),
               'document_label' => 'Daftar Perpajakan',
               'document_route' => route('documents.perpajakan.index'),
               'document_active' => request()->routeIs('documents.perpajakan.*') || request()->is('*documents/perpajakan*'),
@@ -4661,6 +4665,8 @@
               'badge_id' => 'perpajakan-notification-badge',
             ],
             'akutansi' => [
+              'dashboard_route' => route('dashboard.akutansi'),
+              'dashboard_active' => request()->routeIs('dashboard.akutansi'),
               'document_label' => 'Daftar Akutansi',
               'document_route' => route('documents.akutansi.index'),
               'document_active' => request()->routeIs('documents.akutansi.*') || request()->is('*documents/akutansi*'),
@@ -4679,6 +4685,15 @@
           $menu = $workflowMenu[$workflowRoleCode] ?? $workflowMenu['team_verifikasi'];
           $isWorkflowInboxActive = request()->is('inbox') || request()->routeIs('inbox.*');
         @endphp
+        @if(!empty($menu['dashboard_route']))
+        <a href="{{ $menu['dashboard_route'] }}" class="owner-nav-item {{ ($menu['dashboard_active'] ?? false) ? 'active' : '' }}" title="Dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
+        </a>
+        @endif
         <a href="{{ url('/inbox') }}" class="owner-nav-item {{ $isWorkflowInboxActive ? 'active' : '' }}" title="Inbox">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <path d="M22 12h-6l-2 3h-4l-2-3H2"/>

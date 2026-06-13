@@ -21,6 +21,20 @@ use Illuminate\Support\Facades\Schema;
 
 class DashboardPerpajakanController extends Controller
 {
+    use \App\Http\Controllers\Concerns\BuildsRoleDashboard;
+
+    /**
+     * Halaman dashboard Team Perpajakan.
+     */
+    public function dashboard()
+    {
+        $data = $this->buildRoleDashboardData('perpajakan');
+        $data['title'] = 'Dashboard Team Perpajakan';
+        $data['module'] = 'perpajakan';
+        $data['menuDashboard'] = 'Active';
+
+        return view('dashboard.workflow', $data);
+    }
 
     public function dokumens(Request $request)
 
