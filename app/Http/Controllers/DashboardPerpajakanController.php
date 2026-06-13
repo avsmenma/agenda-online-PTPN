@@ -419,6 +419,15 @@ class DashboardPerpajakanController extends Controller
             session(['perpajakan_dokumens_table_columns' => $selectedColumns]);
         }
 
+        // Virtual scroll: balas hanya potongan baris tabel (ringan) tanpa layout, stats, & partial berat
+        if ($request->boolean('virtual_chunk')) {
+            return view('perpajakan.dokumens._chunk', [
+                'dokumens' => $dokumens,
+                'selectedColumns' => $selectedColumns,
+                'showActionColumn' => false,
+            ]);
+        }
+
         // Calculate 4 dashboard-style stats for the document list header
         // 1. Total Dokumen Agenda - semua dokumen dalam sistem (exclude CSV imports)
         $totalDokumenAgenda = Dokumen::excludeCsvImports()->count();

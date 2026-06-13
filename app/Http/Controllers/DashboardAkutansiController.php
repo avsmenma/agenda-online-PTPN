@@ -474,6 +474,15 @@ class DashboardAkutansiController extends Controller
             session(['akutansi_dokumens_table_columns' => $selectedColumns]);
         }
 
+        // Virtual scroll: balas hanya potongan baris tabel (ringan) tanpa layout, stats, & partial berat
+        if ($request->boolean('virtual_chunk')) {
+            return view('akutansi.dokumens._chunk', [
+                'dokumens' => $dokumens,
+                'selectedColumns' => $selectedColumns,
+                'showActionColumn' => false,
+            ]);
+        }
+
         // Calculate 4 dashboard-style stats + delay stats + total rupiah for bento grid
         // 1. Total Dokumen Agenda - semua dokumen dalam sistem (exclude CSV imports)
         $totalDokumenAgenda = Dokumen::excludeCsvImports()->count();
