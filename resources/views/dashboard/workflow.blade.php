@@ -24,16 +24,6 @@
 @endphp
 
 <div class="wd-wrap">
-  <div class="wd-head">
-    <div>
-      <h1 class="wd-title">{{ $title }}</h1>
-      <p class="wd-subtitle">Ringkasan dokumen yang ditangani Tim {{ $cfg['label'] }}.</p>
-    </div>
-    <a href="{{ route($cfg['docRouteName']) }}" class="wd-headbtn">
-      <i class="fas fa-list-ul"></i> Lihat Semua Dokumen
-    </a>
-  </div>
-
   {{-- ====================== 4 KARTU INFORMASI ====================== --}}
   <div class="wd-cards">
     <a href="{{ route($cfg['docRouteName']) }}" class="wd-card wd-card--total">
@@ -171,12 +161,6 @@
 
 <style>
   .wd-wrap { font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 0.25rem 0.1rem 2rem; }
-  .wd-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.1rem; flex-wrap: wrap; }
-  .wd-title { font-size: 1.45rem; font-weight: 700; color: #0f172a; margin: 0; }
-  .wd-subtitle { color: #64748b; font-size: 0.86rem; margin: 0.25rem 0 0; }
-  .wd-headbtn { display: inline-flex; align-items: center; gap: 0.45rem; background: #083E40; color: #fff; border-radius: 10px;
-    padding: 0.55rem 0.95rem; font-size: 0.82rem; font-weight: 600; text-decoration: none; transition: background .18s ease; }
-  .wd-headbtn:hover { background: #0d5b59; color: #fff; }
 
   /* Cards */
   .wd-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.85rem; margin-bottom: 1rem; }
