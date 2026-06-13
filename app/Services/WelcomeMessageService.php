@@ -18,10 +18,19 @@ final readonly class WelcomeMessageService
      */
     public function getWelcomeMessage(?string $module = null): string
     {
+        // Memoize per-request: composer terpasang di View::composer('*'), sehingga method ini
+        // dipanggil sekali untuk SETIAP view/partial (mis. ratusan baris tabel). Tanpa memo,
+        // tiap pemanggilan menyentuh cache driver database = 1 query per baris (N+1).
+        static $memo = [];
+        $memoKey = $module ?? '__null__';
+        if (array_key_exists($memoKey, $memo)) {
+            return $memo[$memoKey];
+        }
+
         try {
             $cacheKey = "welcome_message_{$module}";
 
-            return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($module) {
+            return $memo[$memoKey] = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($module) {
                 $welcomeMessage = $this->fetchWelcomeMessage($module);
 
                 if (!$welcomeMessage) {
@@ -38,7 +47,7 @@ final readonly class WelcomeMessageService
                 'error' => $e->getMessage()
             ]);
 
-            return $this->getFallbackMessage($module);
+            return $memo[$memoKey] = $this->getFallbackMessage($module);
         }
     }
 
