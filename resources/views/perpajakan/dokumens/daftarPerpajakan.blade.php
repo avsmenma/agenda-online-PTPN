@@ -2496,25 +2496,25 @@
               $isSentToPembayaran = $dokumen->status == 'sent_to_pembayaran' || in_array($dokumen->status, ['completed', 'selesai']) || $dokumen->status_pembayaran === 'sudah_dibayar';
               $isPendingApprovalAkutansi = $dokumen->status == 'pending_approval_akutansi';
               $isPendingApprovalPembayaran = $dokumen->status == 'pending_approval_pembayaran' || $dokumen->status == 'menunggu_di_approve';
-              $isPending = $dokumen->roleStatuses()
+              $isPending = $dokumen->roleStatuses
                 ->where('role_code', 'perpajakan')
                 ->where('status', 'pending')
-                ->exists();
+                ->isNotEmpty();
               // Check if document is rejected by perpajakan OR returned from akutansi/pembayaran
-              $isRejectedByPerpajakan = $dokumen->roleStatuses()
+              $isRejectedByPerpajakan = $dokumen->roleStatuses
                 ->where('role_code', 'perpajakan')
                 ->where('status', 'rejected')
-                ->exists();
+                ->isNotEmpty();
 
               // Check if document was rejected by akutansi and returned to department (perpajakan)
               $isReturnedFromAkutansi = $dokumen->status == 'returned_to_department'
                 && $dokumen->return_source == 'akutansi';
 
               // Check if akutansi rejected this document (using roleStatuses)
-              $isRejectedByAkutansi = $dokumen->roleStatuses()
+              $isRejectedByAkutansi = $dokumen->roleStatuses
                 ->where('role_code', 'akutansi')
                 ->where('status', 'rejected')
-                ->exists();
+                ->isNotEmpty();
 
               // Document is rejected if it was rejected by perpajakan, or by akutansi and returned to department
               $isRejected = $isRejectedByPerpajakan || $isReturnedFromAkutansi || $isRejectedByAkutansi;
@@ -2530,25 +2530,25 @@
               $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
 
               // Check Akutansi and Pembayaran status for fallback
-              $akutansiHasApproved = $dokumen->roleStatuses()
+              $akutansiHasApproved = $dokumen->roleStatuses
                 ->where('role_code', 'akutansi')
                 ->where('status', 'approved')
-                ->exists();
+                ->isNotEmpty();
 
-              $pembayaranHasApproved = $dokumen->roleStatuses()
+              $pembayaranHasApproved = $dokumen->roleStatuses
                 ->where('role_code', 'pembayaran')
                 ->where('status', 'approved')
-                ->exists();
+                ->isNotEmpty();
 
-              $akutansiIsPending = $dokumen->roleStatuses()
+              $akutansiIsPending = $dokumen->roleStatuses
                 ->where('role_code', 'akutansi')
                 ->where('status', 'pending')
-                ->exists();
+                ->isNotEmpty();
 
-              $pembayaranIsPending = $dokumen->roleStatuses()
+              $pembayaranIsPending = $dokumen->roleStatuses
                 ->where('role_code', 'pembayaran')
                 ->where('status', 'pending')
-                ->exists();
+                ->isNotEmpty();
 
               // Determine status using display_status first, then fallback
               $sentToTeamFromPerpajakan = null;

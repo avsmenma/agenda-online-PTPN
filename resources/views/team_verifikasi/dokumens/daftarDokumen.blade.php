@@ -3109,19 +3109,20 @@
               // Dokumen ditolak jika:
               // 1. Ditolak oleh Team Verifikasi sendiri, ATAU
               // 2. Ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi (current_handler = Team Verifikasi)
-              $isRejectedByTeamVerifikasi = $dokumen->roleStatuses()
+              // Gunakan koleksi roleStatuses yang sudah di-eager-load (hindari query per baris / N+1)
+              $isRejectedByTeamVerifikasi = $dokumen->roleStatuses
                 ->where('role_code', 'team_verifikasi')
                 ->where('status', 'rejected')
-                ->exists();
+                ->isNotEmpty();
 
               $isRejectedByOtherRole = false;
               $rejectedByRole = null;
               if ($dokumen->current_handler === 'team_verifikasi') {
                 // Cek apakah ada rejection dari perpajakan atau akutansi
-                $rejectedStatus = $dokumen->roleStatuses()
+                $rejectedStatus = $dokumen->roleStatuses
                   ->whereIn('role_code', ['perpajakan', 'akutansi'])
                   ->where('status', 'rejected')
-                  ->latest('status_changed_at')
+                  ->sortByDesc('status_changed_at')
                   ->first();
 
                 if ($rejectedStatus) {
@@ -3133,10 +3134,10 @@
               $isRejected = $isRejectedByTeamVerifikasi || $isRejectedByOtherRole;
 
               // Check pending status from roleStatuses
-              $isPending = $dokumen->roleStatuses()
+              $isPending = $dokumen->roleStatuses
                 ->where('role_code', 'team_verifikasi')
                 ->where('status', 'pending')
-                ->exists();
+                ->isNotEmpty();
 
               // Document is NO LONGER locked after approval
               // Deadline is now determined by database config and calculated from received_at (count up)
@@ -3151,8 +3152,8 @@
               }
 
               // Check if document has been approved by Perpajakan or Akutansi
-              $perpajakanStatus = $dokumen->getStatusForRole('perpajakan');
-              $akutansiStatus = $dokumen->getStatusForRole('akutansi');
+              $perpajakanStatus = $dokumen->roleStatuses->firstWhere('role_code', 'perpajakan');
+              $akutansiStatus = $dokumen->roleStatuses->firstWhere('role_code', 'akutansi');
               $isApprovedByPerpajakan = $perpajakanStatus && $perpajakanStatus->status === 'approved';
               $isApprovedByAkutansi = $akutansiStatus && $akutansiStatus->status === 'approved';
               $isApprovedByOtherRole = $isApprovedByPerpajakan || $isApprovedByAkutansi;
@@ -3195,10 +3196,10 @@
 
                   if ($wasSentToPerpajakan && !$isRejected) {
                     // Check if perpajakan is still pending (document in perpajakan inbox)
-                    $perpajakanIsPendingInbox = $dokumen->roleStatuses()
+                    $perpajakanIsPendingInbox = $dokumen->roleStatuses
                       ->where('role_code', 'perpajakan')
                       ->where('status', 'pending')
-                      ->exists();
+                      ->isNotEmpty();
 
                     if ($perpajakanIsPendingInbox) {
                       $isPendingPerpajakan = true;

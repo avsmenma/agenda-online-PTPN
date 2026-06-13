@@ -2855,10 +2855,10 @@
               <td class="col-status" style="text-align: center;" onclick="event.stopPropagation()">
                 @php
                   // Check if document is rejected by akutansi or pembayaran
-                  $isRejected = $dokumen->roleStatuses()
+                  $isRejected = $dokumen->roleStatuses
                     ->whereIn('role_code', ['akutansi', 'pembayaran'])
                     ->where('status', 'rejected')
-                    ->exists();
+                    ->isNotEmpty();
 
                   // FIX: Akutansi needs to see ACTUAL workflow state (like Perpajakan)
                   // - If document is in Pembayaran inbox (pending) → "Menunggu Approval dari Pembayaran"
@@ -2867,16 +2867,16 @@
                   $pembayaranRoleData = $dokumen->getDataForRole('pembayaran');
 
                   // Check if Pembayaran has APPROVED the document (not just pending)
-                  $pembayaranHasApproved = $dokumen->roleStatuses()
+                  $pembayaranHasApproved = $dokumen->roleStatuses
                     ->where('role_code', 'pembayaran')
                     ->where('status', 'approved')
-                    ->exists();
+                    ->isNotEmpty();
 
                   // Check if document is PENDING in Pembayaran inbox
-                  $pembayaranIsPending = $dokumen->roleStatuses()
+                  $pembayaranIsPending = $dokumen->roleStatuses
                     ->where('role_code', 'pembayaran')
                     ->where('status', 'pending')
-                    ->exists();
+                    ->isNotEmpty();
 
                   // Check if document BYPASSED Akutansi (Bulk Direct to Payment)
                   // These documents went: Operator -> Team Verifikasi -> Pembayaran

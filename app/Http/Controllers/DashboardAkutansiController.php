@@ -275,7 +275,8 @@ class DashboardAkutansiController extends Controller
                 $q->where('role_code', 'akutansi');
             },
             'roleStatuses' => function ($q) {
-                $q->where('role_code', 'akutansi');
+                // Muat status semua role agar pengecekan di view (pembayaran dll) tidak memicu query per baris (N+1)
+                $q->whereIn('role_code', ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran']);
             }
         ]);
 
