@@ -50,12 +50,9 @@ final class User extends Authenticatable
         // New standardized role names
         'Operator' => '/documents',
         'operator' => '/documents',
-        'team_verifikasi' => '/documents/verifikasi',
-        // Legacy role names for backward compatibility
-        'operator' => '/documents',
-        'operator' => '/documents',
-        'team_verifikasi' => '/documents/verifikasi',
-        'verifikasi' => '/documents/verifikasi',
+        // Workflow roles diarahkan ke dashboard masing-masing setelah login
+        'team_verifikasi' => '/dashboard/verifikasi',
+        'verifikasi' => '/dashboard/verifikasi',
         // Other roles
         'Pembayaran' => '/dashboard/pembayaran',
         'pembayaran' => '/dashboard/pembayaran',
