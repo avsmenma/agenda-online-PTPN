@@ -2905,20 +2905,6 @@
 
   <h2 style="margin-bottom: 20px; font-weight: 700;">{{ $title }}</h2>
 
-  @include('partials.document-summary-metrics', [
-    'summaryRouteName' => 'documents.verifikasi.index',
-    'summaryRoleLabel' => 'Verifikasi',
-    'summaryRoleSub' => 'di verifikasi',
-    'summaryRoleIcon' => 'fas fa-folder-open',
-    'summarySentParams' => ['status' => 'terkirim'],
-    'summaryTotalCount' => $totalDokumenAgenda ?? 0,
-    'summaryTotalValue' => $totalNilaiRupiah ?? 0,
-    'summaryRoleCount' => $totalDokumenVerifikasi ?? 0,
-    'summarySentCount' => $totalTerkirim ?? 0,
-    'summarySafeCount' => $dokumenLessThan24h ?? 0,
-    'summaryWarnCount' => $dokumen24to72h ?? 0,
-    'summaryLateCount' => $dokumenMoreThan72h ?? 0,
-  ])
 
   <script>
     (function() {

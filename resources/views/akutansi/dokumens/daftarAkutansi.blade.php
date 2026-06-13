@@ -2310,20 +2310,6 @@
 
   <h2>{{ $title }}</h2>
 
-  @include('partials.document-summary-metrics', [
-    'summaryRouteName' => 'documents.akutansi.index',
-    'summaryRoleLabel' => 'Akutansi',
-    'summaryRoleSub' => 'di akutansi',
-    'summaryRoleIcon' => 'fas fa-calculator',
-    'summarySentParams' => ['status' => 'terkirim_pembayaran'],
-    'summaryTotalCount' => $totalDokumenAgenda ?? 0,
-    'summaryTotalValue' => $totalNilaiRupiah ?? 0,
-    'summaryRoleCount' => $totalDokumenAkutansi ?? 0,
-    'summarySentCount' => $totalTerkirim ?? 0,
-    'summarySafeCount' => $dokumenLessThan24h ?? 0,
-    'summaryWarnCount' => $dokumen24to72h ?? 0,
-    'summaryLateCount' => $dokumenMoreThan72h ?? 0,
-  ])
   <script>
     (function() {
       function easeOutExpo(t) {

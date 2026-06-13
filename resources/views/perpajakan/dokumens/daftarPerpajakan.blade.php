@@ -2330,20 +2330,6 @@
 
   <h2 style="margin-bottom: 20px; font-weight: 700;">{{ $title }}</h2>
 
-  @include('partials.document-summary-metrics', [
-    'summaryRouteName' => 'documents.perpajakan.index',
-    'summaryRoleLabel' => 'Perpajakan',
-    'summaryRoleSub' => 'di perpajakan',
-    'summaryRoleIcon' => 'fas fa-file-invoice-dollar',
-    'summarySentParams' => ['status' => 'terkirim'],
-    'summaryTotalCount' => $totalDokumenAgenda ?? 0,
-    'summaryTotalValue' => $totalNilaiRupiah ?? 0,
-    'summaryRoleCount' => $totalDokumenPerpajakan ?? 0,
-    'summarySentCount' => $totalTerkirim ?? 0,
-    'summarySafeCount' => $dokumenLessThan24h ?? 0,
-    'summaryWarnCount' => $dokumen24to72h ?? 0,
-    'summaryLateCount' => $dokumenMoreThan72h ?? 0,
-  ])
   <script>
     (function() {
       function easeOutExpo(t) { return t === 1 ? 1 : 1 - Math.pow(2, -10 * t); }
