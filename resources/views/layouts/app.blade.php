@@ -4641,9 +4641,6 @@
               'return_label' => 'Pengembalian Ke Bagian',
               'return_route' => route('returns.verifikasi.bagian'),
               'return_active' => request()->routeIs('returns.verifikasi.bagian'),
-              'report_label' => 'Rekapan',
-              'report_route' => route('reports.verifikasi.index'),
-              'report_active' => request()->routeIs('reports.verifikasi.*'),
               'delay_route' => route('rekapan-keterlambatan.role', 'team_verifikasi'),
               'delay_active' => request()->is('*rekapan-keterlambatan/team_verifikasi*'),
               'badge_id' => 'notification-badge',
@@ -4657,9 +4654,6 @@
               'return_label' => null,
               'return_route' => null,
               'return_active' => false,
-              'report_label' => 'Rekapan',
-              'report_route' => route('reports.perpajakan.index'),
-              'report_active' => request()->routeIs('reports.perpajakan.index'),
               'delay_route' => route('rekapan-keterlambatan.role', 'perpajakan'),
               'delay_active' => request()->is('*rekapan-keterlambatan/perpajakan*'),
               'badge_id' => 'perpajakan-notification-badge',
@@ -4673,9 +4667,6 @@
               'return_label' => null,
               'return_route' => null,
               'return_active' => false,
-              'report_label' => 'Rekapan Akutansi',
-              'report_route' => route('reports.akutansi.index'),
-              'report_active' => request()->routeIs('reports.akutansi.*'),
               'delay_route' => route('rekapan-keterlambatan.role', 'akutansi'),
               'delay_active' => request()->is('*rekapan-keterlambatan/akutansi*'),
               'badge_id' => 'akutansi-notification-badge',
@@ -4719,13 +4710,6 @@
           <span class="menu-notification-badge" id="pengembalian-ke-bidang-badge" style="display:none;margin-left:auto;">0</span>
         </a>
         @endif
-        <a href="{{ $menu['report_route'] }}" class="owner-nav-item {{ $menu['report_active'] ? 'active' : '' }}" title="{{ $menu['report_label'] }}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
-            <path d="M3 3v18h18"/>
-            <path d="M7 15l4-4 3 3 5-7"/>
-          </svg>
-          {{ $menu['report_label'] }}
-        </a>
         <a href="{{ $menu['delay_route'] }}" class="owner-nav-item {{ $menu['delay_active'] ? 'active' : '' }}" title="Rekap Keterlambatan">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <circle cx="12" cy="12" r="9"/>
@@ -5042,9 +5026,6 @@
                 <a href="{{ route('documents.akutansi.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
                   <i class="fa-solid fa-list"></i> Daftar Akutansi
                 </a>
-                <a href="{{ route('reports.akutansi.index') }}" class="{{ $isReportsActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-chart-bar"></i> Rekapan Akutansi
-                </a>
                 <a href="{{ route('rekapan-keterlambatan.role', 'akutansi') }}"
                   class="{{ request()->is('*rekapan-keterlambatan/akutansi*') ? 'active' : '' }}">
                   <i class="fa-solid fa-clock-rotate-left"></i> Rekap Keterlambatan
@@ -5052,9 +5033,6 @@
               @elseif($module === 'perpajakan')
                 <a href="{{ route('documents.perpajakan.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
                   <i class="fa-solid fa-list"></i> Daftar Perpajakan
-                </a>
-                <a href="{{ route('reports.perpajakan.index') }}" class="{{ $isReportsActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-chart-bar"></i> Rekapan
                 </a>
                 <a href="{{ route('rekapan-keterlambatan.role', 'perpajakan') }}"
                   class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
@@ -5067,9 +5045,6 @@
                 <a href="{{ route('returns.verifikasi.bagian') }}"
                   class="{{ request()->routeIs('returns.verifikasi.bagian') ? 'active' : '' }}">
                   <i class="fa-solid fa-arrow-left"></i> Pengembalian Ke Bagian
-                </a>
-                <a href="{{ route('reports.verifikasi.index') }}" class="{{ $isReportsActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-chart-bar"></i> Rekapan
                 </a>
                 <a href="{{ route('rekapan-keterlambatan.role', 'team_verifikasi') }}"
                   class="{{ request()->is('*rekapan-keterlambatan/team_verifikasi*') ? 'active' : '' }}">
@@ -5177,9 +5152,6 @@
           <span class="menu-notification-badge" id="akutansi-notification-badge"
             style="display: none; margin-left: auto;">0</span>
         </a>
-        <a href="{{ route('reports.akutansi.index') }}" class="{{ $menuRekapan ?? '' }}">
-          <i class="fa-solid fa-chart-bar me-2"></i> Rekapan Akutansi
-        </a>
         <a href="{{ route('rekapan-keterlambatan.role', 'akutansi') }}"
           class="{{ request()->is('*rekapan-keterlambatan/akutansi*') ? 'active' : '' }}">
           <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
@@ -5189,9 +5161,6 @@
           <i class="fa-solid fa-list me-2"></i> Daftar Perpajakan
           <span class="menu-notification-badge" id="perpajakan-notification-badge"
             style="display: none; margin-left: auto;">0</span>
-        </a>
-        <a href="{{ route('reports.perpajakan.index') }}" class="{{ $menuRekapan ?? '' }}">
-          <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
         </a>
         <a href="{{ route('rekapan-keterlambatan.role', 'perpajakan') }}"
           class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
@@ -5206,9 +5175,6 @@
           <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian Ke Bagian
           <span class="menu-notification-badge" id="pengembalian-ke-bidang-badge"
             style="display: none; margin-left: auto;">0</span>
-        </a>
-        <a href="{{ route('reports.verifikasi.index') }}" class="{{ $menuRekapan ?? '' }}">
-          <i class="fa-solid fa-chart-bar me-2"></i> Rekapan
         </a>
         <a href="{{ route('rekapan-keterlambatan.role', 'team_verifikasi') }}"
           class="{{ request()->is('*rekapan-keterlambatan/team_verifikasi*') ? 'active' : '' }}">

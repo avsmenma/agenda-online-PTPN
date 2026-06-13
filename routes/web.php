@@ -424,10 +424,7 @@ Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('do
 });
 
 // Professional Reports Routes - Verifikasi
-Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('reports/verifikasi')->name('reports.verifikasi.')->group(function () {
-    Route::get('/', [TeamVerifikasiController::class, 'rekapan'])->name('index');
-    Route::get('/analytics', [TeamVerifikasiController::class, 'rekapanAnalytics'])->name('analytics');
-});
+// Halaman laporan/rekapan Team Verifikasi dihapus.
 
 // Professional Returns Routes - Verifikasi
 Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
@@ -550,9 +547,7 @@ Route::middleware(['auth', 'role:admin,akutansi'])->prefix('documents/akutansi')
 });
 
 // Professional Reports Routes - Akutansi
-Route::middleware(['auth', 'role:admin,akutansi'])->prefix('reports/akutansi')->name('reports.akutansi.')->group(function () {
-    Route::get('/', [DashboardAkutansiController::class, 'rekapan'])->name('index');
-});
+// Halaman laporan/rekapan Akutansi dihapus.
 
 // Professional Returns Routes - Akutansi
 Route::get('/returns/akutansi', [DashboardAkutansiController::class, 'pengembalian'])
@@ -575,11 +570,7 @@ Route::middleware(['auth', 'role:admin,perpajakan'])->prefix('documents/perpajak
 });
 
 // Professional Reports Routes - Perpajakan
-Route::middleware(['auth', 'role:admin,perpajakan'])->prefix('reports/perpajakan')->name('reports.perpajakan.')->group(function () {
-    Route::get('/', [DashboardPerpajakanController::class, 'rekapan'])->name('index');
-    Route::get('/export', [DashboardPerpajakanController::class, 'exportView'])->name('export');
-    Route::get('/export/download', [DashboardPerpajakanController::class, 'exportData'])->name('export.download');
-});
+// Halaman laporan/rekapan & export Perpajakan dihapus.
 
 // Professional Returns Routes - Perpajakan
 Route::get('/returns/perpajakan', [DashboardPerpajakanController::class, 'pengembalian'])
