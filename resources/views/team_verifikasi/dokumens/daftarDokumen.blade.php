@@ -359,7 +359,8 @@
 
 
     .data-table tbody tr {
-      transition: all 0.2s ease;
+      /* Jangan transition: all — agar baris tidak menganimasikan layout saat lebar konten/sidebar berubah (anti-lag) */
+      transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
       border-bottom: 1px solid #f0f0f0;
     }
 
