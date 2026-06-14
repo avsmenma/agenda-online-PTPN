@@ -3,7 +3,7 @@
 // Nomor Agenda, Tahun, Nomor SPP, Tanggal Masuk, Dibayar Kepada, Uraian.
 $allColumns = [
     'nomor_agenda'  => 'Nomor Agenda',
-    'tahun'         => 'Tahun',
+    'nilai_rupiah'  => 'Nilai',
     'nomor_spp'     => 'Nomor SPP',
     'tanggal_masuk' => 'Tanggal Masuk',
     'dibayar_kepada' => 'Dibayar Kepada',

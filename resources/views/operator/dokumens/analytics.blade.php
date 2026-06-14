@@ -510,6 +510,10 @@
     word-break: break-word;
     overflow-wrap: anywhere;
     vertical-align: top;
+    border: 1px solid #b9c4cf !important;   /* garis horizontal & vertikal (gridlines) */
+  }
+  .table-responsive.scrollbar-visible > table thead th {
+    border-color: rgba(255, 255, 255, 0.28) !important;  /* garis di header (latar gelap) */
   }
   /* Lebar proporsional tiap kolom (total 100%) */
   .table-responsive.scrollbar-visible > table th:nth-child(1),
@@ -517,15 +521,15 @@
   .table-responsive.scrollbar-visible > table th:nth-child(2),
   .table-responsive.scrollbar-visible > table td:nth-child(2) { width: 11%; }  /* Nomor Agenda */
   .table-responsive.scrollbar-visible > table th:nth-child(3),
-  .table-responsive.scrollbar-visible > table td:nth-child(3) { width: 6%; }   /* Tahun */
+  .table-responsive.scrollbar-visible > table td:nth-child(3) { width: 12%; }  /* Nilai */
   .table-responsive.scrollbar-visible > table th:nth-child(4),
-  .table-responsive.scrollbar-visible > table td:nth-child(4) { width: 15%; }  /* Nomor SPP */
+  .table-responsive.scrollbar-visible > table td:nth-child(4) { width: 14%; }  /* Nomor SPP */
   .table-responsive.scrollbar-visible > table th:nth-child(5),
-  .table-responsive.scrollbar-visible > table td:nth-child(5) { width: 10%; }  /* Tanggal Masuk */
+  .table-responsive.scrollbar-visible > table td:nth-child(5) { width: 9%; }   /* Tanggal Masuk */
   .table-responsive.scrollbar-visible > table th:nth-child(6),
-  .table-responsive.scrollbar-visible > table td:nth-child(6) { width: 24%; }  /* Dibayar Kepada */
+  .table-responsive.scrollbar-visible > table td:nth-child(6) { width: 22%; }  /* Dibayar Kepada */
   .table-responsive.scrollbar-visible > table th:nth-child(7),
-  .table-responsive.scrollbar-visible > table td:nth-child(7) { width: 30%; }  /* Uraian */
+  .table-responsive.scrollbar-visible > table td:nth-child(7) { width: 28%; }  /* Uraian */
 </style>
 
 <!-- Filter Section -->
