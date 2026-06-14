@@ -498,7 +498,8 @@ Route::middleware(['auth', 'role:operator,team_verifikasi,verifikasi,perpajakan,
 
 // Professional Document Routes - Pembayaran
 Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('documents/pembayaran')->name('documents.pembayaran.')->group(function () {
-    Route::get('/', [DashboardPembayaranController::class, 'index'])->name('index');
+    // URL diubah ke /daftar agar tidak terbentur cache redirect 301 lama (/documents/pembayaran → /dashboard/pembayaran).
+    Route::get('/daftar', [DashboardPembayaranController::class, 'index'])->name('index');
     Route::get('/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/payment-data', [DashboardPembayaranController::class, 'getPaymentData'])->name('payment-data');
     Route::post('/{dokumen}/set-deadline', [DashboardPembayaranController::class, 'setDeadline'])->name('set-deadline');
