@@ -1981,7 +1981,7 @@
     </div>
 
     <!-- Filter Section -->
-    <form action="{{ route('dashboard.pembayaran') }}" method="GET" class="filter-section" id="filterForm">
+    <form action="{{ route('documents.pembayaran.index') }}" method="GET" class="filter-section" id="filterForm">
       <div class="filter-row">
         <div class="filter-search">
           <i class="fa-solid fa-search filter-search-icon"></i>
@@ -2010,7 +2010,7 @@
             <i class="fa-solid fa-check"></i>
             Terapkan
           </button>
-          <a href="{{ route('dashboard.pembayaran') }}" class="btn-filter btn-filter--secondary"
+          <a href="{{ route('documents.pembayaran.index') }}" class="btn-filter btn-filter--secondary"
             onclick="try{localStorage.removeItem('pembayaran_columns')}catch(e){}">
             <i class="fa-solid fa-redo"></i>
             Reset
@@ -2286,7 +2286,7 @@
           </div>
           <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
           <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
-          <a href="{{ route('dashboard.pembayaran') }}" class="btn-empty"
+          <a href="{{ route('documents.pembayaran.index') }}" class="btn-empty"
             onclick="try{localStorage.removeItem('pembayaran_columns')}catch(e){}">
             <i class="fa-solid fa-redo"></i>
             Reset Filter

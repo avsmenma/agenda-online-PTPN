@@ -60,6 +60,16 @@ trait BuildsRoleDashboard
                 'fourth'        => 'hari_ini',
                 'visibilityStatuses' => ['sent_to_akutansi', 'sent_to_pembayaran'],
             ],
+            'pembayaran' => [
+                'roleCode'      => 'pembayaran',
+                'handlers'      => ['pembayaran'],
+                'label'         => 'Pembayaran',
+                'icon'          => 'fas fa-money-bill-wave',
+                'routeName'     => 'dashboard.pembayaran',
+                'docRouteName'  => 'documents.pembayaran.index',
+                'fourth'        => 'hari_ini',
+                'visibilityStatuses' => ['sent_to_pembayaran'],
+            ],
         ];
 
         return $configs[$role];

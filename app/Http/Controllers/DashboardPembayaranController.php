@@ -25,6 +25,21 @@ use Illuminate\Pagination\Paginator;
 
 class DashboardPembayaranController extends Controller
 {
+    use \App\Http\Controllers\Concerns\BuildsRoleDashboard;
+
+    /**
+     * Halaman dashboard Pembayaran (gaya workflow, selaras role lain).
+     */
+    public function dashboard()
+    {
+        $data = $this->buildRoleDashboardData('pembayaran');
+        $data['title'] = 'Dashboard Pembayaran';
+        $data['module'] = 'pembayaran';
+        $data['menuDashboard'] = 'Active';
+
+        return view('dashboard.workflow', $data);
+    }
+
     public function redirectDokumens(Request $request)
     {
         return redirect()->route('dashboard.pembayaran', $request->query(), 301);
