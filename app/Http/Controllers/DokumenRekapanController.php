@@ -207,9 +207,21 @@ class DokumenRekapanController extends Controller
             $availableYears = [(int) date('Y')];
         }
 
+        // Pilih shell sidebar sesuai role yang login (bukan paksa 'operator'),
+        // agar sidebar tetap milik role masing-masing saat membuka Rekapan Analitik.
+        $role = strtolower((string) (auth()->user()->role ?? ''));
+        $layoutModule = match ($role) {
+            'operator' => 'operator',
+            'pembayaran' => 'pembayaran',
+            'verifikasi', 'team_verifikasi' => 'team_verifikasi',
+            'perpajakan' => 'perpajakan',
+            'akuntansi', 'akutansi' => 'akutansi',
+            default => '', // owner/admin → shell owner via role
+        };
+
         $data = [
             'title' => 'Analitik Dokumen',
-            'module' => 'operator',
+            'module' => $layoutModule,
             'menuDokumen' => 'active',
             'menuRekapan' => 'active',
             'selectedYear' => (int) $selectedYear,
