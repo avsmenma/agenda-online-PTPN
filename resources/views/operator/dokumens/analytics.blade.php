@@ -119,6 +119,7 @@
   .analytics-app tbody tr:nth-child(even) { background: var(--row-alt); }
   .analytics-app tbody tr:hover { background: var(--accent-soft); }
   .analytics-app .c-no { color: #000; font-weight: 600; text-align: center; }
+  .analytics-app thead th.c-no { color: #fff; }   /* judul header "No" tetap putih */
   .analytics-app .agenda-pill { display: inline-block; font-weight: 700; color: #000; background: var(--accent-soft); border: 1px solid var(--accent-line); border-radius: 7px; padding: 3px 9px; font-size: 13px; white-space: nowrap; }
   .analytics-app .c-nilai { font-weight: 700; color: #000; }
   .analytics-app .mono { font-variant-numeric: tabular-nums; }
