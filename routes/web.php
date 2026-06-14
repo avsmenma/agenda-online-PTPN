@@ -337,6 +337,11 @@ Route::delete('owner/urgency/reset-all', [OwnerDashboardController::class, 'rese
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.urgency.reset-all');
 
+// Notifikasi WhatsApp prioritas dari owner/kabag ke role verifikasi/perpajakan/akutansi
+Route::post('owner/dokumen/{id}/priority-whatsapp', [OwnerDashboardController::class, 'sendPriorityWhatsApp'])
+    ->middleware('auth', 'role:admin,owner')
+    ->name('owner.dokumen.priority-whatsapp');
+
 // Document History / Timeline API
 Route::get('owner/dokumen/{id}/history', [OwnerDashboardController::class, 'getHistory'])
     ->middleware('auth', 'role:admin,owner')

@@ -5,8 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Dokumen;
 use App\Models\DokumenRoleData;
 use App\Models\DocumentTracking;
+use App\Models\User;
+use App\Models\WhatsAppNotificationLog;
+use App\Services\FonnteWhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\Rule;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -4414,6 +4419,161 @@ class OwnerDashboardController extends Controller
             \Log::error('Error resetting all urgencies: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan.'], 500);
         }
+    }
+
+    /**
+     * Role yang dapat menerima notifikasi prioritas dari owner/kabag.
+     * key = role_code yang dikirim dari frontend, value = daftar nilai kolom users.role.
+     */
+    private const PRIORITY_ROLE_MAP = [
+        'team_verifikasi' => ['team_verifikasi', 'verifikasi', 'Team Verifikasi'],
+        'perpajakan'      => ['perpajakan', 'Perpajakan'],
+        'akutansi'        => ['akutansi', 'Akutansi'],
+    ];
+
+    private const PRIORITY_ROLE_NAMES = [
+        'team_verifikasi' => 'Team Verifikasi',
+        'perpajakan'      => 'Perpajakan',
+        'akutansi'        => 'Akutansi',
+    ];
+
+    /**
+     * POST /owner/dokumen/{id}/priority-whatsapp
+     * Kirim notifikasi WhatsApp manual dari owner/kabag untuk menuntut role tertentu
+     * (verifikasi / perpajakan / akutansi) memprioritaskan sebuah dokumen.
+     */
+    public function sendPriorityWhatsApp(Request $request, FonnteWhatsAppService $whatsApp, $id): JsonResponse
+    {
+        $allowedRoles = array_keys(self::PRIORITY_ROLE_MAP);
+
+        $validated = $request->validate([
+            'roles'   => ['required', 'array', 'min:1'],
+            'roles.*' => ['string', Rule::in($allowedRoles)],
+            'message' => ['required', 'string', 'max:2000'],
+        ], [
+            'roles.required'   => 'Pilih minimal satu role tujuan.',
+            'roles.*.in'       => 'Role tujuan tidak valid.',
+            'message.required' => 'Pesan tidak boleh kosong.',
+        ]);
+
+        try {
+            $dokumen = Dokumen::findOrFail($id);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Dokumen tidak ditemukan.'], 404);
+        }
+
+        $messageBody = trim($validated['message']);
+        $senderName  = auth()->user()->name ?? 'Owner';
+
+        $totalSent   = 0;
+        $totalFailed = 0;
+        $noRecipient = [];
+        $perRole     = [];
+
+        foreach (array_unique($validated['roles']) as $roleCode) {
+            $roleName = self::PRIORITY_ROLE_NAMES[$roleCode] ?? $roleCode;
+            $dbRoles  = self::PRIORITY_ROLE_MAP[$roleCode] ?? [$roleCode];
+
+            $users = User::whereIn('role', $dbRoles)
+                ->whereNotNull('phone_number')
+                ->where('phone_number', '!=', '')
+                ->get();
+
+            if ($users->isEmpty()) {
+                $noRecipient[] = $roleName;
+                $perRole[$roleCode] = ['sent' => 0, 'failed' => 0, 'recipients' => 0];
+                continue;
+            }
+
+            $fullMessage = $this->buildPriorityMessage($dokumen, $roleName, $messageBody, $senderName);
+
+            $sent = 0;
+            $failed = 0;
+            foreach ($users as $user) {
+                $log = WhatsAppNotificationLog::create([
+                    'dokumen_id'   => $dokumen->id,
+                    'role_code'    => $roleCode,
+                    'user_id'      => $user->id,
+                    'phone_number' => $user->phone_number,
+                    'message_type' => 'priority',
+                    'message'      => $fullMessage,
+                    'status'       => 'pending',
+                    'channel'      => 'whatsapp',
+                ]);
+
+                $result = $whatsApp->sendMessage($user->phone_number, $fullMessage);
+
+                if ($result['success'] ?? false) {
+                    $log->markAsSuccess(json_encode($result['response'] ?? []));
+                    $sent++;
+                } else {
+                    $log->markAsFailedWithReason(
+                        json_encode($result['response'] ?? ['reason' => $result['reason'] ?? null]),
+                        $result['message'] ?? 'Gagal mengirim'
+                    );
+                    $failed++;
+                }
+            }
+
+            $totalSent   += $sent;
+            $totalFailed += $failed;
+            $perRole[$roleCode] = ['sent' => $sent, 'failed' => $failed, 'recipients' => $users->count()];
+        }
+
+        \Log::info('Priority WhatsApp sent by owner', [
+            'dokumen_id'   => $dokumen->id,
+            'nomor_agenda' => $dokumen->nomor_agenda,
+            'roles'        => array_values(array_unique($validated['roles'])),
+            'sent'         => $totalSent,
+            'failed'       => $totalFailed,
+            'sent_by'      => $senderName,
+        ]);
+
+        // Tidak ada satu pun nomor terdaftar untuk role yang dipilih
+        if ($totalSent === 0 && $totalFailed === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada nomor WhatsApp terdaftar untuk role yang dipilih (' . implode(', ', $noRecipient) . ').',
+            ], 422);
+        }
+
+        $summaryParts = [];
+        if ($totalSent > 0)   $summaryParts[] = "{$totalSent} pesan terkirim";
+        if ($totalFailed > 0) $summaryParts[] = "{$totalFailed} gagal";
+        $message = 'Notifikasi prioritas: ' . implode(', ', $summaryParts) . '.';
+
+        if (!empty($noRecipient)) {
+            $message .= ' Role tanpa nomor terdaftar: ' . implode(', ', $noRecipient) . '.';
+        }
+
+        return response()->json([
+            'success'  => $totalSent > 0,
+            'message'  => $message,
+            'sent'     => $totalSent,
+            'failed'   => $totalFailed,
+            'per_role' => $perRole,
+        ]);
+    }
+
+    /**
+     * Susun isi pesan WhatsApp prioritas (header dokumen + pesan kustom owner).
+     */
+    private function buildPriorityMessage(Dokumen $dokumen, string $roleName, string $messageBody, string $senderName): string
+    {
+        $nilaiFormatted = 'Rp ' . number_format((float) ($dokumen->nilai_rupiah ?? 0), 0, ',', '.');
+        $nomor = $dokumen->nomor_agenda ?: ($dokumen->nomor_spp ?: '-');
+
+        $message  = "⚡ *PERMINTAAN PRIORITAS DOKUMEN*\n\n";
+        $message .= "Kepada *{$roleName}*,\n\n";
+        $message .= "📋 *No. Agenda:* {$nomor}\n";
+        $message .= "📝 *Uraian:* " . ($dokumen->uraian_spp ?? '-') . "\n";
+        $message .= "💰 *Nilai:* {$nilaiFormatted}\n";
+        $message .= "🏢 *Bagian:* " . ($dokumen->bagian ?? '-') . "\n\n";
+        $message .= "💬 *Pesan dari {$senderName}:*\n{$messageBody}\n\n";
+        $message .= "Mohon dokumen ini segera diproses/diprioritaskan.\n\n";
+        $message .= "🔗 _Sistem Agenda Online PTPN_";
+
+        return $message;
     }
 
     /**

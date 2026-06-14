@@ -1613,6 +1613,7 @@
             <col class="owner-docs-col-status">
             <col class="owner-docs-col-handler">
             <col class="owner-docs-col-duration">
+            <col class="owner-docs-col-action">
           </colgroup>
           <thead>
             <tr>
@@ -1623,6 +1624,7 @@
               <th><span class="owner-docs-th-label">Status Pembayaran</span></th>
               <th><span class="owner-docs-th-label">Pengurus Dokumen</span></th>
               <th><span class="owner-docs-th-label">Durasi Peran</span></th>
+              <th><span class="owner-docs-th-label">Aksi</span></th>
             </tr>
           </thead>
           <tbody>
@@ -1684,10 +1686,18 @@
                     {{ $durasi['text'] ?? '-' }}
                   </span>
                 </td>
+                <td data-label="Aksi" class="owner-docs-action-cell">
+                  <button type="button" class="owner-docs-wa-btn"
+                    title="Kirim notifikasi prioritas via WhatsApp"
+                    onclick="event.stopPropagation(); openPriorityWaModal({{ (int) $dokumen['id'] }})">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>WhatsApp</span>
+                  </button>
+                </td>
               </tr>
             @empty
               <tr>
-                <td colspan="7">
+                <td colspan="8">
                   <div class="owner-docs-empty">
                     <i class="far fa-folder-open"></i>
                     <strong>Tidak ada dokumen</strong>
@@ -1728,6 +1738,115 @@
       <div class="owner-docs-modal-detail">
         <h4 class="owner-docs-modal-section">Detail Dokumen</h4>
         <div id="ownerDocModalDetails"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .owner-docs-col-action { width: 132px; }
+  .owner-docs-action-cell { text-align: center; }
+  .owner-docs-wa-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 12px; border: none; border-radius: 8px; cursor: pointer;
+    background: #25d366; color: #fff; font-size: 12.5px; font-weight: 700;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .owner-docs-wa-btn:hover { background: #1ebe5b; }
+  .owner-docs-wa-btn:active { transform: scale(.97); }
+  .owner-docs-wa-btn i { font-size: 15px; }
+
+  .pwa-modal {
+    position: fixed; inset: 0; z-index: 1200; display: none;
+    align-items: center; justify-content: center; padding: 16px;
+    background: rgba(15, 23, 42, .55); backdrop-filter: blur(4px);
+  }
+  .pwa-modal.open { display: flex; }
+  .pwa-panel {
+    width: 100%; max-width: 460px; background: #fff; border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.28); overflow: hidden;
+    animation: pwaIn .18s ease;
+  }
+  @keyframes pwaIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .pwa-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 20px; background: #0f4c3a; color: #fff;
+  }
+  .pwa-head i { font-size: 20px; }
+  .pwa-head h3 { margin: 0; font-size: 15px; font-weight: 800; flex: 1; }
+  .pwa-close { background: transparent; border: none; color: #fff; cursor: pointer; font-size: 18px; opacity: .85; }
+  .pwa-close:hover { opacity: 1; }
+  .pwa-body { padding: 18px 20px; }
+  .pwa-docref {
+    font-size: 12.5px; color: #475569; background: #f1f5f9;
+    border-radius: 8px; padding: 8px 12px; margin-bottom: 16px; word-break: break-word;
+  }
+  .pwa-docref strong { color: #0f172a; }
+  .pwa-label { display: block; font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 8px; }
+  .pwa-roles { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+  .pwa-role-opt {
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;
+    font-size: 13px; color: #1e293b; transition: border-color .12s, background .12s;
+  }
+  .pwa-role-opt:hover { border-color: #cbd5e1; }
+  .pwa-role-opt input { width: 16px; height: 16px; accent-color: #0f4c3a; }
+  .pwa-role-opt.checked { border-color: #0f4c3a; background: #f0fdf4; }
+  .pwa-textarea {
+    width: 100%; min-height: 110px; resize: vertical; box-sizing: border-box;
+    border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;
+    font-size: 13px; font-family: inherit; color: #1e293b; margin-bottom: 6px;
+  }
+  .pwa-textarea:focus { outline: none; border-color: #0f4c3a; }
+  .pwa-hint { font-size: 11.5px; color: #94a3b8; margin: 0 0 18px; }
+  .pwa-actions { display: flex; justify-content: flex-end; gap: 10px; }
+  .pwa-btn {
+    padding: 9px 18px; border-radius: 9px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 700;
+  }
+  .pwa-btn-cancel { background: #f1f5f9; color: #475569; }
+  .pwa-btn-cancel:hover { background: #e2e8f0; }
+  .pwa-btn-send { background: #25d366; color: #fff; display: inline-flex; align-items: center; gap: 7px; }
+  .pwa-btn-send:hover { background: #1ebe5b; }
+  .pwa-btn-send:disabled { opacity: .65; cursor: not-allowed; }
+</style>
+
+<div class="pwa-modal" id="priorityWaModal" role="dialog" aria-modal="true" aria-labelledby="pwaTitle"
+  onclick="if (event.target === this) closePriorityWaModal()">
+  <div class="pwa-panel">
+    <div class="pwa-head">
+      <i class="fab fa-whatsapp"></i>
+      <h3 id="pwaTitle">Kirim Notifikasi Prioritas</h3>
+      <button type="button" class="pwa-close" onclick="closePriorityWaModal()" aria-label="Tutup">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="pwa-body">
+      <div class="pwa-docref" id="pwaDocRef">-</div>
+
+      <span class="pwa-label">Kirim ke role:</span>
+      <div class="pwa-roles" id="pwaRoles">
+        <label class="pwa-role-opt">
+          <input type="checkbox" value="team_verifikasi"> <span>Team Verifikasi</span>
+        </label>
+        <label class="pwa-role-opt">
+          <input type="checkbox" value="perpajakan"> <span>Perpajakan</span>
+        </label>
+        <label class="pwa-role-opt">
+          <input type="checkbox" value="akutansi"> <span>Akutansi</span>
+        </label>
+      </div>
+
+      <span class="pwa-label">Pesan:</span>
+      <textarea class="pwa-textarea" id="pwaMessage"
+        placeholder="Tulis pesan untuk menuntut role agar segera memprioritaskan dokumen ini..."></textarea>
+      <p class="pwa-hint">Detail dokumen (no. agenda, nilai, bagian) otomatis disertakan di pesan.</p>
+
+      <div class="pwa-actions">
+        <button type="button" class="pwa-btn pwa-btn-cancel" onclick="closePriorityWaModal()">Batal</button>
+        <button type="button" class="pwa-btn pwa-btn-send" id="pwaSendBtn" onclick="submitPriorityWa()">
+          <i class="fab fa-whatsapp"></i> <span>Kirim</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1854,6 +1973,104 @@
     if (!modal) return;
     modal.classList.remove('open');
     document.body.style.overflow = '';
+  }
+
+  // ===== Notifikasi WhatsApp Prioritas (owner -> role) =====
+  let pwaCurrentDocId = null;
+  const pwaUrlBase = "{{ url('owner/dokumen') }}";
+
+  function openPriorityWaModal(id) {
+    const doc = ownerDocs.get(Number(id));
+    const modal = document.getElementById('priorityWaModal');
+    if (!modal) return;
+
+    pwaCurrentDocId = Number(id);
+
+    const nomor = doc ? (doc.nomor_agenda || doc.nomor_spp || '-') : '-';
+    const uraian = doc ? (doc.uraian_spp || '-') : '-';
+    document.getElementById('pwaDocRef').innerHTML =
+      '<strong>' + escapeOwnerHtml(nomor) + '</strong><br>' + escapeOwnerHtml(uraian);
+
+    // reset form
+    modal.querySelectorAll('#pwaRoles input[type="checkbox"]').forEach((cb) => {
+      cb.checked = false;
+      cb.closest('.pwa-role-opt').classList.remove('checked');
+    });
+    document.getElementById('pwaMessage').value = '';
+
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePriorityWaModal() {
+    const modal = document.getElementById('priorityWaModal');
+    if (!modal) return;
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+    pwaCurrentDocId = null;
+  }
+
+  // visual toggle saat checkbox role dipilih
+  document.querySelectorAll('#pwaRoles input[type="checkbox"]').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      cb.closest('.pwa-role-opt').classList.toggle('checked', cb.checked);
+    });
+  });
+
+  function submitPriorityWa() {
+    if (!pwaCurrentDocId) return;
+
+    const roles = Array.from(
+      document.querySelectorAll('#pwaRoles input[type="checkbox"]:checked')
+    ).map((cb) => cb.value);
+
+    const message = document.getElementById('pwaMessage').value.trim();
+
+    if (roles.length === 0) {
+      alert('Pilih minimal satu role tujuan.');
+      return;
+    }
+    if (message === '') {
+      alert('Pesan tidak boleh kosong.');
+      return;
+    }
+
+    const btn = document.getElementById('pwaSendBtn');
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Mengirim...</span>';
+
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    fetch(pwaUrlBase + '/' + pwaCurrentDocId + '/priority-whatsapp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': token,
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: JSON.stringify({ roles, message }),
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        return { ok: res.ok, data };
+      })
+      .then(({ ok, data }) => {
+        if (ok && data.success) {
+          closePriorityWaModal();
+          alert(data.message || 'Notifikasi berhasil dikirim.');
+        } else {
+          alert(data.message || 'Gagal mengirim notifikasi. Silakan coba lagi.');
+        }
+      })
+      .catch(() => {
+        alert('Terjadi kesalahan jaringan. Silakan coba lagi.');
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = original;
+      });
   }
 
   document.querySelectorAll('.owner-docs-money-input').forEach((input) => {
