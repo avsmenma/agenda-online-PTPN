@@ -808,6 +808,7 @@ class DashboardPembayaranController extends Controller
             'nilai_rupiah',
             'status_pembayaran',
             'tanggal_dibayar',
+            'link',
         ];
     }
 
@@ -862,6 +863,7 @@ class DashboardPembayaranController extends Controller
             'status_pembayaran' => 'Status Pembayaran',
             'tanggal_dibayar' => 'Tanggal Bayar',
             'bagian' => 'Bagian',
+            'link' => 'Link',
             'nama_pengirim' => 'Nama Pengirim',
             'no_spk' => 'Nomor SPK',
             'tanggal_spk' => 'TGL SPK',
@@ -961,6 +963,11 @@ class DashboardPembayaranController extends Controller
     {
         if ($column === 'status_pembayaran') {
             return $this->renderPembayaranStatusPill($this->getPembayaranComputedStatus($dokumen));
+        }
+
+        // Kolom link: kirim URL mentah; JS DataTables yang membungkus jadi tautan bisa diklik.
+        if (preg_match('/link/i', $column)) {
+            return (string) ($dokumen->{$column} ?? '');
         }
 
         if ($column === 'nilai_rupiah') {
@@ -1330,6 +1337,7 @@ class DashboardPembayaranController extends Controller
             'status_pembayaran' => 'Status Pembayaran',
             'tanggal_dibayar' => 'Tanggal Bayar',
             'bagian' => 'Bagian',
+            'link' => 'Link',
             'nama_pengirim' => 'Nama Pengirim',
             'no_spk' => 'No SPK',
             'tanggal_spk' => 'TGL SPK',
@@ -3894,6 +3902,7 @@ class DashboardPembayaranController extends Controller
             'status_pembayaran' => 'Status Pembayaran',
             'tanggal_dibayar' => 'Tanggal Bayar',
             'bagian' => 'Bagian',
+            'link' => 'Link',
             'nama_pengirim' => 'Nama Pengirim',
             'no_spk' => 'Nomor SPK',
             'tanggal_spk' => 'TGL SPK',

@@ -66,6 +66,7 @@ class Dokumen extends Model
         'dpp_pph',
         'ppn_terhutang',
         'link_dokumen_pajak',
+        'link',
         // Perpajakan Extended Fields
         'komoditi_perpajakan',
         'alamat_pembeli',

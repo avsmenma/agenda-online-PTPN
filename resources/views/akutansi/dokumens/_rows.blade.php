@@ -119,6 +119,16 @@
                       @else
                         -
                       @endif
+                    @elseif($col == 'link')
+                      @if($dokumen->link)
+                        <a href="{{ $dokumen->link }}" target="_blank" rel="noopener noreferrer"
+                          onclick="event.stopPropagation();"
+                          title="{{ $dokumen->link }}" style="color: #0d6efd; text-decoration: none;">
+                          <i class="fa-solid fa-link me-1"></i>Lihat
+                        </a>
+                      @else
+                        -
+                      @endif
                     @elseif($col == 'bagian')
                       {{ $dokumen->bagian ?? '-' }}
                     @elseif($col == 'tanggal_paraf')

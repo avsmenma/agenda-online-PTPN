@@ -400,6 +400,7 @@ class DashboardAkutansiController extends Controller
             'status_dokumen_custom' => 'Status Dokumen',
             'tanggal_dibayar' => 'Tanggal Bayar',
             'bagian' => 'Bagian',
+            'link' => 'Link',
             'nama_pengirim' => 'Nama Pengirim',
             'no_spk' => 'No SPK',
             'tanggal_spk' => 'Tanggal SPK',
@@ -449,7 +450,8 @@ class DashboardAkutansiController extends Controller
                 'nomor_spp',
                 'tanggal_masuk',
                 'nilai_rupiah',
-                'nomor_miro'
+                'nomor_miro',
+                'link'
             ];
 
             if ($user && isset($user->table_columns_preferences['akutansi'])) {

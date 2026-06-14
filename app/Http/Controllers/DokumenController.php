@@ -166,6 +166,7 @@ class DokumenController extends Controller
             'status_dokumen_custom' => 'Status Dokumen',
             'tanggal_dibayar' => 'Tanggal Bayar',
             'bagian' => 'Bagian',
+            'link' => 'Link',
             'nama_pengirim' => 'Nama Pengirim',
             'no_spk' => 'No SPK',
             'tanggal_spk' => 'Tanggal SPK',
@@ -397,6 +398,7 @@ class DokumenController extends Controller
             'status_dokumen_custom' => 'Status Dokumen',
             'tanggal_dibayar' => 'Tanggal Bayar',
             'bagian' => 'Bagian',
+            'link' => 'Link',
             'nama_pengirim' => 'Nama Pengirim',
             'no_spk' => 'No SPK',
             'tanggal_spk' => 'Tanggal SPK',
@@ -1854,6 +1856,7 @@ class DokumenController extends Controller
             // Perpajakan-specific
             'jenis_pph', 'dpp_pph', 'ppn_terhutang', 'tanggal_selesai_verifikasi_pajak',
             'npwp', 'link_dokumen_pajak',
+            'link',
         ];
 
         if (!in_array($field, $editableFields)) {

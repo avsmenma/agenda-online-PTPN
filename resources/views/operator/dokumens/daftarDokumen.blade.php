@@ -4991,6 +4991,7 @@
                 jenis_pembayaran    : 'select_jenis',
                 bulan               : 'select_bulan',
                 tahun               : 'text',
+                link                : 'text',
               };
 
               let activeCell = null;
@@ -5341,6 +5342,12 @@
                   // Gunakan style yang sama persis dengan render Blade asli agar lebar kolom tidak berubah
                   const safeText = String(displayValue ?? '-').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                   return `<span title="${safeText}" style="display: block; word-wrap: break-word; white-space: normal; overflow-wrap: break-word; line-height: 1.5; width: 100%;">${displayValue || '-'}</span>`;
+                } else if (field === 'link') {
+                  const raw = String(rawValue ?? displayValue ?? '').trim();
+                  if (raw === '' || raw === '-') return '-';
+                  const href = /^https?:\/\//i.test(raw) ? raw : ('https://' + raw);
+                  const safe = href.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                  return `<a href="${safe}" target="_blank" rel="noopener noreferrer" class="ie-link-anchor" onclick="event.stopPropagation();" title="${safe}"><i class="fa-solid fa-link fa-sm"></i> Lihat</a>`;
                 }
                 return displayValue || '-';
               }

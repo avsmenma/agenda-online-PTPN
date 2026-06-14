@@ -233,6 +233,12 @@
           @else
             -
           @endif
+        @elseif($col === 'link')
+          @if(!empty($dokumen->link))
+            <a href="{{ $dokumen->link }}" target="_blank" rel="noopener noreferrer" class="ie-link-anchor" onclick="event.stopPropagation();" title="{{ $dokumen->link }}"><i class="fa-solid fa-link fa-sm"></i> Lihat</a>
+          @else
+            -
+          @endif
         @else
           -
         @endif

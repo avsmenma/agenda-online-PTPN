@@ -178,11 +178,12 @@
     // Perpajakan-specific
     npwp                : 'text',
     link_dokumen_pajak  : 'text',
+    link                : 'text',
   };
 
   // Fields yang menggunakan anchor tag di dalam cell —
   // klik anchor = buka link, klik di luar anchor = edit field
-  const LINK_FIRST_CLICK_FIELDS = ['link_dokumen_pajak'];
+  const LINK_FIRST_CLICK_FIELDS = ['link_dokumen_pajak', 'link'];
 
   let activeCell     = null;
   let activeInput    = null;
