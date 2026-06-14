@@ -25,7 +25,17 @@
 
 <div class="wd-wrap">
   {{-- ====================== 4 KARTU INFORMASI ====================== --}}
-  @php $fourthIsReturn = ($fourthLabel === 'Dikembalikan'); @endphp
+  @php
+    $fourthIsReturn = ($fourthLabel === 'Dikembalikan');
+    // Kartu 2 & 3 bisa di-override per role (mis. pembayaran pakai status bayar).
+    // Tanpa override → perilaku default (sama spt verifikasi/perpajakan/akutansi).
+    $card2Label = $card2Label ?? $cfg['label'];
+    $card2Value = $card2Value ?? $totalDokumenRole;
+    $card2Sub   = $card2Sub   ?? 'ditangani tim ini';
+    $card3Label = $card3Label ?? 'Selesai';
+    $card3Value = $card3Value ?? $totalSelesai;
+    $card3Sub   = $card3Sub   ?? 'completed / selesai';
+  @endphp
   <div class="wd-cards">
     {{-- Total Dokumen Agenda --}}
     <a href="{{ route($cfg['docRouteName']) }}" class="wd-card">
@@ -40,29 +50,29 @@
       <div class="wd-card-sub">seluruh dokumen sistem</div>
     </a>
 
-    {{-- Total Dokumen Role --}}
+    {{-- Kartu 2 (default: Total Dokumen Role; pembayaran: Belum Siap Bayar) --}}
     <a href="{{ route($cfg['docRouteName']) }}" class="wd-card">
-      <div class="wd-card-label">Total Dokumen {{ $cfg['label'] }}</div>
+      <div class="wd-card-label">Total Dokumen {{ $card2Label }}</div>
       <div class="wd-card-icon" style="background:#ecfeff">
         <svg viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2">
           <path d="M9 11l3 3L22 4"/>
           <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
         </svg>
       </div>
-      <div class="wd-card-value">{{ number_format($totalDokumenRole, 0, ',', '.') }}</div>
-      <div class="wd-card-sub">ditangani tim ini</div>
+      <div class="wd-card-value">{{ number_format($card2Value, 0, ',', '.') }}</div>
+      <div class="wd-card-sub">{{ $card2Sub }}</div>
     </a>
 
-    {{-- Total Dokumen Selesai --}}
+    {{-- Kartu 3 (default: Total Dokumen Selesai; pembayaran: Siap Bayar) --}}
     <a href="{{ route($cfg['docRouteName'], ['status' => 'terkirim']) }}" class="wd-card">
-      <div class="wd-card-label">Total Dokumen Selesai</div>
+      <div class="wd-card-label">Total Dokumen {{ $card3Label }}</div>
       <div class="wd-card-icon" style="background:#ecfdf5">
         <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
       </div>
-      <div class="wd-card-value" style="color:#10b981">{{ number_format($totalSelesai, 0, ',', '.') }}</div>
-      <div class="wd-card-sub">completed / selesai</div>
+      <div class="wd-card-value" style="color:#10b981">{{ number_format($card3Value, 0, ',', '.') }}</div>
+      <div class="wd-card-sub">{{ $card3Sub }}</div>
     </a>
 
     {{-- Kartu ke-4: Dikembalikan / Hari Ini --}}

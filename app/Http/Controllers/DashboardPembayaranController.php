@@ -37,7 +37,53 @@ class DashboardPembayaranController extends Controller
         $data['module'] = 'pembayaran';
         $data['menuDashboard'] = 'Active';
 
+        // Kartu 2-4 memakai status pembayaran: belum siap / siap / sudah dibayar.
+        $counts = $this->paymentStatusCounts();
+        $data['card2Label'] = 'Belum Siap Bayar';
+        $data['card2Value'] = $counts['belum'];
+        $data['card2Sub']   = 'status: belum siap dibayar';
+        $data['card3Label'] = 'Siap Bayar';
+        $data['card3Value'] = $counts['siap'];
+        $data['card3Sub']   = 'status: siap dibayar';
+        $data['fourthLabel'] = 'Sudah Dibayar';
+        $data['fourthCount'] = $counts['sudah'];
+        $data['fourthSub']   = 'status: sudah dibayar';
+        $data['fourthIcon']  = 'fas fa-check-double';
+
         return view('dashboard.workflow', $data);
+    }
+
+    /**
+     * Hitung jumlah dokumen per status pembayaran (keseluruhan, tanpa filter tanggal).
+     * Logika identik dengan kartu statistik pada halaman dokumen pembayaran.
+     */
+    private function paymentStatusCounts(): array
+    {
+        $base = fn() => Dokumen::whereNotNull('nomor_agenda');
+
+        $sudah = $base()->where(function ($q) {
+            $q->whereNotNull('tanggal_dibayar')
+                ->orWhereNotNull('link_bukti_pembayaran')
+                ->orWhereIn('status_pembayaran', ['sudah_dibayar', 'SUDAH DIBAYAR', 'SUDAH_DIBAYAR']);
+        })->count();
+
+        $siap = $base()
+            ->where(function ($q) {
+                $q->where('current_handler', 'pembayaran')
+                    ->orWhere('status', 'sent_to_pembayaran');
+            })
+            ->whereNull('tanggal_dibayar')
+            ->where(function ($q) {
+                $q->whereNull('status_pembayaran')
+                    ->orWhereNotIn('status_pembayaran', ['sudah_dibayar', 'SUDAH DIBAYAR', 'SUDAH_DIBAYAR']);
+            })
+            ->whereNull('link_bukti_pembayaran')
+            ->count();
+
+        $total = $base()->count();
+        $belum = max(0, $total - $sudah - $siap);
+
+        return ['belum' => $belum, 'siap' => $siap, 'sudah' => $sudah];
     }
 
     public function redirectDokumens(Request $request)
