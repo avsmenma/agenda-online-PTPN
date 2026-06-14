@@ -48,7 +48,8 @@
   .analytics-app .hero-div { width: 1px; align-self: stretch; margin: 8px 36px; background: linear-gradient(transparent, rgba(255,255,255,.28), transparent); }
 
   /* ---------- Filter bar ---------- */
-  .analytics-app .filterbar { display: flex; align-items: flex-end; gap: 30px; padding: 20px 26px; flex-wrap: wrap; }
+  /* flex-direction:row WAJIB di-set eksplisit untuk menimpa Bootstrap .card (column). */
+  .analytics-app .filterbar { display: flex; flex-direction: row; align-items: flex-end; gap: 30px; padding: 20px 26px; flex-wrap: wrap; }
   .analytics-app .filt-group { display: flex; flex-direction: column; gap: 8px; }
   .analytics-app .filt-label { font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: .01em; }
   .analytics-app .select-wrap { position: relative; }
@@ -159,23 +160,7 @@
 <div class="analytics-app">
   <div class="page">
 
-    {{-- ===== HERO: ringkasan tahun ===== --}}
-    <div class="hero">
-      <div class="hero-deco"></div>
-      <div class="hero-col">
-        <div class="hero-eyebrow"><i class="fa-solid fa-folder-open"></i> Total Dokumen</div>
-        <div class="hero-big mono">{{ number_format($totalDokumen, 0, ',', '.') }}</div>
-        <div class="hero-sub">Tahun {{ $selectedYear }}@if($selectedBagian) · {{ $bagianList[$selectedBagian] ?? '' }}@endif</div>
-      </div>
-      <div class="hero-div"></div>
-      <div class="hero-col">
-        <div class="hero-eyebrow"><i class="fa-solid fa-coins"></i> Total Nilai</div>
-        <div class="hero-big hero-big--rp mono">Rp {{ number_format($totalNominal, 0, ',', '.') }}</div>
-        <div class="hero-sub">Akumulasi nilai dokumen</div>
-      </div>
-    </div>
-
-    {{-- ===== FILTER BAR ===== --}}
+    {{-- ===== FILTER BAR (paling atas) ===== --}}
     <div class="card filterbar">
       <div class="filt-group">
         <label class="filt-label" for="yearSelect">Pilih Tahun</label>
@@ -201,6 +186,22 @@
       <div class="filt-stamp">
         <i class="fa-solid fa-calendar-day"></i>
         Data tahun {{ $selectedYear }}@if($selectedBagian) — Bagian {{ $bagianList[$selectedBagian] ?? '' }}@endif
+      </div>
+    </div>
+
+    {{-- ===== HERO: ringkasan tahun ===== --}}
+    <div class="hero">
+      <div class="hero-deco"></div>
+      <div class="hero-col">
+        <div class="hero-eyebrow"><i class="fa-solid fa-folder-open"></i> Total Dokumen</div>
+        <div class="hero-big mono">{{ number_format($totalDokumen, 0, ',', '.') }}</div>
+        <div class="hero-sub">Tahun {{ $selectedYear }}@if($selectedBagian) · {{ $bagianList[$selectedBagian] ?? '' }}@endif</div>
+      </div>
+      <div class="hero-div"></div>
+      <div class="hero-col">
+        <div class="hero-eyebrow"><i class="fa-solid fa-coins"></i> Total Nilai</div>
+        <div class="hero-big hero-big--rp mono">Rp {{ number_format($totalNominal, 0, ',', '.') }}</div>
+        <div class="hero-sub">Akumulasi nilai dokumen</div>
       </div>
     </div>
 
