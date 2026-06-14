@@ -5728,9 +5728,10 @@
               let activeInput = null;
               let activeOverlay = null; // backdrop + popup untuk uraian_spp
 
-              // ---- Long-text fields → modal overlay (bukan floating textarea) ----
-              const OVERLAY_FIELDS = ['uraian_spp'];
-              const OVERLAY_LABELS = { uraian_spp: 'Edit Uraian SPP' };
+              // uraian_spp diedit INLINE (textarea di dalam sel), bukan modal popup,
+              // agar tetap bisa diedit saat tabel dalam mode fullscreen.
+              const OVERLAY_FIELDS = [];
+              const OVERLAY_LABELS = {};
 
               // ---- Overlay functions (modal popup untuk field panjang) ----
               function openOverlay(cell, field, rawValue) {

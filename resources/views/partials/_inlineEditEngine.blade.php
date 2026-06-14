@@ -190,9 +190,11 @@
   let activationTime = 0;   // timestamp saat cell diaktifkan (untuk cooldown Enter key)
   const savingCells  = new WeakSet();
 
-  /* ── Floating overlay for long-text fields ── */
-  const OVERLAY_FIELDS = ['uraian_spp'];
-  const OVERLAY_LABELS = { uraian_spp: 'Edit Uraian SPP' };
+  /* ── Floating overlay for long-text fields ──
+     uraian_spp DIKELUARKAN dari sini agar diedit inline (textarea di dalam sel),
+     bukan via popup — supaya tetap bisa diedit saat mode fullscreen tabel. */
+  const OVERLAY_FIELDS = [];
+  const OVERLAY_LABELS = {};
 
   function openOverlay(cell, field, rawValue) {
     closeOverlay(false); // tidy up any existing overlay
