@@ -4619,6 +4619,13 @@
           </svg>
           Laporan
         </a>
+        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ request()->routeIs('reports.analytics') ? 'active' : '' }}" title="Rekapan Analitik">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M3 3v18h18"/>
+            <path d="M7 15l4-4 3 3 5-7"/>
+          </svg>
+          Rekapan Analitik
+        </a>
         @elseif($isWorkflowShell)
         @php
           $workflowRoleCode = match ($module ?? null) {
@@ -4717,6 +4724,13 @@
           </svg>
           Rekap Keterlambatan
         </a>
+        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ request()->routeIs('reports.analytics') ? 'active' : '' }}" title="Rekapan Analitik">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M3 3v18h18"/>
+            <path d="M7 15l4-4 3 3 5-7"/>
+          </svg>
+          Rekapan Analitik
+        </a>
         @else
         <a href="{{ url('/owner/home') }}" class="owner-nav-item {{ $menuHome ?? '' }}" title="Dashboard">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
@@ -4761,6 +4775,13 @@
           Rekapan &amp; Analisis Kerja
         </a>
 
+        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ request()->routeIs('reports.analytics') ? 'active' : '' }}" title="Rekapan Analitik">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M3 3v18h18"/>
+            <path d="M7 15l4-4 3 3 5-7"/>
+          </svg>
+          Rekapan Analitik
+        </a>
 
         @php
           $isAuditTrailActive = request()->is('*owner/programmer-logs*') ||

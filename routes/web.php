@@ -401,8 +401,12 @@ Route::middleware(['auth'])
 // Professional Reports Routes
 Route::middleware(['auth', 'role:admin,operator'])->prefix('reports')->name('reports.')->group(function () {
     Route::get('/', [DokumenRekapanController::class, 'index'])->name('index');
-    Route::get('/analytics', [DokumenRekapanController::class, 'analytics'])->name('analytics');
 });
+
+// Rekapan Analitik — tersedia untuk semua role utama (owner & alur dokumen)
+Route::get('reports/analytics', [DokumenRekapanController::class, 'analytics'])
+    ->middleware('auth', 'role:admin,operator,owner,team_verifikasi,perpajakan,akutansi,pembayaran')
+    ->name('reports.analytics');
 
 // Backward compatibility routes removed — old dokumen/rekapan URLs (Phase 2 cleanup)
 
