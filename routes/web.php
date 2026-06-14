@@ -512,7 +512,6 @@ Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('reports/pembayaran
     Route::get('/', fn() => redirect()->route('dashboard.pembayaran'))->name('index');
     Route::match(['get', 'post'], '/export', [DashboardPembayaranController::class, 'exportRekapan'])->name('export');
     Route::get('/delays', [DashboardPembayaranController::class, 'rekapanKeterlambatan'])->name('delays');
-    Route::get('/analytics', [DashboardPembayaranController::class, 'analytics'])->name('analytics');
 });
 
 // Professional Returns Routes - Pembayaran

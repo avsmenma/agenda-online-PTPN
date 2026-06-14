@@ -4612,13 +4612,6 @@
           </svg>
           Rekap Keterlambatan
         </a>
-        <a href="{{ route('reports.pembayaran.analytics') }}" class="owner-nav-item {{ ($isPaymentReportActive && !$isPaymentDelayActive) ? 'active' : '' }}" title="Laporan Pembayaran">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
-            <path d="M3 3v18h18"/>
-            <path d="M7 15l4-4 3 3 5-7"/>
-          </svg>
-          Laporan
-        </a>
         <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ request()->routeIs('reports.analytics') ? 'active' : '' }}" title="Rekapan Analitik">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <path d="M3 3v18h18"/>

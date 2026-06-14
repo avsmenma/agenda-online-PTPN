@@ -1092,7 +1092,7 @@
   </div>
   
   <!-- Card 2: Belum Siap Bayar -->
-  <a href="{{ route('reports.pembayaran.analytics', ['status' => 'belum_siap_bayar']) }}" style="text-decoration: none; color: inherit; display: block;">
+  <a href="{{ route('reports.analytics', ['status' => 'belum_siap_bayar']) }}" style="text-decoration: none; color: inherit; display: block;">
     <div class="stat-card" style="cursor: pointer;">
       <div class="stat-card-body">
         <div class="stat-content" style="flex: 1; min-width: 0;">
@@ -1111,7 +1111,7 @@
   </a>
   
   <!-- Card 3: Siap Dibayar -->
-  <a href="{{ route('reports.pembayaran.analytics', ['status' => 'siap_bayar']) }}" style="text-decoration: none; color: inherit; display: block;">
+  <a href="{{ route('reports.analytics', ['status' => 'siap_bayar']) }}" style="text-decoration: none; color: inherit; display: block;">
     <div class="stat-card" style="cursor: pointer;">
       <div class="stat-card-body">
         <div class="stat-content" style="flex: 1; min-width: 0;">
@@ -1130,7 +1130,7 @@
   </a>
   
   <!-- Card 4: Sudah Dibayar -->
-  <a href="{{ route('reports.pembayaran.analytics', ['status' => 'sudah_dibayar']) }}" style="text-decoration: none; color: inherit; display: block;">
+  <a href="{{ route('reports.analytics', ['status' => 'sudah_dibayar']) }}" style="text-decoration: none; color: inherit; display: block;">
     <div class="stat-card" style="cursor: pointer;">
       <div class="stat-card-body">
         <div class="stat-content" style="flex: 1; min-width: 0;">
