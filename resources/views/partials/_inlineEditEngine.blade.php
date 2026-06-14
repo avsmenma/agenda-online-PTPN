@@ -5,11 +5,6 @@
 --}}
 
 <style>
-  /* Sembunyikan kolom checkbox (select-all + per baris) di semua role.
-     Tabel pakai table-layout:auto sehingga kolom ini hilang tanpa sisa ruang. */
-  th.col-checkbox,
-  td.col-checkbox { display: none !important; }
-
   /* ── Inline Edit Cell Base ── */
   .ie-cell { cursor: pointer; position: relative; }
   .ie-cell:not(.ie-editing):hover::after {

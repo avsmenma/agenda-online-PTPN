@@ -165,12 +165,6 @@
               data-jenis-dokumen="{{ $dokumen->jenis_dokumen ?? '' }}"
               data-jenis-sub-pekerjaan="{{ $dokumen->jenis_sub_pekerjaan ?? '' }}"
               ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
-              <td class="col-checkbox" onclick="event.stopPropagation();">
-                @if($canSend && !$isSentToAkutansi && !$isSentToPembayaran && !$isPendingApprovalAkutansi && !$isPendingApprovalPembayaran)
-                  <input type="checkbox" class="doc-checkbox bulk-checkbox" data-id="{{ $dokumen->id }}"
-                    data-agenda="{{ $dokumen->nomor_agenda }}">
-                @endif
-              </td>
               <td class="col-no" style="text-align: center;">{{ $dokumens->firstItem() + $index }}</td>
               @foreach($selectedColumns as $col)
                 @if($col !== 'status')
@@ -699,7 +693,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="{{ count($selectedColumns) + 4 }}" class="text-center" style="padding: 40px;">
+              <td colspan="{{ count($selectedColumns) + 3 }}" class="text-center" style="padding: 40px;">
                 <i class="fa-solid fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 16px;"></i>
                 <p style="color: #999; font-size: 14px;">Belum ada dokumen</p>
               </td>

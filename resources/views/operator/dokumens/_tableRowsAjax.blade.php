@@ -75,19 +75,6 @@
     data-dokumen-id="{{ $dokumen->id }}"
     ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
 
-    <td class="col-checkbox" onclick="event.stopPropagation()">
-      @if($canSendForBulk)
-        <input type="checkbox" class="bulk-checkbox doc-checkbox"
-          data-id="{{ $dokumen->id }}"
-          data-nomor-agenda="{{ $dokumen->nomor_agenda }}"
-          data-nomor-spp="{{ $dokumen->nomor_spp }}"
-          data-nilai-rupiah="{{ $dokumen->formatted_nilai_rupiah }}"
-          title="Pilih dokumen ini untuk bulk send">
-      @else
-        <input type="checkbox" class="bulk-checkbox" disabled title="Dokumen ini tidak dapat dikirim">
-      @endif
-    </td>
-
     <td class="col-no">{{ $rowNumberBase + $index + 1 }}</td>
 
     @foreach($filteredColumns as $col)
@@ -261,7 +248,7 @@
     @php
       $fcAjax = array_filter($selectedColumns, fn($c) => $c !== 'nomor_mirror' && isset($availableColumns[$c]));
     @endphp
-    <td colspan="{{ count($fcAjax) + 3 }}">
+    <td colspan="{{ count($fcAjax) + 2 }}">
       <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
         <div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> <span>Memuat detail dokumen...</span></div>
       </div>

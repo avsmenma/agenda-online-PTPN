@@ -1,15 +1,6 @@
 @php $showActionColumn = $showActionColumn ?? false; @endphp
           @forelse($dokumens as $index => $dokumen)
             @php
-              // Determine if document can be bulk selected (not sent to pembayaran yet)
-              $isSentToPembayaranBulk = in_array($dokumen->status, [
-                'sent_to_pembayaran',
-                'pending_approval_pembayaran',
-                'menunggu_di_approve',
-                'completed',
-                'selesai',
-              ]) || $dokumen->status_pembayaran === 'sudah_dibayar';
-              $canBulkSelect = !$isSentToPembayaranBulk && $dokumen->current_handler === 'akutansi';
               $canInlineEdit = $dokumen->current_handler === 'akutansi';
               $dateCols = ['tanggal_spp','tanggal_berita_acara','tanggal_spk','tanggal_berakhir_spk','tanggal_faktur','tanggal_paraf','tanggal_miro','tanggal_selesai_verifikasi_pajak'];
             @endphp
@@ -20,12 +11,6 @@
               data-jenis-dokumen="{{ $dokumen->jenis_dokumen ?? '' }}"
               data-jenis-sub-pekerjaan="{{ $dokumen->jenis_sub_pekerjaan ?? '' }}"
               ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
-              <td class="col-checkbox" onclick="event.stopPropagation();">
-                @if($canBulkSelect)
-                  <input type="checkbox" class="doc-checkbox bulk-checkbox" data-id="{{ $dokumen->id }}"
-                    data-agenda="{{ $dokumen->nomor_agenda }}">
-                @endif
-              </td>
               <td class="col-number">
                 @php
                   // Jangan tampilkan icon kunci untuk dokumen yang sudah dikirim ke pembayaran
@@ -587,7 +572,7 @@
               @endif
             </tr>
             <tr class="detail-row" id="detail-{{ $dokumen->id }}">
-              <td colspan="{{ count($selectedColumns) + 5 }}">
+              <td colspan="{{ count($selectedColumns) + 4 }}">
                 <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
                   <div class="text-center p-4">
                     <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
@@ -597,7 +582,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="{{ count($selectedColumns) + 5 }}" class="text-center py-5">
+              <td colspan="{{ count($selectedColumns) + 4 }}" class="text-center py-5">
                 <i class="fa-solid fa-inbox fa-3x text-muted mb-3"></i>
                 <p class="text-muted">Tidak ada data dokumen yang tersedia.</p>
               </td>

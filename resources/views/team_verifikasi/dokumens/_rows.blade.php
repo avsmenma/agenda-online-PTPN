@@ -143,11 +143,6 @@
               data-jenis-dokumen="{{ $dokumen->jenis_dokumen ?? '' }}"
               data-jenis-sub-pekerjaan="{{ $dokumen->jenis_sub_pekerjaan ?? '' }}"
               ondblclick="handleRowClick(event, {{ $dokumen->id }})" title="Double klik untuk melihat detail">
-              {{-- Checkbox Column --}}
-              <td class="col-checkbox text-center">
-                <input type="checkbox" class="document-checkbox" value="{{ $dokumen->id }}"
-                  data-nomor="{{ $dokumen->nomor_agenda }}" onclick="event.stopPropagation();">
-              </td>
               {{-- No Column --}}
               <td class="col-no" style="width: 40px;">
                 {{ $loop->iteration + ($dokumens->currentPage() - 1) * $dokumens->perPage() }}
@@ -736,7 +731,7 @@
               @endif
                 </tr>
                 <tr class="detail-row" id="detail-{{ $dokumen->id }}">
-                  <td colspan="9">
+                  <td colspan="8">
                     <div class="detail-content" id="detail-content-{{ $dokumen->id }}">
                       <div class="text-center p-4">
                         <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading detail...
@@ -746,7 +741,7 @@
                 </tr>
           @empty
               <tr>
-                <td colspan="{{ count($selectedColumns) + 4 }}" class="text-center" style="padding: 40px;">
+                <td colspan="{{ count($selectedColumns) + 3 }}" class="text-center" style="padding: 40px;">
                   <i class="fa-solid fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 16px;"></i>
                   <p style="color: #999; font-size: 14px;">Belum ada dokumen</p>
                 </td>
