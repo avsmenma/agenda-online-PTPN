@@ -3624,7 +3624,7 @@
                 return start + meta.row + 1;
               },
             }].concat(selectedColumns.map(function (columnKey) {
-              return {
+              var col = {
                 data: columnKey,
                 name: columnKey,
                 orderable: true,
@@ -3632,10 +3632,29 @@
                 className: 'col-' + columnKey + ' ' + (columnClassMap[columnKey] || ''),
                 width: columnWidthMap[columnKey] || '170px',
                 defaultContent: '-',
-                createdCell: function (cell, cellData, rowData) {
-                  decorateEditableCell(cell, columnKey, rowData);
-                },
               };
+
+              // Kolom berisi link (mis. link_dokumen_pajak, link_bukti_pembayaran):
+              // tampilkan sebagai tautan yang bisa diklik, bukan URL mentah.
+              if (/link/i.test(columnKey)) {
+                col.render = function (data, type, row, meta) {
+                  if (type !== 'display') return data || '';
+                  var url = (data == null) ? '' : String(data).trim();
+                  if (url === '' || url === '-') return '-';
+                  var href = /^https?:\/\//i.test(url) ? url : ('https://' + url);
+                  var safe = href.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                  return '<a href="' + safe + '" target="_blank" rel="noopener noreferrer" ' +
+                    'onclick="event.stopPropagation()" ' +
+                    'style="color:#0d6efd;text-decoration:none;font-weight:600;white-space:nowrap;">' +
+                    '<i class="fa-solid fa-up-right-from-square" style="margin-right:5px;"></i>Lihat Dokumen</a>';
+                };
+              } else {
+                col.createdCell = function (cell, cellData, rowData) {
+                  decorateEditableCell(cell, columnKey, rowData);
+                };
+              }
+
+              return col;
             })),
             createdRow: function (row, data) {
               decorateRow(row, data);
