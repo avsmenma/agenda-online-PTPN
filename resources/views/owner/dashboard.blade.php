@@ -2017,6 +2017,15 @@
     });
   });
 
+  // Tampilkan toast (pakai toast global layout jika tersedia, fallback ke alert)
+  function pwaToast(type, title, message) {
+    if (typeof showGlobalToastNotification === 'function') {
+      showGlobalToastNotification(type, title, message);
+    } else {
+      alert(message);
+    }
+  }
+
   function submitPriorityWa() {
     if (!pwaCurrentDocId) return;
 
@@ -2027,11 +2036,11 @@
     const message = document.getElementById('pwaMessage').value.trim();
 
     if (roles.length === 0) {
-      alert('Pilih minimal satu role tujuan.');
+      pwaToast('warning', 'Belum lengkap', 'Pilih minimal satu role tujuan.');
       return;
     }
     if (message === '') {
-      alert('Pesan tidak boleh kosong.');
+      pwaToast('warning', 'Belum lengkap', 'Pesan tidak boleh kosong.');
       return;
     }
 
@@ -2059,13 +2068,13 @@
       .then(({ ok, data }) => {
         if (ok && data.success) {
           closePriorityWaModal();
-          alert(data.message || 'Notifikasi berhasil dikirim.');
+          pwaToast('success', 'Notifikasi terkirim', data.message || 'Notifikasi berhasil dikirim.');
         } else {
-          alert(data.message || 'Gagal mengirim notifikasi. Silakan coba lagi.');
+          pwaToast('error', 'Gagal mengirim', data.message || 'Gagal mengirim notifikasi. Silakan coba lagi.');
         }
       })
       .catch(() => {
-        alert('Terjadi kesalahan jaringan. Silakan coba lagi.');
+        pwaToast('error', 'Gagal mengirim', 'Terjadi kesalahan jaringan. Silakan coba lagi.');
       })
       .finally(() => {
         btn.disabled = false;
