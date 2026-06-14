@@ -45,10 +45,13 @@ class DashboardPembayaranController extends Controller
         $data['card3Label'] = 'Siap Bayar';
         $data['card3Value'] = $counts['siap'];
         $data['card3Sub']   = 'status: siap dibayar';
+        $data['card3Color']  = '#f59e0b';   // Siap Bayar → kuning
+        $data['card3IconBg'] = '#fffbeb';
         $data['fourthLabel'] = 'Sudah Dibayar';
         $data['fourthCount'] = $counts['sudah'];
         $data['fourthSub']   = 'status: sudah dibayar';
-        $data['fourthIcon']  = 'fas fa-check-double';
+        $data['fourthColor']  = '#10b981';  // Sudah Dibayar → hijau
+        $data['fourthIconBg'] = '#ecfdf5';
 
         return view('dashboard.workflow', $data);
     }

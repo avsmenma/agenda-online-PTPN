@@ -35,6 +35,11 @@
     $card3Label = $card3Label ?? 'Selesai';
     $card3Value = $card3Value ?? $totalSelesai;
     $card3Sub   = $card3Sub   ?? 'completed / selesai';
+    // Warna kartu (angka + ikon) — bisa di-override per role.
+    $card3Color   = $card3Color   ?? '#10b981';
+    $card3IconBg  = $card3IconBg  ?? '#ecfdf5';
+    $fourthColor  = $fourthColor  ?? ($fourthIsReturn ? '#ef4444' : '#f59e0b');
+    $fourthIconBg = $fourthIconBg ?? ($fourthIsReturn ? '#fef2f2' : '#fffbeb');
   @endphp
   <div class="wd-cards">
     {{-- Total Dokumen Agenda --}}
@@ -66,33 +71,33 @@
     {{-- Kartu 3 (default: Total Dokumen Selesai; pembayaran: Siap Bayar) --}}
     <a href="{{ route($cfg['docRouteName'], ['status' => 'terkirim']) }}" class="wd-card">
       <div class="wd-card-label">Total Dokumen {{ $card3Label }}</div>
-      <div class="wd-card-icon" style="background:#ecfdf5">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+      <div class="wd-card-icon" style="background:{{ $card3IconBg }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="{{ $card3Color }}" stroke-width="2">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
       </div>
-      <div class="wd-card-value" style="color:#10b981">{{ number_format($card3Value, 0, ',', '.') }}</div>
+      <div class="wd-card-value" style="color:{{ $card3Color }}">{{ number_format($card3Value, 0, ',', '.') }}</div>
       <div class="wd-card-sub">{{ $card3Sub }}</div>
     </a>
 
     {{-- Kartu ke-4: Dikembalikan / Hari Ini --}}
     <div class="wd-card">
       <div class="wd-card-label">Total Dokumen {{ $fourthLabel }}</div>
-      <div class="wd-card-icon" style="background:{{ $fourthIsReturn ? '#fef2f2' : '#fffbeb' }}">
+      <div class="wd-card-icon" style="background:{{ $fourthIconBg }}">
         @if($fourthIsReturn)
-          <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="{{ $fourthColor }}" stroke-width="2">
             <polyline points="9 14 4 9 9 4"/>
             <path d="M20 20v-7a4 4 0 00-4-4H4"/>
           </svg>
         @else
-          <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="{{ $fourthColor }}" stroke-width="2">
             <rect x="3" y="4" width="18" height="18" rx="2"/>
             <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
             <line x1="3" y1="10" x2="21" y2="10"/>
           </svg>
         @endif
       </div>
-      <div class="wd-card-value" style="color:{{ $fourthIsReturn ? '#ef4444' : '#f59e0b' }}">{{ number_format($fourthCount, 0, ',', '.') }}</div>
+      <div class="wd-card-value" style="color:{{ $fourthColor }}">{{ number_format($fourthCount, 0, ',', '.') }}</div>
       <div class="wd-card-sub">{{ $fourthSub }}</div>
     </div>
   </div>
