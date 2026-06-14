@@ -26,40 +26,32 @@
 <div class="wd-wrap">
   {{-- ====================== 4 KARTU INFORMASI ====================== --}}
   <div class="wd-cards">
-    <a href="{{ route($cfg['docRouteName']) }}" class="wd-card wd-card--total">
+    <a href="{{ route($cfg['docRouteName']) }}" class="wd-card wd-card--accent">
+      <div class="wd-card-label">Total Dokumen Agenda</div>
       <div class="wd-card-icon"><i class="fas fa-layer-group"></i></div>
-      <div class="wd-card-body">
-        <div class="wd-card-label">Total Dokumen Agenda</div>
-        <div class="wd-card-value">{{ number_format($totalDokumenAgenda, 0, ',', '.') }}</div>
-        <div class="wd-card-sub">seluruh dokumen sistem</div>
-      </div>
+      <div class="wd-card-value">{{ number_format($totalDokumenAgenda, 0, ',', '.') }}</div>
+      <div class="wd-card-sub">seluruh dokumen sistem</div>
     </a>
 
     <a href="{{ route($cfg['docRouteName']) }}" class="wd-card">
-      <div class="wd-card-icon"><i class="{{ $cfg['icon'] }}"></i></div>
-      <div class="wd-card-body">
-        <div class="wd-card-label">Total Dokumen {{ $cfg['label'] }}</div>
-        <div class="wd-card-value">{{ number_format($totalDokumenRole, 0, ',', '.') }}</div>
-        <div class="wd-card-sub">ditangani tim ini</div>
-      </div>
+      <div class="wd-card-label">Total Dokumen {{ $cfg['label'] }}</div>
+      <div class="wd-card-icon wd-icon--blue"><i class="{{ $cfg['icon'] }}"></i></div>
+      <div class="wd-card-value">{{ number_format($totalDokumenRole, 0, ',', '.') }}</div>
+      <div class="wd-card-sub">ditangani tim ini</div>
     </a>
 
     <a href="{{ route($cfg['docRouteName'], ['status' => 'terkirim']) }}" class="wd-card">
+      <div class="wd-card-label">Total Dokumen Selesai</div>
       <div class="wd-card-icon wd-icon--green"><i class="fas fa-check-circle"></i></div>
-      <div class="wd-card-body">
-        <div class="wd-card-label">Total Dokumen Selesai</div>
-        <div class="wd-card-value">{{ number_format($totalSelesai, 0, ',', '.') }}</div>
-        <div class="wd-card-sub">completed / selesai</div>
-      </div>
+      <div class="wd-card-value" style="color:#10b981">{{ number_format($totalSelesai, 0, ',', '.') }}</div>
+      <div class="wd-card-sub">completed / selesai</div>
     </a>
 
     <div class="wd-card">
+      <div class="wd-card-label">Total Dokumen {{ $fourthLabel }}</div>
       <div class="wd-card-icon wd-icon--amber"><i class="{{ $fourthIcon }}"></i></div>
-      <div class="wd-card-body">
-        <div class="wd-card-label">Total Dokumen {{ $fourthLabel }}</div>
-        <div class="wd-card-value">{{ number_format($fourthCount, 0, ',', '.') }}</div>
-        <div class="wd-card-sub">{{ $fourthSub }}</div>
-      </div>
+      <div class="wd-card-value" style="color:#d97706">{{ number_format($fourthCount, 0, ',', '.') }}</div>
+      <div class="wd-card-sub">{{ $fourthSub }}</div>
     </div>
   </div>
 
@@ -162,22 +154,42 @@
 <style>
   .wd-wrap { font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 0.25rem 0.1rem 2rem; }
 
-  /* Cards */
-  .wd-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.85rem; margin-bottom: 1rem; }
-  .wd-card { display: flex; align-items: center; gap: 0.85rem; background: #fff; border: 1px solid #e8eef4; border-radius: 14px;
-    padding: 1rem 1.1rem; box-shadow: 0 5px 18px rgba(15,23,42,.06); text-decoration: none; color: #0f172a;
-    transition: transform .18s ease, box-shadow .18s ease; }
-  .wd-card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(15,23,42,.1); color: #0f172a; }
-  .wd-card--total { background: linear-gradient(135deg, #083E40 0%, #0d5b59 100%); border-color: transparent; color: #fff; }
-  .wd-card--total .wd-card-label, .wd-card--total .wd-card-value, .wd-card--total .wd-card-sub { color: #fff; }
-  .wd-card--total .wd-card-icon { background: rgba(255,255,255,.18); color: #fff; }
-  .wd-card-icon { width: 46px; height: 46px; border-radius: 12px; flex: 0 0 auto; display: flex; align-items: center;
-    justify-content: center; background: rgba(8,62,64,.09); color: #083E40; font-size: 1.15rem; }
-  .wd-icon--green { background: rgba(16,185,129,.12); color: #059669; }
-  .wd-icon--amber { background: rgba(245,158,11,.12); color: #d97706; }
-  .wd-card-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; color: #94a3b8; line-height: 1.25; }
-  .wd-card-value { font-size: 1.7rem; font-weight: 700; line-height: 1.1; margin-top: 0.15rem; }
-  .wd-card-sub { font-size: 0.68rem; font-weight: 600; color: #94a3b8; margin-top: 0.1rem; }
+  /* Cards — gaya "kartu informasi" mengikuti /owner/home (stat-card) */
+  .wd-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .wd-card {
+    position: relative; overflow: hidden;
+    background: #fff; border: 1px solid #e8ecf4; border-radius: 14px;
+    padding: 18px 18px 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+    text-decoration: none; color: #1a2340;
+    transition: transform .2s, box-shadow .2s;
+    animation: wdFadeUp .4s ease both;
+  }
+  .wd-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,.09); color: #1a2340; }
+  .wd-card:nth-child(1) { animation-delay: .05s; }
+  .wd-card:nth-child(2) { animation-delay: .1s; }
+  .wd-card:nth-child(3) { animation-delay: .15s; }
+  .wd-card:nth-child(4) { animation-delay: .2s; }
+
+  .wd-card--accent { background: linear-gradient(135deg, #0f766e 0%, #059669 100%); border-color: transparent; }
+  .wd-card--accent .wd-card-label { color: rgba(255,255,255,.7); }
+  .wd-card--accent .wd-card-value { color: #fff !important; }
+  .wd-card--accent .wd-card-sub { color: rgba(255,255,255,.65); }
+  .wd-card--accent .wd-card-icon { background: rgba(255,255,255,.18); color: #fff; }
+
+  .wd-card-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+    color: #a0aec0; margin-bottom: 10px; padding-right: 44px; line-height: 1.3; }
+  .wd-card-value { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 700;
+    color: #1a2340; line-height: 1; margin-bottom: 6px; }
+  .wd-card-sub { font-size: 11px; font-weight: 600; color: #a0aec0; }
+  .wd-card-icon { position: absolute; right: 16px; top: 16px; width: 36px; height: 36px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    background: rgba(37,99,235,.1); color: #2563eb; }
+  .wd-icon--blue { background: rgba(37,99,235,.1); color: #2563eb; }
+  .wd-icon--green { background: #ecfdf5; color: #10b981; }
+  .wd-icon--amber { background: #fffbeb; color: #d97706; }
+
+  @keyframes wdFadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
   /* Charts */
   .wd-charts { display: grid; grid-template-columns: 1.9fr 1fr; gap: 0.85rem; margin-bottom: 1rem; }
