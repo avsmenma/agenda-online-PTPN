@@ -1838,17 +1838,22 @@
     }
   </style>
 
+  <style>
+    /* Halaman dokumen pembayaran: fokus tabel + tools (selaras role lain).
+       Kartu statistik & deadline adalah konten dashboard, kini disembunyikan di sini. */
+    .premium-dashboard .bento-grid { display: none !important; }
+  </style>
   <div class="premium-dashboard">
     <!-- Header -->
     <header class="dashboard-header">
       <div class="header-content">
         <h1 class="header-title">
           <div class="header-title-icon">
-            <i class="fa-solid fa-wallet"></i>
+            <i class="fa-solid fa-file-invoice-dollar"></i>
           </div>
-          Dashboard Pembayaran
+          Daftar Pembayaran
         </h1>
-        <p class="header-subtitle">Kelola dan pantau semua dokumen pembayaran</p>
+        <p class="header-subtitle">Kelola dan proses dokumen pembayaran</p>
       </div>
       <div class="header-actions">
         <button type="button" class="btn-export-excel" onclick="exportDocument('excel')" title="Export Excel">
