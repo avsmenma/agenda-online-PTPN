@@ -195,17 +195,13 @@
     background: #f3faf9 !important;
   }
 
-  #documentTableContainer .data-table .col-checkbox {
+  #documentTableContainer .data-table .col-no,
+  #documentTableContainer .data-table .col-number {
     left: 0 !important;
   }
 
-  #documentTableContainer .data-table .col-no,
-  #documentTableContainer .data-table .col-number {
-    left: var(--document-sticky-no-left, 56px) !important;
-  }
-
   #documentTableContainer .data-table .col-nomor_agenda {
-    left: var(--document-sticky-agenda-left, 132px) !important;
+    left: var(--document-sticky-agenda-left, 88px) !important;
   }
 
   #documentTableContainer .data-table .col-handler {
@@ -270,7 +266,7 @@
 <script>
   (function () {
     const containerId = 'documentTableContainer';
-    const leftStickySelector = '.col-checkbox, .col-no, .col-number, .col-nomor_agenda';
+    const leftStickySelector = '.col-no, .col-number, .col-nomor_agenda';
     const stickySelector = `${leftStickySelector}, .col-handler`;
 
     function getContainer() {
@@ -304,15 +300,14 @@
       const table = getTable(container);
       if (!container || !table) return;
 
-      const checkboxWidth = measureWidth(table, '.col-checkbox');
       const numberWidth = measureWidth(table, '.col-no, .col-number');
       const agendaWidth = measureWidth(table, '.col-nomor_agenda');
       const handlerWidth = measureWidth(table, '.col-handler');
 
-      if (checkboxWidth > 0) {
-        container.style.setProperty('--document-sticky-no-left', `${Math.round(checkboxWidth)}px`);
-        container.style.setProperty('--document-sticky-agenda-left', `${Math.round(checkboxWidth + numberWidth)}px`);
-        container.style.setProperty('--document-sticky-left-width', `${Math.round(checkboxWidth + numberWidth + agendaWidth)}px`);
+      // Kolom No kini paling kiri (left:0); kolom Nomor Agenda menempel tepat setelahnya.
+      if (numberWidth > 0) {
+        container.style.setProperty('--document-sticky-agenda-left', `${Math.round(numberWidth)}px`);
+        container.style.setProperty('--document-sticky-left-width', `${Math.round(numberWidth + agendaWidth)}px`);
       }
 
       if (handlerWidth > 0) {
