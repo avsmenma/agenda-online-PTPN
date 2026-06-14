@@ -1809,6 +1809,16 @@
   .pwa-btn-send { background: #25d366; color: #fff; display: inline-flex; align-items: center; gap: 7px; }
   .pwa-btn-send:hover { background: #1ebe5b; }
   .pwa-btn-send:disabled { opacity: .65; cursor: not-allowed; }
+
+  /* Varian warna toast yang belum ada di layout (success & warning) */
+  .global-notification-toast.success { border-left: 5px solid #25d366; }
+  .global-notification-toast.success .global-notification-icon {
+    background: linear-gradient(135deg, #25d366 0%, #48bb78 100%); color: #fff;
+  }
+  .global-notification-toast.warning { border-left: 5px solid #f59e0b; }
+  .global-notification-toast.warning .global-notification-icon {
+    background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); color: #fff;
+  }
 </style>
 
 <div class="pwa-modal" id="priorityWaModal" role="dialog" aria-modal="true" aria-labelledby="pwaTitle"
@@ -2017,13 +2027,37 @@
     });
   });
 
-  // Tampilkan toast (pakai toast global layout jika tersedia, fallback ke alert)
+  // Tampilkan toast memakai container + CSS toast global layout (tanpa window.alert).
   function pwaToast(type, title, message) {
-    if (typeof showGlobalToastNotification === 'function') {
-      showGlobalToastNotification(type, title, message);
-    } else {
-      alert(message);
-    }
+    const container = document.getElementById('globalNotificationContainer');
+    if (!container) { alert(message); return; }
+
+    const icons = {
+      success: '<i class="fas fa-check-circle"></i>',
+      error: '<i class="fas fa-times-circle"></i>',
+      warning: '<i class="fas fa-exclamation-triangle"></i>',
+      info: '<i class="fas fa-bell"></i>',
+    };
+
+    const toast = document.createElement('div');
+    toast.className = 'global-notification-toast ' + type;
+    toast.innerHTML =
+      '<button class="global-notification-close" onclick="this.parentElement.remove()">&times;</button>' +
+      '<div class="global-notification-content">' +
+        '<div class="global-notification-icon">' + (icons[type] || icons.info) + '</div>' +
+        '<div class="global-notification-body">' +
+          '<div class="global-notification-title">' + escapeOwnerHtml(title) + '</div>' +
+          '<div class="global-notification-message">' + escapeOwnerHtml(message) + '</div>' +
+        '</div>' +
+      '</div>';
+
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+
+    setTimeout(() => {
+      toast.classList.add('hide');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
   }
 
   function submitPriorityWa() {
