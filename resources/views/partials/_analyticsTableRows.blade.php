@@ -37,7 +37,7 @@ $allColumns = [
                 @elseif($col === 'tanggal_spp')
                   {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
                 @elseif($col === 'uraian_spp')
-                  {{ Str::limit($dokumen->uraian_spp ?? '-', 50) }}
+                  {{ $dokumen->uraian_spp ?? '-' }}
                 @elseif($col === 'dibayar_kepada')
                   @if($dokumen->dibayarKepadas && $dokumen->dibayarKepadas->count() > 0)
                     {{ $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') }}
