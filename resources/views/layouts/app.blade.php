@@ -4568,12 +4568,12 @@
           </svg>
           Import CSV
         </a>
-        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ $isOperatorReportActive ? 'active' : '' }}" title="Rekapan">
+        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ $isOperatorReportActive ? 'active' : '' }}" title="Rekapan Dokumen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <path d="M3 3v18h18"/>
             <path d="M7 15l4-4 3 3 5-7"/>
           </svg>
-          Rekapan
+          Rekapan Dokumen
         </a>
         @elseif($isPaymentShell)
         @php
@@ -4612,12 +4612,12 @@
           </svg>
           Rekap Keterlambatan
         </a>
-        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ request()->routeIs('reports.analytics') ? 'active' : '' }}" title="Rekapan Analitik">
+        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ request()->routeIs('reports.analytics') ? 'active' : '' }}" title="Rekapan Dokumen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <path d="M3 3v18h18"/>
             <path d="M7 15l4-4 3 3 5-7"/>
           </svg>
-          Rekapan Analitik
+          Rekapan Dokumen
         </a>
         @elseif($isWorkflowShell)
         @php
@@ -4717,12 +4717,12 @@
           </svg>
           Rekap Keterlambatan
         </a>
-        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ request()->routeIs('reports.analytics') ? 'active' : '' }}" title="Rekapan Analitik">
+        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ request()->routeIs('reports.analytics') ? 'active' : '' }}" title="Rekapan Dokumen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <path d="M3 3v18h18"/>
             <path d="M7 15l4-4 3 3 5-7"/>
           </svg>
-          Rekapan Analitik
+          Rekapan Dokumen
         </a>
         @else
         <a href="{{ url('/owner/home') }}" class="owner-nav-item {{ $menuHome ?? '' }}" title="Dashboard">
@@ -4768,12 +4768,12 @@
           Rekapan &amp; Analisis Kerja
         </a>
 
-        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ request()->routeIs('reports.analytics') ? 'active' : '' }}" title="Rekapan Analitik">
+        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ request()->routeIs('reports.analytics') ? 'active' : '' }}" title="Rekapan Dokumen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <path d="M3 3v18h18"/>
             <path d="M7 15l4-4 3 3 5-7"/>
           </svg>
-          Rekapan Analitik
+          Rekapan Dokumen
         </a>
 
         @php
@@ -5077,7 +5077,7 @@
                   <i class="fa-solid fa-file-import"></i> Import CSV
                 </a>
                 <a href="{{ route('reports.analytics') }}" class="{{ $isReportsActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-chart-pie"></i> Rekapan
+                  <i class="fa-solid fa-chart-pie"></i> Rekapan Dokumen
                 </a>
               @endif
             </div>
@@ -5225,7 +5225,7 @@
           <i class="fa-solid fa-file-import me-2"></i> Import CSV
         </a>
         <a href="{{ url('/reports/analytics') }}" class="{{ $menuRekapan ?? '' }}">
-          <i class="fa-solid fa-chart-pie me-2"></i> Rekapan
+          <i class="fa-solid fa-chart-pie me-2"></i> Rekapan Dokumen
         </a>
       @endif
     </div>
