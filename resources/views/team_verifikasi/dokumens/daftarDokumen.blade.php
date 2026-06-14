@@ -2904,8 +2904,6 @@
     @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
   </style>
 
-  <h2 style="margin-bottom: 20px; font-weight: 700;">{{ $title }}</h2>
-
 
   <script>
     (function() {

@@ -564,6 +564,16 @@
       transform: translateY(-1px);
     }
 
+    .btn-filter--export {
+      background: #217346;
+      color: #fff;
+    }
+
+    .btn-filter--export:hover {
+      background: #1a5c38;
+      transform: translateY(-1px);
+    }
+
     .btn-filter--secondary {
       background: transparent;
       color: var(--text-secondary);
@@ -1844,24 +1854,9 @@
     .premium-dashboard .bento-grid { display: none !important; }
   </style>
   <div class="premium-dashboard">
-    <!-- Header -->
-    <header class="dashboard-header">
-      <div class="header-content">
-        <h1 class="header-title">
-          <div class="header-title-icon">
-            <i class="fa-solid fa-file-invoice-dollar"></i>
-          </div>
-          Daftar Pembayaran
-        </h1>
-        <p class="header-subtitle">Kelola dan proses dokumen pembayaran</p>
-      </div>
-      <div class="header-actions">
-        <button type="button" class="btn-export-excel" onclick="exportDocument('excel')" title="Export Excel">
-          <i class="fa-solid fa-file-excel"></i> Export Excel
-        </button>
-      </div>
-      <!-- Hidden export form -->
-      <form id="exportForm" method="POST" action="{{ route('reports.pembayaran.export') }}" style="display: none;">
+    {{-- Header (judul/subjudul dihapus; tombol Export Excel dipindah ke toolbar filter) --}}
+    <!-- Hidden export form -->
+    <form id="exportForm" method="POST" action="{{ route('reports.pembayaran.export') }}" style="display: none;">
         @csrf
         <input type="hidden" name="format" id="exportFormat">
         <input type="hidden" name="status_pembayaran" value="{{ $selectedStatus ?? '' }}">
@@ -1880,7 +1875,6 @@
         <input type="hidden" name="vendor_export_mode" id="vendorExportMode" value="">
         <div id="exportColumnsContainer"></div>
       </form>
-    </header>
     <!-- Bento Grid Stats -->
     <div class="bento-grid">
       <!-- Main Stats Row -->
@@ -2043,6 +2037,11 @@
             @if($activeAdvancedFilterCount > 0)
               <span class="active-filters-badge">{{ $activeAdvancedFilterCount }}</span>
             @endif
+          </button>
+
+          <button type="button" class="btn-filter btn-filter--export" onclick="exportDocument('excel')" title="Export Excel">
+            <i class="fa-solid fa-file-excel"></i>
+            Export Excel
           </button>
         </div>
       </div>

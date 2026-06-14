@@ -2087,8 +2087,6 @@
     @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
   </style>
 
-  <h2>{{ $title }}</h2>
-
   <script>
     (function() {
       function easeOutExpo(t) {
