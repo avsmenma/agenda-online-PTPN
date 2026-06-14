@@ -1,21 +1,13 @@
 ﻿@php
+// Kolom yang ditampilkan di tabel analitik (selain kolom No):
+// Nomor Agenda, Tahun, Nomor SPP, Tanggal Masuk, Dibayar Kepada, Uraian.
 $allColumns = [
-    'nomor_agenda' => 'Nomor Agenda', 'bulan' => 'Bulan', 'tahun' => 'Tahun',
-    'kategori' => 'Kriteria CF', 'jenis_dokumen' => 'Sub Kriteria',
-    'jenis_sub_pekerjaan' => 'Item Sub Kriteria', 'jenis_pembayaran' => 'Jenis Pembayaran',
-    'nomor_spp' => 'Nomor SPP', 'tanggal_spp' => 'Tanggal SPP',
-    'tanggal_masuk' => 'Tanggal Masuk', 'dibayar_kepada' => 'Dibayar Kepada',
-    'uraian_spp' => 'Uraian SPP', 'nilai_rupiah' => 'Nilai Rupiah',
-    'tanggal_paraf' => 'Tanggal Paraf', 'pemaraf' => 'Pemaraf',
-    'tanggal_selesai_diproses' => 'Tgl Selesai Diproses', 'kepala_sub_bagian' => 'Kepala Sub Bagian',
-    'status_dokumen_custom' => 'Status Dokumen', 'tanggal_dibayar' => 'Tanggal Bayar',
-    'bagian' => 'Bagian', 'nama_pengirim' => 'Nama Pengirim',
-    'no_spk' => 'No SPK', 'tanggal_spk' => 'Tanggal SPK',
-    'tanggal_berakhir_spk' => 'Tgl Berakhir SPK', 'kebun' => 'Kebun',
-    'no_berita_acara' => 'No Berita Acara', 'tanggal_berita_acara' => 'Tgl Berita Acara',
-    'status' => 'Status', 'no_faktur' => 'No Faktur', 'tanggal_faktur' => 'Tgl Faktur',
-    'nomor_miro' => 'Nomor MIRO',
-    'npwp' => 'NPWP', 'link_dokumen_pajak' => 'Link Dokumen Pajak',
+    'nomor_agenda'  => 'Nomor Agenda',
+    'tahun'         => 'Tahun',
+    'nomor_spp'     => 'Nomor SPP',
+    'tanggal_masuk' => 'Tanggal Masuk',
+    'dibayar_kepada' => 'Dibayar Kepada',
+    'uraian_spp'    => 'Uraian',
 ];
 @endphp
 

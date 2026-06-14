@@ -499,8 +499,6 @@
   }
 </style>
 
-<h2>{{ $title }}</h2>
-
 <!-- Filter Section -->
 <div class="filter-year-section">
   <div class="filter-wrapper">
