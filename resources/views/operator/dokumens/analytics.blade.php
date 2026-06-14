@@ -104,26 +104,26 @@
   /* ---------- Table ---------- */
   .analytics-app .tablecard { padding: 24px 26px; }
   .analytics-app .table-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
-  .analytics-app .table-title { display: flex; align-items: center; gap: 11px; color: var(--primary); }
-  .analytics-app .table-title h2 { font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
-  .analytics-app .table-total { font-size: 14px; font-weight: 700; color: var(--accent-strong); white-space: nowrap; }
-  .analytics-app .table-scroll { margin-top: 18px; border-radius: var(--r-sm); border: 1px solid var(--border); overflow: hidden; }
+  .analytics-app .table-title { display: flex; align-items: center; gap: 11px; color: #000; }
+  .analytics-app .table-title h2 { font-size: 22px; font-weight: 700; letter-spacing: -.01em; color: #000; }
+  .analytics-app .table-total { font-size: 14px; font-weight: 700; color: #000; white-space: nowrap; }
+  .analytics-app .table-scroll { margin-top: 18px; border-radius: var(--r-sm); border: 1px solid #c4cdc9; overflow: hidden; }
   .analytics-app table { width: 100%; border-collapse: collapse; table-layout: fixed; }
   .analytics-app thead th {
-    background: var(--primary); color: #fff; text-align: left; font-size: 13.5px; font-weight: 700;
+    background: var(--primary); color: #fff; text-align: center; font-size: 13.5px; font-weight: 700;
     letter-spacing: .01em; padding: 15px 16px; line-height: 1.3;
+    border: 1px solid rgba(255,255,255,.22);   /* garis vertikal antar header */
   }
-  .analytics-app tbody td { padding: 15px 16px; font-size: 14px; color: var(--text); border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.45; word-break: break-word; overflow-wrap: anywhere; }
+  .analytics-app tbody td { padding: 15px 16px; font-size: 14px; color: #000; border: 1px solid #c4cdc9; vertical-align: top; line-height: 1.45; word-break: break-word; overflow-wrap: anywhere; }
   .analytics-app tbody tr { cursor: pointer; }
   .analytics-app tbody tr:nth-child(even) { background: var(--row-alt); }
   .analytics-app tbody tr:hover { background: var(--accent-soft); }
-  .analytics-app tbody tr:last-child td { border-bottom: none; }
-  .analytics-app .c-no { color: var(--muted); font-weight: 600; text-align: center; }
-  .analytics-app .agenda-pill { display: inline-block; font-weight: 700; color: var(--primary); background: var(--accent-soft); border: 1px solid var(--accent-line); border-radius: 7px; padding: 3px 9px; font-size: 13px; white-space: nowrap; }
-  .analytics-app .c-nilai { font-weight: 700; }
+  .analytics-app .c-no { color: #000; font-weight: 600; text-align: center; }
+  .analytics-app .agenda-pill { display: inline-block; font-weight: 700; color: #000; background: var(--accent-soft); border: 1px solid var(--accent-line); border-radius: 7px; padding: 3px 9px; font-size: 13px; white-space: nowrap; }
+  .analytics-app .c-nilai { font-weight: 700; color: #000; }
   .analytics-app .mono { font-variant-numeric: tabular-nums; }
-  .analytics-app .mono-sm { font-size: 13px; color: var(--muted); font-weight: 600; }
-  .analytics-app .c-tgl { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .analytics-app .mono-sm { font-size: 13px; color: #000; font-weight: 600; }
+  .analytics-app .c-tgl { font-variant-numeric: tabular-nums; white-space: nowrap; color: #000; }
   .analytics-app .empty-row { text-align: center; color: var(--muted); padding: 40px; font-style: italic; }
 
   /* Lebar kolom (fixed → semua tampil tanpa scroll horizontal) */
