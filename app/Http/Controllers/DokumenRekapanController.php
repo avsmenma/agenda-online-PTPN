@@ -222,7 +222,7 @@ class DokumenRekapanController extends Controller
         $data = [
             'title' => 'Analitik Dokumen',
             'module' => $layoutModule,
-            'menuDokumen' => 'active',
+            // menuDokumen TIDAK di-set agar menu "Dokumen" tidak ikut aktif (biru) di halaman ini.
             'menuRekapan' => 'active',
             'selectedYear' => (int) $selectedYear,
             'selectedBagian' => $selectedBagian,
