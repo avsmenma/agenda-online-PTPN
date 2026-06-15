@@ -11,7 +11,10 @@
 @if($virtualEnabled)
   <style>
     {{ $virtualContainer }} .table-responsive.virtual-scroll-active {
-      max-height: min(72vh, 760px);
+      /* Isi tinggi layar: tabel mengisi ruang kosong sampai dekat bawah viewport,
+         bukan dibatasi tinggi tetap (mencegah area kosong di monitor tinggi). */
+      max-height: calc(100vh - 200px);
+      min-height: 320px;
       overflow-y: auto;
       position: relative;
       border-top: 1px solid rgba(8, 62, 64, 0.08);
