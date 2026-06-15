@@ -478,9 +478,15 @@
         <div class="stat-label">Total Nilai</div>
         @php
           $totalNilaiNum = (float)($totalNilai ?? 0);
-          $totalNilaiShort = $totalNilaiNum >= 1_000_000_000
-            ? 'Rp ' . number_format($totalNilaiNum / 1_000_000_000, 1, ',', '.') . ' M'
-            : 'Rp ' . number_format($totalNilaiNum / 1_000_000, 1, ',', '.') . ' Jt';
+          if ($totalNilaiNum >= 1_000_000_000_000) {
+            $totalNilaiShort = 'Rp ' . number_format($totalNilaiNum / 1_000_000_000_000, 1, ',', '.') . ' T';
+          } elseif ($totalNilaiNum >= 1_000_000_000) {
+            $totalNilaiShort = 'Rp ' . number_format($totalNilaiNum / 1_000_000_000, 1, ',', '.') . ' M';
+          } elseif ($totalNilaiNum >= 1_000_000) {
+            $totalNilaiShort = 'Rp ' . number_format($totalNilaiNum / 1_000_000, 1, ',', '.') . ' JT';
+          } else {
+            $totalNilaiShort = 'Rp ' . number_format($totalNilaiNum, 0, ',', '.');
+          }
         @endphp
         <div class="stat-value">{{ $totalNilaiShort }}</div>
         <div class="stat-sub">Rp {{ number_format($totalNilaiNum, 0, ',', '.') }}</div>
