@@ -2618,6 +2618,10 @@
         <i class="fa-solid fa-table-columns me-2"></i>
         Kustomisasi Kolom Tabel
       </button>
+      <button type="button" class="btn-refresh" id="btnTambahBarisInline" onclick="tambahBarisInline()"
+        style="background:linear-gradient(135deg,#0f4c3a,#16a34a);color:#fff;">
+        <i class="fa-solid fa-plus me-2"></i>Tambah Baris
+      </button>
     </form>
   </div>
 
@@ -2702,6 +2706,214 @@
       </table>
     </div>
   </div>
+  {{-- ====== Inline Add: tambah baris dokumen langsung di tabel ====== --}}
+  <style>
+    tr.na-row > td { padding: 6px 8px; background: #f0fdf4; }
+    .na-input {
+      width: 100%; box-sizing: border-box; border: 1px solid #bbf7d0;
+      border-radius: 6px; padding: 6px 8px; font-size: 13px; background: #fff;
+    }
+    .na-input:focus { outline: none; border-color: #16a34a; box-shadow: 0 0 0 2px rgba(22,163,74,.15); }
+    .na-input.na-error { border-color: #dc3545; box-shadow: 0 0 0 2px rgba(220,53,69,.15); }
+    textarea.na-input { resize: vertical; min-height: 34px; }
+  </style>
+
+  <script>
+    window.inlineAddColumns = @json(array_values($operatorTableColumns));
+  </script>
+
+  <script>
+    (function () {
+      const COLUMNS = window.inlineAddColumns || [];
+      const NON_EDITABLE = ['tanggal_masuk', 'status', 'nomor_mirror', 'keterangan'];
+      const DATE_FIELDS = [
+        'tanggal_spp', 'tanggal_berita_acara', 'tanggal_spk', 'tanggal_berakhir_spk',
+        'tanggal_faktur', 'tanggal_paraf', 'tanggal_miro', 'tanggal_selesai_verifikasi_pajak',
+      ];
+      const TEXTAREA_FIELDS = ['uraian_spp'];
+
+      function csrf() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content') || '';
+      }
+
+      function tbody() {
+        return document.getElementById('dokumenTableBody');
+      }
+
+      function naToast(message, isError) {
+        const existing = document.getElementById('na-toast');
+        if (existing) existing.remove();
+        const t = document.createElement('div');
+        t.id = 'na-toast';
+        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);'
+          + 'background:' + (isError ? '#dc3545' : '#16a34a') + ';color:#fff;padding:10px 20px;'
+          + 'border-radius:8px;font-size:13px;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,.2);';
+        t.textContent = message;
+        document.body.appendChild(t);
+        setTimeout(function () { t.remove(); }, 3500);
+      }
+
+      function makeInput(field) {
+        let el;
+        if (TEXTAREA_FIELDS.indexOf(field) !== -1) {
+          el = document.createElement('textarea');
+          el.rows = 1;
+        } else {
+          el = document.createElement('input');
+          el.type = DATE_FIELDS.indexOf(field) !== -1 ? 'date' : 'text';
+        }
+        el.className = 'na-input';
+        el.dataset.field = field;
+        return el;
+      }
+
+      function buildRow() {
+        const tr = document.createElement('tr');
+        tr.className = 'na-row';
+
+        const tdNo = document.createElement('td');
+        tdNo.className = 'col-no';
+        tdNo.innerHTML = '<i class="fa-solid fa-plus" style="color:#16a34a;"></i>';
+        tr.appendChild(tdNo);
+
+        COLUMNS.forEach(function (col) {
+          const td = document.createElement('td');
+          td.className = 'col-' + col;
+          if (NON_EDITABLE.indexOf(col) === -1) {
+            td.appendChild(makeInput(col));
+          }
+          tr.appendChild(td);
+        });
+
+        const tdHandler = document.createElement('td');
+        tdHandler.className = 'col-handler';
+        tr.appendChild(tdHandler);
+
+        return tr;
+      }
+
+      function collectBuffer(tr, exceptField) {
+        const buffer = {};
+        tr.querySelectorAll('.na-input').forEach(function (inp) {
+          const f = inp.dataset.field;
+          if (f === exceptField) return;
+          const v = (inp.value || '').trim();
+          if (v !== '') buffer[f] = v;
+        });
+        return buffer;
+      }
+
+      // Flush field buffer satu per satu (berurutan) lewat inline-update yang sudah ada.
+      function flushBuffer(id, buffer, rowEl) {
+        return Object.keys(buffer).reduce(function (chain, field) {
+          return chain.then(function () {
+            return fetch('/documents/' + id + '/inline-update', {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrf(),
+                'Accept': 'application/json',
+              },
+              body: JSON.stringify({ field: field, value: buffer[field] }),
+            })
+              .then(function (r) { return r.json(); })
+              .then(function (data) {
+                if (data && data.success) {
+                  const cell = rowEl.querySelector('.ie-cell[data-field="' + field + '"]');
+                  if (cell) cell.dataset.raw = (data.raw_value != null ? data.raw_value : buffer[field]);
+                } else {
+                  naToast('Sebagian data baris gagal disimpan: ' + field, true);
+                }
+              })
+              .catch(function () { naToast('Koneksi gagal saat menyimpan: ' + field, true); });
+          });
+        }, Promise.resolve());
+      }
+
+      function born(tr, agendaInput) {
+        const nomor = (agendaInput.value || '').trim();
+        if (nomor === '') return;
+        if (tr.dataset.creating === '1') return;
+        tr.dataset.creating = '1';
+        agendaInput.disabled = true;
+        agendaInput.classList.remove('na-error');
+
+        const buffer = collectBuffer(tr, 'nomor_agenda');
+
+        fetch('/documents/inline-create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrf(),
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({ nomor_agenda: nomor }),
+        })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (res) {
+            if (!res.ok || !res.d || !res.d.success) {
+              tr.dataset.creating = '';
+              agendaInput.disabled = false;
+              agendaInput.classList.add('na-error');
+              let msg = 'Gagal membuat baris.';
+              if (res.d && res.d.errors && res.d.errors.nomor_agenda) {
+                msg = res.d.errors.nomor_agenda[0];
+              } else if (res.d && res.d.message) {
+                msg = res.d.message;
+              }
+              naToast(msg, true);
+              agendaInput.focus();
+              return;
+            }
+
+            // Ganti baris klien dengan baris asli dari server (sudah punya data-id, .ie-cell)
+            const tmp = document.createElement('tbody');
+            tmp.innerHTML = (res.d.html || '').trim();
+            const newMain = tmp.querySelector('tr.main-row');
+            const newDetail = tmp.querySelector('tr.detail-row');
+            if (!newMain) { naToast('Respon server tidak valid.', true); return; }
+
+            tr.replaceWith(newMain);
+            if (newDetail) newMain.after(newDetail);
+
+            // Flush field lain yang sudah diketik, lalu spawn baris kosong berikutnya
+            flushBuffer(res.d.id, buffer, newMain).then(function () {
+              tambahBarisInline();
+            });
+          })
+          .catch(function () {
+            tr.dataset.creating = '';
+            agendaInput.disabled = false;
+            agendaInput.classList.add('na-error');
+            naToast('Koneksi gagal. Coba lagi.', true);
+          });
+      }
+
+      function attachHandlers(tr) {
+        const agenda = tr.querySelector('.na-input[data-field="nomor_agenda"]');
+        if (!agenda) return;
+        agenda.addEventListener('blur', function () { born(tr, agenda); });
+        agenda.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); born(tr, agenda); }
+        });
+      }
+
+      // Dipanggil dari tombol toolbar (onclick) — jadikan global.
+      window.tambahBarisInline = function () {
+        const body = tbody();
+        if (!body) return;
+        if (COLUMNS.indexOf('nomor_agenda') === -1) {
+          naToast('Tampilkan kolom "Nomor Agenda" lewat Kustomisasi Kolom untuk menambah baris.', true);
+          return;
+        }
+        const tr = buildRow();
+        body.insertBefore(tr, body.firstChild);
+        attachHandlers(tr);
+        const first = tr.querySelector('.na-input[data-field="nomor_agenda"]');
+        if (first) first.focus();
+      };
+    })();
+  </script>
   {{-- Modal untuk menampilkan alasan reject dari inbox --}}
   @if(isset($dokumens))
     @foreach($dokumens as $dokumen)
