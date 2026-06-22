@@ -331,6 +331,64 @@ class DokumenController extends Controller
         ]);
     }
 
+    /**
+     * Membuat satu baris dokumen draft langsung dari daftar dokumen (inline add).
+     * Hanya butuh nomor_agenda; field lain di-flush via inline-update dari sisi klien.
+     */
+    public function inlineCreate(Request $request)
+    {
+        $validated = $request->validate([
+            'nomor_agenda' => 'required|string|unique:dokumens,nomor_agenda',
+        ], [
+            'nomor_agenda.required' => 'Nomor agenda harus diisi.',
+            'nomor_agenda.unique'   => 'Nomor agenda sudah digunakan. Silakan gunakan nomor lain.',
+        ]);
+
+        $now = Carbon::now();
+        $bulanIndonesia = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ];
+
+        $dokumen = Dokumen::create([
+            'nomor_agenda'    => $validated['nomor_agenda'],
+            'bulan'           => $bulanIndonesia[$now->month],
+            'tahun'           => $now->year,
+            'tanggal_masuk'   => $now,
+            'status'          => 'draft',
+            'created_by'      => 'operator',
+            'current_handler' => 'operator',
+        ]);
+
+        try {
+            ActivityLogHelper::logCreated($dokumen);
+        } catch (\Exception $logException) {
+            \Log::warning('Gagal mencatat activity log inline-create: ' . $logException->getMessage());
+        }
+
+        // Eager-load relasi yang dipakai partial agar markup baris identik
+        $dokumen->load(['roleStatuses', 'dibayarKepadas', 'dokumenPos']);
+
+        // Resolusi kolom sama seperti ajaxRows()
+        $availableColumns = $this->operatorDocumentColumns();
+        $defaultColumns   = $this->defaultOperatorDocumentColumns($availableColumns);
+        $selectedColumns  = session('dokumens_table_columns', $defaultColumns);
+        $selectedColumns  = array_values(array_filter($selectedColumns, fn ($c) => isset($availableColumns[$c])));
+
+        $html = view('operator.dokumens._tableRowsAjax', [
+            'dokumens'         => collect([$dokumen]),
+            'selectedColumns'  => $selectedColumns,
+            'availableColumns' => $availableColumns,
+        ])->render();
+
+        return response()->json([
+            'success' => true,
+            'id'      => $dokumen->id,
+            'html'    => $html,
+        ]);
+    }
+
     public function getAllData(Request $request)
     {
         $query = $this->buildOperatorQuery($request);
