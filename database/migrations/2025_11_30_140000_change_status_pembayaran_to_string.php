@@ -22,8 +22,10 @@ return new class extends Migration
                     // Index might not exist
                 }
                 
-                // Change column type from ENUM to VARCHAR(255)
-                DB::statement("ALTER TABLE dokumens MODIFY COLUMN status_pembayaran VARCHAR(255) NULL");
+                // Change column type from ENUM to VARCHAR(255) (skip on SQLite)
+                if (DB::getDriverName() !== 'sqlite') {
+                    DB::statement("ALTER TABLE dokumens MODIFY COLUMN status_pembayaran VARCHAR(255) NULL");
+                }
                 
                 // Re-add index
                 $table->index(['status_pembayaran']);
@@ -45,8 +47,10 @@ return new class extends Migration
                     // Index might not exist
                 }
                 
-                // Change back to ENUM
-                DB::statement("ALTER TABLE dokumens MODIFY COLUMN status_pembayaran ENUM('siap_dibayar', 'sudah_dibayar') NULL");
+                // Change back to ENUM (skip on SQLite)
+                if (DB::getDriverName() !== 'sqlite') {
+                    DB::statement("ALTER TABLE dokumens MODIFY COLUMN status_pembayaran ENUM('siap_dibayar', 'sudah_dibayar') NULL");
+                }
                 
                 // Re-add index
                 $table->index(['status_pembayaran']);

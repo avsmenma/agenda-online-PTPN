@@ -12,6 +12,12 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        // Drop indexes on columns we're about to remove (required for SQLite)
+        Schema::table('dokumens', function (Blueprint $table) {
+            try { $table->dropIndex('dokumens_bidang_returned_at_index'); } catch (\Exception $e) {}
+            try { $table->dropIndex('dokumens_target_bidang_index'); } catch (\Exception $e) {}
+        });
+
         Schema::table('dokumens', function (Blueprint $table) {
             // Phase 3A: Drop reason/timestamp duplicates
             $table->dropColumn([

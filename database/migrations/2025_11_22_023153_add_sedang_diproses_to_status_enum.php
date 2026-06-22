@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip on SQLite — MODIFY COLUMN is MySQL-specific
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Add 'sedang diproses' to status enum
         DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM(
             'draft',
@@ -41,6 +45,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Remove 'sedang diproses' from status enum (revert to previous state)
         DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM(
             'draft',

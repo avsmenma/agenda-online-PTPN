@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Data migration: skip on SQLite (no existing rows to migrate on a fresh test DB)
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Update existing returned_to_ibua documents to returned_to_department
         // Set default target department based on document category or use 'pembayaran' as default
         DB::table('dokumens')

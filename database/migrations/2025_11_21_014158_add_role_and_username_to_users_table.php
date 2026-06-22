@@ -15,15 +15,22 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table): void {
             $table->string('username')->unique()->after('id');
-            $table->enum('role', [
-                'Admin',
-                'IbuA',
-                'IbuB',
-                'Pembayaran',
-                'Akutansi',
-                'Perpajakan',
-                'Verifikasi'
-            ])->default('IbuA')->after('email');
+
+            // SQLite doesn't support ENUM CHECK constraints well across migrations —
+            // use string for tests; MySQL will get a VARCHAR later via MODIFY migration.
+            if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+                $table->string('role')->default('operator')->after('email');
+            } else {
+                $table->enum('role', [
+                    'Admin',
+                    'IbuA',
+                    'IbuB',
+                    'Pembayaran',
+                    'Akutansi',
+                    'Perpajakan',
+                    'Verifikasi'
+                ])->default('IbuA')->after('email');
+            }
 
             // Indexes untuk performa
             $table->index('role');

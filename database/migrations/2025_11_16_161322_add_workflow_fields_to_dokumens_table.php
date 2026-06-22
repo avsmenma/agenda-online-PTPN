@@ -21,8 +21,10 @@ return new class extends Migration
             $table->timestamp('returned_to_ibua_at')->nullable()->after('processed_at');
         });
         
-        // Modify status enum - use DB::statement for MySQL enum modification
-        DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM('draft', 'sedang diproses', 'sent_to_ibub', 'approved_ibub', 'rejected_ibub', 'returned_to_ibua', 'selesai', 'dikembalikan') DEFAULT 'draft'");
+        // Modify status enum - use DB::statement for MySQL enum modification (skip on SQLite)
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM('draft', 'sedang diproses', 'sent_to_ibub', 'approved_ibub', 'rejected_ibub', 'returned_to_ibua', 'selesai', 'dikembalikan') DEFAULT 'draft'");
+        }
         
         // Update existing records to have workflow fields
         // Set created_by and current_handler to 'ibuA' for existing records
@@ -48,8 +50,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Revert status enum first
-        DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM('sedang diproses', 'selesai') DEFAULT 'sedang diproses'");
+        // Revert status enum first (skip on SQLite)
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM('sedang diproses', 'selesai') DEFAULT 'sedang diproses'");
+        }
         
         Schema::table('dokumens', function (Blueprint $table) {
             $table->dropColumn([

@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip on SQLite (used for tests) — MODIFY is MySQL-specific; SQLite uses TEXT by default
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Check if column exists and is JSON type
         if (Schema::hasColumn('users', 'two_factor_recovery_codes')) {
             // For MySQL/MariaDB, we need to change the column type using raw SQL
@@ -25,6 +29,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Skip on SQLite (used for tests) — MODIFY is MySQL-specific
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Revert back to JSON (but this might cause issues if data is encrypted)
         if (Schema::hasColumn('users', 'two_factor_recovery_codes')) {
             DB::statement('ALTER TABLE `users` MODIFY `two_factor_recovery_codes` JSON NULL');

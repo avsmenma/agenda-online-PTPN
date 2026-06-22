@@ -159,18 +159,30 @@ return new class extends Migration {
 
     /**
      * Check if index exists on table using raw SQL
-     * Compatible with Laravel 11+ (no Doctrine DBAL)
+     * Compatible with SQLite (tests) and MySQL (production)
      */
     private function indexExists(string $table, string $indexName): bool
     {
         $connection = Schema::getConnection();
+
+        // SQLite uses PRAGMA index_list
+        if ($connection->getDriverName() === 'sqlite') {
+            $indexes = $connection->select("PRAGMA index_list(\"{$table}\")");
+            foreach ($indexes as $index) {
+                if ($index->name === $indexName) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         $databaseName = $connection->getDatabaseName();
 
         $result = $connection->select(
-            "SELECT COUNT(*) as count 
-             FROM information_schema.statistics 
-             WHERE table_schema = ? 
-             AND table_name = ? 
+            "SELECT COUNT(*) as count
+             FROM information_schema.statistics
+             WHERE table_schema = ?
+             AND table_name = ?
              AND index_name = ?",
             [$databaseName, $table, $indexName]
         );

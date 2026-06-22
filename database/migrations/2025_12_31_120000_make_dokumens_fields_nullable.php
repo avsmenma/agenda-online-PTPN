@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('nomor_agenda')->nullable()->change();
             $table->string('bulan')->nullable()->change();
             $table->integer('tahun')->nullable()->change();
+            $table->dateTime('tanggal_masuk')->nullable()->change();
             $table->string('nomor_spp')->nullable()->change();
             $table->dateTime('tanggal_spp')->nullable()->change();
             $table->text('uraian_spp')->nullable()->change();
@@ -35,6 +36,7 @@ return new class extends Migration
             $table->string('nomor_agenda')->nullable(false)->change();
             $table->string('bulan')->nullable(false)->change();
             $table->integer('tahun')->nullable(false)->change();
+            $table->dateTime('tanggal_masuk')->nullable(false)->change();
             $table->string('nomor_spp')->nullable(false)->change();
             $table->dateTime('tanggal_spp')->nullable(false)->change();
             $table->text('uraian_spp')->nullable(false)->change();

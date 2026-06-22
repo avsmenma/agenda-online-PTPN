@@ -11,6 +11,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        // Skip on SQLite — MODIFY COLUMN is MySQL-specific
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Untuk MySQL, kita perlu menggunakan raw SQL untuk memodifikasi ENUM
         // karena Laravel Blueprint tidak support modify enum secara langsung
         DB::statement("ALTER TABLE dokumens MODIFY COLUMN inbox_approval_for ENUM('IbuB', 'Perpajakan', 'Akutansi', 'Pembayaran') NULL");
@@ -21,6 +25,9 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Rollback: hapus 'Pembayaran' dari enum
         DB::statement("ALTER TABLE dokumens MODIFY COLUMN inbox_approval_for ENUM('IbuB', 'Perpajakan', 'Akutansi') NULL");
     }

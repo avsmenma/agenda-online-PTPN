@@ -13,6 +13,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        // Skip on SQLite — MODIFY COLUMN is MySQL-specific; SQLite uses TEXT/VARCHAR by default
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Use raw SQL to change ENUM to VARCHAR since Laravel Schema doesn't support this directly
         DB::statement("ALTER TABLE dokumens MODIFY COLUMN status VARCHAR(100) DEFAULT 'belum dikirim'");
     }
@@ -22,6 +26,9 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Note: Reverting to ENUM may cause data loss if any status values don't match
         DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM('sedang diproses', 'selesai', 'belum dikirim') DEFAULT 'sedang diproses'");
     }

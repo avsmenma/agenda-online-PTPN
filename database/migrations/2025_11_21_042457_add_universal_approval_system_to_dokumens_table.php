@@ -21,27 +21,29 @@ return new class extends Migration
             $table->text('universal_approval_rejection_reason')->nullable()->after('universal_approval_responded_by');
         });
 
-        // Update status enum to include universal approval statuses
-        DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM(
-            'draft',
-            'menunggu_approved_pengiriman',
-            'approved_data_sudah_terkirim',
-            'rejected_data_tidak_lengkap',
-            'sent_to_ibub',
-            'processed_by_ibub',
-            'sent_to_perpajakan',
-            'processed_by_perpajakan',
-            'sent_to_akutansi',
-            'processed_by_akutansi',
-            'sent_to_pembayaran',
-            'processed_by_pembayaran',
-            'completed',
-            'returned_to_ibua',
-            'returned_to_ibub',
-            'pending_approval_ibub',
-            'pending_approval_perpajakan',
-            'pending_approval_akutansi'
-        ) NOT NULL DEFAULT 'draft'");
+        // Update status enum to include universal approval statuses (skip on SQLite)
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM(
+                'draft',
+                'menunggu_approved_pengiriman',
+                'approved_data_sudah_terkirim',
+                'rejected_data_tidak_lengkap',
+                'sent_to_ibub',
+                'processed_by_ibub',
+                'sent_to_perpajakan',
+                'processed_by_perpajakan',
+                'sent_to_akutansi',
+                'processed_by_akutansi',
+                'sent_to_pembayaran',
+                'processed_by_pembayaran',
+                'completed',
+                'returned_to_ibua',
+                'returned_to_ibub',
+                'pending_approval_ibub',
+                'pending_approval_perpajakan',
+                'pending_approval_akutansi'
+            ) NOT NULL DEFAULT 'draft'");
+        }
     }
 
     /**
@@ -59,22 +61,24 @@ return new class extends Migration
             ]);
         });
 
-        // Revert status enum
-        DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM(
-            'draft',
-            'pending_approval_ibub',
-            'sent_to_ibub',
-            'sedang diproses',
-            'pending_approval_perpajakan',
-            'sent_to_perpajakan',
-            'pending_approval_akutansi',
-            'sent_to_akutansi',
-            'approved_ibub',
-            'rejected_ibub',
-            'returned_to_ibua',
-            'returned_to_department',
-            'returned_to_bidang',
-            'selesai'
-        ) NOT NULL DEFAULT 'draft'");
+        // Revert status enum (skip on SQLite)
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM(
+                'draft',
+                'pending_approval_ibub',
+                'sent_to_ibub',
+                'sedang diproses',
+                'pending_approval_perpajakan',
+                'sent_to_perpajakan',
+                'pending_approval_akutansi',
+                'sent_to_akutansi',
+                'approved_ibub',
+                'rejected_ibub',
+                'returned_to_ibua',
+                'returned_to_department',
+                'returned_to_bidang',
+                'selesai'
+            ) NOT NULL DEFAULT 'draft'");
+        }
     }
 };

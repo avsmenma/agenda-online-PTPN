@@ -48,7 +48,11 @@ return new class extends Migration {
     public function up(): void
     {
         // Disable foreign key checks to allow updates across related tables
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF');
+        } else {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        }
 
         try {
             // ========================================
@@ -280,7 +284,11 @@ return new class extends Migration {
 
         } finally {
             // Re-enable foreign key checks
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            if (DB::getDriverName() === 'sqlite') {
+                DB::statement('PRAGMA foreign_keys = ON');
+            } else {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            }
         }
     }
 
@@ -289,7 +297,11 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF');
+        } else {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        }
 
         try {
             // Reverse: operator → ibutarapul (legacy default)
@@ -329,7 +341,11 @@ return new class extends Migration {
                 ->update(['role' => 'verifikasi']);
 
         } finally {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            if (DB::getDriverName() === 'sqlite') {
+                DB::statement('PRAGMA foreign_keys = ON');
+            } else {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            }
         }
     }
 };

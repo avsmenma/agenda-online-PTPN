@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip on SQLite — MODIFY COLUMN is MySQL-specific
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Add WAITING_REVIEWER_APPROVAL to status enum
         DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM(
             'draft',
@@ -48,6 +52,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Remove WAITING_REVIEWER_APPROVAL from enum
         DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM(
             'draft',

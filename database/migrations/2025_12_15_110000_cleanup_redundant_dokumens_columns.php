@@ -14,6 +14,12 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('dokumens', function (Blueprint $table) {
+            // Drop indexes that reference columns we're about to remove (required for SQLite)
+            try { $table->dropIndex('idx_current_handler_sent_at'); } catch (\Exception $e) {}
+            try { $table->dropIndex('idx_deadline_at'); } catch (\Exception $e) {}
+        });
+
+        Schema::table('dokumens', function (Blueprint $table) {
             // Drop inbox_approval columns (now in dokumen_statuses)
             $columnsToDrop = [
                 'inbox_approval_for',

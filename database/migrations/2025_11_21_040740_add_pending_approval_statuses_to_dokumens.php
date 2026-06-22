@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip on SQLite — MODIFY COLUMN is MySQL-specific; SQLite uses VARCHAR by default
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Update status enum to include pending approval statuses
         DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM(
             'draft',
@@ -36,6 +40,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         // Revert to original status enum without pending approval
         DB::statement("ALTER TABLE dokumens MODIFY COLUMN status ENUM(
             'draft',

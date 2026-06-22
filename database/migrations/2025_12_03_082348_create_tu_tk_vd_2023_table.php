@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip MySQL-specific DDL on SQLite (used for tests) — table not needed in test env
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
         DB::statement("
             CREATE TABLE IF NOT EXISTS `tu_tk_vd_2023` (
                 `KONTROL` bigint DEFAULT NULL,
