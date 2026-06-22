@@ -2716,6 +2716,13 @@
     .na-input:focus { outline: none; border-color: #16a34a; box-shadow: 0 0 0 2px rgba(22,163,74,.15); }
     .na-input.na-error { border-color: #dc3545; box-shadow: 0 0 0 2px rgba(220,53,69,.15); }
     textarea.na-input { resize: vertical; min-height: 34px; }
+    .na-remove-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border: none; border-radius: 6px;
+      background: #dc3545; color: #fff; cursor: pointer; font-size: 12px;
+      transition: background .15s;
+    }
+    .na-remove-btn:hover { background: #b02a37; }
   </style>
 
   <script>
@@ -2773,7 +2780,13 @@
 
         const tdNo = document.createElement('td');
         tdNo.className = 'col-no';
-        tdNo.innerHTML = '<i class="fa-solid fa-plus" style="color:#16a34a;"></i>';
+        const btnHapus = document.createElement('button');
+        btnHapus.type = 'button';
+        btnHapus.className = 'na-remove-btn';
+        btnHapus.title = 'Hapus baris ini';
+        btnHapus.innerHTML = '<i class="fa-solid fa-minus"></i>';
+        btnHapus.addEventListener('click', function () { tr.remove(); });
+        tdNo.appendChild(btnHapus);
         tr.appendChild(tdNo);
 
         COLUMNS.forEach(function (col) {
