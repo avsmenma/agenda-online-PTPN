@@ -70,6 +70,14 @@ class InlineCreateDokumenTest extends TestCase
         $response->assertStatus(422)->assertJsonValidationErrors('nomor_agenda');
     }
 
+    public function test_nomor_agenda_terlalu_panjang_ditolak(): void
+    {
+        $response = $this->actingAs($this->operator())
+            ->postJson('/documents/inline-create', ['nomor_agenda' => str_repeat('A', 256)]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors('nomor_agenda');
+    }
+
     public function test_non_operator_diblokir(): void
     {
         $owner = User::factory()->create(['role' => 'owner']);

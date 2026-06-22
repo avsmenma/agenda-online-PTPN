@@ -335,10 +335,10 @@ class DokumenController extends Controller
      * Membuat satu baris dokumen draft langsung dari daftar dokumen (inline add).
      * Hanya butuh nomor_agenda; field lain di-flush via inline-update dari sisi klien.
      */
-    public function inlineCreate(Request $request)
+    public function inlineCreate(Request $request): \Illuminate\Http\JsonResponse
     {
         $validated = $request->validate([
-            'nomor_agenda' => 'required|string|unique:dokumens,nomor_agenda',
+            'nomor_agenda' => 'required|string|max:255|unique:dokumens,nomor_agenda',
         ], [
             'nomor_agenda.required' => 'Nomor agenda harus diisi.',
             'nomor_agenda.unique'   => 'Nomor agenda sudah digunakan. Silakan gunakan nomor lain.',
@@ -1935,7 +1935,7 @@ class DokumenController extends Controller
                 // Update bulan & tahun when tanggal_spp changes
                 if (!empty($value)) {
                     $tgl = \Carbon\Carbon::parse($value);
-                    $bulanMap = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'May',6=>'Juni',7=>'July',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
+                    $bulanMap = [1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'];
                     $dokumen->bulan = $bulanMap[$tgl->month];
                     $dokumen->tahun = $tgl->year;
                 }
