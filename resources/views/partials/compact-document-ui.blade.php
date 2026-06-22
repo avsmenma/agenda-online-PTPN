@@ -482,7 +482,6 @@
   body.document-table-only-fullscreen header,
   body.document-table-only-fullscreen footer,
   body.document-table-only-fullscreen .vsummary-strip,
-  body.document-table-only-fullscreen .search-box,
   body.document-table-only-fullscreen .alert,
   body.document-table-only-fullscreen .acn-indicator,
   body.document-table-only-fullscreen #acnIndicator,
@@ -502,7 +501,7 @@
     background: #ffffff !important;
   }
 
-  body.document-table-only-fullscreen .content > :not(#documentTableContainer):not(style):not(script) {
+  body.document-table-only-fullscreen .content > :not(#documentTableContainer):not(.search-box):not(style):not(script) {
     display: none !important;
   }
 
@@ -546,6 +545,45 @@
     border-top: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+  }
+
+  /* === Tampilkan toolbar (search/filter/tambah) di mode fullscreen === */
+  /* Susun sebagai kolom: toolbar di atas, tabel mengisi sisa tinggi & scroll. */
+  body.document-table-only-fullscreen .content {
+    position: fixed !important;
+    inset: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    z-index: 2147483000 !important;
+    overflow: hidden !important;
+  }
+  body.document-table-only-fullscreen .search-box {
+    display: block !important;
+    position: relative !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 12px 16px !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    z-index: 1 !important;
+  }
+  body.document-table-only-fullscreen #documentTableContainer.table-dokumen,
+  body.document-table-only-fullscreen #documentTableContainer {
+    position: relative !important;
+    inset: auto !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    z-index: auto !important;
+  }
+  body.document-table-only-fullscreen #documentTableContainer .table-container,
+  body.document-table-only-fullscreen #documentTableContainer .table-responsive,
+  body.document-table-only-fullscreen #documentTableContainer .virtual-table-viewport {
+    height: auto !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
   }
 
   body.document-table-only-fullscreen #documentTableContainer table {
