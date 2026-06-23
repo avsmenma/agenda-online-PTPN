@@ -11,26 +11,26 @@
 
 | Severity | Jumlah |
 |---|---|
-| CRITICAL (C) | 15 |
+| CRITICAL (C) | 14 |
 | HIGH (H) | 44 |
 | MEDIUM (M) | 74 |
 | LOW (L) | 31 |
 | INFO (I) | 22 |
-| **TOTAL** | **186** |
+| **TOTAL** | **185** |
 
 > Catatan: temuan duplikat `formatTaxDocumentLink` (dilaporkan 2 modul) digabung jadi 1 poin (H35). Ber-tanda `⚠️ASUMSI`: 37 poin.
 >
 > **Pembaruan (eliminasi TU/TK):** 10 poin yang murni soal modul TU/TK yang sudah dihapus telah dibuang dari checklist ini — **H3, H4, H5, H6, H41, M8, M9, M12, L2, L14** (lihat `TU_TK_ELIMINATION_PLAN.md`). Nomor poin lain **sengaja tidak digeser** agar referensi silang (mis. H35/H46/H47, C6/C15) tetap stabil; karena itu ada lompatan nomor pada daftar di bawah. Poin M4, M32, L3, I10 ikut disunting untuk membuang referensi artefak TU/TK.
 >
-> **Pembaruan (perbaikan bug):** **C1** sudah diperbaiki & dibuang dari checklist. Jalur approve/reject Team Verifikasi (`changeDocumentStatus`) yang menulis kolom milestone tak ada di DB (`approved_by_team_verifikasi_at` dkk) dipensiunkan total — TV memang tidak approve/reject. Nomor C lain tidak digeser.
->
-> **Pembaruan (perbaikan bug):** **C2** sudah diperbaiki & dibuang dari checklist. Skema referensi koneksi `cash_bank_new` disimpan di `database/schema/cash_bank_new.sql` (DDL 8 tabel di-dump dari produksi). Nomor C lain tidak digeser.
+> **Pembaruan (perbaikan bug) — sudah diperbaiki & dibuang dari checklist (nomor C lain tidak digeser):**
+> - **C1** — jalur approve/reject Team Verifikasi (`changeDocumentStatus`) yang menulis kolom milestone tak ada di DB dipensiunkan total (TV memang tidak approve/reject).
+> - **C2** — skema referensi koneksi `cash_bank_new` disimpan di `database/schema/cash_bank_new.sql` (DDL 8 tabel dari produksi).
+> - **C3** — hardening verifikasi 2FA: rate limit `throttle:5,1`, penghitung gagal per `2fa_user_id` + batalkan sesi setelah 5 gagal, window TOTP `2→1`, anti-replay via kolom baru `users.two_factor_last_used_timestep`.
 
 ---
 
 ## CRITICAL
 
-- [ ] **C3.** Tambahkan rate limiting (mis. 5/menit) pada `2fa.verify.store`/`2fa.verify.recovery`, hitung kegagalan per `2fa_user_id` + batalkan sesi setelah N gagal, persempit window TOTP ke `1`, dan tambah anti-replay. — (ref: TwoFactorController.php:164–289; web.php:35–37)
 - [ ] **C4.** Ganti channel broadcasting `documents.{department}`/`inbox.{role}`/`documents.ibuB` dari `return true` menjadi otorisasi nyata (cocokkan `$user->role` dengan channel). — (ref: channels.php:17–70)
 - [ ] **C5.** Tambahkan middleware `role:` pada `/universal-approval/{dokumen}/approve|reject` agar tidak semua user login bisa approve/reject. — (ref: web.php:474–479; InboxController.php:341–555)
 - [ ] **C6.** Hapus key duplikat pada `User::ROLES`/`DASHBOARD_ROUTES` dan jadikan satu set role kanonik (pisahkan display-name dari daftar role valid). — (ref: User.php:17–43)
