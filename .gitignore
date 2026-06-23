@@ -39,6 +39,8 @@ data_csv/
 *.sql
 *.dump
 *.bak
+# Pengecualian: skema referensi DB eksternal (sumber kebenaran, wajib di-repo)
+!database/schema/*.sql
 
 # File lama/backup
 *_old.blade.php
