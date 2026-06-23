@@ -11,22 +11,23 @@
 
 | Severity | Jumlah |
 |---|---|
-| CRITICAL (C) | 17 |
+| CRITICAL (C) | 16 |
 | HIGH (H) | 44 |
 | MEDIUM (M) | 74 |
 | LOW (L) | 31 |
 | INFO (I) | 22 |
-| **TOTAL** | **188** |
+| **TOTAL** | **187** |
 
 > Catatan: temuan duplikat `formatTaxDocumentLink` (dilaporkan 2 modul) digabung jadi 1 poin (H35). Ber-tanda `⚠️ASUMSI`: 37 poin.
 >
 > **Pembaruan (eliminasi TU/TK):** 10 poin yang murni soal modul TU/TK yang sudah dihapus telah dibuang dari checklist ini — **H3, H4, H5, H6, H41, M8, M9, M12, L2, L14** (lihat `TU_TK_ELIMINATION_PLAN.md`). Nomor poin lain **sengaja tidak digeser** agar referensi silang (mis. H35/H46/H47, C6/C15) tetap stabil; karena itu ada lompatan nomor pada daftar di bawah. Poin M4, M32, L3, I10 ikut disunting untuk membuang referensi artefak TU/TK.
+>
+> **Pembaruan (perbaikan bug):** **C1** sudah diperbaiki & dibuang dari checklist. Jalur approve/reject Team Verifikasi (`changeDocumentStatus`) yang menulis kolom milestone tak ada di DB (`approved_by_team_verifikasi_at` dkk) dipensiunkan total — TV memang tidak approve/reject. Nomor C lain tidak digeser.
 
 ---
 
 ## CRITICAL
 
-- [ ] **C1.** Konfirmasi ke DB produksi apakah kolom `approved_by_team_verifikasi_at/_by`, `approved_by_perpajakan_at`, `approved_by_akutansi_at` sudah ada manual; bila belum, buat migrasi penambah kolom ATAU alihkan penulisan ke `approved_by_ibub_at`. — (ref: TeamVerifikasiController.php:2794–2802)
 - [ ] **C2.** Simpan skema referensi (`schema.sql`/migrasi read-only) untuk koneksi `cash_bank_new` agar 7 model CashBank punya sumber kebenaran skema. — (ref: app/Models/CashBank/*; config/database.php:86–105)
 - [ ] **C3.** Tambahkan rate limiting (mis. 5/menit) pada `2fa.verify.store`/`2fa.verify.recovery`, hitung kegagalan per `2fa_user_id` + batalkan sesi setelah N gagal, persempit window TOTP ke `1`, dan tambah anti-replay. — (ref: TwoFactorController.php:164–289; web.php:35–37)
 - [ ] **C4.** Ganti channel broadcasting `documents.{department}`/`inbox.{role}`/`documents.ibuB` dari `return true` menjadi otorisasi nyata (cocokkan `$user->role` dengan channel). — (ref: channels.php:17–70)
