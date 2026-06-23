@@ -119,6 +119,7 @@ final class User extends Authenticatable
             'table_columns_preferences' => 'array',
             'two_factor_enabled' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
+            'two_factor_last_used_timestep' => 'integer',
         ];
     }
 

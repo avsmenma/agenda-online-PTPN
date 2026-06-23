@@ -33,8 +33,8 @@ Route::middleware('guest')->group(function () {
 
     // 2FA Verification Routes (accessible without auth, but requires 2fa_user_id in session)
     Route::get('/2fa/verify', [\App\Http\Controllers\TwoFactorController::class, 'showVerify'])->name('2fa.verify');
-    Route::post('/2fa/verify', [\App\Http\Controllers\TwoFactorController::class, 'verify'])->name('2fa.verify.store');
-    Route::post('/2fa/verify-recovery', [\App\Http\Controllers\TwoFactorController::class, 'verifyRecoveryCode'])->name('2fa.verify.recovery');
+    Route::post('/2fa/verify', [\App\Http\Controllers\TwoFactorController::class, 'verify'])->middleware('throttle:5,1')->name('2fa.verify.store');
+    Route::post('/2fa/verify-recovery', [\App\Http\Controllers\TwoFactorController::class, 'verifyRecoveryCode'])->middleware('throttle:5,1')->name('2fa.verify.recovery');
 });
 
 // GET logout - accessible without CSRF token (fixes 419 PAGE EXPIRED)

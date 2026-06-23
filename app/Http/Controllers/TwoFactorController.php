@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use PragmaRX\Google2FA\Google2FA;
@@ -192,22 +194,51 @@ final class TwoFactorController extends Controller
 
         $secretKey = decrypt($user->two_factor_secret);
 
-        // Verify the code (allow 2 time windows = 60 seconds)
-        $valid = $this->google2fa->verifyKey($secretKey, $request->code, 2);
+        $throttleKey = '2fa:' . $user->id;
 
-        if (!$valid) {
+        // Anti-replay + window dipersempit ke 1 (toleransi ±30 detik).
+        // verifyKeyNewer hanya menerima kode yang LEBIH BARU dari time-slice
+        // terakhir yang dipakai -> kode yang sama tidak bisa diputar ulang.
+        $hasReplayColumn = Schema::hasColumn('users', 'two_factor_last_used_timestep');
+        $oldTimestamp = $hasReplayColumn && $user->two_factor_last_used_timestep !== null
+            ? (int) $user->two_factor_last_used_timestep
+            : null;
+
+        $timestamp = $this->google2fa->verifyKeyNewer($secretKey, $request->code, $oldTimestamp, 1);
+
+        if ($timestamp === false) {
+            RateLimiter::hit($throttleKey, 600); // hitung kegagalan per user (decay 10 menit)
+
             Log::warning('2FA verification failed', [
                 'user_id' => $user->id,
                 'username' => $user->username,
                 'ip_address' => $request->ip(),
+                'attempts' => RateLimiter::attempts($throttleKey),
             ]);
+
+            // Batalkan sesi 2FA setelah 5 kegagalan -> paksa login ulang dari password
+            if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+                session()->forget('2fa_user_id');
+                session()->forget('2fa_remember');
+                RateLimiter::clear($throttleKey);
+
+                return redirect()->route('login')
+                    ->with('error', 'Terlalu banyak percobaan verifikasi 2FA yang gagal. Silakan login ulang.');
+            }
 
             return back()
                 ->withInput()
                 ->withErrors(['code' => 'Kode verifikasi tidak valid. Pastikan kode dari aplikasi authenticator Anda.']);
         }
 
+        // Simpan time-slice kode untuk mencegah replay pada verifikasi berikutnya
+        if ($hasReplayColumn) {
+            $user->two_factor_last_used_timestep = $timestamp;
+            $user->save();
+        }
+
         // Clear 2FA session and login user
+        RateLimiter::clear($throttleKey);
         session()->forget('2fa_user_id');
         Auth::login($user, session('2fa_remember', false));
         session()->forget('2fa_remember');
@@ -253,12 +284,27 @@ final class TwoFactorController extends Controller
         $recoveryCodes = json_decode(decrypt($user->two_factor_recovery_codes), true);
         $recoveryCode = strtoupper(trim($request->recovery_code));
 
+        $throttleKey = '2fa:' . $user->id;
+
         if (!in_array($recoveryCode, $recoveryCodes)) {
+            RateLimiter::hit($throttleKey, 600); // hitung kegagalan per user (decay 10 menit)
+
             Log::warning('Invalid recovery code used', [
                 'user_id' => $user->id,
                 'username' => $user->username,
                 'ip_address' => $request->ip(),
+                'attempts' => RateLimiter::attempts($throttleKey),
             ]);
+
+            // Batalkan sesi 2FA setelah 5 kegagalan -> paksa login ulang dari password
+            if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+                session()->forget('2fa_user_id');
+                session()->forget('2fa_remember');
+                RateLimiter::clear($throttleKey);
+
+                return redirect()->route('login')
+                    ->with('error', 'Terlalu banyak percobaan verifikasi 2FA yang gagal. Silakan login ulang.');
+            }
 
             return back()
                 ->withInput()
@@ -271,6 +317,7 @@ final class TwoFactorController extends Controller
         $user->save();
 
         // Clear 2FA session and login user
+        RateLimiter::clear($throttleKey);
         session()->forget('2fa_user_id');
         Auth::login($user, session('2fa_remember', false));
         session()->forget('2fa_remember');
