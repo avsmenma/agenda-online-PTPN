@@ -1174,43 +1174,6 @@ class Dokumen extends Model
     }
 
     /**
-     * Helper untuk menampilkan status yang benar ke Ibu Tarapul
-     * Memeriksa milestone historical sebelum menampilkan current status
-     */
-    public function getoperatorStatusDisplay()
-    {
-        // Prioritaskan milestone historical PERMANENT
-        if ($this->approved_by_team_verifikasi_at) {
-            return 'Document Approved'; // ✅ PERMANENT MILESTONE - TIDAK AKAN TERGANGGU REJECT
-        }
-
-        if ($this->approved_by_perpajakan_at) {
-            return 'Approved by Perpajakan';
-        }
-
-        if ($this->approved_by_akutansi_at) {
-            return 'Approved by Akutansi';
-        }
-
-        // Jika ada milestone, gunakan itu - jangan overwrite dengan current status!
-        if ($this->approved_by_team_verifikasi_at || $this->approved_by_perpajakan_at || $this->approved_by_akutansi_at) {
-            // Cari status milestone yang sesuai
-            $milestoneStatuses = [
-                'approved_data_sudah_terkirim' => 'Document Approved',
-                'approved_Team Verifikasi' => 'Approved by Team Verifikasi',
-                'approved_perpajakan' => 'Approved by Perpajakan',
-                'approved_akutansi' => 'Approved by Akutansi',
-                'selesai' => 'Document Selesai'
-            ];
-
-            return $milestoneStatuses[$this->status] ?? 'Status Unknown';
-        }
-
-        // Fallback ke current status dengan logic yang bersih
-        return $this->getStatusDisplay();
-    }
-
-    /**
      * Get status display name in Indonesian
      * Helper method untuk menampilkan status dalam format yang user-friendly
      */
@@ -1240,48 +1203,6 @@ class Dokumen extends Model
         ];
 
         return $statusMap[$this->status] ?? ucfirst(str_replace('_', ' ', $this->status));
-    }
-
-    /**
-     * Helper untuk menampilkan status yang benar ke Ibu Tarapul
-     * Milestone-aware status display untuk mencegah kesalahan architcktural
-     */
-    public function getCorrectStatusDisplay()
-    {
-        // Jika ada milestone historical, gunakan itu
-        if ($this->approved_by_team_verifikasi_at) {
-            return 'Document Approved'; // ✅ MILESTONE SELALU BENAR
-        }
-
-        if ($this->approved_by_perpajakan_at) {
-            return 'Approved by Perpajakan';
-        }
-
-        if ($this->approved_by_akutansi_at) {
-            return 'Approved by Akutansi';
-        }
-
-        // Fallback ke status logic yang bersih tanpa overwrite
-        $statusMapping = [
-            'draft' => 'Draft',
-            'sedang diproses' => 'Sedang Diproses',
-            'approved_data_sudah_terkirim' => 'Document Approved',
-            'approved_perpajakan' => 'Approved by Perpajakan',
-            'approved_akutansi' => 'Approved by Akutansi',
-            'selesai' => 'Selesai',
-            'returned_to_operator' => 'Dikembalikan ke Ibu Tarapul',
-            'returned_to_department' => 'Dikembalikan ke Bagian',
-            'returned_to_verifikasi' => 'Kembali ke Team Verifikasi',
-            'rejected_Team Verifikasi' => 'Ditolak oleh Ibu Yuni',
-            'rejected_data_tidik_lengkap' => 'Ditolak (Data Tidak Lengkap)',
-            'returned_from_perpajakan' => 'Dikembalikan dari Perpajakan',
-            'returned_from_akutansi' => 'Dikembalikan dari Akutansi',
-            'menunggu_di_approve' => 'Menunggu Approve Ibu Yuni',
-            'menunggu_di_approve_perpajakan' => 'Menunggu Approve Perpajakan',
-            'menunggu_di_approve_akutansi' => 'Menunggu Approve Akutansi',
-        ];
-
-        return $statusMapping[$this->status] ?? 'Status Unknown';
     }
 
     /**

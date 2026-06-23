@@ -431,7 +431,6 @@ Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('do
     Route::post('/{dokumen}/send-to-next', [TeamVerifikasiController::class, 'sendToNextHandler'])->name('send-to-next');
     Route::post('/{dokumen}/set-deadline', [TeamVerifikasiController::class, 'setDeadline'])->name('set-deadline');
     Route::post('/{dokumen}/return-to-owner', [TeamVerifikasiController::class, 'returnToOperator'])->name('return-to-owner');
-    Route::post('/{dokumen}/change-status', [TeamVerifikasiController::class, 'changeDocumentStatus'])->name('change-status');
     Route::post('/{dokumen}/paraf', [TeamVerifikasiController::class, 'parafDokumen'])->name('paraf');
 });
 
