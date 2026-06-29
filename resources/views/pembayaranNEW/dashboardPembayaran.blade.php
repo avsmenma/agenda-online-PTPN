@@ -1807,6 +1807,34 @@
       background: #f3faf9 !important;
     }
 
+    /* Frozen kolom Nomor Agenda — menempel tepat setelah kolom No (lebar 88px).
+       Mengikuti pola sticky kolom No di atas; box-shadow kanan menandai batas
+       kolom yang di-freeze. */
+    #documentTableContainer .data-table th.col-nomor_agenda,
+    #documentTableContainer .data-table td.col-nomor_agenda {
+      position: sticky;
+      left: 88px;
+      z-index: 29;
+      background-clip: padding-box;
+      box-shadow: inset -1px 0 0 #d9e0e7, 6px 0 8px -6px rgba(15, 23, 42, 0.15);
+    }
+
+    #documentTableContainer .data-table th.col-nomor_agenda {
+      z-index: 550;
+    }
+
+    #documentTableContainer .data-table tbody tr:nth-child(odd) td.col-nomor_agenda {
+      background: #ffffff !important;
+    }
+
+    #documentTableContainer .data-table tbody tr:nth-child(even) td.col-nomor_agenda {
+      background: #f8fafc !important;
+    }
+
+    #documentTableContainer .data-table tbody tr:hover td.col-nomor_agenda {
+      background: #f3faf9 !important;
+    }
+
     #documentTableContainer .status-pill {
       border-radius: 999px;
       font-size: 0.75rem;
