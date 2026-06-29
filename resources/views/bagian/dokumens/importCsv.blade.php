@@ -525,7 +525,6 @@
             <i class="fa-solid fa-file-csv hero-mark"></i>
             <div class="eyebrow">Buku Agenda Online 2026 · PTPN IV Regional V</div>
             <h1>Import Dokumen dari CSV</h1>
-            <p>Unggah berkas CSV agenda, tinjau hasil validasi per baris, lalu impor. Baris bermasalah otomatis dilewati — data yang ada tidak ditimpa.</p>
         </header>
 
         <!-- Stepper -->
