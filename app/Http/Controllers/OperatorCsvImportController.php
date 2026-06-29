@@ -138,12 +138,16 @@ class OperatorCsvImportController extends Controller
     }
 
     /**
-     * Clean header names and handle empty first column
-     * 
-     * Only these columns will be imported:
-     * Agenda, Bulan, Tahun, Kriteria, No SPP, Tanggal SPP, Tanggal Masuk, Dibayarkan Kepada, Uraian SPP, Nilai
-     * 
-     * Columns like "Kontrol" will be skipped
+     * Clean header names and handle empty first column.
+     *
+     * Header names di spreadsheet bisa berubah-ubah (mis. istilah "SPP" diganti
+     * "PP"/"Permintaan Pembayaran", beda kapitalisasi, ada spasi/baris baru, atau
+     * imbuhan seperti "(Rp)"/"(BA)"/"(PP)"). Maka pencocokan dilakukan secara
+     * tahan-banting: tiap header dinormalisasi (lowercase, rapikan spasi, buang
+     * imbuhan) lalu dicocokkan ke daftar alias menuju nama kolom kanonik yang
+     * dipakai transformRow()/validateRow().
+     *
+     * Kolom yang tidak dikenali (mis. "Kontrol", "LINK", kolom pajak) dilewati.
      */
     private function cleanHeaders($headers)
     {
@@ -155,58 +159,101 @@ class OperatorCsvImportController extends Controller
             $skipFirstColumn = true;
         }
 
-        // Define allowed columns (these are the only columns we want to import)
-        $allowedColumns = [
-            'Agenda',
-            'Bulan',
-            'Tahun',
-            'Kriteria',
-            'No SPP',
-            'Tanggal SPP',
-            'Tanggal Masuk',
-            'Dibayarkan Kepada',
-            'Uraian SPP',
-            'Nilai',  // Will match "Nilai (Rp)" after cleaning
-            // SPK fields
-            'No SPK',
-            'Tanggal SPK',
-            'Tgl. Akhir SPK',
-            // BA fields
-            'No Berita Acara',  // Will match "No Berita Acara (BA)" after cleaning
-            'Tanggal Berita Acara',  // Will match "Tanggal Berita Acara (BA)" after cleaning
-            // PO and MIRO
-            'No. PO',
-            'No. Miro/SES',
-            // Paraf & processing fields
-            'Tanggal Paraf',
-            'Pemaraf',
-            'Tgl selesai diproses',
-            'Kepala Sub Bagian',
-            'Status Dokumen',
-            'Tanggal Bayar',
-        ];
+        $aliasMap = $this->headerAliasMap();
 
         // Clean headers and track which indices to keep
         $filteredHeaders = [];
         $validIndices = [];
+        $usedCanonical = [];
 
         foreach ($headers as $index => $header) {
-            // Clean the header
-            $header = preg_replace('/\s+/', ' ', trim($header));
-            $header = str_replace(['(Rp)', '(RP)', '(BA)'], '', $header);
-            $header = trim($header);
+            $canonical = $aliasMap[$this->normalizeHeader($header)] ?? null;
 
-            // Check if this is an allowed column
-            if (in_array($header, $allowedColumns)) {
-                $filteredHeaders[] = $header;
-                $validIndices[] = $index;
+            // Lewati kolom tak dikenal & hindari kolom kanonik ganda (jaga
+            // array_combine tetap valid di pemanggil).
+            if ($canonical === null || isset($usedCanonical[$canonical])) {
+                continue;
             }
+
+            $usedCanonical[$canonical] = true;
+            $filteredHeaders[] = $canonical;
+            $validIndices[] = $index;
         }
 
         return [
             'headers' => $filteredHeaders,
             'skip_first' => $skipFirstColumn,
             'valid_indices' => $validIndices,
+        ];
+    }
+
+    /**
+     * Normalisasi satu nama header untuk pencocokan alias.
+     * - rapikan spasi/baris baru jadi satu spasi
+     * - buang imbuhan satuan/jenis: (Rp) (BA) (PP) (SPP)
+     * - lowercase + trim tanda baca/dot di ujung
+     */
+    private function normalizeHeader($header)
+    {
+        $normalized = strtolower((string) $header);
+        $normalized = preg_replace('/\s+/', ' ', $normalized);        // newline & spasi ganda -> 1 spasi
+        $normalized = str_replace(['(rp)', '(ba)', '(pp)', '(spp)'], '', $normalized);
+        $normalized = preg_replace('/[\s.]+$/', '', trim($normalized)); // buang dot/spasi di ujung
+        return trim($normalized);
+    }
+
+    /**
+     * Peta alias header (sudah dinormalisasi) -> nama kolom kanonik.
+     * Mendukung istilah lama "SPP" maupun baru "PP/Permintaan Pembayaran".
+     */
+    private function headerAliasMap()
+    {
+        return [
+            'agenda' => 'Agenda',
+            'bulan' => 'Bulan',
+            'tahun' => 'Tahun',
+            'kriteria' => 'Kriteria',
+
+            // Nomor SPP / PP
+            'no spp' => 'No SPP', 'no pp' => 'No SPP',
+            'nomor spp' => 'No SPP', 'nomor pp' => 'No SPP',
+
+            // Tanggal SPP / PP
+            'tanggal spp' => 'Tanggal SPP', 'tanggal pp' => 'Tanggal SPP',
+            'tgl spp' => 'Tanggal SPP', 'tgl pp' => 'Tanggal SPP',
+
+            'tanggal masuk' => 'Tanggal Masuk', 'tgl masuk' => 'Tanggal Masuk',
+
+            'dibayarkan kepada' => 'Dibayarkan Kepada',
+            'dibayar kepada' => 'Dibayarkan Kepada',
+            'dibayarkan kpd' => 'Dibayarkan Kepada',
+
+            // Uraian SPP / PP / Permintaan Pembayaran
+            'uraian spp' => 'Uraian SPP', 'uraian pp' => 'Uraian SPP',
+            'uraian permintaan pembayaran' => 'Uraian SPP', 'uraian' => 'Uraian SPP',
+
+            'nilai' => 'Nilai', // "Nilai (Rp)" -> "nilai" setelah normalisasi
+
+            // SPK
+            'no spk' => 'No SPK',
+            'tanggal spk' => 'Tanggal SPK',
+            'tgl akhir spk' => 'Tgl. Akhir SPK', 'tgl. akhir spk' => 'Tgl. Akhir SPK',
+
+            // Berita Acara
+            'no berita acara' => 'No Berita Acara',
+            'tanggal berita acara' => 'Tanggal Berita Acara',
+
+            // PO & MIRO
+            'no po' => 'No. PO', 'no. po' => 'No. PO',
+            'no miro/ses' => 'No. Miro/SES', 'no. miro/ses' => 'No. Miro/SES',
+
+            // Paraf & proses
+            'tanggal paraf' => 'Tanggal Paraf',
+            'pemaraf' => 'Pemaraf',
+            'tgl selesai diproses' => 'Tgl selesai diproses',
+            'kepala sub bagian' => 'Kepala Sub Bagian',
+            'status dokumen' => 'Status Dokumen',
+            'tanggal bayar' => 'Tanggal Bayar',
         ];
     }
 
