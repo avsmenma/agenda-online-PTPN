@@ -1,658 +1,841 @@
 @extends('layouts/app')
 @section('content')
 
+    {{-- Semua gaya di-scope ke .imp agar tidak bocor ke halaman lain (versi lama
+         meng-override selektor global seperti h2). --}}
     <style>
-        h2 {
-            background: linear-gradient(135deg, #083E40 0%, #889717 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 24px;
+        .imp {
+            --imp-teal: #083E40;
+            --imp-teal-2: #0a5e54;
+            --imp-olive: #889717;
+            --imp-ink: #0f172a;
+            --imp-muted: #64748b;
+            --imp-line: #e6e9ee;
+            --imp-bg: #f6f8f7;
+            --imp-ok: #15a36e;
+            --imp-warn: #d98a04;
+            --imp-err: #e1483b;
+            color: var(--imp-ink);
         }
 
-        .import-container {
-            background: white;
+        .dark .imp {
+            --imp-ink: #e8edf2;
+            --imp-muted: #94a3b8;
+            --imp-line: #2a3645;
+            --imp-bg: #0f172a;
+        }
+
+        /* ---------- Command header ---------- */
+        .imp-hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            padding: 28px 30px;
+            background: linear-gradient(120deg, var(--imp-teal) 0%, var(--imp-teal-2) 55%, var(--imp-olive) 140%);
+            color: #fff;
+            box-shadow: 0 18px 40px -22px rgba(8, 62, 64, .8);
+        }
+
+        .imp-hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(420px 180px at 88% -40%, rgba(255, 255, 255, .18), transparent 70%);
+            pointer-events: none;
+        }
+
+        .imp-hero .eyebrow {
+            text-transform: uppercase;
+            letter-spacing: .22em;
+            font-size: 11px;
+            font-weight: 700;
+            opacity: .82;
+            margin-bottom: 6px;
+        }
+
+        .imp-hero h1 {
+            font-size: clamp(22px, 3vw, 30px);
+            font-weight: 800;
+            letter-spacing: -.01em;
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        .imp-hero p {
+            margin: 8px 0 0;
+            opacity: .9;
+            font-size: 14px;
+            max-width: 56ch;
+        }
+
+        .imp-hero .hero-mark {
+            position: absolute;
+            right: 26px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 76px;
+            opacity: .16;
+        }
+
+        /* ---------- Stepper ---------- */
+        .imp-steps {
+            display: flex;
+            gap: 10px;
+            margin: 18px 0 26px;
+        }
+
+        .imp-steps .s {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: #fff;
+            border: 1px solid var(--imp-line);
+            transition: all .25s ease;
+        }
+
+        .dark .imp-steps .s {
+            background: #131c2b;
+        }
+
+        .imp-steps .s .dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            font-size: 14px;
+            background: var(--imp-bg);
+            color: var(--imp-muted);
+            flex: none;
+        }
+
+        .imp-steps .s .lbl small {
+            display: block;
+            font-size: 10px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--imp-muted);
+        }
+
+        .imp-steps .s .lbl strong {
+            font-size: 14px;
+        }
+
+        .imp-steps .s.active {
+            border-color: transparent;
+            background: linear-gradient(120deg, var(--imp-teal), var(--imp-teal-2));
+            color: #fff;
+            box-shadow: 0 12px 26px -16px rgba(8, 62, 64, .9);
+        }
+
+        .imp-steps .s.active .dot {
+            background: rgba(255, 255, 255, .2);
+            color: #fff;
+        }
+
+        .imp-steps .s.active .lbl small {
+            color: rgba(255, 255, 255, .8);
+        }
+
+        .imp-steps .s.done .dot {
+            background: var(--imp-ok);
+            color: #fff;
+        }
+
+        /* ---------- Cards ---------- */
+        .imp-card {
+            background: #fff;
+            border: 1px solid var(--imp-line);
+            border-radius: 18px;
+            padding: 26px;
+            box-shadow: 0 1px 0 rgba(16, 24, 40, .02);
+        }
+
+        .dark .imp-card {
+            background: #131c2b;
+        }
+
+        .imp-card>.head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .imp-card>.head .ttl {
+            font-weight: 700;
+            font-size: 17px;
+        }
+
+        .imp-card>.head .ico {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: var(--imp-bg);
+            color: var(--imp-teal);
+        }
+
+        /* ---------- Dropzone ---------- */
+        .imp-drop {
+            border: 2px dashed var(--imp-line);
             border-radius: 16px;
-            padding: 32px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-            margin-bottom: 24px;
-        }
-
-        .dark .import-container {
-            background: #1e293b;
-        }
-
-        .upload-area {
-            border: 3px dashed #d1d5db;
-            border-radius: 12px;
-            padding: 48px;
+            padding: 46px 24px;
             text-align: center;
-            background: #f9fafb;
-            transition: all 0.3s ease;
             cursor: pointer;
+            background:
+                radial-gradient(140% 120% at 50% -20%, rgba(8, 62, 64, .04), transparent 60%);
+            transition: border-color .2s, background .2s, transform .05s;
         }
 
-        .dark .upload-area {
-            background: #0f172a;
-            border-color: #334155;
+        .imp-drop:hover {
+            border-color: var(--imp-olive);
         }
 
-        .upload-area.dragover {
-            border-color: #083E40;
-            background: #e0f2fe;
+        .imp-drop.dragover {
+            border-color: var(--imp-teal);
+            background: linear-gradient(120deg, rgba(8, 62, 64, .07), rgba(136, 151, 23, .07));
         }
 
-        .upload-area:hover {
-            border-color: #889717;
-            background: #f0fdf4;
+        .imp-drop .disc {
+            width: 74px;
+            height: 74px;
+            margin: 0 auto 14px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 30px;
+            color: #fff;
+            background: linear-gradient(135deg, var(--imp-teal), var(--imp-olive));
+            box-shadow: 0 14px 26px -14px rgba(8, 62, 64, .8);
         }
 
-        .upload-icon {
-            font-size: 64px;
-            color: #9ca3af;
-            margin-bottom: 16px;
+        .imp-drop h5 {
+            margin: 0 0 4px;
+            font-weight: 700;
         }
 
-        .btn-upload {
-            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-            color: white;
-            border: none;
-            padding: 12px 32px;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
-        }
-
-        .btn-upload:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(8, 62, 64, 0.4);
-            color: white;
-        }
-
-        .preview-table {
-            margin-top: 24px;
+        .imp-drop p {
+            margin: 0 0 16px;
+            color: var(--imp-muted);
             font-size: 13px;
         }
 
-        .preview-table th {
-            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-            color: white;
-            padding: 12px;
-            font-weight: 600;
-        }
-
-        .preview-table td {
-            padding: 10px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .dark .preview-table td {
-            border-bottom-color: #334155;
-        }
-
-        .stats-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            text-align: center;
-        }
-
-        .dark .stats-card {
-            background: #1e293b;
-        }
-
-        .stats-card .number {
-            font-size: 32px;
+        .imp-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+            padding: 11px 22px;
+            border-radius: 11px;
             font-weight: 700;
-            margin: 8px 0;
+            font-size: 14px;
+            color: #fff;
+            background: linear-gradient(120deg, var(--imp-teal), var(--imp-teal-2));
+            transition: transform .08s, box-shadow .2s, filter .2s;
+            box-shadow: 0 10px 22px -12px rgba(8, 62, 64, .9);
         }
 
-        .stats-card.success .number {
-            color: #10b981;
+        .imp-btn:hover {
+            color: #fff;
+            transform: translateY(-1px);
+            filter: brightness(1.04);
         }
 
-        .stats-card.warning .number {
-            color: #f59e0b;
+        .imp-btn:active {
+            transform: translateY(0);
         }
 
-        .stats-card.error .number {
-            color: #ef4444;
+        .imp-btn.ghost {
+            background: transparent;
+            color: var(--imp-muted);
+            border: 1px solid var(--imp-line);
+            box-shadow: none;
         }
 
-        .progress-bar-custom {
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 16px 0;
+        .imp-btn.ghost:hover {
+            color: var(--imp-ink);
+            border-color: var(--imp-muted);
         }
 
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-            transition: width 0.3s ease;
-        }
-
-        .alert-custom {
-            padding: 16px;
-            border-radius: 12px;
-            margin: 12px 0;
-            display: flex;
-            align-items: start;
+        /* file chip */
+        .imp-filechip {
+            display: none;
+            align-items: center;
             gap: 12px;
+            margin-top: 16px;
+            padding: 12px 14px;
+            border: 1px solid var(--imp-line);
+            border-radius: 12px;
+            background: var(--imp-bg);
         }
 
-        .alert-custom.info {
-            background: #dbeafe;
-            border-left: 4px solid #3b82f6;
-            color: #1e40af;
+        .imp-filechip .fi {
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            background: var(--imp-ok);
+            flex: none;
         }
 
-        .alert-custom.warning {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            color: #92400e;
+        .imp-filechip .meta strong {
+            display: block;
+            font-size: 14px;
+            word-break: break-all;
         }
 
-        .alert-custom.error {
-            background: #fee2e2;
-            border-left: 4px solid #ef4444;
-            color: #991b1b;
+        .imp-filechip .meta small {
+            color: var(--imp-muted);
         }
 
-        .step-indicator {
+        /* ---------- Hint / format note ---------- */
+        .imp-note {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 32px;
+            gap: 12px;
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--imp-line);
+            background: var(--imp-bg);
+            font-size: 13px;
+            color: var(--imp-muted);
         }
 
-        .step {
-            flex: 1;
-            text-align: center;
+        .imp-note i {
+            color: var(--imp-teal);
+            margin-top: 2px;
+        }
+
+        .imp-note code {
+            color: var(--imp-ink);
+            font-weight: 600;
+            background: transparent;
+        }
+
+        /* ---------- Stat strip (segmented) ---------- */
+        .imp-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        @media (max-width: 640px) {
+            .imp-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .imp-stat {
+            border: 1px solid var(--imp-line);
+            border-radius: 14px;
+            padding: 16px 18px;
+            background: #fff;
             position: relative;
         }
 
-        .step::before {
+        .dark .imp-stat {
+            background: #131c2b;
+        }
+
+        .imp-stat .n {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .imp-stat .k {
+            margin-top: 6px;
+            font-size: 12px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--imp-muted);
+        }
+
+        .imp-stat::before {
             content: '';
             position: absolute;
-            top: 20px;
-            left: 50%;
-            width: 100%;
-            height: 3px;
-            background: #e5e7eb;
-            z-index: -1;
+            left: 0;
+            top: 14px;
+            bottom: 14px;
+            width: 4px;
+            border-radius: 4px;
+            background: var(--imp-muted);
+            opacity: .4;
         }
 
-        .step:first-child::before {
+        .imp-stat.ok::before { background: var(--imp-ok); opacity: 1; }
+        .imp-stat.warn::before { background: var(--imp-warn); opacity: 1; }
+        .imp-stat.err::before { background: var(--imp-err); opacity: 1; }
+        .imp-stat.ok .n { color: var(--imp-ok); }
+        .imp-stat.warn .n { color: var(--imp-warn); }
+        .imp-stat.err .n { color: var(--imp-err); }
+
+        /* ---------- Issue panels (scrollable) ---------- */
+        .imp-panel {
             display: none;
+            border: 1px solid var(--imp-line);
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 18px;
         }
 
-        .step-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #e5e7eb;
-            color: #9ca3af;
-            display: inline-flex;
+        .imp-panel .ph {
+            display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 8px;
+            padding: 12px 16px;
             font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .step.active .step-circle {
-            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
-        }
-
-        .step.completed .step-circle {
-            background: #10b981;
-            color: white;
-        }
-
-        .step-title {
             font-size: 14px;
-            font-weight: 600;
-            color: #6b7280;
+            border-bottom: 1px solid var(--imp-line);
+            background: var(--imp-bg);
         }
 
-        .step.active .step-title {
-            color: #083E40;
+        .imp-panel.is-err .ph { color: var(--imp-err); }
+        .imp-panel.is-warn .ph { color: var(--imp-warn); }
+
+        .imp-panel .ph .badge {
+            margin-left: auto;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 999px;
+            color: #fff;
+        }
+
+        .imp-panel.is-err .badge { background: var(--imp-err); }
+        .imp-panel.is-warn .badge { background: var(--imp-warn); }
+
+        .imp-panel .pb {
+            max-height: 260px;
+            overflow: auto;
+        }
+
+        .imp-row {
+            display: flex;
+            gap: 12px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--imp-line);
+            font-size: 13px;
+        }
+
+        .imp-row:last-child {
+            border-bottom: none;
+        }
+
+        .imp-row .tag {
+            flex: none;
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+            font-family: ui-monospace, "SF Mono", Menlo, monospace;
+            font-size: 12px;
+            color: var(--imp-muted);
+            min-width: 110px;
+        }
+
+        /* ---------- Preview table ---------- */
+        .imp-tablewrap {
+            border: 1px solid var(--imp-line);
+            border-radius: 14px;
+            overflow: auto;
+            max-height: 360px;
+        }
+
+        table.imp-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table.imp-table th {
+            position: sticky;
+            top: 0;
+            background: var(--imp-teal);
+            color: #fff;
+            text-align: left;
+            padding: 11px 14px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        table.imp-table td {
+            padding: 9px 14px;
+            border-bottom: 1px solid var(--imp-line);
+            white-space: nowrap;
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        table.imp-table tr:nth-child(even) td {
+            background: rgba(0, 0, 0, .015);
+        }
+
+        /* ---------- Import progress ---------- */
+        .imp-progress {
+            height: 10px;
+            border-radius: 999px;
+            background: var(--imp-line);
+            overflow: hidden;
+        }
+
+        .imp-progress > i {
+            display: block;
+            height: 100%;
+            width: 0;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--imp-teal), var(--imp-olive));
+            transition: width .3s ease;
+        }
+
+        .imp-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 18px 0;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .imp-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        @media (max-width: 640px) {
+            .imp-steps { flex-direction: column; }
         }
     </style>
 
-    <h2><i class="fa-solid fa-file-import me-2"></i>{{ $title }}</h2>
+    <div class="imp">
+        <header class="imp-hero">
+            <i class="fa-solid fa-file-csv hero-mark"></i>
+            <div class="eyebrow">Buku Agenda Online 2026 · PTPN IV Regional V</div>
+            <h1>Import Dokumen dari CSV</h1>
+            <p>Unggah berkas CSV agenda, tinjau hasil validasi per baris, lalu impor. Baris bermasalah otomatis dilewati — data yang ada tidak ditimpa.</p>
+        </header>
 
-    <!-- Step Indicator -->
-    <div class="step-indicator">
-        <div class="step active" id="step1">
-            <div class="step-circle">1</div>
-            <div class="step-title">Upload File</div>
-        </div>
-        <div class="step" id="step2">
-            <div class="step-circle">2</div>
-            <div class="step-title">Preview & Validasi</div>
-        </div>
-        <div class="step" id="step3">
-            <div class="step-circle">3</div>
-            <div class="step-title">Import Data</div>
-        </div>
-    </div>
-
-    <!-- Step 1: Upload -->
-    <div class="import-container" id="uploadSection">
-        <h4 class="mb-4"><i class="fa-solid fa-cloud-upload-alt me-2"></i>Upload File CSV</h4>
-
-        <div class="alert-custom info">
-            <i class="fa-solid fa-info-circle" style="font-size: 20px;"></i>
-            <div>
-                <strong>Format File CSV:</strong><br>
-                • Kolom: Agenda, Bulan, Tahun, Kriteria, No SPP, Tanggal SPP, Tanggal Masuk, Dibayarkan Kepada, Uraian SPP,
-                Nilai<br>
-                • File harus dalam format .csv<br>
-                • Maximum size: 10MB<br>
-                • Dokumen dengan Nomor Agenda yang sudah ada akan di-skip
+        <!-- Stepper -->
+        <nav class="imp-steps" aria-label="Langkah import">
+            <div class="s active" id="step1">
+                <div class="dot">1</div>
+                <div class="lbl"><small>Langkah 1</small><strong>Unggah Berkas</strong></div>
             </div>
-        </div>
-
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">
-                <i class="fa-solid fa-file-csv"></i>
+            <div class="s" id="step2">
+                <div class="dot">2</div>
+                <div class="lbl"><small>Langkah 2</small><strong>Tinjau & Validasi</strong></div>
             </div>
-            <h5 class="mb-2">Drag & Drop File CSV Disini</h5>
-            <p class="text-muted mb-3">atau klik untuk memilih file</p>
-            <input type="file" id="csvFile" accept=".csv,.xlsx,.xls" style="display: none;">
-            <button type="button" class="btn btn-upload" onclick="document.getElementById('csvFile').click()">
-                <i class="fa-solid fa-folder-open me-2"></i>Pilih File
-            </button>
-        </div>
+            <div class="s" id="step3">
+                <div class="dot">3</div>
+                <div class="lbl"><small>Langkah 3</small><strong>Impor Data</strong></div>
+            </div>
+        </nav>
 
-        <div id="fileInfo" class="mt-3" style="display: none;">
-            <div class="alert-custom info">
-                <i class="fa-solid fa-file-check"></i>
-                <div>
-                    <strong id="fileName"></strong><br>
+        <!-- File input lives OUTSIDE the dropzone on purpose: kalau input ada di
+             dalam dropzone, klik .click()-nya mem-bubble balik ke handler dropzone
+             dan memicu dialog berulang (bug "minta pilih file terus"). -->
+        <input type="file" id="csvFile" accept=".csv,.xlsx,.xls" hidden>
+
+        <!-- Step 1: Upload -->
+        <section class="imp-card" id="uploadSection">
+            <div class="head">
+                <span class="ico"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+                <span class="ttl">Unggah Berkas CSV</span>
+            </div>
+
+            <div class="imp-drop" id="uploadArea">
+                <div class="disc"><i class="fa-solid fa-file-csv"></i></div>
+                <h5>Tarik &amp; letakkan berkas di sini</h5>
+                <p>atau pilih dari komputer Anda — format .csv, maksimal 10 MB</p>
+                <button type="button" class="imp-btn" id="btnPick">
+                    <i class="fa-solid fa-folder-open"></i> Pilih Berkas
+                </button>
+            </div>
+
+            <div class="imp-filechip" id="fileInfo">
+                <span class="fi"><i class="fa-solid fa-check"></i></span>
+                <div class="meta">
+                    <strong id="fileName"></strong>
                     <small id="fileSize"></small>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Step 2: Preview -->
-    <div class="import-container" id="previewSection" style="display: none;">
-        <h4 class="mb-4"><i class="fa-solid fa-eye me-2"></i>Preview & Validasi Data</h4>
-
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="stats-card">
-                    <i class="fa-solid fa-file-lines" style="font-size: 24px; color: #6b7280;"></i>
-                    <div class="number" id="totalRows">0</div>
-                    <div class="text-muted">Total Rows</div>
+            <div class="imp-note">
+                <i class="fa-solid fa-circle-info"></i>
+                <div>
+                    Kolom yang dibaca: <code>Agenda</code>, <code>Bulan</code>, <code>Tahun</code>,
+                    <code>No PP/SPP</code>, <code>Tanggal PP/SPP</code>, <code>Tanggal Masuk</code>,
+                    <code>Dibayarkan kepada</code>, <code>Uraian</code>, <code>Nilai</code>, beserta kolom SPK/BA/PO bila ada.
+                    Kolom lain (mis. Kontrol, LINK, pajak) diabaikan. Dokumen dengan Nomor Agenda yang sudah ada akan dilewati.
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stats-card success">
-                    <i class="fa-solid fa-check-circle" style="font-size: 24px;"></i>
-                    <div class="number" id="validRows">0</div>
-                    <div class="text-muted">Valid</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-card warning">
-                    <i class="fa-solid fa-exclamation-triangle" style="font-size: 24px;"></i>
-                    <div class="number" id="warningRows">0</div>
-                    <div class="text-muted">Duplikat</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-card error">
-                    <i class="fa-solid fa-times-circle" style="font-size: 24px;"></i>
-                    <div class="number" id="errorRows">0</div>
-                    <div class="text-muted">Error</div>
-                </div>
-            </div>
-        </div>
+        </section>
 
-        <div id="errorsList" style="display: none;">
-            <h5 class="mb-3">Errors (akan di-skip saat import):</h5>
-            <div id="errorsContent"></div>
-        </div>
-
-        <div id="warningsList" style="display: none;">
-            <h5 class="mb-3 mt-4">Duplikat (akan di-skip saat import):</h5>
-            <div id="warningsContent"></div>
-        </div>
-
-        <h5 class="mb-3 mt-4">Preview Data (10 rows pertama):</h5>
-        <div class="table-responsive">
-            <table class="table preview-table" id="previewTable">
-                <thead id="previewHeaders"></thead>
-                <tbody id="previewBody"></tbody>
-            </table>
-        </div>
-
-        <div class="mt-4">
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="skipDuplicates" checked>
-                <label class="form-check-label" for="skipDuplicates">
-                    Skip dokumen yang sudah ada (berdasarkan Nomor Agenda)
-                </label>
+        <!-- Step 2: Preview -->
+        <section class="imp-card" id="previewSection" style="display:none;">
+            <div class="head">
+                <span class="ico"><i class="fa-solid fa-list-check"></i></span>
+                <span class="ttl">Tinjau &amp; Validasi Data</span>
             </div>
 
-            <button type="button" class="btn btn-upload" id="btnImport">
-                <i class="fa-solid fa-upload me-2"></i>Mulai Import
-            </button>
-            <button type="button" class="btn btn-secondary ms-2" onclick="location.reload()">
-                <i class="fa-solid fa-arrow-left me-2"></i>Batal
-            </button>
-        </div>
-    </div>
-
-    <!-- Step 3: Import Progress -->
-    <div class="import-container" id="importSection" style="display: none;">
-        <h4 class="mb-4"><i class="fa-solid fa-spinner fa-spin me-2"></i>Importing Data...</h4>
-
-        <div class="progress-bar-custom">
-            <div class="progress-bar-fill" id="importProgress" style="width: 0%"></div>
-        </div>
-
-        <div class="text-center mt-3">
-            <p id="importStatus">Memproses data...</p>
-        </div>
-    </div>
-
-    <!-- Step 4: Result -->
-    <div class="import-container" id="resultSection" style="display: none;">
-        <h4 class="mb-4"><i class="fa-solid fa-check-circle me-2" style="color: #10b981;"></i>Import Selesai!</h4>
-
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="stats-card success">
-                    <i class="fa-solid fa-check-circle" style="font-size: 24px;"></i>
-                    <div class="number" id="importedCount">0</div>
-                    <div class="text-muted">Berhasil Di-import</div>
-                </div>
+            <div class="imp-stats">
+                <div class="imp-stat"><div class="n" id="totalRows">0</div><div class="k">Total Baris</div></div>
+                <div class="imp-stat ok"><div class="n" id="validRows">0</div><div class="k">Valid</div></div>
+                <div class="imp-stat warn"><div class="n" id="warningRows">0</div><div class="k">Duplikat</div></div>
+                <div class="imp-stat err"><div class="n" id="errorRows">0</div><div class="k">Error</div></div>
             </div>
-            <div class="col-md-4">
-                <div class="stats-card warning">
-                    <i class="fa-solid fa-ban" style="font-size: 24px;"></i>
-                    <div class="number" id="skippedCount">0</div>
-                    <div class="text-muted">Di-skip (Duplikat)</div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stats-card error">
-                    <i class="fa-solid fa-exclamation-circle" style="font-size: 24px;"></i>
-                    <div class="number" id="failedCount">0</div>
-                    <div class="text-muted">Gagal</div>
-                </div>
-            </div>
-        </div>
 
-        <div class="alert-custom info">
-            <i class="fa-solid fa-info-circle" style="font-size: 20px;"></i>
-            <div>
-                <strong>Batch ID:</strong> <span id="batchId"></span><br>
-                <small>Gunakan Batch ID ini untuk tracking dokumen yang di-import dari CSV</small>
+            <div class="imp-panel is-err" id="errorsList">
+                <div class="ph"><i class="fa-solid fa-circle-xmark"></i> Baris error (dilewati saat impor)
+                    <span class="badge" id="errBadge">0</span></div>
+                <div class="pb" id="errorsContent"></div>
             </div>
-        </div>
 
-        <div class="mt-4">
-            <a href="/dokumens" class="btn btn-upload">
-                <i class="fa-solid fa-list me-2"></i>Lihat Daftar Dokumen
-            </a>
-            <button type="button" class="btn btn-secondary ms-2" onclick="location.reload()">
-                <i class="fa-solid fa-redo me-2"></i>Import Lagi
-            </button>
-        </div>
+            <div class="imp-panel is-warn" id="warningsList">
+                <div class="ph"><i class="fa-solid fa-triangle-exclamation"></i> Duplikat (dilewati saat impor)
+                    <span class="badge" id="warnBadge">0</span></div>
+                <div class="pb" id="warningsContent"></div>
+            </div>
+
+            <div style="font-weight:700;font-size:14px;margin:6px 0 10px;">Pratinjau Data <span style="color:var(--imp-muted);font-weight:500;">(10 baris pertama)</span></div>
+            <div class="imp-tablewrap">
+                <table class="imp-table">
+                    <thead id="previewHeaders"></thead>
+                    <tbody id="previewBody"></tbody>
+                </table>
+            </div>
+
+            <label class="imp-check">
+                <input type="checkbox" id="skipDuplicates" checked>
+                Lewati dokumen yang sudah ada (berdasarkan Nomor Agenda)
+            </label>
+
+            <div class="imp-actions">
+                <button type="button" class="imp-btn" id="btnImport"><i class="fa-solid fa-upload"></i> Mulai Impor</button>
+                <button type="button" class="imp-btn ghost" onclick="location.reload()"><i class="fa-solid fa-arrow-left"></i> Batal</button>
+            </div>
+        </section>
+
+        <!-- Step 3: Importing -->
+        <section class="imp-card" id="importSection" style="display:none;">
+            <div class="head">
+                <span class="ico"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                <span class="ttl">Mengimpor Data…</span>
+            </div>
+            <div class="imp-progress"><i id="importProgress"></i></div>
+            <p style="text-align:center;margin-top:14px;color:var(--imp-muted);" id="importStatus">Memproses data…</p>
+        </section>
+
+        <!-- Step 4: Result -->
+        <section class="imp-card" id="resultSection" style="display:none;">
+            <div class="head">
+                <span class="ico" style="background:rgba(21,163,110,.12);color:var(--imp-ok);"><i class="fa-solid fa-circle-check"></i></span>
+                <span class="ttl">Impor Selesai</span>
+            </div>
+
+            <div class="imp-stats" style="grid-template-columns:repeat(3,1fr);">
+                <div class="imp-stat ok"><div class="n" id="importedCount">0</div><div class="k">Berhasil diimpor</div></div>
+                <div class="imp-stat warn"><div class="n" id="skippedCount">0</div><div class="k">Dilewati</div></div>
+                <div class="imp-stat err"><div class="n" id="failedCount">0</div><div class="k">Gagal</div></div>
+            </div>
+
+            <div class="imp-note">
+                <i class="fa-solid fa-hashtag"></i>
+                <div><strong style="color:var(--imp-ink);">Batch ID:</strong> <span id="batchId"></span><br>
+                    Simpan ID ini untuk menelusuri dokumen hasil impor.</div>
+            </div>
+
+            <div class="imp-actions">
+                <a href="/dokumens" class="imp-btn"><i class="fa-solid fa-list"></i> Lihat Daftar Dokumen</a>
+                <button type="button" class="imp-btn ghost" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i> Impor Lagi</button>
+            </div>
+        </section>
     </div>
 
     <script>
-        let uploadedFilePath = '';
+        (function () {
+            let uploadedFilePath = '';
 
-        // Drag and drop
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('csvFile');
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('csvFile');
+            const btnPick = document.getElementById('btnPick');
+            const csrf = document.querySelector('meta[name="csrf-token"]').content;
 
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
+            // --- File picker (single trigger; input is outside dropzone) ---
+            function openPicker() { fileInput.value = ''; fileInput.click(); }
 
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
+            uploadArea.addEventListener('click', openPicker);
+            btnPick.addEventListener('click', function (e) { e.stopPropagation(); openPicker(); });
+            fileInput.addEventListener('change', handleFile);
 
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                fileInput.files = files;
-                handleFileUpload();
-            }
-        });
-
-        uploadArea.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', handleFileUpload);
-
-        function handleFileUpload() {
-            const file = fileInput.files[0];
-
-            if (!file) return;
-
-            const validExtensions = ['.csv', '.xlsx', '.xls'];
-            const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-            if (!validExtensions.includes(fileExt)) {
-                alert('File harus dalam format .csv, .xlsx, atau .xls');
-                return;
-            }
-
-            if (file.size > 10 * 1024 * 1024) {
-                alert('File terlalu besar! Maximum 10MB');
-                return;
-            }
-
-            document.getElementById('fileName').textContent = file.name;
-            document.getElementById('fileSize').textContent = formatFileSize(file.size);
-            document.getElementById('fileInfo').style.display = 'block';
-
-            uploadFile(file);
-        }
-
-        function uploadFile(file) {
-            const formData = new FormData();
-            formData.append('csv_file', file);
-
-            fetch('/documents/import/upload', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        uploadedFilePath = data.file_path;
-                        showPreviewSection(data.preview);
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Upload error:', error);
-                    alert('Error uploading file');
-                });
-        }
-
-        function showPreviewSection(preview) {
-            document.getElementById('step1').classList.add('completed');
-            document.getElementById('step1').classList.remove('active');
-            document.getElementById('step2').classList.add('active');
-
-            document.getElementById('uploadSection').style.display = 'none';
-            document.getElementById('previewSection').style.display = 'block';
-
-            displayPreviewTable(preview.headers, preview.rows);
-            validateAllRows();
-        }
-
-        function displayPreviewTable(headers, rows) {
-            const headerRow = document.getElementById('previewHeaders');
-            const tbody = document.getElementById('previewBody');
-
-            headerRow.innerHTML = '';
-            tbody.innerHTML = '';
-
-            const displayHeaders = headers.slice(0, 8);
-            headerRow.innerHTML = '<tr>' + displayHeaders.map(h => `<th>${h}</th>`).join('') + '</tr>';
-
-            rows.forEach(row => {
-                const displayRow = row.slice(0, 8);
-                tbody.innerHTML += '<tr>' + displayRow.map(cell => `<td>${cell || '-'}</td>`).join('') + '</tr>';
+            // --- Drag & drop ---
+            ['dragenter', 'dragover'].forEach(ev => uploadArea.addEventListener(ev, e => {
+                e.preventDefault(); uploadArea.classList.add('dragover');
+            }));
+            ['dragleave', 'drop'].forEach(ev => uploadArea.addEventListener(ev, e => {
+                e.preventDefault(); uploadArea.classList.remove('dragover');
+            }));
+            uploadArea.addEventListener('drop', e => {
+                const files = e.dataTransfer.files;
+                if (files && files.length) { fileInput.files = files; handleFile(); }
             });
-        }
 
-        function validateAllRows() {
-            document.getElementById('totalRows').textContent = '...';
-            document.getElementById('validRows').textContent = '...';
-            document.getElementById('warningRows').textContent = '...';
-            document.getElementById('errorRows').textContent = '...';
+            function handleFile() {
+                const file = fileInput.files[0];
+                if (!file) return;
 
-            fetch('/documents/import/preview', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({ file_path: uploadedFilePath })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const validation = data.validation;
-                        document.getElementById('totalRows').textContent = validation.total;
-                        document.getElementById('validRows').textContent = validation.valid;
-                        document.getElementById('warningRows').textContent = validation.warnings;
-                        document.getElementById('errorRows').textContent = validation.errors;
+                const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+                if (!['.csv', '.xlsx', '.xls'].includes(ext)) {
+                    return alert('Berkas harus berformat .csv, .xlsx, atau .xls');
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    return alert('Berkas terlalu besar. Maksimal 10 MB.');
+                }
 
-                        if (validation.errors > 0) {
-                            document.getElementById('errorsList').style.display = 'block';
-                            let errorsHtml = '';
-                            validation.error_details.forEach(err => {
-                                errorsHtml += `
-                                    <div class="alert-custom error">
-                                        <i class="fa-solid fa-times-circle"></i>
-                                        <div>
-                                            <strong>Row ${err.row} (${err.nomor_agenda}):</strong><br>
-                                            ${err.errors.join(', ')}
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                            document.getElementById('errorsContent').innerHTML = errorsHtml;
-                        }
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = formatSize(file.size);
+                document.getElementById('fileInfo').style.display = 'flex';
+                uploadFile(file);
+            }
 
-                        if (validation.warnings > 0) {
-                            document.getElementById('warningsList').style.display = 'block';
-                            let warningsHtml = '';
-                            validation.warning_details.forEach(warn => {
-                                warningsHtml += `
-                                    <div class="alert-custom warning">
-                                        <i class="fa-solid fa-exclamation-triangle"></i>
-                                        <div>
-                                            <strong>Row ${warn.row} (${warn.nomor_agenda}):</strong><br>
-                                            ${warn.warnings.join(', ')}
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                            document.getElementById('warningsContent').innerHTML = warningsHtml;
-                        }
-                    }
-                });
-        }
-
-        document.getElementById('btnImport').addEventListener('click', () => {
-            document.getElementById('step2').classList.add('completed');
-            document.getElementById('step2').classList.remove('active');
-            document.getElementById('step3').classList.add('active');
-
-            document.getElementById('previewSection').style.display = 'none';
-            document.getElementById('importSection').style.display = 'block';
-
-            startImport();
-        });
-
-        function startImport() {
-            const skipDuplicates = document.getElementById('skipDuplicates').checked;
-
-            let progress = 0;
-            const progressBar = document.getElementById('importProgress');
-            const progressInterval = setInterval(() => {
-                progress += 10;
-                progressBar.style.width = progress + '%';
-                if (progress >= 90) clearInterval(progressInterval);
-            }, 200);
-
-            fetch('/documents/import', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({
-                    file_path: uploadedFilePath,
-                    skip_duplicates: skipDuplicates
+            function uploadFile(file) {
+                const fd = new FormData();
+                fd.append('csv_file', file);
+                fetch('/documents/import/upload', {
+                    method: 'POST', headers: { 'X-CSRF-TOKEN': csrf }, body: fd
                 })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    clearInterval(progressInterval);
-                    progressBar.style.width = '100%';
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            uploadedFilePath = data.file_path;
+                            goPreview(data.preview);
+                        } else { alert('Gagal mengunggah: ' + data.message); }
+                    })
+                    .catch(err => { console.error(err); alert('Terjadi kesalahan saat mengunggah berkas.'); });
+            }
 
-                    if (data.success) {
-                        setTimeout(() => showResultSection(data.result), 500);
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
+            // --- Step 2 ---
+            function goPreview(preview) {
+                setStep(1, 'done'); setStep(2, 'active');
+                document.getElementById('uploadSection').style.display = 'none';
+                document.getElementById('previewSection').style.display = 'block';
+                renderPreview(preview.headers, preview.rows);
+                validateAll();
+            }
+
+            function renderPreview(headers, rows) {
+                const head = document.getElementById('previewHeaders');
+                const body = document.getElementById('previewBody');
+                const cols = headers.slice(0, 8);
+                head.innerHTML = '<tr>' + cols.map(h => `<th>${esc(h)}</th>`).join('') + '</tr>';
+                body.innerHTML = rows.map(row =>
+                    '<tr>' + row.slice(0, 8).map(c => `<td>${esc(c) || '<span style="color:#aaa">—</span>'}</td>`).join('') + '</tr>'
+                ).join('');
+            }
+
+            function validateAll() {
+                ['totalRows', 'validRows', 'warningRows', 'errorRows'].forEach(id =>
+                    document.getElementById(id).textContent = '…');
+
+                fetch('/documents/import/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    body: JSON.stringify({ file_path: uploadedFilePath })
                 })
-                .catch(error => {
-                    clearInterval(progressInterval);
-                    console.error('Import error:', error);
-                    alert('Error importing data');
-                });
-        }
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.success) return;
+                        const v = data.validation;
+                        document.getElementById('totalRows').textContent = v.total;
+                        document.getElementById('validRows').textContent = v.valid;
+                        document.getElementById('warningRows').textContent = v.warnings;
+                        document.getElementById('errorRows').textContent = v.errors;
 
-        function showResultSection(result) {
-            document.getElementById('step3').classList.add('completed');
+                        renderIssues('errorsList', 'errorsContent', 'errBadge', v.errors, v.error_details, 'errors');
+                        renderIssues('warningsList', 'warningsContent', 'warnBadge', v.warnings, v.warning_details, 'warnings');
+                    });
+            }
 
-            document.getElementById('importSection').style.display = 'none';
-            document.getElementById('resultSection').style.display = 'block';
+            function renderIssues(panelId, bodyId, badgeId, count, details, key) {
+                const panel = document.getElementById(panelId);
+                if (!count) { panel.style.display = 'none'; return; }
+                panel.style.display = 'block';
+                document.getElementById(badgeId).textContent = count;
+                document.getElementById(bodyId).innerHTML = (details || []).map(d =>
+                    `<div class="imp-row"><span class="tag">Baris ${d.row} · ${esc(d.nomor_agenda)}</span><span>${esc((d[key] || []).join(', '))}</span></div>`
+                ).join('') + (count > (details || []).length
+                    ? `<div class="imp-row" style="color:var(--imp-muted)"><span class="tag">…</span><span>dan ${count - details.length} baris lainnya</span></div>`
+                    : '');
+            }
 
-            document.getElementById('importedCount').textContent = result.imported;
-            document.getElementById('skippedCount').textContent = result.skipped;
-            document.getElementById('failedCount').textContent = result.failed;
-            document.getElementById('batchId').textContent = result.batch_id;
-        }
+            // --- Step 3 ---
+            document.getElementById('btnImport').addEventListener('click', () => {
+                setStep(2, 'done'); setStep(3, 'active');
+                document.getElementById('previewSection').style.display = 'none';
+                document.getElementById('importSection').style.display = 'block';
+                runImport();
+            });
 
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-        }
+            function runImport() {
+                const skip = document.getElementById('skipDuplicates').checked;
+                const bar = document.getElementById('importProgress');
+                let p = 0;
+                const t = setInterval(() => { p = Math.min(p + 8, 90); bar.style.width = p + '%'; }, 220);
+
+                fetch('/documents/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    body: JSON.stringify({ file_path: uploadedFilePath, skip_duplicates: skip })
+                })
+                    .then(r => r.json())
+                    .then(data => {
+                        clearInterval(t); bar.style.width = '100%';
+                        if (data.success) setTimeout(() => showResult(data.result), 450);
+                        else alert('Gagal mengimpor: ' + data.message);
+                    })
+                    .catch(err => { clearInterval(t); console.error(err); alert('Terjadi kesalahan saat mengimpor data.'); });
+            }
+
+            function showResult(r) {
+                setStep(3, 'done');
+                document.getElementById('importSection').style.display = 'none';
+                document.getElementById('resultSection').style.display = 'block';
+                document.getElementById('importedCount').textContent = r.imported;
+                document.getElementById('skippedCount').textContent = r.skipped;
+                document.getElementById('failedCount').textContent = r.failed;
+                document.getElementById('batchId').textContent = r.batch_id;
+            }
+
+            // --- helpers ---
+            function setStep(n, state) {
+                const el = document.getElementById('step' + n);
+                el.classList.remove('active', 'done');
+                if (state) el.classList.add(state);
+            }
+            function esc(s) {
+                return String(s ?? '').replace(/[&<>"']/g, m =>
+                    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+            }
+            function formatSize(b) {
+                if (!b) return '0 B';
+                const k = 1024, u = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(b) / Math.log(k));
+                return Math.round(b / Math.pow(k, i) * 100) / 100 + ' ' + u[i];
+            }
+        })();
     </script>
 
 @endsection
-
-
-
-
