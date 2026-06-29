@@ -3,6 +3,7 @@
 @section('content')
   <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.4.3/css/scroller.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/5.0.4/css/fixedColumns.dataTables.min.css">
 
   <style>
     /* ===== PREMIUM SAAS DESIGN SYSTEM ===== */
@@ -1779,21 +1780,9 @@
       width: 210px !important;
     }
 
-    #documentTableContainer .data-table th.col-no,
-    #documentTableContainer .data-table td.col-no {
-      position: sticky;
-      z-index: 30;
-      background-clip: padding-box;
-    }
-
-    #documentTableContainer .data-table th.col-no,
-    #documentTableContainer .data-table td.col-no {
-      left: 0;
-    }
-
-    #documentTableContainer .data-table th.col-no {
-      z-index: 560;
-    }
+    /* Positioning kolom beku (No & Nomor Agenda) ditangani oleh ekstensi
+       DataTables FixedColumns (fixedColumns.start = 2). CSS di sini hanya
+       mengurus lebar & latar belakang agar isi tidak tembus. */
 
     #documentTableContainer .data-table tbody tr:nth-child(odd) td.col-no {
       background: #ffffff !important;
@@ -1805,22 +1794,6 @@
 
     #documentTableContainer .data-table tbody tr:hover td.col-no {
       background: #f3faf9 !important;
-    }
-
-    /* Frozen kolom Nomor Agenda — menempel tepat setelah kolom No (lebar 88px).
-       Mengikuti pola sticky kolom No di atas; box-shadow kanan menandai batas
-       kolom yang di-freeze. */
-    #documentTableContainer .data-table th.col-nomor_agenda,
-    #documentTableContainer .data-table td.col-nomor_agenda {
-      position: sticky;
-      left: 88px;
-      z-index: 29;
-      background-clip: padding-box;
-      box-shadow: inset -1px 0 0 #d9e0e7, 6px 0 8px -6px rgba(15, 23, 42, 0.15);
-    }
-
-    #documentTableContainer .data-table th.col-nomor_agenda {
-      z-index: 550;
     }
 
     #documentTableContainer .data-table tbody tr:nth-child(odd) td.col-nomor_agenda {
@@ -3368,6 +3341,7 @@
   @if($mode != 'rekapan_table')
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/scroller/2.4.3/js/dataTables.scroller.min.js"></script>
+    <script src="https://cdn.datatables.net/fixedcolumns/5.0.4/js/dataTables.fixedColumns.min.js"></script>
     <script>
       (function () {
         'use strict';
@@ -3617,6 +3591,10 @@
             scroller: {
               loadingIndicator: true,
               displayBuffer: 9,
+            },
+            // Freeze 2 kolom pertama (No & Nomor Agenda) saat scroll horizontal.
+            fixedColumns: {
+              start: 2,
             },
             pageLength: 50,
             lengthChange: false,
