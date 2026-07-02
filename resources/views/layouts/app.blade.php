@@ -7717,6 +7717,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let startY     = 0;
     let startScrollLeft = 0;
     let startScrollTop  = 0;
+    let dragAxis   = null; // 'x' | 'y' — dikunci ke sumbu dominan agar tak scroll dua arah sekaligus
 
     // ── Mouse events (rAF-optimised) ───────────────────────────
     var rafId = 0;
@@ -7728,6 +7729,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (e.target.closest('a, button, input, select, textarea, label')) return;
       isDragging = true;
       didDrag    = false;
+      dragAxis   = null;
       startX     = e.clientX;
       startY     = e.clientY;
       startScrollLeft = el.scrollLeft;
@@ -7744,13 +7746,19 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!didDrag) {
         didDrag = true;
         el.classList.add('is-dragging');
+        // Kunci ke sumbu dominan saat drag mulai: horizontal → hanya scrollLeft,
+        // vertikal → hanya scrollTop. Mencegah scroll virtual ikut bergerak.
+        dragAxis = Math.abs(deltaX) >= Math.abs(deltaY) ? 'x' : 'y';
       }
       lastMoveX = deltaX;
       lastMoveY = deltaY;
       if (!rafId) {
         rafId = requestAnimationFrame(function () {
-          el.scrollLeft = startScrollLeft - lastMoveX * SPEED_FACTOR;
-          el.scrollTop  = startScrollTop  - lastMoveY * SPEED_FACTOR;
+          if (dragAxis === 'y') {
+            el.scrollTop  = startScrollTop  - lastMoveY * SPEED_FACTOR;
+          } else {
+            el.scrollLeft = startScrollLeft - lastMoveX * SPEED_FACTOR;
+          }
           rafId = 0;
         });
       }
@@ -7790,20 +7798,29 @@ document.addEventListener('DOMContentLoaded', function() {
     let touchStartY = 0;
     let touchScrollLeft = 0;
     let touchScrollTop  = 0;
+    let touchAxis   = null;
 
     el.addEventListener('touchstart', function (e) {
       touchStartX     = e.touches[0].clientX;
       touchStartY     = e.touches[0].clientY;
       touchScrollLeft = el.scrollLeft;
       touchScrollTop  = el.scrollTop;
+      touchAxis       = null;
     }, { passive: true });
 
     el.addEventListener('touchmove', function (e) {
       const deltaX = e.touches[0].clientX - touchStartX;
       const deltaY = e.touches[0].clientY - touchStartY;
       if (Math.abs(deltaX) < DRAG_THRESHOLD && Math.abs(deltaY) < DRAG_THRESHOLD) return;
-      el.scrollLeft = touchScrollLeft - deltaX * SPEED_FACTOR;
-      el.scrollTop  = touchScrollTop  - deltaY * SPEED_FACTOR;
+      // Kunci ke sumbu dominan (sama seperti mouse) supaya scroll virtual tak ikut bergerak.
+      if (touchAxis === null) {
+        touchAxis = Math.abs(deltaX) >= Math.abs(deltaY) ? 'x' : 'y';
+      }
+      if (touchAxis === 'y') {
+        el.scrollTop  = touchScrollTop  - deltaY * SPEED_FACTOR;
+      } else {
+        el.scrollLeft = touchScrollLeft - deltaX * SPEED_FACTOR;
+      }
     }, { passive: true });
   }
 
