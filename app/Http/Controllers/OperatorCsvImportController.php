@@ -506,6 +506,20 @@ class OperatorCsvImportController extends Controller
             $dokumenData['created_at'] = $now;
             $dokumenData['updated_at'] = $now;
 
+            // Jika baris CSV menandakan dokumen SUDAH DIBAYAR (ada tanggal bayar
+            // atau kolom "Status Dokumen" bernilai sudah dibayar/lunas), tandai
+            // status_pembayaran = 'sudah_dibayar'.
+            //
+            // PENTING: import ini memakai raw bulk insert (DB::table()->insert())
+            // yang MELEWATI Eloquent observer, sehingga DokumenObserver::saving()
+            // yang biasanya meng-set status_pembayaran tidak berjalan. Kita set
+            // manual di sini agar scheduler `dokumen:process-auto-forward`
+            // (polling fallback) otomatis meneruskan dokumen ke role Pembayaran
+            // beserta seluruh record workflow-nya.
+            if ($this->isMarkedPaid($dokumenData)) {
+                $dokumenData['status_pembayaran'] = 'sudah_dibayar';
+            }
+
             // CSV import tracking
             if (isset($dokumenColumns['imported_from_csv'])) {
                 $dokumenData['imported_from_csv'] = true;
@@ -681,6 +695,29 @@ class OperatorCsvImportController extends Controller
             'status_dokumen_csv' => trim($row['Status Dokumen'] ?? '') ?: null,
             'tanggal_dibayar' => $this->parseDate($row['Tanggal Bayar'] ?? null),
         ];
+    }
+
+    /**
+     * Tentukan apakah baris hasil transformRow menandakan dokumen sudah dibayar.
+     *
+     * Aturan (mengikuti DokumenObserver::saving() + kolom Status Dokumen CSV):
+     *   - Ada tanggal_dibayar  → sudah dibayar
+     *   - status_dokumen_csv mengandung "dibayar"/"lunas"/"paid" DAN bukan "belum"
+     */
+    private function isMarkedPaid(array $data): bool
+    {
+        if (!empty($data['tanggal_dibayar'])) {
+            return true;
+        }
+
+        $status = strtolower(trim($data['status_dokumen_csv'] ?? ''));
+        if ($status === '' || str_contains($status, 'belum')) {
+            return false;
+        }
+
+        return str_contains($status, 'dibayar')
+            || str_contains($status, 'lunas')
+            || str_contains($status, 'paid');
     }
 
     /**
