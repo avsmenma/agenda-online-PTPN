@@ -3983,16 +3983,21 @@ class DashboardPembayaranController extends Controller
 
         try {
             $file = $request->file('csv_file');
-            $fileName = 'import_' . time() . '.' . $file->getClientOriginalExtension();
-            $filePath = $file->storeAs('imports', $fileName, 'public');
+            $ext = strtolower($file->getClientOriginalExtension() ?: 'csv');
+            // Disk privat (bukan 'public') + nama acak → file tidak bisa diunduh via URL
+            $filePath = $file->storeAs('imports', \Illuminate\Support\Str::uuid() . '.' . $ext, 'local');
 
-            // Execute import command
-            $exitCode = \Illuminate\Support\Facades\Artisan::call('import:csv', [
-                'path' => storage_path('app/public/' . $filePath)
-            ]);
+            try {
+                // Execute import command (path filesystem absolut dari disk privat)
+                $exitCode = \Illuminate\Support\Facades\Artisan::call('import:csv', [
+                    'path' => \Illuminate\Support\Facades\Storage::disk('local')->path($filePath)
+                ]);
+            } finally {
+                // Selalu hapus file unggahan setelah diproses
+                \Illuminate\Support\Facades\Storage::disk('local')->delete($filePath);
+            }
 
             if ($exitCode === 0) {
-                // Redirect with success message
                 return redirect()->back()->with('success', 'Data CSV berhasil diimport ke database!');
             } else {
                 return redirect()->back()->with('error', 'Gagal import data CSV. Silakan cek log error.');
