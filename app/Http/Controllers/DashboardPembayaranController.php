@@ -981,7 +981,8 @@ class DashboardPembayaranController extends Controller
 
         $value = $dokumen->{$column} ?? '-';
         if ($value instanceof Carbon) {
-            $value = $value->format('Y-m-d H:i:s');
+            // Tanggal-waktu (mis. TGL MASUK): tanggal-bulan-tahun lalu jam.
+            $value = $value->format('d/m/Y H:i:s');
         }
 
         return e((string) ($value === '' || $value === null ? '-' : $value));
