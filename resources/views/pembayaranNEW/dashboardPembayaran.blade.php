@@ -1773,39 +1773,9 @@
       width: 210px !important;
     }
 
-    /* Kolom beku NO & NOMOR AGENDA — position:sticky murni (bukan DataTables
-       FixedColumns yang tidak stabil dengan Scroller + serverSide). Offset
-       kolom kedua = lebar kolom NO (88px, dikunci !important di atas).
-       Berlaku untuk tabel biasa (fallback) maupun DataTables scrollX
-       (.dt-scroll-head / .dt-scroll-body). */
-    #documentTableContainer .data-table th.col-no,
-    #documentTableContainer .dt-scroll-head th.col-no {
-      position: sticky !important;
-      left: 0 !important;
-      z-index: 6 !important;
-    }
-    #documentTableContainer .data-table td.col-no {
-      position: sticky !important;
-      left: 0 !important;
-      z-index: 4 !important;
-    }
-    #documentTableContainer .data-table th.col-nomor_agenda,
-    #documentTableContainer .dt-scroll-head th.col-nomor_agenda {
-      position: sticky !important;
-      left: 88px !important;
-      z-index: 5 !important;
-    }
-    #documentTableContainer .data-table td.col-nomor_agenda {
-      position: sticky !important;
-      left: 88px !important;
-      z-index: 3 !important;
-    }
-    /* Garis pembatas halus di tepi kanan blok kolom beku */
-    #documentTableContainer .data-table th.col-nomor_agenda,
-    #documentTableContainer .data-table td.col-nomor_agenda,
-    #documentTableContainer .dt-scroll-head th.col-nomor_agenda {
-      box-shadow: 6px 0 6px -4px rgba(15, 23, 42, 0.18) !important;
-    }
+    /* Kolom beku NO & NOMOR AGENDA (kolom + header) ditangani oleh partial
+       bersama partials._documentTableStickyCells yang di-include di bawah —
+       identik dengan tabel role lain yang sudah frozen dengan benar. */
 
     #documentTableContainer .data-table tbody tr:nth-child(odd) td.col-no {
       background: #ffffff !important;
@@ -3659,6 +3629,8 @@
     </script>
   @endif
 
+  {{-- Freeze kolom & header (NO, NOMOR AGENDA) — pola bersama yang sudah teruji --}}
+  @include('partials._documentTableStickyCells')
   @include('partials._inlineEditEngine')
   @include('partials._activeCellNav', ['tableSelector' => '#pembayaranDocumentTable'])
 @endsection
