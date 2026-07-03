@@ -15,6 +15,14 @@ class DokumenDummySeeder extends Seeder
      */
     public function run(): void
     {
+        // Pengaman: seeder ini meng-TRUNCATE dokumens & role data.
+        // Jangan pernah dijalankan di produksi.
+        if (app()->isProduction()) {
+            throw new \RuntimeException(
+                'DokumenDummySeeder dilarang dijalankan di environment produksi (menghapus semua dokumen).'
+            );
+        }
+
         // Clear existing data first
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DokumenRoleData::truncate();
