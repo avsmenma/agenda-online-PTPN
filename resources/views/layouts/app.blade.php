@@ -7714,51 +7714,36 @@ document.addEventListener('DOMContentLoaded', function() {
     let isDragging = false;
     let didDrag    = false;
     let startX     = 0;
-    let startY     = 0;
     let startScrollLeft = 0;
-    let startScrollTop  = 0;
-    let dragAxis   = null; // 'x' | 'y' — dikunci ke sumbu dominan agar tak scroll dua arah sekaligus
 
     // ── Mouse events (rAF-optimised) ───────────────────────────
     var rafId = 0;
     var lastMoveX = 0;
-    var lastMoveY = 0;
 
     el.addEventListener('mousedown', function (e) {
       if (e.button !== 0) return;
       if (e.target.closest('a, button, input, select, textarea, label')) return;
       isDragging = true;
       didDrag    = false;
-      dragAxis   = null;
       startX     = e.clientX;
-      startY     = e.clientY;
       startScrollLeft = el.scrollLeft;
-      startScrollTop  = el.scrollTop;
       el.style.willChange = 'scroll-position';
       e.stopPropagation();
     }, { passive: true });
 
     el.addEventListener('mousemove', function (e) {
       if (!isDragging) return;
+      // Hold-and-drag KHUSUS scroll horizontal — gerakan vertikal diabaikan total.
       var deltaX = e.clientX - startX;
-      var deltaY = e.clientY - startY;
-      if (!didDrag && Math.abs(deltaX) < DRAG_THRESHOLD && Math.abs(deltaY) < DRAG_THRESHOLD) return;
+      if (!didDrag && Math.abs(deltaX) < DRAG_THRESHOLD) return;
       if (!didDrag) {
         didDrag = true;
         el.classList.add('is-dragging');
-        // Kunci ke sumbu dominan saat drag mulai: horizontal → hanya scrollLeft,
-        // vertikal → hanya scrollTop. Mencegah scroll virtual ikut bergerak.
-        dragAxis = Math.abs(deltaX) >= Math.abs(deltaY) ? 'x' : 'y';
       }
       lastMoveX = deltaX;
-      lastMoveY = deltaY;
       if (!rafId) {
         rafId = requestAnimationFrame(function () {
-          if (dragAxis === 'y') {
-            el.scrollTop  = startScrollTop  - lastMoveY * SPEED_FACTOR;
-          } else {
-            el.scrollLeft = startScrollLeft - lastMoveX * SPEED_FACTOR;
-          }
+          el.scrollLeft = startScrollLeft - lastMoveX * SPEED_FACTOR;
           rafId = 0;
         });
       }
@@ -7795,32 +7780,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ── Touch events ──────────────────────────────────────────
     let touchStartX = 0;
-    let touchStartY = 0;
     let touchScrollLeft = 0;
-    let touchScrollTop  = 0;
-    let touchAxis   = null;
 
     el.addEventListener('touchstart', function (e) {
       touchStartX     = e.touches[0].clientX;
-      touchStartY     = e.touches[0].clientY;
       touchScrollLeft = el.scrollLeft;
-      touchScrollTop  = el.scrollTop;
-      touchAxis       = null;
     }, { passive: true });
 
     el.addEventListener('touchmove', function (e) {
+      // Hanya scroll horizontal; gerakan vertikal dibiarkan untuk scroll halaman native.
       const deltaX = e.touches[0].clientX - touchStartX;
-      const deltaY = e.touches[0].clientY - touchStartY;
-      if (Math.abs(deltaX) < DRAG_THRESHOLD && Math.abs(deltaY) < DRAG_THRESHOLD) return;
-      // Kunci ke sumbu dominan (sama seperti mouse) supaya scroll virtual tak ikut bergerak.
-      if (touchAxis === null) {
-        touchAxis = Math.abs(deltaX) >= Math.abs(deltaY) ? 'x' : 'y';
-      }
-      if (touchAxis === 'y') {
-        el.scrollTop  = touchScrollTop  - deltaY * SPEED_FACTOR;
-      } else {
-        el.scrollLeft = touchScrollLeft - deltaX * SPEED_FACTOR;
-      }
+      if (Math.abs(deltaX) < DRAG_THRESHOLD) return;
+      el.scrollLeft = touchScrollLeft - deltaX * SPEED_FACTOR;
     }, { passive: true });
   }
 
