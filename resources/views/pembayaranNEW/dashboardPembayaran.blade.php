@@ -1,8 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-  <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.4.3/css/scroller.dataTables.min.css">
+  {{-- Tabel pembayaran memakai tabel biasa + CSS sticky (bukan DataTables) --}}
 
   <style>
     /* ===== PREMIUM SAAS DESIGN SYSTEM ===== */
@@ -3363,8 +3362,6 @@
   </script>
 
   @if($mode != 'rekapan_table')
-    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/scroller/2.4.3/js/dataTables.scroller.min.js"></script>
     <script>
       (function () {
         'use strict';
@@ -3530,10 +3527,25 @@
           const html = rows.map(function (row, index) {
             const rowNumber = currentStart + index + 1;
             return '<tr data-dokumen-id="' + escapeAttribute(row.dokumen_id) + '" data-editable="true" data-kategori="' + escapeAttribute(row.kategori_raw) + '" data-jenis-dokumen="' + escapeAttribute(row.jenis_dokumen_raw) + '" data-jenis-sub-pekerjaan="' + escapeAttribute(row.jenis_sub_pekerjaan_raw) + '"><td class="col-no text-center">' + rowNumber + '</td>' + selectedColumns.map(function (columnKey) {
-              const className = 'col-' + columnKey + ' ' + (columnClassMap[columnKey] || '') + (isEditableColumn(columnKey) ? ' ie-cell' : '');
-              const value = row[columnKey] || '-';
+              const isLink = /link/i.test(columnKey);
+              const editable = !isLink && isEditableColumn(columnKey);
+              const className = 'col-' + columnKey + ' ' + (columnClassMap[columnKey] || '') + (editable ? ' ie-cell' : '');
+              let value;
+              if (isLink) {
+                // Kolom link: tampilkan sebagai tautan yang bisa diklik (bukan URL mentah).
+                const url = (row[columnKey] == null) ? '' : String(row[columnKey]).trim();
+                if (url === '' || url === '-') {
+                  value = '-';
+                } else {
+                  const href = /^https?:\/\//i.test(url) ? url : ('https://' + url);
+                  const safe = href.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                  value = '<a href="' + safe + '" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="color:#0d6efd;text-decoration:none;font-weight:600;white-space:nowrap;"><i class="fa-solid fa-up-right-from-square" style="margin-right:5px;"></i>Lihat Dokumen</a>';
+                }
+              } else {
+                value = row[columnKey] || '-';
+              }
               const rawValue = row._raw && row._raw[columnKey] !== undefined ? row._raw[columnKey] : '';
-              const attrs = isEditableColumn(columnKey)
+              const attrs = editable
                 ? ' data-field="' + escapeAttribute(columnKey) + '" data-raw="' + escapeAttribute(rawValue) + '" title="Enter untuk edit, Arrow untuk pindah cell"'
                 : '';
               return '<td class="' + className + '"' + attrs + '>' + value + '</td>';
@@ -3601,118 +3613,18 @@
           });
         }
 
+        // Tabel dirender sebagai SATU tabel biasa + infinite scroll server-side,
+        // BUKAN DataTables scrollX. DataTables scrollX memisah header ke elemen
+        // .dt-scroll-head yang digeser secara internal, sehingga header kolom
+        // beku (NO & NOMOR AGENDA) tidak bisa ikut sticky. Dengan satu tabel,
+        // freeze kolom (position:sticky left) DAN freeze header (sticky top)
+        // bekerja alami — sama seperti tabel role lain. Filter/pencarian tetap
+        // jalan karena reloadTable() memanggil loadFallbackRows() saat tanpa
+        // instance DataTables.
         function initPembayaranDataTable() {
           const tableEl = document.getElementById('pembayaranDocumentTable');
           if (!tableEl) return;
-
-          const dataTableOptions = {
-            processing: true,
-            serverSide: true,
-            deferRender: true,
-            scrollX: true,
-            scrollY: '62vh',
-            scroller: {
-              loadingIndicator: true,
-              displayBuffer: 9,
-            },
-            // Freeze kolom NO & NOMOR AGENDA ditangani via CSS position:sticky
-            // (lihat blok .col-no/.col-nomor_agenda di atas). FixedColumns dilepas
-            // karena tidak stabil dengan Scroller + serverSide.
-            pageLength: 50,
-            lengthChange: false,
-            searching: true,
-            ordering: true,
-            order: [],
-            info: false,
-            paging: true,
-            dom: 'rt',
-            ajax: {
-              url: '{{ route("dashboard.pembayaran.data") }}',
-              type: 'GET',
-              data: function (d) {
-                const filterForm = document.getElementById('filterForm');
-                if (filterForm) {
-                  const formData = new FormData(filterForm);
-                  for (const [key, value] of formData.entries()) {
-                    d[key === 'search' ? 'filter_search' : key] = value || '';
-                  }
-                }
-                d.visible_columns = selectedColumns;
-              },
-            },
-            columns: [{
-              data: null,
-              name: 'row_number',
-              orderable: false,
-              searchable: false,
-              className: 'col-no text-center',
-              width: '88px',
-              render: function (data, type, row, meta) {
-                const start = meta && meta.settings ? (meta.settings._iDisplayStart || 0) : 0;
-                return start + meta.row + 1;
-              },
-            }].concat(selectedColumns.map(function (columnKey) {
-              var col = {
-                data: columnKey,
-                name: columnKey,
-                orderable: true,
-                searchable: true,
-                className: 'col-' + columnKey + ' ' + (columnClassMap[columnKey] || ''),
-                width: columnWidthMap[columnKey] || '170px',
-                defaultContent: '-',
-              };
-
-              // Kolom berisi link (mis. link_dokumen_pajak, link_bukti_pembayaran):
-              // tampilkan sebagai tautan yang bisa diklik, bukan URL mentah.
-              if (/link/i.test(columnKey)) {
-                col.render = function (data, type, row, meta) {
-                  if (type !== 'display') return data || '';
-                  var url = (data == null) ? '' : String(data).trim();
-                  if (url === '' || url === '-') return '-';
-                  var href = /^https?:\/\//i.test(url) ? url : ('https://' + url);
-                  var safe = href.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                  return '<a href="' + safe + '" target="_blank" rel="noopener noreferrer" ' +
-                    'onclick="event.stopPropagation()" ' +
-                    'style="color:#0d6efd;text-decoration:none;font-weight:600;white-space:nowrap;">' +
-                    '<i class="fa-solid fa-up-right-from-square" style="margin-right:5px;"></i>Lihat Dokumen</a>';
-                };
-              } else {
-                col.createdCell = function (cell, cellData, rowData) {
-                  decorateEditableCell(cell, columnKey, rowData);
-                };
-              }
-
-              return col;
-            })),
-            createdRow: function (row, data) {
-              decorateRow(row, data);
-            },
-            drawCallback: function (settings) {
-              const countEl = document.getElementById('tableCount');
-              if (countEl && settings && settings.json) {
-                countEl.textContent = Number(settings.json.recordsFiltered || 0).toLocaleString('id-ID');
-              }
-              dispatchTableRefreshed();
-            },
-            language: {
-              processing: 'Memuat data...',
-              zeroRecords: 'Tidak ada dokumen ditemukan',
-              emptyTable: 'Tidak ada dokumen ditemukan',
-            },
-          };
-
-          try {
-            if (window.jQuery && jQuery.fn && jQuery.fn.DataTable) {
-              pembayaranTable = jQuery(tableEl).DataTable(dataTableOptions);
-            } else if (window.DataTable) {
-              pembayaranTable = new DataTable(tableEl, dataTableOptions);
-            } else {
-              initFallbackTableScroll();
-            }
-          } catch (error) {
-            console.error('Pembayaran DataTable init error:', error);
-            initFallbackTableScroll();
-          }
+          initFallbackTableScroll();
         }
 
         document.addEventListener('DOMContentLoaded', function () {
