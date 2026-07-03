@@ -413,13 +413,17 @@ Route::get('reports/analytics', [DokumenRekapanController::class, 'analytics'])
 
 // Backward compatibility routes removed — old dokumen/rekapan URLs (Phase 2 cleanup)
 
-// Autocomplete Routes
-Route::get('/api/autocomplete/payment-recipients', [AutocompleteController::class, 'getPaymentRecipients'])->name('autocomplete.payment-recipients');
-Route::get('/api/autocomplete/document-senders', [AutocompleteController::class, 'getDocumentSenders'])->name('autocomplete.document-senders');
-Route::get('/api/autocomplete/document-descriptions', [AutocompleteController::class, 'getDocumentDescriptions'])->name('autocomplete.document-descriptions');
-Route::get('/api/autocomplete/po-numbers', [AutocompleteController::class, 'getPONumbers'])->name('autocomplete.po-numbers');
-Route::get('/api/autocomplete/pr-numbers', [AutocompleteController::class, 'getPRNumbers'])->name('autocomplete.pr-numbers');
-Route::get('/pengembalian-dokumens', [PengembalianDokumenController::class, 'index']);
+// Autocomplete Routes — WAJIB login (dipakai form dokumen & inline-edit lintas role)
+Route::middleware('auth')->group(function () {
+    Route::get('/api/autocomplete/payment-recipients', [AutocompleteController::class, 'getPaymentRecipients'])->name('autocomplete.payment-recipients');
+    Route::get('/api/autocomplete/document-senders', [AutocompleteController::class, 'getDocumentSenders'])->name('autocomplete.document-senders');
+    Route::get('/api/autocomplete/document-descriptions', [AutocompleteController::class, 'getDocumentDescriptions'])->name('autocomplete.document-descriptions');
+    Route::get('/api/autocomplete/po-numbers', [AutocompleteController::class, 'getPONumbers'])->name('autocomplete.po-numbers');
+    Route::get('/api/autocomplete/pr-numbers', [AutocompleteController::class, 'getPRNumbers'])->name('autocomplete.pr-numbers');
+});
+// Halaman dokumen dikembalikan ke Operator — hanya operator/admin/owner
+Route::get('/pengembalian-dokumens', [PengembalianDokumenController::class, 'index'])
+    ->middleware(['auth', 'role:admin,operator,owner']);
 
 // Professional Document Routes - Verifikasi (Team Verifikasi)
 Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
@@ -525,8 +529,8 @@ Route::get('/returns/pembayaran', [DashboardPembayaranController::class, 'pengem
 
 // Backward compatibility routes removed — old Pembayaran URLs (Phase 2 cleanup)
 
-// Dashboard Pembayaran Routes
-Route::middleware('auth')->prefix('dashboard-pembayaran')->name('dashboard-pembayaran.')->group(function () {
+// Dashboard Pembayaran Routes — impor/CSV khusus role Pembayaran & Admin
+Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('dashboard-pembayaran')->name('dashboard-pembayaran.')->group(function () {
     Route::get('/', [DashboardPembayaranController::class, 'index'])->name('index');
     Route::get('/import', [DashboardPembayaranController::class, 'showImportForm'])->name('import');
     Route::post('/import-csv', [DashboardPembayaranController::class, 'importCsv'])->name('import-csv');
