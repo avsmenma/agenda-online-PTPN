@@ -455,16 +455,6 @@
       position: relative;
     }
 
-    .filter-search-icon {
-      position: absolute;
-      left: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-tertiary);
-      font-size: 0.875rem;
-      pointer-events: none;
-    }
-
     .filter-search input {
       width: 100%;
       height: 44px;
@@ -473,7 +463,12 @@
       border-radius: var(--radius-md);
       font-size: 0.875rem;
       font-family: inherit;
-      background: var(--bg-secondary);
+      /* Ikon kaca pembesar tunggal via background — hindari duplikasi ikon FontAwesome */
+      background-color: var(--bg-secondary);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: left 1rem center;
+      background-size: 16px 16px;
       color: var(--text-primary);
       transition: var(--transition-fast);
     }
@@ -482,7 +477,7 @@
       outline: none;
       border-color: var(--brand-primary);
       box-shadow: 0 0 0 3px var(--brand-primary-glow);
-      background: var(--bg-tertiary);
+      background-color: var(--bg-tertiary);
     }
 
     .filter-search input::placeholder {
@@ -1984,7 +1979,6 @@
     <form action="{{ route('documents.pembayaran.index') }}" method="GET" class="filter-section" id="filterForm">
       <div class="filter-row">
         <div class="filter-search">
-          <i class="fa-solid fa-search filter-search-icon"></i>
           <input type="text" name="search" placeholder="Cari no agenda, SPP, vendor..." value="{{ $search ?? '' }}">
         </div>
 
@@ -2002,7 +1996,8 @@
           </select>
 
           <input type="date" name="date" class="filter-date" value="{{ $selectedDate ?? '' }}"
-            aria-label="Filter tanggal" title="Filter tanggal">
+            data-placeholder="Pilih tanggal masuk (dd/mm/yyyy)"
+            aria-label="Filter tanggal masuk" title="Filter tanggal masuk">
         </div>
 
         <div class="filter-actions">

@@ -7364,12 +7364,13 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       // Change type to text and add placeholder
+      // (bisa dikustom per-input lewat atribut data-placeholder)
       input.type = 'text';
-      input.placeholder = 'Pilih tanggal (dd/mm/yyyy)';
+      input.placeholder = input.dataset.placeholder || 'Pilih tanggal (dd/mm/yyyy)';
       if (currentValue) {
         input.value = currentValue;
       }
-      
+
       // Initialize Flatpickr for date inputs
       flatpickr(input, {
         dateFormat: "d/m/Y",
