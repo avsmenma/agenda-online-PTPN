@@ -123,18 +123,21 @@
         <h2 class="wd-panel-title">Status Keterlambatan</h2>
         <span class="wd-panel-note">dokumen tim ini</span>
       </div>
-      <div class="wd-bubble-area">
+      <div class="wd-bubble-area" id="wdBubbleArea">
         <div class="wd-bubble wd-bubble--late"
              style="width:{{ $bubbleSize($terlambat) }}px;height:{{ $bubbleSize($terlambat) }}px;">
           <span class="wd-bubble-val">{{ $terlambat }}</span>
+          <span class="wd-bubble-name">Terlambat</span>
         </div>
         <div class="wd-bubble wd-bubble--warn"
              style="width:{{ $bubbleSize($peringatan) }}px;height:{{ $bubbleSize($peringatan) }}px;">
           <span class="wd-bubble-val">{{ $peringatan }}</span>
+          <span class="wd-bubble-name">Peringatan</span>
         </div>
         <div class="wd-bubble wd-bubble--safe"
              style="width:{{ $bubbleSize($aman) }}px;height:{{ $bubbleSize($aman) }}px;">
           <span class="wd-bubble-val">{{ $aman }}</span>
+          <span class="wd-bubble-name">Aman</span>
         </div>
       </div>
       <div class="wd-bubble-legend">
@@ -239,14 +242,22 @@
   .wd-chartbox { position: relative; height: 300px; }
   .wd-empty { padding: 2.2rem 1rem; text-align: center; color: #94a3b8; font-size: 0.88rem; }
 
-  /* Bubble */
-  .wd-bubble-area { position: relative; height: 240px; display: flex; align-items: center; justify-content: center; }
-  .wd-bubble { position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    color: #fff; font-weight: 700; box-shadow: 0 8px 22px rgba(15,23,42,.12); }
-  .wd-bubble-val { font-size: 1.5rem; }
-  .wd-bubble--safe { background: rgba(16,185,129,.85); left: 18%; top: 46%; transform: translate(-50%,-50%); z-index: 3; }
-  .wd-bubble--warn { background: rgba(245,158,11,.85); left: 50%; top: 30%; transform: translate(-50%,-50%); z-index: 2; }
-  .wd-bubble--late { background: rgba(244,63,94,.82); left: 70%; top: 60%; transform: translate(-50%,-50%); z-index: 1; }
+  /* Bubble — area fisika mengambang (gaya cryptobubbles) */
+  .wd-bubble-area { position: relative; height: 240px; overflow: hidden; touch-action: none; }
+  .wd-bubble { position: absolute; left: 0; top: 0; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    color: #fff; font-weight: 700; box-shadow: 0 8px 22px rgba(15,23,42,.12);
+    cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none;
+    will-change: transform; transition: box-shadow .15s ease; }
+  .wd-bubble::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle at 32% 28%, rgba(255,255,255,.45), rgba(255,255,255,0) 55%); }
+  .wd-bubble.is-grabbing { cursor: grabbing; box-shadow: 0 14px 30px rgba(15,23,42,.28); z-index: 10; }
+  .wd-bubble-val { font-size: 1.5rem; line-height: 1; }
+  .wd-bubble-name { font-size: 0.62rem; font-weight: 600; letter-spacing: .02em; opacity: .92; text-transform: none; }
+  .wd-bubble--safe { background: rgba(16,185,129,.9); z-index: 3; }
+  .wd-bubble--warn { background: rgba(245,158,11,.9); z-index: 2; }
+  .wd-bubble--late { background: rgba(244,63,94,.88); z-index: 1; }
+  @media (prefers-reduced-motion: reduce) { .wd-bubble { transition: none; } }
   .wd-bubble-legend { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; border-top: 1px solid #f1f5f9; padding-top: 0.85rem; }
   .wd-legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: #475569; }
   .wd-legend-item b { margin-left: auto; color: #0f172a; }
@@ -313,6 +324,224 @@
       }
     });
   });
+</script>
+
+{{-- Simulasi fisika bubble "Status Keterlambatan" (mengambang, memantul, bisa digeser) --}}
+<script>
+  (function () {
+    const area = document.getElementById('wdBubbleArea');
+    if (!area) return;
+
+    const els = Array.prototype.slice.call(area.querySelectorAll('.wd-bubble'));
+    if (!els.length) return;
+
+    const reduceMotion = window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Batas kecepatan agar gerakan lembut & tidak bikin pusing.
+    const MAX_SPEED   = 0.55;   // px per frame (dinormalisasi ke 60fps)
+    const MIN_FLOAT   = 0.12;   // jaga bubble tetap "hidup" saat mengambang
+    const WANDER      = 0.02;   // dorongan acak kecil tiap frame
+    const WALL_DAMP   = 0.9;    // redam saat memantul dinding
+    const FRICTION    = 0.992;  // gesekan lembut agar lemparan mereda
+    const RESTITUTION = 0.85;   // kelentingan antar-bubble
+
+    let W = 0, H = 0;
+    const bubbles = els.map(function (el, i) {
+      const r = el.offsetWidth / 2;
+      // Kecepatan awal acak (deterministik per-index, tak butuh Math.random di init).
+      const a = (i * 2.3999) + 0.7;
+      return {
+        el: el,
+        r: r,
+        m: Math.max(r * r, 1), // massa ~ luas
+        x: 0, y: 0,
+        vx: Math.cos(a) * 0.3,
+        vy: Math.sin(a) * 0.3,
+        dragging: false,
+      };
+    });
+
+    function measure() {
+      const rect = area.getBoundingClientRect();
+      W = rect.width; H = rect.height;
+    }
+
+    function placeInitial() {
+      measure();
+      // Sebar tanpa tumpang tindih: susun horizontal lalu dorong ke tengah vertikal.
+      let cursor = 0;
+      bubbles.forEach(function (b, i) {
+        const gap = 6;
+        b.x = Math.min(Math.max(cursor + b.r + gap, b.r), Math.max(W - b.r, b.r));
+        cursor = b.x + b.r;
+        const bias = (i % 2 === 0) ? 0.42 : 0.62;
+        b.y = Math.min(Math.max(H * bias, b.r), Math.max(H - b.r, b.r));
+      });
+    }
+
+    function clampSpeed(b) {
+      const sp = Math.hypot(b.vx, b.vy);
+      if (sp > MAX_SPEED) { const k = MAX_SPEED / sp; b.vx *= k; b.vy *= k; }
+    }
+
+    function step() {
+      for (let i = 0; i < bubbles.length; i++) {
+        const b = bubbles[i];
+        if (b.dragging) continue;
+
+        if (!reduceMotion) {
+          // Wander lembut (arah bervariasi per bubble & waktu, tanpa Math.random tiap frame).
+          b.vx += Math.sin((tick + i * 40) * 0.017) * WANDER;
+          b.vy += Math.cos((tick + i * 55) * 0.013) * WANDER;
+          b.vx *= FRICTION; b.vy *= FRICTION;
+
+          // Jaga agar tetap mengambang pelan.
+          const sp = Math.hypot(b.vx, b.vy);
+          if (sp < MIN_FLOAT) {
+            const a = (tick + i * 90) * 0.01;
+            b.vx += Math.cos(a) * MIN_FLOAT * 0.5;
+            b.vy += Math.sin(a) * MIN_FLOAT * 0.5;
+          }
+          clampSpeed(b);
+          b.x += b.vx; b.y += b.vy;
+        }
+
+        // Pantul dinding kartu.
+        if (b.x - b.r < 0)  { b.x = b.r;      b.vx = Math.abs(b.vx) * WALL_DAMP; }
+        if (b.x + b.r > W)  { b.x = W - b.r;  b.vx = -Math.abs(b.vx) * WALL_DAMP; }
+        if (b.y - b.r < 0)  { b.y = b.r;      b.vy = Math.abs(b.vy) * WALL_DAMP; }
+        if (b.y + b.r > H)  { b.y = H - b.r;  b.vy = -Math.abs(b.vy) * WALL_DAMP; }
+      }
+
+      // Tabrakan antar-bubble: dorong lepas + tukar momentum (elastis).
+      for (let i = 0; i < bubbles.length; i++) {
+        for (let j = i + 1; j < bubbles.length; j++) {
+          resolve(bubbles[i], bubbles[j]);
+        }
+      }
+
+      // Render.
+      for (let k = 0; k < bubbles.length; k++) {
+        const b = bubbles[k];
+        b.el.style.transform = 'translate(' + (b.x - b.r) + 'px,' + (b.y - b.r) + 'px)';
+      }
+    }
+
+    function resolve(a, b) {
+      let dx = b.x - a.x, dy = b.y - a.y;
+      let dist = Math.hypot(dx, dy);
+      const minDist = a.r + b.r;
+      if (dist === 0) { dx = 0.01; dy = 0.01; dist = 0.0141; }
+      if (dist >= minDist) return;
+
+      const nx = dx / dist, ny = dy / dist;
+      const overlap = minDist - dist;
+
+      // Massa efektif: bubble yang sedang digeser = tak tergoyahkan (massa tak hingga).
+      const aFixed = a.dragging, bFixed = b.dragging;
+      const invA = aFixed ? 0 : 1 / a.m;
+      const invB = bFixed ? 0 : 1 / b.m;
+      const invSum = invA + invB || 1;
+
+      // Pisahkan overlap sesuai proporsi massa.
+      a.x -= nx * overlap * (invA / invSum);
+      a.y -= ny * overlap * (invA / invSum);
+      b.x += nx * overlap * (invB / invSum);
+      b.y += ny * overlap * (invB / invSum);
+
+      // Impuls sepanjang normal (hanya bila saling mendekat).
+      const rvx = b.vx - a.vx, rvy = b.vy - a.vy;
+      const vn = rvx * nx + rvy * ny;
+      if (vn > 0) return;
+      const imp = -(1 + RESTITUTION) * vn / invSum;
+      a.vx -= imp * invA * nx; a.vy -= imp * invA * ny;
+      b.vx += imp * invB * nx; b.vy += imp * invB * ny;
+      clampSpeed(a); clampSpeed(b);
+    }
+
+    // ---- Drag (mouse + sentuh via Pointer Events) ----
+    let active = null, grabDX = 0, grabDY = 0, lastX = 0, lastY = 0;
+
+    function pointFromEvent(e) {
+      const rect = area.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+
+    bubbles.forEach(function (b) {
+      b.el.addEventListener('pointerdown', function (e) {
+        e.preventDefault();
+        const p = pointFromEvent(e);
+        active = b; b.dragging = true;
+        b.el.classList.add('is-grabbing');
+        b.el.setPointerCapture && b.el.setPointerCapture(e.pointerId);
+        grabDX = p.x - b.x; grabDY = p.y - b.y;
+        lastX = p.x; lastY = p.y;
+        b.vx = 0; b.vy = 0;
+      });
+    });
+
+    window.addEventListener('pointermove', function (e) {
+      if (!active) return;
+      const p = pointFromEvent(e);
+      let nx = p.x - grabDX, ny = p.y - grabDY;
+      nx = Math.min(Math.max(nx, active.r), Math.max(W - active.r, active.r));
+      ny = Math.min(Math.max(ny, active.r), Math.max(H - active.r, active.r));
+      // Kecepatan lemparan dari perpindahan pointer.
+      active.vx = nx - active.x; active.vy = ny - active.y;
+      active.x = nx; active.y = ny;
+      lastX = p.x; lastY = p.y;
+    });
+
+    function release() {
+      if (!active) return;
+      active.el.classList.remove('is-grabbing');
+      active.dragging = false;
+      clampSpeed(active); // batasi lemparan agar tetap lembut
+      active = null;
+    }
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+
+    // ---- Loop ----
+    let tick = 0, raf = null, running = false;
+    function frame() {
+      tick++;
+      step();
+      raf = requestAnimationFrame(frame);
+    }
+    function start() { if (!running) { running = true; frame(); } }
+    function stop()  { running = false; if (raf) cancelAnimationFrame(raf); raf = null; }
+
+    // Hemat daya: berhenti saat tab tak terlihat / kartu di luar layar.
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stop(); else start();
+    });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) start(); else stop();
+        });
+      }, { threshold: 0 }).observe(area);
+    }
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(function () {
+        measure();
+        // Tarik bubble yang terlanjur di luar batas ke dalam.
+        bubbles.forEach(function (b) {
+          b.x = Math.min(Math.max(b.x, b.r), Math.max(W - b.r, b.r));
+          b.y = Math.min(Math.max(b.y, b.r), Math.max(H - b.r, b.r));
+        });
+      }).observe(area);
+    } else {
+      window.addEventListener('resize', measure);
+    }
+
+    placeInitial();
+    // Render awal langsung, lalu jalankan animasi.
+    step();
+    start();
+  })();
 </script>
 @endpush
 @endsection
