@@ -30,10 +30,10 @@ class DocumentHandlerController extends Controller
 
         $userRole = $this->normalizeRole((string) (auth()->user()?->role ?? ''));
 
-        if (in_array($userRole, ['admin', 'programmer'], true)) {
+        if (in_array($userRole, ['admin', 'programmer'], true) || str_starts_with($userRole, 'bagian_')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Admin dan programmer tidak menggunakan alur pengurus dokumen.',
+                'message' => 'Role ini tidak menggunakan alur pengurus dokumen.',
             ], 403);
         }
 

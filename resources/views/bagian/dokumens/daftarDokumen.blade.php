@@ -1050,10 +1050,6 @@
         </h2>
         <p class="text-muted mb-0">{{ $bagianName }}</p>
       </div>
-      <a href="{{ route('bagian.documents.create') }}" class="btn-create">
-        <i class="fa-solid fa-plus"></i>
-        Buat Dokumen
-      </a>
     </div>
 
 
@@ -1129,7 +1125,7 @@
               @php
                 $statusLower = strtolower($doc->status ?? '');
                 // Bagian bisa edit saat status belum dikirim atau dikembalikan
-                $canInlineEdit = in_array($doc->status ?? '', ['belum dikirim', 'returned_to_bidang']);
+                $canInlineEdit = false; // Bagian bersifat view-only: inline-edit dinonaktifkan
               @endphp
               <tr onclick="showDocumentDetail({{ json_encode([
                   'id' => $doc->id,
@@ -1390,38 +1386,14 @@
                           @endif {{-- end @if(in_array...) / @else non-editable --}}
                         @endforeach
                         <td onclick="event.stopPropagation()">
-                          @include('partials.document-handler-select', ['dokumen' => $doc])
+                          {{-- Bagian view-only: posisi dokumen ditampilkan read-only (bukan dropdown yang bisa mengubah) --}}
+                          <span class="text-muted">{{ \App\Models\Dokumen::getRoleDisplayNameIndo($doc->current_handler ?? 'operator') }}</span>
                         </td>
                         <td onclick="event.stopPropagation()">
                           <div class="action-buttons">
-                            @if($statusLower == 'belum dikirim' || $statusLower == 'returned_to_bidang')
-                              <a href="{{ route('bagian.documents.edit', $doc) }}" class="btn-action btn-edit" title="Edit">
-                                <i class="fa-solid fa-pen"></i>
-                              </a>
-                              <form id="sendForm-{{ $doc->id }}" action="{{ route('bagian.documents.send-to-Operator', $doc) }}"
-                                method="POST" class="d-inline">
-                                @csrf
-                                <button type="button" class="btn-action btn-send" title="Kirim"
-                                  onclick="showSendModal({{ $doc->id }})">
-                                  <i class="fa-solid fa-paper-plane"></i>
-                                </button>
-                              </form>
-                              @if($statusLower == 'belum dikirim')
-                                <form id="deleteForm-{{ $doc->id }}" action="{{ route('bagian.documents.destroy', $doc) }}"
-                                  method="POST" class="d-inline">
-                                  @csrf
-                                  @method('DELETE')
-                                  <button type="button" class="btn-action btn-delete" title="Hapus"
-                                    onclick="showDeleteModal({{ $doc->id }})">
-                                    <i class="fa-solid fa-trash"></i>
-                                  </button>
-                                </form>
-                              @endif
-                            @else
-                              <a href="{{ route('bagian.tracking') }}" class="btn-action btn-tracking" title="Tracking">
-                                <i class="fa-solid fa-route"></i>
-                              </a>
-                            @endif
+                            <a href="{{ route('bagian.tracking') }}" class="btn-action btn-tracking" title="Lihat Tracking">
+                              <i class="fa-solid fa-route"></i>
+                            </a>
                           </div>
                         </td>
                       </tr>
@@ -1453,11 +1425,7 @@
         <div class="empty-state">
           <i class="fa-solid fa-folder-open"></i>
           <h4>Belum ada dokumen</h4>
-          <p>Buat dokumen pertama Anda sekarang</p>
-          <a href="{{ route('bagian.documents.create') }}" class="btn-create">
-            <i class="fa-solid fa-plus"></i>
-            Buat Dokumen
-          </a>
+          <p>Belum ada dokumen untuk Bagian ini di keuangan.</p>
         </div>
       @endif
     </div>

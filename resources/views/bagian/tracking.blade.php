@@ -730,11 +730,7 @@
                         <div class="text-center py-5">
                             <i class="fa-solid fa-route" style="font-size: 64px; color: #dee2e6; margin-bottom: 20px;"></i>
                             <h5 class="text-muted">Tidak ada dokumen untuk dilacak</h5>
-                            <p class="text-muted mb-4">Buat dokumen terlebih dahulu</p>
-                            <a href="{{ route('bagian.documents.create') }}" class="btn btn-primary"
-                                style="background: #083E40; border: none;">
-                                <i class="fa-solid fa-plus me-2"></i>Buat Dokumen
-                            </a>
+                            <p class="text-muted mb-4">Belum ada dokumen untuk Bagian ini di keuangan.</p>
                         </div>
                     @endif
                 </div>

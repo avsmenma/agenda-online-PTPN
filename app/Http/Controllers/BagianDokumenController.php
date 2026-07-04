@@ -265,6 +265,7 @@ class BagianDokumenController extends Controller
      */
     public function create()
     {
+        abort(403, 'Role Bagian bersifat view-only dan tidak dapat mengubah dokumen.');
         $bagianCode = $this->getBagianCode();
         $bagianName = $this->getBagianName();
 
@@ -313,6 +314,7 @@ class BagianDokumenController extends Controller
      */
     public function store(Request $request)
     {
+        abort(403, 'Role Bagian bersifat view-only dan tidak dapat membuat dokumen.');
         $bagianCode = $this->getBagianCode();
 
         if (!$bagianCode) {
@@ -467,6 +469,7 @@ class BagianDokumenController extends Controller
      */
     public function edit(Dokumen $dokumen)
     {
+        abort(403, 'Role Bagian bersifat view-only dan tidak dapat mengubah dokumen.');
         $bagianCode = $this->getBagianCode();
         $bagianName = $this->getBagianName();
 
@@ -547,6 +550,7 @@ class BagianDokumenController extends Controller
      */
     public function update(Request $request, Dokumen $dokumen)
     {
+        abort(403, 'Role Bagian bersifat view-only dan tidak dapat mengubah dokumen.');
         $bagianCode = $this->getBagianCode();
 
         if (!$bagianCode || $dokumen->bagian !== $bagianCode) {
@@ -776,6 +780,7 @@ class BagianDokumenController extends Controller
      */
     public function destroy(Dokumen $dokumen)
     {
+        abort(403, 'Role Bagian bersifat view-only dan tidak dapat menghapus dokumen.');
         $bagianCode = $this->getBagianCode();
 
         if (!$bagianCode || $dokumen->bagian !== $bagianCode) {
@@ -809,6 +814,7 @@ class BagianDokumenController extends Controller
      */
     public function sendToOperator(Request $request, Dokumen $dokumen)
     {
+        abort(403, 'Role Bagian bersifat view-only dan tidak dapat mengirim dokumen.');
         $bagianCode = $this->getBagianCode();
         $isAjax = $request->ajax();
 

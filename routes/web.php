@@ -387,7 +387,7 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
 });
 
 // Inline edit — accessible by all roles that can handle documents
-Route::middleware(['auth', 'role:admin,operator,team_verifikasi,verifikasi,perpajakan,akutansi,pembayaran,bagian'])
+Route::middleware(['auth', 'role:admin,operator,team_verifikasi,verifikasi,perpajakan,akutansi,pembayaran'])
     ->prefix('documents')->name('documents.')
     ->group(function () {
         Route::patch('/{dokumen}/inline-update', [DokumenController::class, 'inlineUpdate'])->name('inline-update');
@@ -753,16 +753,10 @@ Route::middleware(['auth', 'bagian'])
         Route::get('bagian/dashboard', [\App\Http\Controllers\BagianDokumenController::class, 'dashboard'])
             ->name('bagian.dashboard');
 
-        // Document CRUD
+        // Document — VIEW ONLY (kemampuan tulis Bagian dicabut: Bagian hanya memantau dokumennya)
         Route::prefix('bagian/documents')->name('bagian.documents.')->group(function () {
             Route::get('/', [\App\Http\Controllers\BagianDokumenController::class, 'index'])->name('index');
-            Route::get('/create', [\App\Http\Controllers\BagianDokumenController::class, 'create'])->name('create');
-            Route::post('/', [\App\Http\Controllers\BagianDokumenController::class, 'store'])->name('store');
-            Route::get('/{dokumen}/edit', [\App\Http\Controllers\BagianDokumenController::class, 'edit'])->name('edit');
             Route::get('/{dokumen}/detail', [\App\Http\Controllers\BagianDokumenController::class, 'getDocumentDetail'])->name('detail');
-            Route::put('/{dokumen}', [\App\Http\Controllers\BagianDokumenController::class, 'update'])->name('update');
-            Route::delete('/{dokumen}', [\App\Http\Controllers\BagianDokumenController::class, 'destroy'])->name('destroy');
-            Route::post('/{dokumen}/send-to-Operator', [\App\Http\Controllers\BagianDokumenController::class, 'sendToOperator'])->name('send-to-Operator');
         });
 
         // Tracking

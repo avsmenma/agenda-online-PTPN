@@ -45,10 +45,6 @@
                 </h2>
                 <p class="text-muted mb-0">Selamat datang, {{ $bagianName }}</p>
             </div>
-            <a href="{{ route('bagian.documents.create') }}" class="btn btn-primary"
-                style="background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%); border: none;">
-                <i class="fa-solid fa-plus me-2"></i>Buat Dokumen Baru
-            </a>
         </div>
 
         <!-- Statistics Cards -->
@@ -128,17 +124,6 @@
                         <i class="fa-solid fa-list" style="font-size: 32px; color: #083E40; margin-bottom: 12px;"></i>
                         <h5 style="color: #083E40; font-weight: 600;">Daftar Dokumen</h5>
                         <p class="text-muted mb-0" style="font-size: 13px;">Lihat semua dokumen {{ $bagianCode }}</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-4">
-                <a href="{{ route('bagian.documents.create') }}" class="card text-decoration-none h-100"
-                    style="border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: transform 0.2s;">
-                    <div class="card-body text-center py-4">
-                        <i class="fa-solid fa-plus-circle"
-                            style="font-size: 32px; color: #28a745; margin-bottom: 12px;"></i>
-                        <h5 style="color: #28a745; font-weight: 600;">Buat Dokumen</h5>
-                        <p class="text-muted mb-0" style="font-size: 13px;">Buat dokumen baru</p>
                     </div>
                 </a>
             </div>
