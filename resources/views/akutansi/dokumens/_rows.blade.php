@@ -111,19 +111,21 @@
                     @elseif($col == 'ppn_terhutang')
                       {{ $dokumen->ppn_terhutang ? number_format($dokumen->ppn_terhutang, 0, ',', '.') : '-' }}
                     @elseif($col == 'link_dokumen_pajak')
-                      @if($dokumen->link_dokumen_pajak)
-                        <a href="{{ $dokumen->link_dokumen_pajak }}" target="_blank" rel="noopener noreferrer"
-                          title="{{ $dokumen->link_dokumen_pajak }}" style="color: #0d6efd; text-decoration: none;">
+                      @php $safeLink = \App\Support\SafeUrl::external($dokumen->link_dokumen_pajak); @endphp
+                      @if($safeLink)
+                        <a href="{{ $safeLink }}" target="_blank" rel="noopener noreferrer"
+                          title="{{ $safeLink }}" style="color: #0d6efd; text-decoration: none;">
                           <i class="fa-solid fa-link me-1"></i>Lihat Dokumen
                         </a>
                       @else
                         -
                       @endif
                     @elseif($col == 'link')
-                      @if($dokumen->link)
-                        <a href="{{ $dokumen->link }}" target="_blank" rel="noopener noreferrer"
+                      @php $safeLink = \App\Support\SafeUrl::external($dokumen->link); @endphp
+                      @if($safeLink)
+                        <a href="{{ $safeLink }}" target="_blank" rel="noopener noreferrer"
                           onclick="event.stopPropagation();"
-                          title="{{ $dokumen->link }}" style="color: #0d6efd; text-decoration: none;">
+                          title="{{ $safeLink }}" style="color: #0d6efd; text-decoration: none;">
                           <i class="fa-solid fa-link me-1"></i>Lihat
                         </a>
                       @else

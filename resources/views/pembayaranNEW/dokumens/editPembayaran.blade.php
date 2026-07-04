@@ -1224,10 +1224,11 @@
               <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 11px;">
                 <i class="fa-solid fa-info-circle"></i> Masukkan link Google Drive untuk bukti pembayaran (PDF/File)
               </small>
-              @if($dokumen->link_bukti_pembayaran)
+              @php $safeBukti = \App\Support\SafeUrl::external($dokumen->link_bukti_pembayaran); @endphp
+              @if($safeBukti)
                 <div style="margin-top: 10px; padding: 10px 15px; background: #e8f5e9; border-radius: 8px;">
                   <i class="fa-brands fa-google-drive" style="color: #28a745;"></i>
-                  <a href="{{ $dokumen->link_bukti_pembayaran }}" target="_blank"
+                  <a href="{{ $safeBukti }}" target="_blank"
                     style="margin-left: 8px; color: #28a745; font-size: 13px; text-decoration: underline;">
                     <i class="fa-solid fa-external-link-alt"></i> Lihat Bukti Pembayaran
                   </a>

@@ -228,14 +228,16 @@
         @elseif($col === 'npwp')
           {{ $dokumen->npwp ?? '-' }}
         @elseif($col === 'link_dokumen_pajak')
-          @if(!empty($dokumen->link_dokumen_pajak))
-            <a href="{{ $dokumen->link_dokumen_pajak }}" target="_blank" rel="noopener" title="{{ $dokumen->link_dokumen_pajak }}">Lihat Dokumen</a>
+          @php $safeLink = \App\Support\SafeUrl::external($dokumen->link_dokumen_pajak); @endphp
+          @if($safeLink)
+            <a href="{{ $safeLink }}" target="_blank" rel="noopener" title="{{ $safeLink }}">Lihat Dokumen</a>
           @else
             -
           @endif
         @elseif($col === 'link')
-          @if(!empty($dokumen->link))
-            <a href="{{ $dokumen->link }}" target="_blank" rel="noopener noreferrer" class="ie-link-anchor" onclick="event.stopPropagation();" title="{{ $dokumen->link }}"><i class="fa-solid fa-link fa-sm"></i> Lihat</a>
+          @php $safeLink = \App\Support\SafeUrl::external($dokumen->link); @endphp
+          @if($safeLink)
+            <a href="{{ $safeLink }}" target="_blank" rel="noopener noreferrer" class="ie-link-anchor" onclick="event.stopPropagation();" title="{{ $safeLink }}"><i class="fa-solid fa-link fa-sm"></i> Lihat</a>
           @else
             -
           @endif
