@@ -4960,9 +4960,6 @@
               <a href="{{ route('bagian.documents.index') }}" class="{{ $isBagianDocumentsActive ? 'active' : '' }}">
                 <i class="fa-solid fa-list"></i> Daftar Dokumen
               </a>
-              <a href="{{ route('bagian.documents.create') }}" class="{{ $isBagianTambahActive ? 'active' : '' }}">
-                <i class="fa-solid fa-plus"></i> Tambah Dokumen
-              </a>
               <a href="{{ route('bagian.tracking') }}" class="{{ $isBagianTrackingActive ? 'active' : '' }}">
                 <i class="fa-solid fa-route"></i> Tracking Dokumen
               </a>
@@ -5204,9 +5201,6 @@
         @endphp
         <a href="{{ route('bagian.documents.index') }}" class="{{ $isDaftarActive ? 'active' : '' }}">
           <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
-        </a>
-        <a href="{{ route('bagian.documents.create') }}" class="{{ $isTambahActive ? 'active' : '' }}">
-          <i class="fa-solid fa-plus me-2"></i> Tambah Dokumen
         </a>
         <a href="{{ route('bagian.tracking') }}" class="{{ request()->routeIs('bagian.tracking') ? 'active' : '' }}">
           <i class="fa-solid fa-route me-2"></i> Tracking Dokumen
