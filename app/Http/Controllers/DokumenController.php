@@ -140,54 +140,9 @@ class DokumenController extends Controller
             $suggestions = $this->getSearchSuggestions($searchTerm, $request->year);
         }
 
-        // Available columns for customization
-        $availableColumns = [
-            'nomor_agenda' => 'Nomor Agenda',
-            'bulan' => 'Bulan',
-            'tahun' => 'Tahun',
-            'kategori' => 'Kriteria CF',
-            'jenis_dokumen' => 'Sub Kriteria',
-            'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
-            'jenis_pembayaran' => 'Jenis Pembayaran',
-            'nomor_spp' => 'Nomor SPP',
-            'tanggal_spp' => 'Tanggal SPP',
-            'tanggal_masuk' => 'Tanggal Masuk',
-            'dibayar_kepada' => 'Dibayar Kepada',
-            'uraian_spp' => 'Uraian SPP',
-            'nilai_rupiah' => 'Nilai Rupiah',
-            // Backend later columns
-            'tanggal_paraf' => 'Tanggal Paraf',
-            'pemaraf' => 'Pemaraf',
-            'tanggal_selesai_diproses' => 'Tgl Selesai Diproses',
-            'tanggal_kembali_ke_bagian' => 'Tgl Kembali ke Bagian',
-            'tanggal_hasil_koreksi_bagian' => 'Tgl Hasil Koreksi Bagian',
-            'kepala_sub_bagian' => 'Kepala Sub Bagian',
-            'keterangan' => 'Keterangan',
-            'status_dokumen_custom' => 'Status Dokumen',
-            'tanggal_dibayar' => 'Tanggal Bayar',
-            'bagian' => 'Bagian',
-            'link' => 'Link',
-            'nama_pengirim' => 'Nama Pengirim',
-            'no_spk' => 'No SPK',
-            'tanggal_spk' => 'Tanggal SPK',
-            'tanggal_berakhir_spk' => 'Tanggal Akhir SPK',
-            'no_berita_acara' => 'No Berita Acara (BA)',
-            'tanggal_berita_acara' => 'Tanggal Berita Acara (BA)',
-            'nomor_po' => 'No PO',
-            'nomor_miro' => 'No Miro',
-            'no_faktur' => 'No Faktur',
-            'tanggal_faktur' => 'Tanggal Faktur',
-            'tanggal_selesai_verifikasi_pajak' => 'Tgl Selesai Verifikasi Pajak',
-            'jenis_pph' => 'Jenis PPh',
-            'dpp_pph' => 'DPP PPh',
-            'ppn_terhutang' => 'PPH Terhutang',
-            // Role-specific columns
-            'status' => 'Status',
-            'kebun' => 'Kebun',
-            // Perpajakan data (read-only view for Operator)
-            'npwp' => 'NPWP',
-            'link_dokumen_pajak' => 'Link Dokumen Pajak',
-        ];
+        // Available columns for customization — sumber terpusat (Operator memakai
+        // base penuh, termasuk opsi 'status'). Sumber: config/document_columns.php.
+        $availableColumns = config('document_columns.base');
 
         $defaultColumns = $this->defaultOperatorDocumentColumns($availableColumns);
 
@@ -1957,9 +1912,11 @@ class DokumenController extends Controller
                 $saveValue = \Carbon\Carbon::parse($value)->format('Y-m-d');
                 $dokumen->status_pembayaran = 'sudah_dibayar';
                 $dokumen->status = 'completed';
-            } elseif ($field === 'link_dokumen_pajak') {
-                // Simpan URL, null jika kosong
-                $saveValue = !empty(trim($value ?? '')) ? trim($value) : null;
+            } elseif (in_array($field, ['link', 'link_dokumen_pajak'])) {
+                // Sanitasi + validasi skema URL untuk mencegah stored-XSS
+                // (mis. javascript:, data:). Skema berbahaya ditolak (422),
+                // URL tanpa skema otomatis di-prefix https://.
+                $saveValue = \App\Support\SafeUrl::sanitizeForStorage($value);
             } elseif ($field === 'nomor_agenda') {
                 // Check uniqueness
                 $exists = Dokumen::where('nomor_agenda', $value)->where('id', '!=', $dokumen->id)->exists();
@@ -2026,11 +1983,15 @@ class DokumenController extends Controller
                 $displayValue = \Carbon\Carbon::parse($saveValue)->format('d-m-Y');
             } elseif (in_array($field, ['dpp_pph', 'ppn_terhutang']) && $saveValue) {
                 $displayValue = number_format($saveValue, 0, ',', '.');
-            } elseif ($field === 'link_dokumen_pajak') {
-                // Kembalikan HTML link seperti di Blade agar cell langsung menampilkan link
-                if ($saveValue) {
-                    $displayValue = '<a href="' . htmlspecialchars($saveValue) . '" target="_blank" rel="noopener noreferrer" style="color: #0d6efd; text-decoration: none;">'
-                        . '<i class="fa-solid fa-link me-1"></i>Lihat Dokumen</a>';
+            } elseif (in_array($field, ['link', 'link_dokumen_pajak'])) {
+                // Bangun anchor aman untuk sink innerHTML di sisi klien.
+                // Pertahanan berlapis: SafeUrl::external memastikan href selalu
+                // berskema http(s); htmlspecialchars cegah attribute breakout.
+                $safeHref = \App\Support\SafeUrl::external($saveValue);
+                if ($safeHref) {
+                    $label = $field === 'link_dokumen_pajak' ? 'Lihat Dokumen' : 'Lihat';
+                    $displayValue = '<a href="' . htmlspecialchars($safeHref, ENT_QUOTES) . '" target="_blank" rel="noopener noreferrer" class="ie-link-anchor" onclick="event.stopPropagation();" style="color: #0d6efd; text-decoration: none;">'
+                        . '<i class="fa-solid fa-link me-1"></i>' . $label . '</a>';
                 } else {
                     $displayValue = '-';
                 }
@@ -2042,6 +2003,12 @@ class DokumenController extends Controller
                 'raw_value'     => $saveValue,
             ]);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first() ?: 'Data tidak valid.',
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Inline update error: ' . $e->getMessage());
