@@ -659,14 +659,7 @@ class DokumenController extends Controller
 
     private function operatorDocumentHandlerState(Dokumen $dokumen): array
     {
-        $normalizeHandler = function ($value) {
-            $value = strtolower(trim((string) $value));
-            return match ($value) {
-                'verifikasi', 'team verifikasi', 'tim verifikasi', 'ibu yuni', 'ibu b' => 'team_verifikasi',
-                'akuntansi', 'tim akuntansi', 'team akuntansi' => 'akutansi',
-                default => str_replace(' ', '_', $value),
-            };
-        };
+        $normalizeHandler = fn ($value) => \App\Support\Role::normalize($value);
 
         $currentUserRole = $normalizeHandler(auth()->user()?->role ?? '');
         $currentHandler = $normalizeHandler($dokumen->current_handler ?? 'operator');
@@ -1390,12 +1383,9 @@ class DokumenController extends Controller
         $createdBy = strtolower($dokumen->created_by ?? '');
         $status = strtolower($dokumen->status ?? '');
 
-        // Check if document is created by Operator (case-insensitive, all valid aliases)
-        $Operatorliases = ['operator', 'Operator', 'Operator', 'tarapul', 'operator'];
-        $createdByOperator = in_array($createdBy, $Operatorliases);
-
-        // Check if document is currently with Operator (case-insensitive)
-        $currentHandlerOperator = in_array($currentHandler, $Operatorliases);
+        // Dokumen dibuat/dipegang oleh Operator (termasuk alias 'tarapul') via normalizer terpusat
+        $createdByOperator = \App\Support\Role::normalize($createdBy) === \App\Support\Role::OPERATOR;
+        $currentHandlerOperator = \App\Support\Role::normalize($currentHandler) === \App\Support\Role::OPERATOR;
 
         // Check if document is rejected
         $isRejected = false;

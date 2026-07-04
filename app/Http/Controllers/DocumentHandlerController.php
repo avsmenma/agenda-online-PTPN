@@ -336,14 +336,6 @@ class DocumentHandlerController extends Controller
 
     private function normalizeRole(string $role): string
     {
-        $role = strtolower(trim($role));
-
-        return match ($role) {
-            'verifikasi', 'team verifikasi', 'tim verifikasi', 'ibu yuni', 'ibu b' => 'team_verifikasi',
-            'tim perpajakan', 'team perpajakan' => 'perpajakan',
-            'akuntansi', 'tim akuntansi', 'team akuntansi', 'team akutansi', 'tim akutansi' => 'akutansi',
-            'tim pembayaran', 'team pembayaran' => 'pembayaran',
-            default => str_replace(' ', '_', $role),
-        };
+        return \App\Support\Role::normalize($role);
     }
 }
