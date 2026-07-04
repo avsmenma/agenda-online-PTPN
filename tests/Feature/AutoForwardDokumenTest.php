@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Dokumen;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -25,35 +24,26 @@ class AutoForwardDokumenTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * Seed kode role yang dipakai workflow ke tabel `roles`.
+     * TIDAK ada seed role manual di sini — sengaja.
      *
-     * CATATAN PENTING (diverifikasi empiris, bukan asumsi):
-     * - Kelima kode workflow (operator, team_verifikasi, perpajakan, akutansi,
-     *   pembayaran) SUDAH dihasilkan dengan benar oleh rantai migrasi: create_roles
-     *   menyeed kode lama (ibuA/ibuB/...) lalu standardize_role_names (2026_01_24)
-     *   me-rename-nya. Migrasi itu TIDAK di-guard SQLite, jadi berlaku di test juga.
-     * - Yang benar-benar wajib di-seed di sini adalah role 'system'. Saat auto-forward
-     *   melewati tahap antara, AutoForwardDokumenService memanggil
-     *   sendToRoleInbox($toRole, 'system'); Dokumen::sendToRoleInbox lalu mencatat
-     *   display_status PENGIRIM ke dokumen_role_data dengan role_code='system'.
-     *   Kolom dokumen_role_data.role_code punya FK ke roles.code, sedangkan TIDAK ADA
-     *   migrasi/seeder yang membuat role 'system'. Tanpa baris ini, auto-forward gagal
-     *   dengan "FOREIGN KEY constraint failed" (insert dokumen_role_data role_code=system).
-     *   Produksi hanya bekerja bila baris 'system' disisipkan di luar migrasi — gap
-     *   reproducibility nyata (lihat catatan Fase 2 untuk keputusan perbaikannya).
-     * Kita seed keenam kode agar test deterministik & FK selalu lolos.
+     * Test ini mengandalkan tabel `roles` yang dibangun sepenuhnya oleh rantai
+     * migrasi (RefreshDatabase), sehingga sekaligus MEMBUKTIKAN gap 'system'
+     * sudah tertutup:
+     * - Kode workflow (operator, team_verifikasi, perpajakan, akutansi,
+     *   pembayaran) dihasilkan create_roles -> standardize_role_names (tak
+     *   di-guard SQLite, jadi berlaku di test).
+     * - Role 'system' disediakan migrasi 2026_07_04_000001_add_system_role_to_
+     *   roles_table. Ini WAJIB: auto-forward memanggil sendToRoleInbox($to,
+     *   'system'); Dokumen::sendToRoleInbox mencatat display_status pengirim ke
+     *   dokumen_role_data dengan role_code='system' (FK ke roles.code). Sebelum
+     *   migrasi itu ada, test gagal "FOREIGN KEY constraint failed".
+     *
+     * Jika suatu saat migrasi 'system' terhapus/rusak, test ini akan MERAH lagi —
+     * itulah gunanya tidak menyeed manual.
      */
     protected function setUp(): void
     {
         parent::setUp();
-
-        $codes = ['operator', 'team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran', 'system'];
-        foreach ($codes as $i => $code) {
-            DB::table('roles')->updateOrInsert(
-                ['code' => $code],
-                ['name' => ucfirst($code), 'sequence' => $i + 1, 'created_at' => now(), 'updated_at' => now()]
-            );
-        }
     }
 
     private function buatDokumenOperator(string $nomorAgenda): Dokumen
