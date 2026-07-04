@@ -48,7 +48,7 @@ class DocumentSent implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('documents.' . $this->sentTo), // Public channel for testing
+            new Channel('documents.' . \App\Support\Role::normalize($this->sentTo)), // Public channel
         ];
     }
 

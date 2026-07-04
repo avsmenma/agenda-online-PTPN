@@ -39,7 +39,7 @@ class DocumentReturned implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('documents.Operator'),
+            new Channel('documents.operator'),
         ];
     }
 
