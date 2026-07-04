@@ -14,61 +14,45 @@ final class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    // Kode peran kanonik → label. Satu kunci per peran (lihat App\Support\Role).
+    // Alias/campur-case ditangani oleh Role::normalize() di method, bukan di sini.
     public const ROLES = [
-        'Admin' => 'Admin',
-        'owner' => 'Owner',
-        'programmer' => 'Programmer',  // Special role for developer/programmer operations
-        'operator' => 'Operator',  // Standardized from Operator/Ibu Tarapul
-        'team_verifikasi' => 'Team Verifikasi',  // Standardized from Team Verifikasi/Verifikasi
-        'Pembayaran' => 'Pembayaran',
-        'pembayaran' => 'Pembayaran',
-        'Akutansi' => 'Akuntansi',
-        'akutansi' => 'Akuntansi',
-        'Perpajakan' => 'Perpajakan',
-        'perpajakan' => 'Perpajakan',
-        // Legacy role names for backward compatibility
-        'operator' => 'Operator',
-        'operator' => 'Operator',
+        'admin'           => 'Admin',
+        'owner'           => 'Owner',
+        'programmer'      => 'Programmer',
+        'operator'        => 'Operator',
         'team_verifikasi' => 'Team Verifikasi',
-        'verifikasi' => 'Team Verifikasi',
-        // Bagian roles
-        'bagian_akn' => 'Bagian AKN',
-        'bagian_dpm' => 'Bagian DPM',
-        'bagian_kpl' => 'Bagian KPL',
-        'bagian_pmo' => 'Bagian PMO',
-        'bagian_sdm' => 'Bagian SDM',
-        'bagian_skh' => 'Bagian SKH',
-        'bagian_tan' => 'Bagian TAN',
-        'bagian_tep' => 'Bagian TEP',
+        'perpajakan'      => 'Perpajakan',
+        'akutansi'        => 'Akuntansi',
+        'pembayaran'      => 'Pembayaran',
+        'system'          => 'System',
+        'bagian_akn'      => 'Bagian AKN',
+        'bagian_dpm'      => 'Bagian DPM',
+        'bagian_kpl'      => 'Bagian KPL',
+        'bagian_pmo'      => 'Bagian PMO',
+        'bagian_sdm'      => 'Bagian SDM',
+        'bagian_skh'      => 'Bagian SKH',
+        'bagian_tan'      => 'Bagian TAN',
+        'bagian_tep'      => 'Bagian TEP',
     ];
 
     public const DASHBOARD_ROUTES = [
-        'Admin' => '/owner/home',
-        'owner' => '/owner/home',
-        'Owner' => '/owner/home',
-        'programmer' => '/programmer/dashboard',  // Programmer dashboard
-        // New standardized role names
-        'Operator' => '/documents',
-        'operator' => '/documents',
-        // Workflow roles diarahkan ke dashboard masing-masing setelah login
+        'admin'           => '/owner/home',
+        'owner'           => '/owner/home',
+        'programmer'      => '/programmer/dashboard',
+        'operator'        => '/documents',
         'team_verifikasi' => '/dashboard/verifikasi',
-        'verifikasi' => '/dashboard/verifikasi',
-        // Other roles
-        'Pembayaran' => '/dashboard/pembayaran',
-        'pembayaran' => '/dashboard/pembayaran',
-        'Akutansi' => '/dashboard/akutansi',
-        'akutansi' => '/dashboard/akutansi',
-        'Perpajakan' => '/dashboard/perpajakan',
-        'perpajakan' => '/dashboard/perpajakan',
-        // Bagian dashboard routes
-        'bagian_akn' => '/bagian/dashboard',
-        'bagian_dpm' => '/bagian/dashboard',
-        'bagian_kpl' => '/bagian/dashboard',
-        'bagian_pmo' => '/bagian/dashboard',
-        'bagian_sdm' => '/bagian/dashboard',
-        'bagian_skh' => '/bagian/dashboard',
-        'bagian_tan' => '/bagian/dashboard',
-        'bagian_tep' => '/bagian/dashboard',
+        'perpajakan'      => '/dashboard/perpajakan',
+        'akutansi'        => '/dashboard/akutansi',
+        'pembayaran'      => '/dashboard/pembayaran',
+        'bagian_akn'      => '/bagian/dashboard',
+        'bagian_dpm'      => '/bagian/dashboard',
+        'bagian_kpl'      => '/bagian/dashboard',
+        'bagian_pmo'      => '/bagian/dashboard',
+        'bagian_sdm'      => '/bagian/dashboard',
+        'bagian_skh'      => '/bagian/dashboard',
+        'bagian_tan'      => '/bagian/dashboard',
+        'bagian_tep'      => '/bagian/dashboard',
     ];
 
 
@@ -156,15 +140,17 @@ final class User extends Authenticatable
      */
     public function getDashboardRoute(): string
     {
-        return self::DASHBOARD_ROUTES[$this->role] ?? self::DASHBOARD_ROUTES['operator'];
+        $role = \App\Support\Role::normalize($this->role);
+
+        return self::DASHBOARD_ROUTES[$role] ?? self::DASHBOARD_ROUTES['operator'];
     }
 
     /**
-     * Check if user has a specific role.
+     * Check if user has a specific role (case-insensitive + alias-aware).
      */
     public function hasRole(string $role): bool
     {
-        return $this->role === $role;
+        return \App\Support\Role::matches($this->role, $role);
     }
 
     /**
@@ -172,7 +158,7 @@ final class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        return $this->hasRole('Admin');
+        return $this->hasRole(\App\Support\Role::ADMIN);
     }
 
     /**
@@ -180,7 +166,9 @@ final class User extends Authenticatable
      */
     public function getRoleDisplayName(): string
     {
-        return self::ROLES[$this->role] ?? 'Unknown';
+        $role = \App\Support\Role::normalize($this->role);
+
+        return self::ROLES[$role] ?? 'Unknown';
     }
 
     public function getProfilePhotoUrlAttribute(): ?string
@@ -206,6 +194,7 @@ final class User extends Authenticatable
     public static function getRoleOptions(): array
     {
         return collect(self::ROLES)
+            ->except(['system']) // 'system' peran virtual auto-forward, tak boleh dipilih manual
             ->map(fn(string $label, string $value) => ['value' => $value, 'label' => $label])
             ->values()
             ->all();
