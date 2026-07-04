@@ -27,11 +27,21 @@ class AutoForwardDokumenTest extends TestCase
     /**
      * Seed kode role yang dipakai workflow ke tabel `roles`.
      *
-     * CATATAN: migrasi create_roles hanya menyeed ibuA/ibuB/perpajakan/akutansi/
-     * pembayaran, TIDAK termasuk operator/team_verifikasi/system, padahal
-     * dokumen_role_data.role_code punya FK ke roles.code. Produksi bekerja karena
-     * tabel roles-nya diisi berbeda. Di sini kita seed kode nyata agar FK lolos
-     * dan perilaku auto-forward bisa diuji apa adanya.
+     * CATATAN PENTING (diverifikasi empiris, bukan asumsi):
+     * - Kelima kode workflow (operator, team_verifikasi, perpajakan, akutansi,
+     *   pembayaran) SUDAH dihasilkan dengan benar oleh rantai migrasi: create_roles
+     *   menyeed kode lama (ibuA/ibuB/...) lalu standardize_role_names (2026_01_24)
+     *   me-rename-nya. Migrasi itu TIDAK di-guard SQLite, jadi berlaku di test juga.
+     * - Yang benar-benar wajib di-seed di sini adalah role 'system'. Saat auto-forward
+     *   melewati tahap antara, AutoForwardDokumenService memanggil
+     *   sendToRoleInbox($toRole, 'system'); Dokumen::sendToRoleInbox lalu mencatat
+     *   display_status PENGIRIM ke dokumen_role_data dengan role_code='system'.
+     *   Kolom dokumen_role_data.role_code punya FK ke roles.code, sedangkan TIDAK ADA
+     *   migrasi/seeder yang membuat role 'system'. Tanpa baris ini, auto-forward gagal
+     *   dengan "FOREIGN KEY constraint failed" (insert dokumen_role_data role_code=system).
+     *   Produksi hanya bekerja bila baris 'system' disisipkan di luar migrasi — gap
+     *   reproducibility nyata (lihat catatan Fase 2 untuk keputusan perbaikannya).
+     * Kita seed keenam kode agar test deterministik & FK selalu lolos.
      */
     protected function setUp(): void
     {
