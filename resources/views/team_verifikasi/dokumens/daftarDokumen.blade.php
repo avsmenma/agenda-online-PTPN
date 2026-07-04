@@ -5919,6 +5919,11 @@
 
 {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
 @include('partials._activeCellNav', ['tableSelector' => '.data-table'])
+
+{{-- Kolom beku (No, Nomor Agenda kiri; Pengurus Dokumen kanan) — partial bersama.
+     Team Verifikasi sebelumnya tidak meng-include ini sehingga kolomnya tidak ikut
+     frozen seperti role lain, meski markup #documentTableContainer/.col-* sudah cocok. --}}
+@include('partials._documentTableStickyCells')
 <style>
   #documentTableContainer .data-table tbody td.acn-active,
   body.is-fullscreen #documentTableContainer .data-table tbody td.acn-active,
