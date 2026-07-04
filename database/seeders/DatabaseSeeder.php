@@ -15,6 +15,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Guard produksi: seeder default ini menyisipkan user uji (test@example.com)
+        // dengan factory. Dilarang berjalan di produksi agar tidak mengotori tabel users.
+        if (app()->isProduction()) {
+            throw new \RuntimeException('DatabaseSeeder (membuat user uji) dilarang dijalankan di environment produksi.');
+        }
+
         // User::factory(10)->create();
 
         User::factory()->create([
