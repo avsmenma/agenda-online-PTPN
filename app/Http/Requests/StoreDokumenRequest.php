@@ -43,7 +43,7 @@ class StoreDokumenRequest extends FormRequest
 
         $rules = [
             'nomor_agenda' => 'nullable|string|unique:dokumens,nomor_agenda',
-            'bagian' => $validBagianCodes ? 'nullable|string|in:' . implode(',', $validBagianCodes) : 'nullable|string',
+            'bagian' => $validBagianCodes ? 'required|string|in:' . implode(',', $validBagianCodes) : 'required|string',
             'nama_pengirim' => 'nullable|string|max:255',
             'nomor_spp' => 'nullable|string',
             'tanggal_spp' => 'nullable|date',

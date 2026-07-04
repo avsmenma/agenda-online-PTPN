@@ -335,9 +335,9 @@
       <!-- 1. Bagian dan 2. Nama Pengirim Dokumen -->
       <div class="form-row">
         <div class="form-group">
-          <label>Bagian</label>
-          <select name="bagian">
-            <option value="">Pilih Bagian</option>
+          <label>Bagian <span style="color:#dc3545;">*</span></label>
+          <select name="bagian" required>
+            <option value="" disabled {{ old('bagian') ? '' : 'selected' }}>Pilih Bagian</option>
             @foreach($bagianList as $bagian)
               <option value="{{ $bagian->kode }}" {{ old('bagian') == $bagian->kode ? 'selected' : '' }}>{{ $bagian->nama }}
               </option>

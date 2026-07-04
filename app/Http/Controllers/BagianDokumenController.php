@@ -58,22 +58,21 @@ class BagianDokumenController extends Controller
             abort(403, 'Bagian code not configured for this user');
         }
 
-        // Count documents for this bagian - filter by created_by to only show docs created by this bagian
-        $createdByValue = 'bagian_' . strtolower($bagianCode);
-        $totalDokumen = Dokumen::where('created_by', $createdByValue)->count();
-        $dokumenBelumDikirim = Dokumen::where('created_by', $createdByValue)
+        // View-only monitoring: hitung semua dokumen milik bagian ini (kolom `bagian`).
+        $totalDokumen = Dokumen::where('bagian', $bagianCode)->count();
+        $dokumenBelumDikirim = Dokumen::where('bagian', $bagianCode)
             ->where('status', 'belum dikirim')
             ->count();
-        $dokumenTerkirim = Dokumen::where('created_by', $createdByValue)
+        $dokumenTerkirim = Dokumen::where('bagian', $bagianCode)
             ->whereNotIn('status', ['belum dikirim'])
             ->count();
-        $dokumenSelesai = Dokumen::where('created_by', $createdByValue)
+        $dokumenSelesai = Dokumen::where('bagian', $bagianCode)
             ->where('status', 'sudah dibayar')
             ->count();
 
-        // Recent documents - only show docs created by this bagian
+        // Recent documents milik bagian ini
         $recentDokumens = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
-            ->where('created_by', $createdByValue)
+            ->where('bagian', $bagianCode)
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
@@ -101,10 +100,9 @@ class BagianDokumenController extends Controller
             abort(403, 'Bagian code not configured for this user');
         }
 
-        // Filter by created_by to only show documents created by this bagian
-        $createdByValue = 'bagian_' . strtolower($bagianCode);
+        // View-only monitoring: tampilkan semua dokumen milik bagian ini (kolom `bagian`)
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
-            ->where('created_by', $createdByValue)
+            ->where('bagian', $bagianCode)
             ->orderByRaw('CASE 
                 WHEN nomor_agenda REGEXP "^[0-9]+$" THEN CAST(nomor_agenda AS UNSIGNED)
                 ELSE 0
@@ -172,68 +170,32 @@ class BagianDokumenController extends Controller
         $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Available columns for customization
+        // Bagian view-only: HANYA 12 kolom yang boleh dilihat (keputusan pemilik).
+        // Kolom tahap-lanjut (paraf, SPK, PO, pajak, status internal, dll) sengaja
+        // tidak diekspos ke Bagian.
         $availableColumns = [
             'nomor_agenda' => 'Nomor Agenda',
+            'nomor_spp' => 'Nomor SPP',
+            'tanggal_spp' => 'Tanggal SPP',
+            'tanggal_masuk' => 'Tanggal Masuk',
             'bulan' => 'Bulan',
             'tahun' => 'Tahun',
             'kategori' => 'Kriteria CF',
             'jenis_dokumen' => 'Sub Kriteria',
             'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
-            'jenis_pembayaran' => 'Jenis Pembayaran',
-            'nomor_spp' => 'Nomor SPP',
-            'tanggal_spp' => 'Tanggal SPP',
-            'tanggal_masuk' => 'Tanggal Masuk',
             'dibayar_kepada' => 'Dibayar Kepada',
             'uraian_spp' => 'Uraian SPP',
             'nilai_rupiah' => 'Nilai Rupiah',
-            // Backend later columns
-            'tanggal_paraf' => 'Tanggal Paraf',
-            'pemaraf' => 'Pemaraf',
-            'tanggal_selesai_diproses' => 'Tgl Selesai Diproses',
-            'tanggal_kembali_ke_bagian' => 'Tgl Kembali ke Bagian',
-            'tanggal_hasil_koreksi_bagian' => 'Tgl Hasil Koreksi Bagian',
-            'kepala_sub_bagian' => 'Kepala Sub Bagian',
-            'keterangan' => 'Keterangan',
-            'status_dokumen_custom' => 'Status Dokumen',
-            'tanggal_dibayar' => 'Tanggal Bayar',
-            'bagian' => 'Bagian',
-            'nama_pengirim' => 'Nama Pengirim',
-            'no_spk' => 'No SPK',
-            'tanggal_spk' => 'Tanggal SPK',
-            'tanggal_berakhir_spk' => 'Tanggal Akhir SPK',
-            'no_berita_acara' => 'No Berita Acara (BA)',
-            'tanggal_berita_acara' => 'Tanggal Berita Acara (BA)',
-            'nomor_po' => 'No PO',
-            'nomor_miro' => 'No Miro',
-            'no_faktur' => 'No Faktur',
-            'tanggal_faktur' => 'Tanggal Faktur',
-            'tanggal_selesai_verifikasi_pajak' => 'Tgl Selesai Verifikasi Pajak',
-            'jenis_pph' => 'Jenis PPh',
-            'dpp_pph' => 'DPP PPh',
-            'ppn_terhutang' => 'PPH Terhutang',
-            // Role-specific columns
-            'status' => 'Status',
-            'umur_dokumen' => 'Umur Dokumen',
-            'status_pembayaran' => 'Status Pembayaran',
-            'kebun' => 'Kebun',
-            // Perpajakan data (read-only view)
-            'npwp' => 'NPWP',
-            'link_dokumen_pajak' => 'Link Dokumen Pajak',
         ];
 
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
 
-        // Default columns
-        $defaultColumns = [
-            'nomor_agenda',
-            'nomor_spp',
-            'tanggal_masuk',
-            'nilai_rupiah',
-            'status',
-            'umur_dokumen',
-            'status_pembayaran',
-        ];
+        // Default: tampilkan seluruh 12 kolom yang diizinkan
+        $defaultColumns = array_keys($availableColumns);
+
+        // Guard: apa pun kolom yang diminta, batasi hanya ke daftar yang diizinkan
+        $selectedColumns = array_values(array_intersect($selectedColumns, array_keys($availableColumns)));
 
         // If columns are provided in request, save to session
         if ($request->has('columns') && !empty($selectedColumns)) {
@@ -249,6 +211,13 @@ class BagianDokumenController extends Controller
 
             // Update session to keep it in sync
             session(['bagian_dokumens_table_columns' => $selectedColumns]);
+        }
+
+        // Filter akhir: buang sisa kolom terlarang dari session lama (mis. status,
+        // umur_dokumen, status_pembayaran yang dulu pernah tersimpan).
+        $selectedColumns = array_values(array_intersect($selectedColumns, array_keys($availableColumns)));
+        if (empty($selectedColumns)) {
+            $selectedColumns = $defaultColumns;
         }
 
         return view('bagian.dokumens.daftarDokumen', compact(
@@ -1013,10 +982,9 @@ class BagianDokumenController extends Controller
             abort(403, 'Bagian code not configured for this user');
         }
 
-        // Filter by created_by to only show documents created by this bagian
-        $createdByValue = 'bagian_' . strtolower($bagianCode);
+        // View-only monitoring: tampilkan semua dokumen milik bagian ini (kolom `bagian`)
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
-            ->where('created_by', $createdByValue)
+            ->where('bagian', $bagianCode)
             ->orderBy('updated_at', 'desc');
 
         // General search - searches across multiple fields
