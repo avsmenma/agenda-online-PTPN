@@ -347,6 +347,44 @@
       background: linear-gradient(90deg, rgba(136, 151, 23, 0.05) 0%, transparent 100%);
     }
 
+    /* Kolom beku (No & Nomor Agenda) — kiri. Gaya lokal Bagian (hijau #083E40),
+       tidak memakai partial bersama _documentTableStickyCells karena partial itu
+       memaksa header biru + table-layout:fixed dan membekukan handler; Bagian
+       punya tema hijau sendiri & kolom Aksi selalu tampil di kanan. */
+    #documentTableContainer .data-table th.col-no,
+    #documentTableContainer .data-table td.col-no {
+      position: sticky;
+      left: 0;
+      width: 70px;
+      min-width: 70px;
+      white-space: nowrap;
+      z-index: 5;
+    }
+
+    #documentTableContainer .data-table th.col-nomor_agenda,
+    #documentTableContainer .data-table td.col-nomor_agenda {
+      position: sticky;
+      left: 70px; /* selebar kolom No di atas */
+      z-index: 5;
+    }
+
+    /* Latar opaque agar isi kolom lain tak tembus saat scroll horizontal */
+    #documentTableContainer .data-table tbody td.col-no,
+    #documentTableContainer .data-table tbody td.col-nomor_agenda {
+      background: #ffffff;
+    }
+
+    #documentTableContainer .data-table thead th.col-no,
+    #documentTableContainer .data-table thead th.col-nomor_agenda {
+      background: #083E40; /* samakan dengan thead hijau */
+      z-index: 6;          /* header di atas sel body yang beku */
+    }
+
+    #documentTableContainer .data-table tbody tr:hover td.col-no,
+    #documentTableContainer .data-table tbody tr:hover td.col-nomor_agenda {
+      background: #f3faf9;
+    }
+
     .badge-status {
       display: inline-flex;
       align-items: center;
@@ -1078,9 +1116,9 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>No</th>
+                <th class="col-no">No</th>
                 @foreach($selectedColumns as $col)
-                  <th>{{ $availableColumns[$col] ?? $col }}</th>
+                  <th class="{{ $col == 'nomor_agenda' ? 'col-nomor_agenda' : '' }}">{{ $availableColumns[$col] ?? $col }}</th>
                 @endforeach
                 <th>Pengurus Dokumen</th>
                 <th>Aksi</th>
@@ -1121,7 +1159,7 @@
                   'dibayar_kepada' => $doc->dibayarKepadas->pluck('nama_penerima')->join(', ') ?: '-',
                   'status' => ucwords(str_replace('_', ' ', $doc->status ?? 'Belum Dikirim'))
                 ]) }})">
-                        <td>{{ $dokumens->firstItem() + $index }}</td>
+                        <td class="col-no">{{ $dokumens->firstItem() + $index }}</td>
                         @foreach($selectedColumns as $col)
                           @if(in_array($col, ['nomor_spp', 'uraian_spp', 'nilai_rupiah', 'tanggal_spp']) && $canInlineEdit)
                             <td class="ie-cell"
@@ -1144,7 +1182,7 @@
                               @endif
                             </td>
                           @else
-                          <td>
+                          <td class="{{ $col == 'nomor_agenda' ? 'col-nomor_agenda' : '' }}">
                             @if($col == 'nomor_agenda')
                               <strong style="color: #000000;">{{ $doc->nomor_agenda }}</strong>
                               <br>
@@ -1335,10 +1373,11 @@
                             @elseif($col == 'npwp')
                               {{ $doc->npwp ?? '-' }}
                             @elseif($col == 'link_dokumen_pajak')
-                              @if($doc->link_dokumen_pajak)
-                                <a href="{{ $doc->link_dokumen_pajak }}" target="_blank" rel="noopener noreferrer"
+                              @php $safeLink = \App\Support\SafeUrl::external($doc->link_dokumen_pajak); @endphp
+                              @if($safeLink)
+                                <a href="{{ $safeLink }}" target="_blank" rel="noopener noreferrer"
                                   class="ie-link-anchor" onclick="event.stopPropagation();"
-                                  title="{{ $doc->link_dokumen_pajak }}">
+                                  title="{{ $safeLink }}">
                                   <i class="fa-solid fa-link fa-sm"></i> Link Pajak
                                 </a>
                               @else
