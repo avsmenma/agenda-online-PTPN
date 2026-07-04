@@ -433,10 +433,10 @@ class TeamVerifikasiController extends Controller
                     $isPeringatan = $hoursDiff >= 24 && $hoursDiff < 72;
                     $isTerlambat = $hoursDiff >= 72;
                 } else {
-                    // No received_at → treat as terlambat
+                    // Tanpa received_at (belum diterima) → NETRAL: tidak masuk kategori mana pun
                     $isAman = false;
                     $isPeringatan = false;
-                    $isTerlambat = true;
+                    $isTerlambat = false;
                 }
 
                 if ($keterlambatanFilter === 'aman' && $isAman) {

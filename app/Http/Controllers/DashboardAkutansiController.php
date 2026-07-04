@@ -505,13 +505,8 @@ class DashboardAkutansiController extends Controller
                     $dokumenMoreThan72h++;
                 }
             } else {
-                $isBypassed = in_array($doc->status, ['sent_to_pembayaran', 'completed', 'selesai'])
-                    || $doc->current_handler !== 'akutansi';
-                if ($isBypassed) {
-                    $dokumenLessThan24h++;
-                } else {
-                    $dokumenMoreThan72h++;
-                }
+                // Tanpa received_at (belum diterima) → NETRAL: tidak dihitung aman/peringatan/terlambat.
+                // (dulu bypass dihitung <24 jam, sisanya >72 jam — menyesatkan)
             }
         }
 

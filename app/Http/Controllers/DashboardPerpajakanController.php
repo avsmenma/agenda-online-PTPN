@@ -467,11 +467,10 @@ class DashboardPerpajakanController extends Controller
                     $isPeringatan = $hoursDiff >= 24 && $hoursDiff < 72;
                     $isTerlambat = $hoursDiff >= 72;
                 } else {
-                    $isBypassed = in_array($doc->status, ['sent_to_akutansi', 'sent_to_pembayaran', 'completed', 'selesai'])
-                        || $doc->current_handler !== 'perpajakan';
-                    $isAman = $isBypassed;
+                    // Tanpa received_at (belum diterima) → NETRAL: tidak masuk kategori mana pun
+                    $isAman = false;
                     $isPeringatan = false;
-                    $isTerlambat = !$isBypassed;
+                    $isTerlambat = false;
                 }
                 if ($keterlambatanFilter === 'aman' && $isAman) $filteredIds[] = $doc->id;
                 elseif ($keterlambatanFilter === 'peringatan' && $isPeringatan) $filteredIds[] = $doc->id;

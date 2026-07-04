@@ -260,6 +260,7 @@ class DashboardPembayaranController extends Controller
                     $totalTerlambat++;
                 }
             } else {
+                // Pembayaran memakai tanggal_masuk sebagai jam-mulai sah bila received_at kosong.
                 $baseDate = $dok->tanggal_masuk ?? $dok->created_at;
                 if ($baseDate) {
                     $hoursDiff = Carbon::parse($baseDate)->diffInHours(Carbon::parse($endTime));
@@ -270,9 +271,8 @@ class DashboardPembayaranController extends Controller
                     } else {
                         $totalTerlambat++;
                     }
-                } else {
-                    $totalAman++;
                 }
+                // Tanpa received_at MAUPUN tanggal_masuk/created_at → NETRAL (tidak dihitung)
             }
         }
 

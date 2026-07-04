@@ -178,8 +178,8 @@ trait BuildsRoleDashboard
                     $terlambat++;
                 }
             } else {
-                // Tanpa received_at: jika sudah diteruskan anggap aman, jika masih menggantung anggap terlambat.
-                $isSent ? $aman++ : $terlambat++;
+                // Tanpa received_at (belum diterima): NETRAL — tidak dihitung aman/peringatan/terlambat.
+                // (dulu tidak konsisten: menggantung dihitung 'terlambat', sudah diteruskan dihitung 'aman')
             }
         }
 
