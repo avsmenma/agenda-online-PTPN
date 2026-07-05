@@ -830,13 +830,7 @@
                         <i class="fa-solid fa-wrench"></i>
                         <span>Perbaiki Data</span>
                       </a>
-                      @if($dokumen->returned_from_perpajakan_at)
-                        <button type="button" class="btn-action btn-send" onclick="sendBackToPerpajakan({{ $dokumen->id }})"
-                          title="Kirim ke Team Perpajakan">
-                          <i class="fa-solid fa-paper-plane"></i>
-                          <span>Kirim</span>
-                        </button>
-                      @elseif($dokumen->inbox_approval_status != 'rejected')
+                      @if($dokumen->inbox_approval_status != 'rejected')
                         <button type="button" class="btn-action btn-send" onclick="sendToNextHandler({{ $dokumen->id }})"
                           title="Kirim Dokumen">
                           <i class="fa-solid fa-paper-plane"></i>
@@ -870,40 +864,6 @@
 
   <!-- Modal Edit Dokumen - Full Data Editor -->
 
-  <!-- Modal for Send Back to Perpajakan Confirmation -->
-  <!-- Modal Konfirmasi Pengiriman ke Team Perpajakan -->
-  <div class="modal fade" id="sendBackToPerpajakanConfirmationModal" tabindex="-1"
-    aria-labelledby="sendBackToPerpajakanConfirmationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
-          <h5 class="modal-title" id="sendBackToPerpajakanConfirmationModalLabel">
-            <i class="fa-solid fa-question-circle me-2"></i>Konfirmasi Pengiriman ke Team Perpajakan
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body text-center">
-          <div class="mb-3">
-            <i class="fa-solid fa-question-circle" style="font-size: 52px; color: #28a745;"></i>
-          </div>
-          <h5 class="fw-bold mb-3">Apakah Anda yakin dokumen ini sudah diperbaiki dan ingin dikirim ke Team Perpajakan?
-          </h5>
-          <p class="text-muted mb-0">
-            Dokumen akan dikirim ke Team Perpajakan dan akan muncul di daftar dokumen Team Perpajakan untuk proses
-            verifikasi selanjutnya.
-          </p>
-        </div>
-        <div class="modal-footer border-0 justify-content-center gap-2">
-          <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
-            <i class="fa-solid fa-times me-2"></i>Batal
-          </button>
-          <button type="button" class="btn btn-success px-4" id="confirmSendBackToPerpajakanBtn">
-            <i class="fa-solid fa-paper-plane me-2"></i>Ya, Kirim
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Modal Konfirmasi Pengiriman ke Team Selanjutnya -->
   <div class="modal fade" id="sendToNextHandlerConfirmationModal" tabindex="-1"
@@ -1409,52 +1369,6 @@
     }
 
     // Send document back to perpajakan after repair
-    function sendBackToPerpajakan(docId) {
-      document.getElementById('confirmSendBackToPerpajakanBtn').setAttribute('data-doc-id', docId);
-      const confirmationModal = new bootstrap.Modal(document.getElementById('sendBackToPerpajakanConfirmationModal'));
-      confirmationModal.show();
-    }
-
-    // Confirm and send back to perpajakan
-    function confirmSendBackToPerpajakan() {
-      const docId = document.getElementById('confirmSendBackToPerpajakanBtn').getAttribute('data-doc-id');
-      if (!docId) {
-        console.error('Document ID not found');
-        return;
-      }
-
-      const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('sendBackToPerpajakanConfirmationModal'));
-      confirmationModal.hide();
-
-      const btn = document.querySelector(`button[onclick="sendBackToPerpajakan(${docId})"]`);
-      const originalHTML = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Mengirim...</span>';
-
-      fetch(`/dokumensB/${docId}/send-back-to-perpajakan`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            window.location.reload();
-          } else {
-            alert('❌ Gagal mengirim dokumen: ' + (data.message || 'Terjadi kesalahan'));
-            btn.disabled = false;
-            btn.innerHTML = originalHTML;
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('❌ Terjadi kesalahan saat mengirim dokumen. Silakan coba lagi.');
-          btn.disabled = false;
-          btn.innerHTML = originalHTML;
-        });
-    }
 
     // Confirm and send to next handler
     function confirmSendToNextHandler() {
@@ -1513,11 +1427,6 @@
 
     // Initialize confirmation buttons
     document.addEventListener('DOMContentLoaded', function () {
-      const confirmSendBackBtn = document.getElementById('confirmSendBackToPerpajakanBtn');
-      if (confirmSendBackBtn) {
-        confirmSendBackBtn.addEventListener('click', confirmSendBackToPerpajakan);
-      }
-
       const confirmSendToNextBtn = document.getElementById('confirmSendToNextHandlerBtn');
       if (confirmSendToNextBtn) {
         confirmSendToNextBtn.addEventListener('click', confirmSendToNextHandler);
