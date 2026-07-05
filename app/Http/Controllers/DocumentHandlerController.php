@@ -101,6 +101,18 @@ class DocumentHandlerController extends Controller
             ]);
         }
 
+        // Bagian wajib terisi sebelum dokumen MENINGGALKAN Operator menuju alur
+        // keuangan. Draft quick-add boleh dibuat tanpa bagian, tapi tak boleh
+        // dikirim lanjut tanpa bagian — kalau tidak, dokumen tak akan terlihat di
+        // monitoring role Bagian (view-only) yang scoping-nya berdasarkan kolom `bagian`.
+        $movingIntoWorkflow = in_array($targetHandler, self::WORKFLOW_ROLES, true) && $targetHandler !== 'operator';
+        if ($currentHandler === 'operator' && $movingIntoWorkflow && empty(trim((string) $dokumen->bagian))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kolom Bagian wajib diisi sebelum dokumen dikirim ke alur berikutnya.',
+            ], 422);
+        }
+
         try {
             DB::beginTransaction();
 
