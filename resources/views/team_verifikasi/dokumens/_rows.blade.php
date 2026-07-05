@@ -474,13 +474,7 @@
                     {{-- Dokumen ditolak oleh perpajakan/akutansi dan dikembalikan ke verifikasi --}}
                     <span class="badge-status badge-dikembalikan" style="position: relative;">
                       <i class="fa-solid fa-times-circle me-1"></i>
-                      <span>Dokumen ditolak,
-                        <a href="{{ route('returns.verifikasi.index') }}?search={{ $dokumen->nomor_agenda }}"
-                          class="text-white text-decoration-underline fw-bold" onclick="event.stopPropagation();"
-                          style="color: #fff !important; text-decoration: underline !important; font-weight: 600 !important;">
-                          cek disini
-                        </a>
-                      </span>
+                      <span>Dokumen ditolak</span>
                     </span>
                   @else
                     {{-- Dokumen ditolak dari inbox (oleh Team Verifikasi sendiri) --}}

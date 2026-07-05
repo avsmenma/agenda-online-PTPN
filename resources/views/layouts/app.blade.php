@@ -4468,7 +4468,7 @@
       };
       // URL halaman pengembalian/rekapan per role
       $pengembalianUrl = match ($module) {
-        'team_verifikasi' => '/returns/verifikasi',
+        'team_verifikasi' => '/returns/verifikasi/bagian',
         'pembayaran'      => '/returns/pembayaran',
         'akutansi'        => '/returns/akutansi',
         'perpajakan'      => '/returns/perpajakan',

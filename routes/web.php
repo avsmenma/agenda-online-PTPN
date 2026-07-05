@@ -422,8 +422,9 @@ Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('do
 
 // Professional Returns Routes - Verifikasi
 Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
-    Route::get('/', [TeamVerifikasiController::class, 'pengembalian'])->name('index');
-    Route::get('/stats', [TeamVerifikasiController::class, 'getPengembalianKeBagianStats'])->name('stats');
+    // Halaman '/returns/verifikasi' (index) + '/stats' DIHAPUS 2026-07-05: halaman
+    // "dokumen ditolak downstream" tanpa menu, tak dipakai lagi (dikonfirmasi pemilik).
+    // Halaman pengembalian yang hidup ada di '/bagian' (menu "Pengembalian Ke Bagian").
     Route::get('/bagian', [TeamVerifikasiController::class, 'pengembalianKeBidang'])->name('bagian');
     Route::post('/{dokumen}/to-bidang', [TeamVerifikasiController::class, 'returnToBidang'])->name('to-bidang');
     Route::post('/{dokumen}/restore-from-bidang', [TeamVerifikasiController::class, 'restoreFromBidang'])->name('restore-from-bidang');
