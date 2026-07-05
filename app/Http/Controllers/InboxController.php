@@ -24,10 +24,11 @@ class InboxController extends Controller
             $user = auth()->user();
             $userRole = $this->getUserRole($user);
 
-            // Hanya allow Operator, Team Verifikasi/Verifikasi, Perpajakan, Akutansi, Pembayaran
-            $allowedRoles = ['operator', 'team_verifikasi', 'team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+            // Hanya allow Team Verifikasi/Verifikasi, Perpajakan, Akutansi, Pembayaran.
+            // operator dibuang 2026-07-05 (PL-2): operator tak lagi punya inbox.
+            $allowedRoles = ['team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
             if (!$userRole || !in_array($userRole, $allowedRoles)) {
-                abort(403, 'Unauthorized access - Halaman ini hanya untuk Ibu Tarapul, Team Verifikasi, Perpajakan, Akutansi, dan Pembayaran');
+                abort(403, 'Unauthorized access - Halaman ini hanya untuk Team Verifikasi, Perpajakan, Akutansi, dan Pembayaran');
             }
 
             // Normalize role code for database query (lowercase)

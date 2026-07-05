@@ -149,24 +149,24 @@ class InboxApprovalAuthorizationTest extends TestCase
     }
 
     /**
-     * BACKSTOP: route universal-approval hanya di-guard `auth` (tanpa role
-     * middleware). Yang menahan penyalahgunaan adalah cek isPendingForRole.
-     * Kunci: user bagian TIDAK bisa approve lewat jalur ini.
+     * Route universal-approval approve/reject (menunjuk InboxController, hanya
+     * di-guard `auth` tanpa role gate) adalah duplikat mati tanpa pemanggil di
+     * frontend — DIHAPUS (PL-3, 2026-07-05). Approve/reject resmi hanya lewat
+     * `/inbox/*` yang bergerbang role + cek pending. Test ini mengunci bahwa
+     * jalur lama itu tidak diam-diam hidup lagi.
      */
-    public function test_universal_approval_tetap_ditahan_cek_pending(): void
+    public function test_route_universal_approval_approve_reject_sudah_dihapus(): void
     {
         $dokumen = $this->buatDokumenPendingUntuk('perpajakan', 'AG-UNI');
-        $bagian = $this->buatUser('bagian_sdm');
+        $user = $this->buatUser('perpajakan');
 
-        $response = $this->actingAs($bagian)
-            ->postJson(route('universal.approval.approve', $dokumen));
+        $this->actingAs($user)
+            ->postJson("/universal-approval/{$dokumen->id}/approve")
+            ->assertNotFound();
 
-        // Lolos auth (tak ada role gate) tapi ditahan cek pending -> 422, tidak sukses.
-        $response->assertStatus(422);
-        $response->assertJson(['success' => false]);
-
-        $dokumen->refresh();
-        $this->assertTrue($dokumen->isPendingForRole('perpajakan'));
+        $this->actingAs($user)
+            ->postJson("/universal-approval/{$dokumen->id}/reject", ['reason' => 'x'])
+            ->assertNotFound();
     }
 
     // =====================================================================
@@ -233,10 +233,10 @@ class InboxApprovalAuthorizationTest extends TestCase
     // AKSES HALAMAN INBOX (index)
     // =====================================================================
 
-    /** Role workflow bisa membuka inbox index. */
+    /** Hanya role kerja hilir yang punya inbox (operator/admin TIDAK, per PL-1/PL-2). */
     public function test_inbox_index_dapat_diakses_role_workflow(): void
     {
-        foreach (['operator', 'team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'] as $role) {
+        foreach (['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'] as $role) {
             $user = $this->buatUser($role);
 
             $this->actingAs($user)
@@ -245,10 +245,15 @@ class InboxApprovalAuthorizationTest extends TestCase
         }
     }
 
-    /** Role non-workflow ditolak middleware (redirect ke /login). */
-    public function test_inbox_index_ditolak_untuk_role_non_workflow(): void
+    /**
+     * Role tanpa inbox ditolak middleware (redirect ke /login).
+     * - operator: bagian tak lagi kirim dokumen → operator tak butuh inbox (PL-2).
+     * - admin: KABAG god-view, bukan pekerja → tak punya inbox (PL-1).
+     * - bagian/owner/programmer: memang di luar alur inbox.
+     */
+    public function test_inbox_index_ditolak_untuk_role_tanpa_inbox(): void
     {
-        foreach (['bagian_sdm', 'owner', 'programmer'] as $role) {
+        foreach (['operator', 'admin', 'bagian_sdm', 'owner', 'programmer'] as $role) {
             $user = $this->buatUser($role);
 
             $this->actingAs($user)

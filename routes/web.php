@@ -473,14 +473,10 @@ Route::middleware(['auth', 'web'])->prefix('api/documents')->name('api.documents
         ->name('activity.stop');
 });
 
-// Universal Approval Routes - Untuk semua user kecuali Operator - dengan auth
+// Universal Approval Routes - hanya detail + notifikasi (dipakai frontend).
+// Route approve/reject lama (menunjuk InboxController, tanpa gerbang role) DIHAPUS
+// 2026-07-05 (PL-3): duplikat mati tanpa pemanggil; approve/reject resmi via /inbox/*.
 Route::middleware(['auth'])->group(function () {
-    Route::post('/universal-approval/{dokumen}/approve', [\App\Http\Controllers\InboxController::class, 'approve'])
-        ->name('universal.approval.approve');
-
-    Route::post('/universal-approval/{dokumen}/reject', [\App\Http\Controllers\InboxController::class, 'reject'])
-        ->name('universal.approval.reject');
-
     Route::get('/universal-approval/{dokumen}/detail', [\App\Http\Controllers\UniversalApprovalController::class, 'getDetail'])
         ->name('universal.approval.detail');
 
@@ -488,8 +484,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('universal.approval.notifications');
 });
 
-// Inbox Routes - Untuk Operator, Team Verifikasi, Perpajakan, Akutansi, Pembayaran, Verifikasi
-Route::middleware(['auth', 'role:operator,team_verifikasi,verifikasi,perpajakan,akutansi,pembayaran,admin'])->group(function () {
+// Inbox Routes - Untuk Team Verifikasi, Perpajakan, Akutansi, Pembayaran (+ alias Verifikasi).
+// operator & admin DIBUANG 2026-07-05: bagian tak lagi kirim dokumen → operator tak butuh
+// inbox (PL-2); admin = KABAG god-view, bukan pekerja inbox (PL-1).
+Route::middleware(['auth', 'role:team_verifikasi,verifikasi,perpajakan,akutansi,pembayaran'])->group(function () {
     Route::get('/inbox', [\App\Http\Controllers\InboxController::class, 'index'])->name('inbox.index');
     Route::get('/inbox/check-new', [\App\Http\Controllers\InboxController::class, 'checkNewDocuments'])->name('inbox.checkNew');
     Route::get('/inbox/history', [\App\Http\Controllers\InboxController::class, 'history'])->name('inbox.history');
