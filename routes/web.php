@@ -506,14 +506,10 @@ Route::get('/returns/pembayaran', [DashboardPembayaranController::class, 'pengem
 
 // Backward compatibility routes removed — old Pembayaran URLs (Phase 2 cleanup)
 
-// Dashboard Pembayaran Routes — impor/CSV khusus role Pembayaran & Admin
-Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('dashboard-pembayaran')->name('dashboard-pembayaran.')->group(function () {
-    Route::get('/', [DashboardPembayaranController::class, 'index'])->name('index');
-    Route::get('/import', [DashboardPembayaranController::class, 'showImportForm'])->name('import');
-    Route::post('/import-csv', [DashboardPembayaranController::class, 'importCsv'])->name('import-csv');
-    Route::get('/download-csv-template', [DashboardPembayaranController::class, 'downloadCsvTemplate'])->name('download-csv-template');
-    Route::post('/check-updates', [DashboardPembayaranController::class, 'checkUpdates']);
-});
+// Grup route dashboard-pembayaran DIHAPUS 2026-07-05 (dead-code): duplikat mati
+// dari halaman import CSV pembayaran (view pembayaranNEW/importCsv) yang sudah
+// digantikan /csv-import (CsvImportController). Method index & checkUpdates yang
+// hidup tetap dilayani route documents.pembayaran.index & api check-updates.
 
 // CSV Import Routes - Pembayaran
 Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('csv-import')->name('csv.import.')->group(function () {
