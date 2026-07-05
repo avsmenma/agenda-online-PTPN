@@ -81,6 +81,16 @@ if (typeof Chart !== 'undefined') {
 /* ── 2-COL GRID ── */
 .cb-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
 @media(max-width:900px){.cb-grid-2{grid-template-columns:1fr}}
+/* ── Tab bar (6 card info → 6 tab) ── */
+.cb-tabs{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;background:#fff;border:1px solid #e6e9ef;border-radius:14px;padding:6px;margin-bottom:16px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.cb-tabs::-webkit-scrollbar{height:6px}
+.cb-tabs::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:999px}
+.cb-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border:none;background:transparent;border-radius:10px;font-family:inherit;font-weight:700;font-size:12.5px;color:#64748b;cursor:pointer;white-space:nowrap;transition:background .15s ease,color .15s ease}
+.cb-tab:hover{background:#f1f5f9;color:#0f766e}
+.cb-tab.active{background:linear-gradient(135deg,#0f766e 0%,#059669 100%);color:#fff;box-shadow:0 2px 8px rgba(5,150,105,.25)}
+.cb-tabpanel{display:none}
+.cb-tabpanel.active{display:block;animation:cbTabFade .25s ease}
+@keyframes cbTabFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .cb-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:18px}
 @media(max-width:900px){.cb-grid-3{grid-template-columns:1fr}}
 
@@ -545,11 +555,20 @@ function rupiahFull(float $n): string {
     </div>
   </div>
 
-  {{-- ── ROW 2: CHART + SALDO REKENING ── --}}
-  <div class="cb-grid-2" style="animation-delay:.25s">
+  {{-- ── TAB BAR (6 card info → 6 tab) ── --}}
+  <div class="cb-tabs" role="tablist" aria-label="Informasi Cash Bank">
+    <button type="button" class="cb-tab active" data-cbtab="tren">Tren</button>
+    <button type="button" class="cb-tab" data-cbtab="saldo-bank">Saldo Bank</button>
+    <button type="button" class="cb-tab" data-cbtab="komposisi">Komposisi Penerimaan</button>
+    <button type="button" class="cb-tab" data-cbtab="rencana">Rencana Pengeluaran</button>
+    <button type="button" class="cb-tab" data-cbtab="penerimaan">Penerimaan Terbaru</button>
+    <button type="button" class="cb-tab" data-cbtab="saldo-va">Saldo VA</button>
+  </div>
 
-    {{-- Chart: Tren Rencana vs Realisasi --}}
-    <div class="cb-card" style="animation-delay:.28s">
+  <div class="cb-tabpanels">
+
+    {{-- TAB: Tren Rencana vs Realisasi --}}
+    <div class="cb-card cb-tabpanel active" data-cbpanel="tren">
       <div class="cb-card-header">
         <div class="cb-card-title" style="color:#0d9488">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -563,8 +582,8 @@ function rupiahFull(float $n): string {
       </div>
     </div>
 
-    {{-- Saldo per Rekening --}}
-    <div class="cb-card" style="animation-delay:.32s">
+    {{-- TAB: Saldo Rekening Bank --}}
+    <div class="cb-card cb-tabpanel" data-cbpanel="saldo-bank">
       <div class="cb-card-header">
         <div class="cb-card-title" style="color:var(--accent2)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -596,13 +615,9 @@ function rupiahFull(float $n): string {
         <div class="cb-empty">Belum ada data rekening</div>
       @endif
     </div>
-  </div>
 
-  {{-- ── ROW 3: PENERIMAAN per KOMODITAS (Donut Chart Interaktif) ── --}}
-  <div class="cb-grid-2" style="margin-bottom:18px">
-
-    {{-- Donut Chart Interaktif: Komposisi Penerimaan --}}
-    <div class="cb-card" style="animation-delay:.36s">
+    {{-- TAB: Komposisi Penerimaan per Komoditas --}}
+    <div class="cb-card cb-tabpanel" data-cbpanel="komposisi">
       <div class="cb-card-header">
         <div class="cb-card-title" style="color:var(--green)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -655,8 +670,8 @@ function rupiahFull(float $n): string {
       </div>
     </div>
 
-    {{-- Chart Bar: Rencana Pengeluaran per Kategori --}}
-    <div class="cb-card expense-plan-card" style="animation-delay:.4s">
+    {{-- TAB: Rencana Pengeluaran per Kategori --}}
+    <div class="cb-card expense-plan-card cb-tabpanel" data-cbpanel="rencana">
       <div class="cb-card-header">
         <div class="cb-card-title" style="color:#7c3aed">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -740,13 +755,9 @@ function rupiahFull(float $n): string {
         @endif
       </div>
     </div>
-  </div>
 
-  {{-- ── ROW 4: TABEL PENERIMAAN TERBARU + SALDO VA ── --}}
-  <div class="cb-grid-2" style="margin-bottom:0">
-
-    {{-- Penerimaan Terbaru --}}
-    <div class="cb-card" style="animation-delay:.44s">
+    {{-- TAB: Penerimaan Terbaru --}}
+    <div class="cb-card cb-tabpanel" data-cbpanel="penerimaan">
       <div class="cb-card-header">
         <div class="cb-card-title">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#0d9488">
@@ -790,8 +801,8 @@ function rupiahFull(float $n): string {
       </div>
     </div>
 
-    {{-- Saldo Virtual Account per Kebun/Unit --}}
-    <div class="cb-card" style="animation-delay:.48s">
+    {{-- TAB: Saldo Virtual Account per Kebun / Unit --}}
+    <div class="cb-card cb-tabpanel" data-cbpanel="saldo-va">
       <div class="cb-card-header">
         <div class="cb-card-title" style="color:var(--accent2)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1229,6 +1240,22 @@ if (typeof Chart === 'undefined') {
 }); // End DOMContentLoaded
 
 console.log('📊 Chart script fully loaded');
+
+// ── TAB BAR (6 card info) — toggle panel + resize chart saat tab dibuka ──
+(function () {
+  const tabs = document.querySelectorAll('.cb-tab');
+  const panels = document.querySelectorAll('.cb-tabpanel');
+  if (!tabs.length) return;
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      const key = tab.getAttribute('data-cbtab');
+      tabs.forEach(t => t.classList.toggle('active', t === tab));
+      panels.forEach(p => p.classList.toggle('active', p.getAttribute('data-cbpanel') === key));
+      // Chart.js render 0px di tab tersembunyi → paksa hitung ulang saat tab dibuka.
+      setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 30);
+    });
+  });
+})();
 </script>
 @endpush
 
