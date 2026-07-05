@@ -4738,7 +4738,7 @@
         </a>
         @php
           $isRekapanKeterlambatanActive = request()->is('*rekapan-keterlambatan*') ||
-            request()->routeIs('owner.rekapan-keterlambatan*') ||
+            request()->routeIs('rekapan-keterlambatan*') ||
             request()->routeIs('rekapan-keterlambatan.*') ||
             request()->is('*owner/analytics*') ||
             request()->routeIs('analytics.index');

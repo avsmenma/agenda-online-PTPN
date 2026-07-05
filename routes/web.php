@@ -240,14 +240,8 @@ Route::get('owner/api/trend-chart', [OwnerDashboardController::class, 'getTrendC
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.api.trend-chart');
 
-// Tracking Dokumen routes - Available for all roles
-Route::get('tracking-dokumen', [OwnerDashboardController::class, 'trackingDokumen'])
-    ->middleware('auth')
-    ->name('tracking.dokumen');
-
-Route::get('owner/rekapan-keterlambatan', fn () => redirect()->route('rekapan-keterlambatan.index'))
-    ->middleware('auth', 'role:admin,owner')
-    ->name('owner.rekapan-keterlambatan');
+// (dihapus 2026-07-05, dead-code) route tracking-dokumen + owner/rekapan-keterlambatan
+// (redirect duplikat) — lihat rekapan-keterlambatan.* tanpa prefix.
 
 Route::get('rekapan-keterlambatan/{roleCode}', [OwnerDashboardController::class, 'rekapanKeterlambatanByRole'])
     ->middleware('auth')
@@ -278,30 +272,19 @@ Route::get('rekapan-keterlambatan-export/{roleCode}', [OwnerDashboardController:
     ->where('roleCode', 'team_verifikasi|perpajakan|akutansi|pembayaran')
     ->name('rekapan-keterlambatan.export');
 
-// Rekapan keterlambatan per role
-Route::get('owner/rekapan-keterlambatan/{roleCode}', [OwnerDashboardController::class, 'rekapanKeterlambatanByRole'])
-    ->middleware('auth')
-    ->where('roleCode', 'operator|team_verifikasi|perpajakan|akutansi|pembayaran')
-    ->name('owner.rekapan-keterlambatan.role');
-
-// Export rekapan keterlambatan per role to Excel
-Route::get('owner/rekapan-keterlambatan-export/{roleCode}', [OwnerDashboardController::class, 'exportRekapanKeterlambatan'])
-    ->middleware('auth', 'role:admin,owner')
-    ->where('roleCode', 'team_verifikasi|perpajakan|akutansi|pembayaran')
-    ->name('owner.rekapan-keterlambatan.export');
+// (dihapus 2026-07-05, dead-code) owner/rekapan-keterlambatan/{role} + export —
+// duplikat dari rekapan-keterlambatan.role & .export (tanpa prefix), tak dirujuk.
 
 // Analytics Dashboard - merged with Rekapan Keterlambatan (redirect for backward compat)
-Route::get('owner/analytics', fn() => redirect()->route('owner.rekapan-keterlambatan'))
+Route::get('owner/analytics', fn() => redirect()->route('rekapan-keterlambatan.index'))
     ->middleware('auth', 'role:admin,owner')
     ->name('analytics.index');
 Route::get('owner/analytics/data', [\App\Http\Controllers\AnalyticsController::class, 'getAnalyticsData'])
     ->middleware('auth', 'role:admin,owner')
     ->name('analytics.data');
 
-// Admin shortcut to Owner Dashboard
-Route::get('admin/monitoring', [OwnerDashboardController::class, 'index'])
-    ->middleware('auth', 'role:admin')
-    ->name('admin.monitoring');
+// (dihapus 2026-07-05, dead-code) admin/monitoring — duplikat /owner/dokumen
+// (OwnerDashboardController@index), tak ditaut di mana pun.
 
 // Urgency Alert Routes (Admin/Owner only for send/reset)
 Route::post('owner/dokumen/{id}/urgency', [OwnerDashboardController::class, 'sendUrgency'])
@@ -721,9 +704,6 @@ Route::middleware(['auth', 'role:owner,admin'])
     ->group(function () {
         Route::get('/owner/programmer-logs', [\App\Http\Controllers\ProgrammerLogController::class, 'ownerIndex'])
             ->name('owner.programmer-logs');
-
-        Route::get('/owner/notification-logs', [\App\Http\Controllers\WhatsAppNotificationLogController::class, 'index'])
-            ->name('owner.notification-logs');
     });
 
 // =============================================================================

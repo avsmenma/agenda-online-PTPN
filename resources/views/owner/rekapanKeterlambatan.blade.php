@@ -208,7 +208,7 @@ tbody td.doc-cell{text-align:left}
     $isRoleScoped = $isRoleScoped ?? false;
     $roleCode = $roleCode ?? null;
     $roleScopedLabel = $roleScopedLabel ?? null;
-    $rekapanFilterUrl = $rekapanFilterUrl ?? route('owner.rekapan-keterlambatan');
+    $rekapanFilterUrl = $rekapanFilterUrl ?? route('rekapan-keterlambatan.index');
     $rekapanExportUrl = $rekapanExportUrl ?? null;
   @endphp
 
