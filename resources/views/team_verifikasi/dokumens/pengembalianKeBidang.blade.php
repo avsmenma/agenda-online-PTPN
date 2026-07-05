@@ -1072,29 +1072,6 @@
       // Jika type info atau dokumen masuk/reject, tetap permanen
     }
 
-    // Auto-refresh notification badge
-    function updateNotificationBadge() {
-      fetch('/pengembalian-dokumens-ke-bagian/stats')
-        .then(response => response.json())
-        .then(data => {
-          const badge = document.getElementById('pengembalian-ke-bagian-badge');
-          if (badge && data.total > 0) {
-            badge.textContent = data.total;
-            badge.style.display = 'inline-flex';
-          } else if (badge) {
-            badge.style.display = 'none';
-          }
-        })
-        .catch(error => console.log('Error updating badge:', error));
-    }
-
-    // Update badge on page load
-    document.addEventListener('DOMContentLoaded', function () {
-      updateNotificationBadge();
-
-      // Update badge every 30 seconds
-      setInterval(updateNotificationBadge, 30000);
-    });
   </script>
 
 @endsection
