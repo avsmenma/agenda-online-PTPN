@@ -143,6 +143,8 @@
   const IE_JENIS_BAYAR = @json($ieJenisPembayaranList ?? []);
 
   const BULAN_LIST = ['Januari','Februari','Maret','April','May','Juni','July','Agustus','September','Oktober','November','Desember'];
+  // Daftar Bagian (kode + nama) — sumber DB Bagian, dipakai untuk dropdown kolom "bagian".
+  const IE_BAGIAN  = @json($ieBagianList ?? \App\Models\Bagian::active()->ordered()->get(['kode','nama']) ?? []);
 
   const FIELD_TYPE = {
     nomor_agenda        : 'text',
@@ -159,7 +161,7 @@
     tanggal_selesai_verifikasi_pajak: 'date',
     tanggal_dibayar     : 'date',
     kebun               : 'text',
-    bagian              : 'text',
+    bagian              : 'select_bagian',
     nama_pengirim       : 'text',
     no_berita_acara     : 'text',
     no_spk              : 'text',
@@ -460,6 +462,7 @@
     else if (field === 'select_item')     options = filterItemOptions(cell).map(k => ({ value: k.nama_item_sub_kriteria, label: k.nama_item_sub_kriteria }));
     else if (field === 'select_jenis')    options = IE_JENIS_BAYAR.map(k => ({ value: k.nama_jenis_pembayaran, label: k.nama_jenis_pembayaran }));
     else if (field === 'select_bulan')    options = BULAN_LIST.map(b  => ({ value: b, label: b }));
+    else if (field === 'select_bagian')   options = IE_BAGIAN.map(b   => ({ value: b.kode, label: b.nama ? (b.kode + ' — ' + b.nama) : b.kode }));
     const empty = document.createElement('option');
     empty.value = ''; empty.textContent = '-- Pilih --';
     sel.appendChild(empty);
