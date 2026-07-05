@@ -774,23 +774,9 @@ class TeamVerifikasiController extends Controller
         return view('team_verifikasi.dokumens.daftarDokumen', $data);
     }
 
-    public function createDokumen()
-    {
-        $data = array(
-            "title" => "Tambah Dokumen Team Verifikasi",
-            "module" => "team_verifikasi",
-            "menuDashboard" => "",
-            'menuDokumen' => 'Active',
-            'menuTambahDokumen' => 'Active',
-        );
-        return view('team_verifikasi.dokumens.tambahDokumen', $data);
-    }
+    
 
-    public function storeDokumen(Request $request)
-    {
-        // Implementation for storing document
-        return redirect()->route('documents.verifikasi.index')->with('success', 'Dokumen berhasil ditambahkan');
-    }
+    
 
     public function editDokumen(Dokumen $dokumen)
     {
@@ -1399,11 +1385,7 @@ class TeamVerifikasiController extends Controller
         return $html;
     }
 
-    public function destroyDokumen($id)
-    {
-        // Implementation for deleting document
-        return redirect()->route('documents.verifikasi.index')->with('success', 'Dokumen berhasil dihapus');
-    }
+    
 
     public function pengembalian(Request $request)
     {
