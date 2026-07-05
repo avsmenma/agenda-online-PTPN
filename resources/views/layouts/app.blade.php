@@ -4521,7 +4521,6 @@
         <div class="owner-sidebar-label">Menu</div>
         @if($isOperatorShell)
         @php
-          $isOperatorInboxActive = request()->is('inbox') || request()->routeIs('inbox.*');
           $isOperatorDocumentsActive = request()->routeIs('documents.index') ||
             request()->routeIs('documents.edit') ||
             request()->is('documents') ||
@@ -4529,24 +4528,8 @@
           $isOperatorCreateActive = request()->routeIs('documents.create') || request()->is('documents/create');
           $isOperatorImportActive = request()->routeIs('documents.import.*') || request()->is('documents/import*');
           $isOperatorReportActive = request()->routeIs('reports.analytics') || request()->is('reports/analytics');
-          try {
-            $operatorInboxCount = \App\Models\Dokumen::where('inbox_approval_for', 'operator')
-              ->where('inbox_approval_status', 'pending')
-              ->count();
-          } catch (\Exception $e) {
-            $operatorInboxCount = 0;
-          }
         @endphp
-        <a href="{{ url('/inbox') }}" class="owner-nav-item {{ $isOperatorInboxActive ? 'active' : '' }}" title="Inbox">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
-            <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
-            <path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/>
-          </svg>
-          Inbox
-          @if($operatorInboxCount > 0)
-            <span class="menu-notification-badge" style="margin-left:auto;">{{ $operatorInboxCount }}</span>
-          @endif
-        </a>
+        {{-- Inbox operator DIHAPUS 2026-07-05 (PL-2): bagian tak lagi kirim dokumen → operator tak butuh inbox --}}
         <a href="{{ route('documents.index') }}" class="owner-nav-item {{ $isOperatorDocumentsActive ? 'active' : '' }}" title="Daftar Dokumen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
