@@ -105,6 +105,9 @@ table.cb-table tbody tr{border-bottom:1px solid var(--border);transition:backgro
 table.cb-table tbody tr:last-child{border-bottom:none}
 table.cb-table tbody tr:hover{background:#fafbfd}
 table.cb-table tbody td{padding:10px 14px;font-size:12px;vertical-align:middle}
+/* Scroll vertikal utk tabel panjang (Penerimaan Terbaru & Saldo VA) + header sticky */
+.cb-table-scroll{max-height:440px;overflow:auto}
+.cb-table-scroll table.cb-table thead th{position:sticky;top:0;z-index:2;box-shadow:0 1px 0 var(--border)}
 
 /* ── BADGE ── */
 .cb-badge{
@@ -767,7 +770,7 @@ function rupiahFull(float $n): string {
         </div>
         <span style="font-size:11px;color:var(--muted)">10 transaksi terakhir</span>
       </div>
-      <div style="overflow-x:auto">
+      <div class="cb-table-scroll">
         <table class="cb-table">
           <thead>
             <tr>
@@ -812,7 +815,7 @@ function rupiahFull(float $n): string {
           Saldo Virtual Account per Kebun / Unit
         </div>
       </div>
-      <div style="overflow-x:auto">
+      <div class="cb-table-scroll">
         <table class="cb-table">
           <thead>
             <tr>
