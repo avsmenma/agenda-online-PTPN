@@ -13,8 +13,18 @@
   };
 
   $waitLabel = function ($hours) {
-      if ($hours < 24) return $hours . ' jam';
-      return floor($hours / 24) . ' hari';
+      $hours = (float) $hours;
+      if ($hours < 1) {
+          return max(1, (int) round($hours * 60)) . ' menit';
+      }
+      if ($hours < 24) {
+          $h = (int) floor($hours);
+          $m = (int) round(($hours - $h) * 60);
+          return $m > 0 ? ($h . ' jam ' . $m . ' menit') : ($h . ' jam');
+      }
+      $days = (int) floor($hours / 24);
+      $h = (int) round($hours - $days * 24);
+      return $h > 0 ? ($days . ' hari ' . $h . ' jam') : ($days . ' hari');
   };
   $waitClass = function ($hours) {
       if ($hours < 24) return 'wd-badge--safe';
@@ -273,7 +283,8 @@
     color: #94a3b8; padding: 0.55rem 0.7rem; border-bottom: 1px solid #e8eef4; white-space: nowrap; }
   .wd-table tbody td { padding: 0.7rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #334155; }
   .wd-table tbody tr:hover { background: #f8fafc; }
-  .wd-num { text-align: right; white-space: nowrap; }
+  .wd-num { text-align: center; white-space: nowrap; }
+  .wd-table thead th.wd-num { text-align: center; }
   .wd-muted { color: #94a3b8; font-size: 0.75rem; }
   .wd-agenda { font-weight: 700; color: #083E40; }
   .wd-uraian { font-weight: 600; color: #0f172a; }
