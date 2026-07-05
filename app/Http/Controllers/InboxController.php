@@ -26,7 +26,7 @@ class InboxController extends Controller
 
             // Hanya allow Team Verifikasi/Verifikasi, Perpajakan, Akutansi, Pembayaran.
             // operator dibuang 2026-07-05 (PL-2): operator tak lagi punya inbox.
-            $allowedRoles = ['team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+            $allowedRoles = ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
             if (!$userRole || !in_array($userRole, $allowedRoles)) {
                 abort(403, 'Unauthorized access - Halaman ini hanya untuk Team Verifikasi, Perpajakan, Akutansi, dan Pembayaran');
             }
@@ -63,16 +63,8 @@ class InboxController extends Controller
                 ])
                 ->count();
 
-            // Normalize module untuk layout
-            $moduleMap = [
-                'operator' => 'operator',
-                'team_verifikasi' => 'team_verifikasi',
-                'team_verifikasi' => 'team_verifikasi',
-                'Perpajakan' => 'perpajakan',
-                'Akutansi' => 'akutansi',
-                'Pembayaran' => 'pembayaran',
-            ];
-            $normalizedModule = $moduleMap[$userRole] ?? strtolower($userRole);
+            // Nama module = kode peran kanonik (sudah lowercase dari getUserRole()).
+            $normalizedModule = strtolower($userRole);
 
             // Hitung dokumen baru (masuk dalam 24 jam terakhir)
             $newDocumentsCount = \App\Models\DokumenStatus::whereIn('role_code', $roleCodes)
@@ -122,7 +114,7 @@ class InboxController extends Controller
             $userRole = $this->getUserRole($user);
 
             // Hanya allow Team Verifikasi/Verifikasi, Perpajakan, Akutansi, Pembayaran
-            $allowedRoles = ['team_verifikasi', 'team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'];
+            $allowedRoles = ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
             if (!$userRole || !in_array($userRole, $allowedRoles)) {
                 return response()->json([
                     'success' => false,
@@ -293,15 +285,8 @@ class InboxController extends Controller
                     ->with('error', 'Dokumen ini tidak tersedia untuk approval atau sudah diproses.');
             }
 
-            // Normalize module untuk layout (harus lowercase untuk match statement)
-            $moduleMap = [
-                'team_verifikasi' => 'team_verifikasi',
-                'team_verifikasi' => 'team_verifikasi',
-                'Perpajakan' => 'perpajakan',
-                'Akutansi' => 'akutansi',
-                'Pembayaran' => 'pembayaran',
-            ];
-            $normalizedModule = $moduleMap[$userRole] ?? strtolower($userRole);
+            // Nama module = kode peran kanonik (sudah lowercase dari getUserRole()).
+            $normalizedModule = strtolower($userRole);
 
             // Load activity logs untuk getSenderDisplayName
             $dokumen->load('activityLogs');
@@ -565,79 +550,17 @@ class InboxController extends Controller
             return null;
         }
 
-        // Prioritize role field over name field
+        // Kembalikan KODE PERAN KANONIK (lowercase) lewat normalizer terpusat.
+        // Menggantikan peta campur-case lama (Perpajakan/Akutansi/Pembayaran +
+        // alias ibu b/ibu yuni/team verifikasi). Semua call-site sudah men-strtolower
+        // nilai ini sebelum cek DB, jadi hasilnya identik — hanya lebih konsisten.
+        // Prioritaskan kolom role; fallback ke name bila role tak ada (praktis mati).
         if (isset($user->role)) {
-            $role = $user->role;
-            // Map role ke format yang sesuai untuk inbox (must match enum: Operator, Team Verifikasi/Verifikasi, Perpajakan, Akutansi)
-            $roleMap = [
-                // Operator / Ibu Tarapul mappings
-                'operator' => 'operator',
-                'operator' => 'operator',
-                'Operator' => 'operator',
-                'Operator' => 'operator',
-                'Operator' => 'operator',
-                'Operator' => 'operator',
-                'operator' => 'operator',
-                'operator' => 'operator',
-                // Team Verifikasi / Verifikasi mappings
-                'team_verifikasi' => 'team_verifikasi',
-                'team_verifikasi' => 'team_verifikasi',
-                'Ibu B' => 'team_verifikasi',
-                'ibu B' => 'team_verifikasi',
-                'Ibu Yuni' => 'team_verifikasi',
-                'ibu yuni' => 'team_verifikasi',
-                'team_verifikasi' => 'team_verifikasi',
-                'team_verifikasi' => 'team_verifikasi',
-                'Team Verifikasi' => 'team_verifikasi',
-                'team verifikasi' => 'team_verifikasi',
-                'perpajakan' => 'Perpajakan',
-                'Perpajakan' => 'Perpajakan',
-                'akutansi' => 'Akutansi',
-                'Akutansi' => 'Akutansi',
-                'pembayaran' => 'Pembayaran',
-                'Pembayaran' => 'Pembayaran',
-            ];
-            $mappedRole = $roleMap[$role] ?? $role;
-
-            \Log::info('getUserRole: Mapped from role field', [
-                'user_id' => $user->id,
-                'original_role' => $role,
-                'mapped_role' => $mappedRole,
-            ]);
-
-            return $mappedRole;
+            return \App\Support\Role::normalize($user->role);
         }
 
-        // Fallback ke field name
         if (isset($user->name)) {
-            $name = $user->name;
-            $nameToRole = [
-                'Operator' => 'operator',
-                'operator' => 'operator',
-                'operator' => 'operator',
-                'Operator' => 'operator',
-                'Operator' => 'operator',
-                'team_verifikasi' => 'team_verifikasi',
-                'Ibu B' => 'team_verifikasi',
-                'team_verifikasi' => 'team_verifikasi',
-                'ibu B' => 'team_verifikasi',
-                'Ibu Yuni' => 'team_verifikasi',
-                'ibu yuni' => 'team_verifikasi',
-                'Perpajakan' => 'Perpajakan',
-                'perpajakan' => 'Perpajakan',
-                'Akutansi' => 'Akutansi',
-                'akutansi' => 'Akutansi',
-                'Pembayaran' => 'Pembayaran'
-            ];
-            $mappedRole = $nameToRole[$name] ?? null;
-
-            \Log::info('getUserRole: Mapped from name field', [
-                'user_id' => $user->id,
-                'user_name' => $name,
-                'mapped_role' => $mappedRole,
-            ]);
-
-            return $mappedRole;
+            return \App\Support\Role::normalize($user->name);
         }
 
         \Log::warning('getUserRole: No role or name field found', [
@@ -653,19 +576,10 @@ class InboxController extends Controller
      */
     private function getRoleCodes($userRole)
     {
-        $roleCode = strtolower($userRole);
-
-        // Operator should also match 'operator' for backward compatibility
-        if ($roleCode === 'operator' || $roleCode === 'operator') {
-            return ['operator', 'operator'];
-        }
-
-        // Verifikasi should also match 'team_verifikasi' for backward compatibility
-        if ($roleCode === 'team_verifikasi' || $roleCode === 'team_verifikasi') {
-            return ['team_verifikasi', 'team_verifikasi'];
-        }
-
-        return [$roleCode];
+        // getUserRole() sudah kanonik-lowercase; role_code di DB juga disimpan
+        // lowercase (verifikasi dinormalkan ke team_verifikasi saat set status).
+        // Cabang lama hanya menghasilkan duplikat yang runtuh sendiri di whereIn.
+        return [strtolower($userRole)];
     }
 
     /**
@@ -682,10 +596,10 @@ class InboxController extends Controller
                 'user_id' => $user->id ?? null,
                 'user_role_raw' => $user->role ?? null,
                 'user_role_mapped' => $userRole,
-                'allowed_roles' => ['team_verifikasi', 'team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran']
+                'allowed_roles' => ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran']
             ]);
 
-            if (!$userRole || !in_array($userRole, ['team_verifikasi', 'team_verifikasi', 'Perpajakan', 'Akutansi', 'Pembayaran'])) {
+            if (!$userRole || !in_array($userRole, ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'])) {
                 Log::warning('Unauthorized access to checkNewDocuments', [
                     'user_role' => $userRole,
                     'user_role_raw' => $user->role ?? null
