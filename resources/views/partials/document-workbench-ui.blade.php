@@ -531,12 +531,12 @@
           fields: [
             { label: 'Nomor Agenda', value: clean(row.querySelector('.owner-docs-docno')?.textContent), important: true },
             { label: 'Uraian SPP', value: clean(row.querySelector('.owner-docs-docname')?.textContent), wide: true },
-            { label: 'Nilai', value: textForCell(row.children[1]), money: true },
-            { label: 'Dari', value: textForCell(row.children[2]) },
-            { label: 'Umur Dokumen', value: textForCell(row.children[3]) },
-            { label: 'Status Pembayaran', value: textForCell(row.children[4]) },
+            { label: 'Nilai', value: textForCell(row.querySelector('[data-label="Nilai"]')), money: true },
+            { label: 'Dari', value: textForCell(row.querySelector('[data-label="Dari"]')) },
+            { label: 'Umur Dokumen', value: textForCell(row.querySelector('[data-label="Umur Dokumen"]')) },
+            { label: 'Status Pembayaran', value: textForCell(row.querySelector('[data-label="Status Pembayaran"]')) },
             { label: 'Pengurus Dokumen', value: handlerValue },
-            { label: 'Durasi Peran', value: textForCell(row.children[6]) },
+            { label: 'Durasi Peran', value: textForCell(row.querySelector('[data-label="Durasi Peran"]')) },
             { label: 'Tanggal Masuk', value: clean(Array.from(row.querySelectorAll('.owner-docs-payee')).find((el) => el.textContent.includes('Tanggal masuk'))?.textContent.replace('Tanggal masuk:', '')) }
           ].filter((field) => field.value)
         };
