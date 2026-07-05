@@ -533,6 +533,7 @@
             { label: 'Uraian SPP', value: clean(row.querySelector('.owner-docs-docname')?.textContent), wide: true },
             { label: 'Nilai', value: textForCell(row.querySelector('[data-label="Nilai"]')), money: true },
             { label: 'Dari', value: textForCell(row.querySelector('[data-label="Dari"]')) },
+            { label: 'Dibayar Kepada', value: clean(Array.from(row.querySelectorAll('.owner-docs-payee')).find((el) => el.textContent.includes('Dibayar kepada'))?.textContent.replace('Dibayar kepada:', '')), wide: true },
             { label: 'Umur Dokumen', value: textForCell(row.querySelector('[data-label="Umur Dokumen"]')) },
             { label: 'Status Pembayaran', value: textForCell(row.querySelector('[data-label="Status Pembayaran"]')) },
             { label: 'Pengurus Dokumen', value: handlerValue },
@@ -572,7 +573,7 @@
 
         const wanted = [
           'Nomor Agenda', 'Nomor SPP', 'Uraian SPP', 'Nilai', 'Nilai Rupiah',
-          'Dari', 'Bagian', 'Status Dokumen', 'Status Pembayaran',
+          'Dari', 'Bagian', 'Dibayar Kepada', 'Status Dokumen', 'Status Pembayaran',
           'Pengurus Dokumen', 'Tanggal Masuk', 'Durasi Peran', 'Umur Dokumen'
         ];
         const used = new Set();
