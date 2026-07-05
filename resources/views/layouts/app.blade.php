@@ -7919,14 +7919,21 @@ document.addEventListener('DOMContentLoaded', function() {
     let el = btn;
     for (let i = 0; i < 15; i++) {
       el = el.parentElement;
-      if (!el) break;
+      if (!el || el === document.body) break;
       if (
         el.classList.contains('content') ||
         el.classList.contains('main-content') ||
         el.tagName === 'MAIN'
       ) return el;
     }
-    return document.querySelector('.content') || null;
+    // Fallback: ancestor teratas dari tombol yang merupakan anak langsung <body>.
+    // Menjamin area yang dikembalikan MEMUAT tombol — cegah layar putih (jika area
+    // salah/tak memuat tombol, hideAbove bisa menyembunyikan seluruh isi halaman).
+    el = btn;
+    while (el && el.parentElement && el.parentElement !== document.body) {
+      el = el.parentElement;
+    }
+    return el || document.querySelector('.content') || null;
   }
 
   // ── Direct child of contentArea that wraps the filter row ─────
@@ -8034,7 +8041,9 @@ document.addEventListener('DOMContentLoaded', function() {
     fsArea = findContentArea(fsBtn);
     if (fsArea) {
       const anchor = findFilterAnchor(fsBtn, fsArea);
-      if (anchor) hideAbove(anchor, fsArea);
+      // Hanya sembunyikan elemen DI ATAS anchor bila anchor benar-benar anak
+      // langsung dari fsArea — jika tidak, lewati agar isi tabel tak ikut hilang.
+      if (anchor && anchor.parentElement === fsArea && anchor !== fsArea) hideAbove(anchor, fsArea);
       lockContentArea(fsArea);          // ← inline fixed positioning
     }
 
