@@ -152,10 +152,10 @@ Route::get('/api/documents/pembayaran/check-updates', [DashboardPembayaranContro
 // Backward compatibility routes removed — old check-updates routes were redundant (Phase 2 cleanup)
 
 
-// Dashboard routes with role protection - Professional URLs
-Route::get('dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth', 'role:admin,operator')
-    ->name('dashboard.main');
+// Dashboard operator lama (DashboardController@index → view operator.dashboard
+// "Dokumen Terbaru") DIHAPUS 2026-07-05: halaman yatim, operator kini mendarat
+// di /documents. URL /dashboard kini ditangani redirect LoginController::dashboard
+// (→ getDashboardRoute per role).
 
 // Dashboard Team Verifikasi
 Route::get('dashboard/verifikasi', [TeamVerifikasiController::class, 'dashboard'])
