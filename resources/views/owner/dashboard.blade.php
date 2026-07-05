@@ -673,21 +673,21 @@
     overflow-wrap: normal;
   }
 
-  .owner-docs-table th:nth-child(n+4),
-  .owner-docs-table td:nth-child(n+4) {
+  .owner-docs-table th:nth-child(n+5),
+  .owner-docs-table td:nth-child(n+5) {
     border-left: 1px solid var(--od-border-soft);
   }
 
-  .owner-docs-table th:nth-child(4),
-  .owner-docs-table td:nth-child(4) {
+  .owner-docs-table th:nth-child(5),
+  .owner-docs-table td:nth-child(5) {
     padding-left: 18px;
     padding-right: 18px;
   }
 
-  .owner-docs-table th:nth-child(6),
-  .owner-docs-table td:nth-child(6),
   .owner-docs-table th:nth-child(7),
-  .owner-docs-table td:nth-child(7) {
+  .owner-docs-table td:nth-child(7),
+  .owner-docs-table th:nth-child(8),
+  .owner-docs-table td:nth-child(8) {
     padding-left: 18px;
     padding-right: 18px;
   }
@@ -709,14 +709,22 @@
     min-width: 0;
   }
 
-  .owner-docs-table td:nth-child(2) {
+  .owner-docs-table td:nth-child(3) {
     text-align: right;
   }
 
-  .owner-docs-table td:nth-child(4),
   .owner-docs-table td:nth-child(5),
-  .owner-docs-table td:nth-child(7) {
+  .owner-docs-table td:nth-child(6),
+  .owner-docs-table td:nth-child(8) {
     text-align: center;
+  }
+
+  .owner-docs-col-no { width: 68px; }
+  .owner-docs-no {
+    text-align: center;
+    color: var(--od-muted);
+    font-weight: 700;
+    font-size: 12px;
   }
 
   .owner-docs-row {
@@ -1321,6 +1329,11 @@
       border-left: 0;
     }
 
+    /* Kolom No disembunyikan di mobile (tampilan kartu) */
+    .owner-docs-table td.owner-docs-no {
+      display: none;
+    }
+
     .owner-docs-table td[data-label]::before {
       content: attr(data-label);
       display: block;
@@ -1332,7 +1345,7 @@
       text-transform: uppercase;
     }
 
-    .owner-docs-table td:first-child {
+    .owner-docs-table td:nth-child(2) {
       padding: 16px 18px 8px;
     }
 
@@ -1616,6 +1629,7 @@
       <div class="owner-docs-table-wrap">
         <table class="owner-docs-table">
           <colgroup>
+            <col class="owner-docs-col-no">
             <col class="owner-docs-col-doc">
             <col class="owner-docs-col-value">
             <col class="owner-docs-col-from">
@@ -1627,6 +1641,7 @@
           </colgroup>
           <thead>
             <tr>
+              <th><span class="owner-docs-th-label">No</span></th>
               <th><span class="owner-docs-th-label">Nomor / Uraian SPP</span></th>
               <th><span class="owner-docs-th-label">Nilai</span></th>
               <th><span class="owner-docs-th-label">Dari</span></th>
@@ -1650,6 +1665,7 @@
                 $nomor = $dokumen['nomor_agenda'] ?: ($dokumen['nomor_spp'] ?: '-');
               @endphp
               <tr class="owner-docs-row" onclick="openOwnerDocModal({{ (int) $dokumen['id'] }})">
+                <td class="owner-docs-no" data-label="No">{{ ($documents->firstItem() ?? 1) + $loop->index }}</td>
                 <td>
                   <div class="owner-docs-docmeta">
                     <span class="owner-docs-dot" style="background:{{ $bagianColor }}"></span>
@@ -1707,7 +1723,7 @@
               </tr>
             @empty
               <tr>
-                <td colspan="8">
+                <td colspan="9">
                   <div class="owner-docs-empty">
                     <i class="far fa-folder-open"></i>
                     <strong>Tidak ada dokumen</strong>
