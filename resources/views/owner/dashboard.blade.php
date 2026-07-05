@@ -704,7 +704,7 @@
 
   .owner-docs-table td {
     padding: 17px 14px;
-    border-bottom: 1.5px solid var(--od-border);
+    border-bottom: 2px solid var(--od-border);
     vertical-align: middle;
     min-width: 0;
   }
