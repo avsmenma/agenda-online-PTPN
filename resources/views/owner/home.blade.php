@@ -92,6 +92,7 @@
     padding: 18px 18px 14px;
     box-shadow: var(--shadow);
     position: relative; overflow: hidden;
+    cursor: pointer;
     transition: transform .2s, box-shadow .2s;
     animation: fadeUp .4s ease both;
   }
@@ -728,18 +729,26 @@ if (tCtx) {
       }]
     },
     options: {
+      // Beri ruang kiri agar label sumbu-Y (mis. "3.000") tidak terpotong —
+      // Chart.js kadang kurang menyisakan ruang saat font kustom belum termuat.
+      layout: { padding: { left: 14, right: 4, top: 4, bottom: 2 } },
       plugins: {
         legend: { display: false },
         tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => ` ${ctx.raw} dokumen` } }
       },
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 10.5, family: 'Plus Jakarta Sans' }, color: '#a0aec0', maxTicksLimit: 6 } },
-        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10.5, family: 'Plus Jakarta Sans' }, color: '#a0aec0' }, border: { display: false } }
+        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10.5, family: 'Plus Jakarta Sans' }, color: '#a0aec0', callback: (v) => Number(v).toLocaleString('id-ID') }, border: { display: false } }
       },
       interaction: { mode: 'index', intersect: false }
     }
   });
 }
+
+// Card KPI bisa diklik → arahkan ke /owner/dokumen
+document.querySelectorAll('.stats-row .stat-card').forEach(function (card) {
+  card.addEventListener('click', function () { window.location.href = '/owner/dokumen'; });
+});
 
 // Period tab switching
 document.querySelectorAll('.period-tab').forEach(tab => {
