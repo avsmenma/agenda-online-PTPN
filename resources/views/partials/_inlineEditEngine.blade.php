@@ -59,7 +59,7 @@
     z-index: 9997;
   }
   /* Samakan bentuk editor uraian dengan kolom lain (satu baris; bisa di-resize). */
-  .ie-textarea { resize: vertical; min-height: 0; height: auto; line-height: 1.45; }
+  .ie-textarea { resize: none; min-height: 0; overflow-y: auto; line-height: 1.45; box-sizing: border-box; }
   .ie-spinner {
     display: inline-block; width: 12px; height: 12px; margin-left: 4px;
     border: 2px solid #93c5fd; border-top-color: #3b82f6;
@@ -508,6 +508,12 @@
     if (fieldType === 'textarea') {
       el = document.createElement('textarea');
       el.className = 'ie-input ie-textarea'; el.value = rawValue ?? ''; el.rows = 1;
+      // Auto-tinggi: pas dengan isi (1 baris untuk teks pendek → tak ada area kosong),
+      // tumbuh hingga maks 220px lalu menggulir. Mengatasi kotak uraian yang tinggi sendiri
+      // (textarea height:auto di dalam sel tabel ikut meregang mengikuti tinggi baris).
+      const _grow = () => { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 220) + 'px'; };
+      el.addEventListener('input', _grow);
+      requestAnimationFrame(_grow);
     } else if (fieldType.startsWith('select_')) {
       el = buildSelect(fieldType, rawValue ?? '', cell);
     } else if (fieldType === 'date') {
