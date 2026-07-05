@@ -462,7 +462,7 @@
     else if (field === 'select_item')     options = filterItemOptions(cell).map(k => ({ value: k.nama_item_sub_kriteria, label: k.nama_item_sub_kriteria }));
     else if (field === 'select_jenis')    options = IE_JENIS_BAYAR.map(k => ({ value: k.nama_jenis_pembayaran, label: k.nama_jenis_pembayaran }));
     else if (field === 'select_bulan')    options = BULAN_LIST.map(b  => ({ value: b, label: b }));
-    else if (field === 'select_bagian')   options = IE_BAGIAN.map(b   => ({ value: b.kode, label: b.nama ? (b.kode + ' — ' + b.nama) : b.kode }));
+    else if (field === 'select_bagian')   options = IE_BAGIAN.map(b   => ({ value: b.kode, label: (b.nama && b.nama !== b.kode) ? (b.kode + ' — ' + b.nama) : b.kode }));
     const empty = document.createElement('option');
     empty.value = ''; empty.textContent = '-- Pilih --';
     sel.appendChild(empty);
