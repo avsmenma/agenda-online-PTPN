@@ -19,10 +19,17 @@
     'TAN' => '#10b981', 'TEP' => '#6366f1', 'PTI' => '#3b82f6',
   ];
 
+  // Format Total Nilai disamakan dengan /owner/home (bertingkat T/M/JT).
   $totalNilaiNum = (float)($totalNilai ?? 0);
-  $totalNilaiShort = $totalNilaiNum >= 1_000_000_000
-    ? 'Rp ' . number_format($totalNilaiNum / 1_000_000_000, 1, ',', '.') . ' M'
-    : 'Rp ' . number_format($totalNilaiNum / 1_000_000, 1, ',', '.') . ' Jt';
+  if ($totalNilaiNum >= 1_000_000_000_000) {
+    $totalNilaiShort = 'Rp ' . number_format($totalNilaiNum / 1_000_000_000_000, 1, ',', '.') . ' T';
+  } elseif ($totalNilaiNum >= 1_000_000_000) {
+    $totalNilaiShort = 'Rp ' . number_format($totalNilaiNum / 1_000_000_000, 1, ',', '.') . ' M';
+  } elseif ($totalNilaiNum >= 1_000_000) {
+    $totalNilaiShort = 'Rp ' . number_format($totalNilaiNum / 1_000_000, 1, ',', '.') . ' JT';
+  } else {
+    $totalNilaiShort = 'Rp ' . number_format($totalNilaiNum, 0, ',', '.');
+  }
 
   $queryWithoutStatus = request()->except(['status', 'page']);
   $ownerDocsBaseUrl = url('/owner/dokumen');
@@ -299,8 +306,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
+    /* Jaga tetap SATU baris di 100% (dulu wrap → chip hari turun ke baris ke-2).
+       Bila layar sangat sempit, baris ini menggulir mendatar, bukan membungkus. */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
     margin-bottom: 14px;
   }
 
@@ -312,20 +322,20 @@
     box-shadow: var(--od-shadow);
     display: inline-flex;
     gap: 4px;
-    max-width: 100%;
-    overflow-x: auto;
+    flex-shrink: 0;
   }
 
   .owner-docs-age-shortcuts {
     display: inline-flex;
     gap: 6px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
   }
 
   .owner-docs-age-chip {
     display: inline-flex;
     align-items: center;
-    padding: 10px 14px;
+    padding: 8px 11px;
     border-radius: 12px;
     border: 1px solid var(--od-border);
     background: #fff;
@@ -369,8 +379,8 @@
   .owner-docs-tab {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 9px 16px;
+    gap: 6px;
+    padding: 8px 11px;
     border-radius: 9px;
     color: var(--od-sub);
     text-decoration: none;
