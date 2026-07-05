@@ -345,21 +345,27 @@ class OwnerDashboardController extends Controller
         };
 
         // === RINGKASAN HARI INI ===
+        // Anchor keterlambatan = waktu masuk ke ROLE saat ini (received_at), BUKAN
+        // created_at (Q9). Dokumen lama yang baru masuk ke role saat ini tidak
+        // langsung dihitung terlambat/mendekati. 'masuk' tetap pakai created_at —
+        // itu metrik volume ("dokumen masuk hari ini"), bukan metrik deadline.
+        $roleStartExpr = $this->ownerRoleDeadlineStartExpr();
+        $belumDibayar = function ($q) {
+            $q->whereNull('status_pembayaran')
+                ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+        };
         $hariIni = [
             'masuk'     => Dokumen::whereDate('created_at', today())->count(),
-            'mendekati' => Dokumen::whereBetween('created_at', [now()->subDays(3), now()->subDay()])
+            'mendekati' => Dokumen::whereRaw($roleStartExpr . ' BETWEEN ? AND ?', [
+                                  now()->subDays(3)->toDateTimeString(),
+                                  now()->subDay()->toDateTimeString(),
+                              ])
                               ->whereNull('tanggal_dibayar')
-                              ->where(function($q) {
-                                  $q->whereNull('status_pembayaran')
-                                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                              })->count(),
-            'terlambat' => Dokumen::where('created_at', '<', now()->subDays(3))
+                              ->where($belumDibayar)->count(),
+            'terlambat' => Dokumen::whereRaw($roleStartExpr . ' < ?', [now()->subDays(3)->toDateTimeString()])
                               ->whereNull('tanggal_dibayar')
                               ->where('current_handler', '!=', 'operator')
-                              ->where(function($q) {
-                                  $q->whereNull('status_pembayaran')
-                                    ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
-                              })->count(),
+                              ->where($belumDibayar)->count(),
         ];
 
         // === STATISTIK UTAMA ===
@@ -686,6 +692,20 @@ class OwnerDashboardController extends Controller
     }
 
     /**
+     * SQL: waktu dokumen MASUK ke role yang sedang memegangnya (received_at role
+     * saat ini), fallback ke created_at bila belum ada. Ini anchor keterlambatan
+     * god-view sesuai Q9 — keterlambatan dihitung dari tanggal masuk ke role,
+     * BUKAN tanggal dibuat. Dokumen lama yang baru masuk ke role saat ini tidak
+     * langsung dianggap terlambat.
+     */
+    private function ownerRoleDeadlineStartExpr(): string
+    {
+        return 'COALESCE((SELECT drd.received_at FROM dokumen_role_data drd '
+            . 'WHERE drd.dokumen_id = dokumens.id AND drd.role_code = dokumens.current_handler '
+            . 'AND drd.received_at IS NOT NULL ORDER BY drd.received_at DESC LIMIT 1), dokumens.created_at)';
+    }
+
+    /**
      * Restrict a query to documents still in process (not paid, not completed).
      */
     private function scopeOwnerActiveUnpaid($query)
@@ -711,9 +731,7 @@ class OwnerDashboardController extends Controller
     {
         $this->scopeOwnerActiveUnpaid($query);
 
-        $startExpr = 'COALESCE((SELECT drd.received_at FROM dokumen_role_data drd '
-            . 'WHERE drd.dokumen_id = dokumens.id AND drd.role_code = dokumens.current_handler '
-            . 'AND drd.received_at IS NOT NULL ORDER BY drd.received_at DESC LIMIT 1), dokumens.created_at)';
+        $startExpr = $this->ownerRoleDeadlineStartExpr();
         $threshold = now()->subDays(3)->toDateTimeString();
 
         return $query->whereRaw($startExpr . ($late ? ' <= ?' : ' > ?'), [$threshold]);
