@@ -2319,6 +2319,21 @@
       box-shadow: 0 3px 12px rgba(136, 151, 23, 0.4);
     }
 
+    /* ── Samakan lebar & bentuk SEMUA tombol toolbar ── */
+    .btn-filter,
+    .btn-refresh,
+    .btn-customize-columns-inline,
+    .btn-fullscreen-toggle,
+    .btn-tambah-dokumen-fs {
+      min-width: 168px;
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+
     /* Enhanced Form Controls */
     .form-select {
       padding: 10px 14px;
@@ -2619,7 +2634,7 @@
         Kustomisasi Kolom Tabel
       </button>
       <button type="button" class="btn-refresh" id="btnTambahBarisInline" onclick="tambahBarisInline()"
-        style="background:linear-gradient(135deg,#0f4c3a,#16a34a);color:#fff;">
+        style="background:linear-gradient(135deg,#083E40 0%,#0a4f52 100%);color:#fff;">
         <i class="fa-solid fa-plus me-2"></i>Tambah Baris
       </button>
     </form>

@@ -58,7 +58,8 @@
     position: relative;
     z-index: 9997;
   }
-  .ie-textarea { resize: vertical; min-height: 60px; }
+  /* Samakan bentuk editor uraian dengan kolom lain (satu baris; bisa di-resize). */
+  .ie-textarea { resize: vertical; min-height: 0; height: auto; line-height: 1.45; }
   .ie-spinner {
     display: inline-block; width: 12px; height: 12px; margin-left: 4px;
     border: 2px solid #93c5fd; border-top-color: #3b82f6;
@@ -503,7 +504,7 @@
     let el;
     if (fieldType === 'textarea') {
       el = document.createElement('textarea');
-      el.className = 'ie-input ie-textarea'; el.value = rawValue ?? ''; el.rows = 3;
+      el.className = 'ie-input ie-textarea'; el.value = rawValue ?? ''; el.rows = 1;
     } else if (fieldType.startsWith('select_')) {
       el = buildSelect(fieldType, rawValue ?? '', cell);
     } else if (fieldType === 'date') {
@@ -677,7 +678,10 @@
     if (e.key === 'Escape') {
       e.preventDefault();
       cancelCell(activeCell);
-    } else if (e.key === 'Enter' && activeInput && activeInput.tagName !== 'TEXTAREA') {
+    } else if (e.key === 'Enter') {
+      // Textarea (uraian): Shift+Enter = baris baru; Enter biasa = SIMPAN, sama
+      // seperti kolom lain. Field lain: Enter = SIMPAN.
+      if (activeInput && activeInput.tagName === 'TEXTAREA' && e.shiftKey) return;
       e.preventDefault();
       // Cooldown: abaikan Enter selama 250ms pertama setelah cell diaktifkan.
       // Ini mencegah tombol Enter yang sama (yang memicu aktivasi via active cell
