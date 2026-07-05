@@ -469,6 +469,13 @@
                       </a>
                     </span>
                   </span>
+                @elseif(!($akutansiRoleData?->received_at)
+                    && in_array($dokumen->current_handler, ['operator', 'team_verifikasi', 'perpajakan'], true)
+                    && !in_array($dokumen->status, ['completed', 'selesai'], true)
+                    && $dokumen->status_pembayaran !== 'sudah_dibayar')
+                  {{-- Dokumen BELUM sampai ke Akutansi (masih di hulu) → status "Draft",
+                       disamakan dengan role lain. --}}
+                  <span class="badge-status badge-proses">⏳ Draft</span>
                 @elseif($pembayaranIsPending)
                   {{-- FIX: Document is in Pembayaran inbox waiting approval --}}
                   <span class="badge-status badge-warning">

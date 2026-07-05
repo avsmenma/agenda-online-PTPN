@@ -2216,6 +2216,12 @@
                               <span class="status-pill status-pill--paid">
                                 <i class="fa-solid fa-circle"></i> Sudah Dibayar
                               </span>
+                            @elseif(in_array($doc->current_handler, ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'], true))
+                              {{-- Dokumen BELUM sampai ke Pembayaran (masih di hulu) →
+                                   status "Draft", disamakan dengan role lain. --}}
+                              <span class="status-pill status-pill--pending">
+                                <i class="fa-solid fa-circle"></i> Draft
+                              </span>
                             @else
                               <span class="status-pill status-pill--pending">
                                 <i class="fa-solid fa-circle"></i> Belum Siap

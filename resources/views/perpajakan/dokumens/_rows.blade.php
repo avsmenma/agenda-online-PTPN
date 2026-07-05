@@ -596,6 +596,13 @@
                       </a>
                     </span>
                   </span>
+                @elseif(!($perpajakanRoleData?->received_at)
+                    && in_array($dokumen->current_handler, ['operator', 'team_verifikasi'], true)
+                    && !in_array($dokumen->status, ['completed', 'selesai'], true)
+                    && $dokumen->status_pembayaran !== 'sudah_dibayar')
+                  {{-- Dokumen BELUM sampai ke Perpajakan (masih di operator/verifikasi) →
+                       tampilkan "Draft", disamakan dengan role lain. --}}
+                  <span class="badge-status badge-proses">⏳ Draft</span>
                 @elseif($isPendingDownstream)
                   {{-- FIX: Document is in downstream inbox (Akutansi/Pembayaran) waiting approval --}}
                   {{-- This should show "Menunggu Approval" NOT "Sudah Terkirim" --}}
