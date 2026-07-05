@@ -4708,6 +4708,7 @@
           Rekapan Dokumen
         </a>
         @else
+        {{-- 1. Dashboard --}}
         <a href="{{ url('/owner/home') }}" class="owner-nav-item {{ $menuHome ?? '' }}" title="Dashboard">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -4715,27 +4716,23 @@
           </svg>
           Dashboard
         </a>
-        <a href="{{ url('/owner/dokumen') }}" class="owner-nav-item {{ $menuDokumen ?? '' }}" title="Dokumen">
+        {{-- 2. Daftar Dokumen --}}
+        <a href="{{ url('/owner/dokumen') }}" class="owner-nav-item {{ $menuDokumen ?? '' }}" title="Daftar Dokumen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
             <polyline points="14,2 14,8 20,8"/>
           </svg>
-          Dokumen
+          Daftar Dokumen
         </a>
-        @php
-          $isAsistenVirtualActive = request()->routeIs('owner.asisten-virtual');
-        @endphp
-        <a href="{{ route('owner.asisten-virtual') }}" class="owner-nav-item {{ ($menuAsistenVirtual ?? '') ?: ($isAsistenVirtualActive ? 'active' : '') }}" title="Asisten Virtual">
+        {{-- 3. Rekapan Dokumen --}}
+        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ request()->routeIs('reports.analytics') ? 'active' : '' }}" title="Rekapan Dokumen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
-            <path d="M12 8V4H8"/>
-            <rect x="4" y="8" width="16" height="12" rx="4"/>
-            <path d="M2 14h2M20 14h2"/>
-            <circle cx="9" cy="14" r="1"/>
-            <circle cx="15" cy="14" r="1"/>
-            <path d="M10 18h4"/>
+            <path d="M3 3v18h18"/>
+            <path d="M7 15l4-4 3 3 5-7"/>
           </svg>
-          Asisten Virtual
+          Rekapan Dokumen
         </a>
+        {{-- 4. Rekapan & Analisis Kerja --}}
         @php
           $isRekapanKeterlambatanActive = request()->is('*rekapan-keterlambatan*') ||
             request()->routeIs('rekapan-keterlambatan*') ||
@@ -4750,27 +4747,7 @@
           </svg>
           Rekapan &amp; Analisis Kerja
         </a>
-
-        <a href="{{ route('reports.analytics') }}" class="owner-nav-item {{ request()->routeIs('reports.analytics') ? 'active' : '' }}" title="Rekapan Dokumen">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
-            <path d="M3 3v18h18"/>
-            <path d="M7 15l4-4 3 3 5-7"/>
-          </svg>
-          Rekapan Dokumen
-        </a>
-
-        @php
-          $isAuditTrailActive = request()->is('*owner/programmer-logs*') ||
-            request()->routeIs('owner.programmer-logs') ||
-            ($menuAuditTrail ?? '') === 'active';
-        @endphp
-        <a href="{{ url('/owner/programmer-logs') }}" class="owner-nav-item {{ $isAuditTrailActive ? 'active' : '' }}" title="Audit Trail">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          Audit Trail
-        </a>
-
+        {{-- 5. Laporan Cash Bank --}}
         @php
           $isCashBankActive = request()->is('*owner/cashbank*') || request()->routeIs('owner.cashbank.*');
         @endphp
@@ -4781,6 +4758,33 @@
             <path d="M8 21h8M12 17v4"/>
           </svg>
           Laporan Cash Bank
+        </a>
+        {{-- 6. Asisten Virtual --}}
+        @php
+          $isAsistenVirtualActive = request()->routeIs('owner.asisten-virtual');
+        @endphp
+        <a href="{{ route('owner.asisten-virtual') }}" class="owner-nav-item {{ ($menuAsistenVirtual ?? '') ?: ($isAsistenVirtualActive ? 'active' : '') }}" title="Asisten Virtual">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M12 8V4H8"/>
+            <rect x="4" y="8" width="16" height="12" rx="4"/>
+            <path d="M2 14h2M20 14h2"/>
+            <circle cx="9" cy="14" r="1"/>
+            <circle cx="15" cy="14" r="1"/>
+            <path d="M10 18h4"/>
+          </svg>
+          Asisten Virtual
+        </a>
+        {{-- 7. Audit Trail --}}
+        @php
+          $isAuditTrailActive = request()->is('*owner/programmer-logs*') ||
+            request()->routeIs('owner.programmer-logs') ||
+            ($menuAuditTrail ?? '') === 'active';
+        @endphp
+        <a href="{{ url('/owner/programmer-logs') }}" class="owner-nav-item {{ $isAuditTrailActive ? 'active' : '' }}" title="Audit Trail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Audit Trail
         </a>
         @endif
       </div>
