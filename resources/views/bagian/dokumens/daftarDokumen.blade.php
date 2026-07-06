@@ -397,6 +397,20 @@
       background: #083E40; /* samakan dengan thead hijau */
       z-index: 6;          /* header di atas sel body yang beku */
     }
+    /* Paksa header kiri ikut beku (spesifisitas thead th.col- + !important agar
+       tak kalah dari aturan lain). Cell-nya sudah beku; ini khusus header-nya. */
+    #documentTableContainer .data-table thead th.col-no {
+      position: -webkit-sticky !important;
+      position: sticky !important;
+      left: 0 !important;
+      z-index: 7 !important;
+    }
+    #documentTableContainer .data-table thead th.col-nomor_spp {
+      position: -webkit-sticky !important;
+      position: sticky !important;
+      left: 64px !important;
+      z-index: 7 !important;
+    }
     #documentTableContainer .data-table tbody tr:hover td.col-no,
     #documentTableContainer .data-table tbody tr:hover td.col-nomor_spp,
     #documentTableContainer .data-table tbody tr:hover td.col-status_pembayaran {
