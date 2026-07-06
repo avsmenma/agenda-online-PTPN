@@ -415,9 +415,9 @@
       position: -webkit-sticky !important;
       position: sticky !important;
       left: 64px !important; /* selebar kolom No */
-      width: 160px;
-      min-width: 160px;
-      max-width: 160px;
+      width: 195px;
+      min-width: 195px;
+      max-width: 195px;
       z-index: 5;
       box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.25);
     }
@@ -1293,6 +1293,8 @@
                               <small class="text-muted">{{ $doc->bulan ?? '' }} {{ $doc->tahun ?? '' }}</small>
                             @elseif($col == 'nomor_spp')
                               {{ $doc->nomor_spp }}
+                            @elseif($col == 'dibayar_kepada')
+                              {{ $doc->dibayarKepadas->pluck('nama_penerima')->join(', ') ?: '-' }}
                             @elseif($col == 'tanggal_masuk')
                               {{ $doc->tanggal_masuk ? $doc->tanggal_masuk->format('d-m-Y H:i') : '-' }}
                             @elseif($col == 'nilai_rupiah')
