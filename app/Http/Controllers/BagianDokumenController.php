@@ -132,35 +132,45 @@ class BagianDokumenController extends Controller
         // Kolom tahap-lanjut (paraf, SPK, PO, pajak, status internal, dll) sengaja
         // tidak diekspos ke Bagian.
         $availableColumns = [
-            'nomor_agenda' => 'Nomor Agenda',
             'nomor_spp' => 'Nomor SPP',
-            'tanggal_spp' => 'Tanggal SPP',
-            'tanggal_masuk' => 'Tanggal Masuk',
+            'nomor_agenda' => 'Nomor Agenda',
             'bulan' => 'Bulan',
             'tahun' => 'Tahun',
-            'kategori' => 'Kriteria CF',
-            'jenis_dokumen' => 'Sub Kriteria',
-            'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
+            'tanggal_spp' => 'Tanggal SPP',
+            'tanggal_masuk' => 'Tanggal Masuk',
             'dibayar_kepada' => 'Dibayar Kepada',
             'uraian_spp' => 'Uraian SPP',
             'nilai_rupiah' => 'Nilai Rupiah',
+            'status_pembayaran' => 'Status Pembayaran',
+            'umur_dokumen' => 'Waktu Pengerjaan',
         ];
 
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
 
-        // Default: tampilkan seluruh 12 kolom yang diizinkan
-        $defaultColumns = array_keys($availableColumns);
+        // Default: susunan kolom pemantauan Bagian (No & Nomor SPP beku kiri;
+        // Status Pembayaran, Waktu Pengerjaan, Pengurus Dokumen beku kanan).
+        $defaultColumns = [
+            'nomor_spp',
+            'nomor_agenda',
+            'bulan',
+            'tahun',
+            'dibayar_kepada',
+            'uraian_spp',
+            'nilai_rupiah',
+            'status_pembayaran',
+            'umur_dokumen',
+        ];
 
         // Guard: apa pun kolom yang diminta, batasi hanya ke daftar yang diizinkan
         $selectedColumns = array_values(array_intersect($selectedColumns, array_keys($availableColumns)));
 
         // If columns are provided in request, save to session
         if ($request->has('columns') && !empty($selectedColumns)) {
-            session(['bagian_dokumens_table_columns' => $selectedColumns]);
+            session(['bagian_dokumens_table_columns_v2' => $selectedColumns]);
         } else {
             // Load from session or use default
-            $selectedColumns = session('bagian_dokumens_table_columns', $defaultColumns);
+            $selectedColumns = session('bagian_dokumens_table_columns_v2', $defaultColumns);
 
             // If empty after filtering, use default
             if (empty($selectedColumns)) {
@@ -168,22 +178,34 @@ class BagianDokumenController extends Controller
             }
 
             // Update session to keep it in sync
-            session(['bagian_dokumens_table_columns' => $selectedColumns]);
+            session(['bagian_dokumens_table_columns_v2' => $selectedColumns]);
         }
 
-        // Filter akhir: buang sisa kolom terlarang dari session lama (mis. status,
-        // umur_dokumen, status_pembayaran yang dulu pernah tersimpan).
+        // Filter akhir: buang kolom terlarang dari session lama.
         $selectedColumns = array_values(array_intersect($selectedColumns, array_keys($availableColumns)));
         if (empty($selectedColumns)) {
             $selectedColumns = $defaultColumns;
         }
+
+        // Kartu informasi — total keseluruhan milik bagian ini (tidak terpengaruh filter).
+        $totalDokumen = Dokumen::where('bagian', $bagianCode)->count();
+        $totalSudahDibayar = Dokumen::where('bagian', $bagianCode)
+            ->where(function ($q) {
+                $q->whereNotNull('tanggal_dibayar')
+                    ->orWhere('status_pembayaran', 'sudah_dibayar');
+            })
+            ->count();
+        $totalBelumDibayar = $totalDokumen - $totalSudahDibayar;
 
         return view('bagian.dokumens.daftarDokumen', compact(
             'dokumens',
             'bagianCode',
             'bagianName',
             'availableColumns',
-            'selectedColumns'
+            'selectedColumns',
+            'totalDokumen',
+            'totalBelumDibayar',
+            'totalSudahDibayar'
         ));
     }
 

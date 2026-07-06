@@ -347,10 +347,10 @@
       background: linear-gradient(90deg, rgba(136, 151, 23, 0.05) 0%, transparent 100%);
     }
 
-    /* Kolom beku (No & Nomor Agenda) — kiri. Gaya lokal Bagian (hijau #083E40),
-       tidak memakai partial bersama _documentTableStickyCells karena partial itu
-       memaksa header biru + table-layout:fixed dan membekukan handler; Bagian
-       punya tema hijau sendiri & kolom Aksi selalu tampil di kanan. */
+    /* Kolom beku Bagian (tema hijau #083E40).
+       KIRI : No + Nomor SPP.  KANAN : Status Pembayaran, Waktu Pengerjaan,
+       Pengurus Dokumen (dibekukan sebagai blok kontigu). Offset kanan dihitung
+       kanan→kiri berdasarkan lebar kolom di kanannya. */
     #documentTableContainer .data-table th.col-no,
     #documentTableContainer .data-table td.col-no {
       position: sticky;
@@ -360,28 +360,70 @@
       white-space: nowrap;
       z-index: 5;
     }
-
-    #documentTableContainer .data-table th.col-nomor_agenda,
-    #documentTableContainer .data-table td.col-nomor_agenda {
+    #documentTableContainer .data-table th.col-nomor_spp,
+    #documentTableContainer .data-table td.col-nomor_spp {
       position: sticky;
-      left: 70px; /* selebar kolom No di atas */
+      left: 70px; /* selebar kolom No */
+      width: 150px;
+      min-width: 150px;
       z-index: 5;
+    }
+    #documentTableContainer .data-table th.col-pengurus,
+    #documentTableContainer .data-table td.col-pengurus {
+      position: sticky;
+      right: 0;
+      width: 150px;
+      min-width: 150px;
+      z-index: 5;
+    }
+    #documentTableContainer .data-table th.col-umur_dokumen,
+    #documentTableContainer .data-table td.col-umur_dokumen {
+      position: sticky;
+      right: 150px; /* selebar Pengurus Dokumen */
+      width: 165px;
+      min-width: 165px;
+      z-index: 5;
+    }
+    #documentTableContainer .data-table th.col-status_pembayaran,
+    #documentTableContainer .data-table td.col-status_pembayaran {
+      position: sticky;
+      right: 315px; /* Pengurus (150) + Waktu Pengerjaan (165) */
+      width: 175px;
+      min-width: 175px;
+      z-index: 5;
+    }
+
+    /* Bayangan pemisah di tepi blok beku */
+    #documentTableContainer .data-table th.col-nomor_spp,
+    #documentTableContainer .data-table td.col-nomor_spp {
+      box-shadow: 4px 0 6px -4px rgba(0, 0, 0, 0.18);
+    }
+    #documentTableContainer .data-table th.col-status_pembayaran,
+    #documentTableContainer .data-table td.col-status_pembayaran {
+      box-shadow: -4px 0 6px -4px rgba(0, 0, 0, 0.18);
     }
 
     /* Latar opaque agar isi kolom lain tak tembus saat scroll horizontal */
     #documentTableContainer .data-table tbody td.col-no,
-    #documentTableContainer .data-table tbody td.col-nomor_agenda {
+    #documentTableContainer .data-table tbody td.col-nomor_spp,
+    #documentTableContainer .data-table tbody td.col-status_pembayaran,
+    #documentTableContainer .data-table tbody td.col-umur_dokumen,
+    #documentTableContainer .data-table tbody td.col-pengurus {
       background: #ffffff;
     }
-
     #documentTableContainer .data-table thead th.col-no,
-    #documentTableContainer .data-table thead th.col-nomor_agenda {
+    #documentTableContainer .data-table thead th.col-nomor_spp,
+    #documentTableContainer .data-table thead th.col-status_pembayaran,
+    #documentTableContainer .data-table thead th.col-umur_dokumen,
+    #documentTableContainer .data-table thead th.col-pengurus {
       background: #083E40; /* samakan dengan thead hijau */
       z-index: 6;          /* header di atas sel body yang beku */
     }
-
     #documentTableContainer .data-table tbody tr:hover td.col-no,
-    #documentTableContainer .data-table tbody tr:hover td.col-nomor_agenda {
+    #documentTableContainer .data-table tbody tr:hover td.col-nomor_spp,
+    #documentTableContainer .data-table tbody tr:hover td.col-status_pembayaran,
+    #documentTableContainer .data-table tbody tr:hover td.col-umur_dokumen,
+    #documentTableContainer .data-table tbody tr:hover td.col-pengurus {
       background: #f3faf9;
     }
 
@@ -1028,20 +1070,85 @@
     .dark .btn-refresh:hover {
       background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
     }
+
+    /* ── Kartu informasi Bagian (terinspirasi kartu owner, dibuat sendiri) ── */
+    .bagian-info-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+    .bic-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #ffffff;
+      border: 1px solid #e8eef0;
+      border-radius: 16px;
+      padding: 20px 22px;
+      box-shadow: 0 2px 10px rgba(8, 62, 64, 0.05);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .bic-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 5px;
+    }
+    .bic-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(8, 62, 64, 0.10);
+    }
+    .bic-icon {
+      flex: 0 0 auto;
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: #fff;
+    }
+    .bic-value { font-size: 28px; font-weight: 800; line-height: 1.1; color: #0f2f2b; }
+    .bic-label { font-size: 13px; font-weight: 600; color: #6b7f7c; margin-top: 2px; }
+    .bic-total::before { background: #083E40; }
+    .bic-total .bic-icon { background: linear-gradient(135deg, #083E40, #0a5a5e); }
+    .bic-belum::before { background: #d97706; }
+    .bic-belum .bic-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .bic-sudah::before { background: #16a34a; }
+    .bic-sudah .bic-icon { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .dark .bic-card { background: #14201f; border-color: #24403c; }
+    .dark .bic-value { color: #e6f2ef; }
+    .dark .bic-label { color: #93a9a4; }
+    @media (max-width: 900px) {
+      .bagian-info-cards { grid-template-columns: 1fr; }
+    }
   </style>
 
   <div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h2>
-          <i class="fa-solid fa-file-lines me-2"></i>
-          Daftar Dokumen Bagian {{ $bagianCode }}
-        </h2>
-        <p class="text-muted mb-0">{{ $bagianName }}</p>
+    <!-- Kartu Informasi -->
+    <div class="bagian-info-cards">
+      <div class="bic-card bic-total">
+        <div class="bic-icon"><i class="fa-solid fa-folder-open"></i></div>
+        <div class="bic-body">
+          <div class="bic-value">{{ number_format($totalDokumen, 0, ',', '.') }}</div>
+          <div class="bic-label">Total Dokumen {{ $bagianCode }}</div>
+        </div>
+      </div>
+      <div class="bic-card bic-belum">
+        <div class="bic-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div class="bic-body">
+          <div class="bic-value">{{ number_format($totalBelumDibayar, 0, ',', '.') }}</div>
+          <div class="bic-label">Dokumen Belum Dibayar</div>
+        </div>
+      </div>
+      <div class="bic-card bic-sudah">
+        <div class="bic-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="bic-body">
+          <div class="bic-value">{{ number_format($totalSudahDibayar, 0, ',', '.') }}</div>
+          <div class="bic-label">Dokumen Sudah Dibayar</div>
+        </div>
       </div>
     </div>
-
 
     <!-- Search & Filter -->
     <div class="search-box">
@@ -1104,9 +1211,9 @@
               <tr>
                 <th class="col-no">No</th>
                 @foreach($selectedColumns as $col)
-                  <th class="{{ $col == 'nomor_agenda' ? 'col-nomor_agenda' : '' }}">{{ $availableColumns[$col] ?? $col }}</th>
+                  <th class="col-{{ $col }}">{{ $availableColumns[$col] ?? $col }}</th>
                 @endforeach
-                <th>Pengurus Dokumen</th>
+                <th class="col-pengurus">Pengurus Dokumen</th>
               </tr>
             </thead>
             <tbody>
@@ -1167,7 +1274,7 @@
                               @endif
                             </td>
                           @else
-                          <td class="{{ $col == 'nomor_agenda' ? 'col-nomor_agenda' : '' }}">
+                          <td class="col-{{ $col }}">
                             @if($col == 'nomor_agenda')
                               <strong style="color: #000000;">{{ $doc->nomor_agenda }}</strong>
                               <br>
@@ -1374,7 +1481,7 @@
                           </td>
                           @endif {{-- end @if(in_array...) / @else non-editable --}}
                         @endforeach
-                        <td onclick="event.stopPropagation()">
+                        <td class="col-pengurus" onclick="event.stopPropagation()">
                           {{-- Bagian view-only: posisi dokumen ditampilkan read-only (bukan dropdown yang bisa mengubah) --}}
                           <span class="text-muted">{{ \App\Models\Dokumen::getRoleDisplayNameIndo($doc->current_handler ?? 'operator') }}</span>
                         </td>
