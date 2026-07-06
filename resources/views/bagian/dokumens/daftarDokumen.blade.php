@@ -351,8 +351,8 @@
        KIRI : No + Nomor SPP.  KANAN : Status Pembayaran (kolom paling kanan,
        tunggal — tak ada kolom beku tambahan). Lebar dikunci agar header & body
        sejajar dan offset sticky presisi. */
-    #documentTableContainer .data-table th.col-no,
-    #documentTableContainer .data-table td.col-no {
+    #bagianDaftarTable .data-table th.col-no,
+    #bagianDaftarTable .data-table td.col-no {
       position: -webkit-sticky !important;
       position: sticky !important;
       left: 0 !important;
@@ -362,8 +362,8 @@
       white-space: nowrap;
       z-index: 5;
     }
-    #documentTableContainer .data-table th.col-nomor_spp,
-    #documentTableContainer .data-table td.col-nomor_spp {
+    #bagianDaftarTable .data-table th.col-nomor_spp,
+    #bagianDaftarTable .data-table td.col-nomor_spp {
       position: -webkit-sticky !important;
       position: sticky !important;
       left: 64px !important; /* selebar kolom No */
@@ -373,8 +373,8 @@
       z-index: 5;
       box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.25);
     }
-    #documentTableContainer .data-table th.col-status_pembayaran,
-    #documentTableContainer .data-table td.col-status_pembayaran {
+    #bagianDaftarTable .data-table th.col-status_pembayaran,
+    #bagianDaftarTable .data-table td.col-status_pembayaran {
       position: -webkit-sticky !important;
       position: sticky !important;
       right: 0 !important;
@@ -386,34 +386,34 @@
     }
 
     /* Latar opaque agar isi kolom lain tak tembus saat scroll horizontal */
-    #documentTableContainer .data-table tbody td.col-no,
-    #documentTableContainer .data-table tbody td.col-nomor_spp,
-    #documentTableContainer .data-table tbody td.col-status_pembayaran {
+    #bagianDaftarTable .data-table tbody td.col-no,
+    #bagianDaftarTable .data-table tbody td.col-nomor_spp,
+    #bagianDaftarTable .data-table tbody td.col-status_pembayaran {
       background: #ffffff;
     }
-    #documentTableContainer .data-table thead th.col-no,
-    #documentTableContainer .data-table thead th.col-nomor_spp,
-    #documentTableContainer .data-table thead th.col-status_pembayaran {
+    #bagianDaftarTable .data-table thead th.col-no,
+    #bagianDaftarTable .data-table thead th.col-nomor_spp,
+    #bagianDaftarTable .data-table thead th.col-status_pembayaran {
       background: #083E40; /* samakan dengan thead hijau */
       z-index: 6;          /* header di atas sel body yang beku */
     }
     /* Paksa header kiri ikut beku (spesifisitas thead th.col- + !important agar
        tak kalah dari aturan lain). Cell-nya sudah beku; ini khusus header-nya. */
-    #documentTableContainer .data-table thead th.col-no {
+    #bagianDaftarTable .data-table thead th.col-no {
       position: -webkit-sticky !important;
       position: sticky !important;
       left: 0 !important;
       z-index: 7 !important;
     }
-    #documentTableContainer .data-table thead th.col-nomor_spp {
+    #bagianDaftarTable .data-table thead th.col-nomor_spp {
       position: -webkit-sticky !important;
       position: sticky !important;
       left: 64px !important;
       z-index: 7 !important;
     }
-    #documentTableContainer .data-table tbody tr:hover td.col-no,
-    #documentTableContainer .data-table tbody tr:hover td.col-nomor_spp,
-    #documentTableContainer .data-table tbody tr:hover td.col-status_pembayaran {
+    #bagianDaftarTable .data-table tbody tr:hover td.col-no,
+    #bagianDaftarTable .data-table tbody tr:hover td.col-nomor_spp,
+    #bagianDaftarTable .data-table tbody tr:hover td.col-status_pembayaran {
       background: #f3faf9;
     }
 
@@ -1191,7 +1191,7 @@
     </div>
 
     <!-- Document Table -->
-    <div class="table-container" id="documentTableContainer">
+    <div class="table-container" id="bagianDaftarTable">
       @if($dokumens->count() > 0)
         <!-- Per-page dropdown at the top -->
         @include('partials.pagination-perpage-top', ['paginator' => $dokumens])
@@ -2943,7 +2943,7 @@
     // AJAX Refresh Document Table
     function refreshDocumentTable() {
       const btn = document.getElementById('btnRefreshTable');
-      const container = document.getElementById('documentTableContainer');
+      const container = document.getElementById('bagianDaftarTable');
 
       if (!btn || !container) return;
 
@@ -2963,7 +2963,7 @@
         .then(html => {
           const parser = new DOMParser();
           const doc = parser.parseFromString(html, 'text/html');
-          const newTable = doc.getElementById('documentTableContainer');
+          const newTable = doc.getElementById('bagianDaftarTable');
           if (newTable) {
             container.innerHTML = newTable.innerHTML;
             showRefreshToast('success', 'Data berhasil diperbarui!');
