@@ -1294,7 +1294,7 @@
                             @elseif($col == 'nomor_spp')
                               {{ $doc->nomor_spp }}
                             @elseif($col == 'dibayar_kepada')
-                              {{ $doc->dibayarKepadas->pluck('nama_penerima')->join(', ') ?: '-' }}
+                              {{ $doc->dibayar_kepada ?: ($doc->dibayarKepadas->pluck('nama_penerima')->join(', ') ?: '-') }}
                             @elseif($col == 'tanggal_masuk')
                               {{ $doc->tanggal_masuk ? $doc->tanggal_masuk->format('d-m-Y H:i') : '-' }}
                             @elseif($col == 'nilai_rupiah')
