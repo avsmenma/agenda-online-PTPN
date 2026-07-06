@@ -1339,7 +1339,7 @@
                         @endforeach
                         <td class="col-pengurus" onclick="event.stopPropagation()">
                           {{-- Bagian view-only: posisi dokumen ditampilkan read-only (bukan dropdown yang bisa mengubah) --}}
-                          <span class="text-muted">{{ \App\Models\Dokumen::getRoleDisplayNameIndo($doc->current_handler ?? 'operator') }}</span>
+                          <span class="text-muted">{{ strtolower($doc->current_handler ?? 'operator') === 'operator' ? 'Operator' : \App\Models\Dokumen::getRoleDisplayNameIndo($doc->current_handler) }}</span>
                         </td>
                         <td class="col-status_pembayaran">
                           @php
