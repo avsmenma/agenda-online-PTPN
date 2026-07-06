@@ -304,6 +304,54 @@
       border-spacing: 0;
     }
 
+    /* ── Tata letak lebar kolom (pengganti penataan dari partial global
+       compact-document-ui yang DULU ikut menata tabel ini lewat id bersama;
+       kini tabel Bagian terisolasi, jadi diatur sendiri di sini).
+       Tabel selebar isi → kolom tak berdesakan + gulir horizontal. ── */
+    #bagianDaftarTable .data-table {
+      width: max-content;
+      min-width: 100%;
+    }
+    #bagianDaftarTable .data-table th,
+    #bagianDaftarTable .data-table td {
+      white-space: nowrap;
+    }
+    /* Teks panjang boleh membungkus dalam lebar terbatas. */
+    #bagianDaftarTable .data-table th.col-uraian_spp,
+    #bagianDaftarTable .data-table td.col-uraian_spp {
+      white-space: normal;
+      min-width: 300px;
+      max-width: 380px;
+    }
+    #bagianDaftarTable .data-table th.col-dibayar_kepada,
+    #bagianDaftarTable .data-table td.col-dibayar_kepada {
+      white-space: normal;
+      min-width: 170px;
+      max-width: 240px;
+    }
+    #bagianDaftarTable .data-table th.col-nomor_agenda,
+    #bagianDaftarTable .data-table td.col-nomor_agenda {
+      min-width: 150px;
+    }
+    #bagianDaftarTable .data-table th.col-bulan,
+    #bagianDaftarTable .data-table td.col-bulan,
+    #bagianDaftarTable .data-table th.col-tahun,
+    #bagianDaftarTable .data-table td.col-tahun {
+      min-width: 74px;
+    }
+    #bagianDaftarTable .data-table th.col-nilai_rupiah,
+    #bagianDaftarTable .data-table td.col-nilai_rupiah {
+      min-width: 150px;
+    }
+    #bagianDaftarTable .data-table th.col-umur_dokumen,
+    #bagianDaftarTable .data-table td.col-umur_dokumen {
+      min-width: 185px;
+    }
+    #bagianDaftarTable .data-table th.col-pengurus,
+    #bagianDaftarTable .data-table td.col-pengurus {
+      min-width: 160px;
+    }
+
     /* Header tabel hijau solid seperti gambar */
     .data-table thead {
       background: #083E40;
