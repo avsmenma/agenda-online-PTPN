@@ -557,10 +557,6 @@ Route::get('/returns/perpajakan', [DashboardPerpajakanController::class, 'pengem
 // =============================================================================
 Route::middleware(['auth', 'bagian'])
     ->group(function () {
-        // Dashboard
-        Route::get('bagian/dashboard', [\App\Http\Controllers\BagianDokumenController::class, 'dashboard'])
-            ->name('bagian.dashboard');
-
         // Document — VIEW ONLY (kemampuan tulis Bagian dicabut: Bagian hanya memantau dokumennya)
         Route::prefix('bagian/documents')->name('bagian.documents.')->group(function () {
             Route::get('/', [\App\Http\Controllers\BagianDokumenController::class, 'index'])->name('index');

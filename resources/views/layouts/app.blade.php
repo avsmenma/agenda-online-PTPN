@@ -4830,17 +4830,9 @@
     @else
     <!-- Regular Menu for other roles -->
     <div style="flex: 1; display: flex; flex-direction: column;">
-      @if($isBagianUser)
-        {{-- Bagian-specific Home menu --}}
-        @php
-          $isBagianDashboardActive = request()->is('*bagian/dashboard*') || request()->routeIs('bagian.dashboard');
-        @endphp
-        <a href="{{ route('bagian.dashboard') }}" class="{{ $isBagianDashboardActive ? 'active' : '' }}"><i
-            class="fa-solid fa-house"></i> Home</a>
-      @else
-        @if(!in_array($module, ['operator', 'team_verifikasi', 'perpajakan', 'akutansi']))
-          <a href="{{ url($dashboardUrl) }}" class="{{ $menuDashboard ?? '' }}"><i class="fa-solid fa-house"></i> Home</a>
-        @endif
+      {{-- Bagian TIDAK punya menu Home lagi (landing = Daftar Dokumen /bagian/documents). --}}
+      @if(!$isBagianUser && !in_array($module, ['operator', 'team_verifikasi', 'perpajakan', 'akutansi']))
+        <a href="{{ url($dashboardUrl) }}" class="{{ $menuDashboard ?? '' }}"><i class="fa-solid fa-house"></i> Home</a>
       @endif
 
       <!-- Owner Dashboard - Only for Admin users -->

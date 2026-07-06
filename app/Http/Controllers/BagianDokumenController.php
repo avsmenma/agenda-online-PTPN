@@ -47,48 +47,6 @@ class BagianDokumenController extends Controller
     }
 
     /**
-     * Dashboard for Bagian
-     */
-    public function dashboard()
-    {
-        $bagianCode = $this->getBagianCode();
-        $bagianName = $this->getBagianName();
-
-        if (!$bagianCode) {
-            abort(403, 'Bagian code not configured for this user');
-        }
-
-        // View-only monitoring: hitung semua dokumen milik bagian ini (kolom `bagian`).
-        $totalDokumen = Dokumen::where('bagian', $bagianCode)->count();
-        $dokumenBelumDikirim = Dokumen::where('bagian', $bagianCode)
-            ->where('status', 'belum dikirim')
-            ->count();
-        $dokumenTerkirim = Dokumen::where('bagian', $bagianCode)
-            ->whereNotIn('status', ['belum dikirim'])
-            ->count();
-        $dokumenSelesai = Dokumen::where('bagian', $bagianCode)
-            ->where('status', 'sudah dibayar')
-            ->count();
-
-        // Recent documents milik bagian ini
-        $recentDokumens = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
-            ->where('bagian', $bagianCode)
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
-
-        return view('bagian.dashboard', compact(
-            'bagianCode',
-            'bagianName',
-            'totalDokumen',
-            'dokumenBelumDikirim',
-            'dokumenTerkirim',
-            'dokumenSelesai',
-            'recentDokumens'
-        ));
-    }
-
-    /**
      * List documents for current bagian
      */
     public function index(Request $request)

@@ -45,14 +45,14 @@ final class User extends Authenticatable
         'perpajakan'      => '/dashboard/perpajakan',
         'akutansi'        => '/dashboard/akutansi',
         'pembayaran'      => '/dashboard/pembayaran',
-        'bagian_akn'      => '/bagian/dashboard',
-        'bagian_dpm'      => '/bagian/dashboard',
-        'bagian_kpl'      => '/bagian/dashboard',
-        'bagian_pmo'      => '/bagian/dashboard',
-        'bagian_sdm'      => '/bagian/dashboard',
-        'bagian_skh'      => '/bagian/dashboard',
-        'bagian_tan'      => '/bagian/dashboard',
-        'bagian_tep'      => '/bagian/dashboard',
+        'bagian_akn'      => '/bagian/documents',
+        'bagian_dpm'      => '/bagian/documents',
+        'bagian_kpl'      => '/bagian/documents',
+        'bagian_pmo'      => '/bagian/documents',
+        'bagian_sdm'      => '/bagian/documents',
+        'bagian_skh'      => '/bagian/documents',
+        'bagian_tan'      => '/bagian/documents',
+        'bagian_tep'      => '/bagian/documents',
     ];
 
 
