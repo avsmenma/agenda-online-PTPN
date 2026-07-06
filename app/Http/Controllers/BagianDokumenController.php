@@ -61,10 +61,9 @@ class BagianDokumenController extends Controller
         // View-only monitoring: tampilkan semua dokumen milik bagian ini (kolom `bagian`)
         $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
             ->where('bagian', $bagianCode)
-            ->orderByRaw('CASE 
-                WHEN nomor_agenda REGEXP "^[0-9]+$" THEN CAST(nomor_agenda AS UNSIGNED)
-                ELSE 0
-            END DESC')
+            // Urut TERBARU → TERLAMA berdasarkan angka nomor agenda (bagian sebelum "_",
+            // mis. "3075_2026" → 3075). REGEXP lama gagal karena ada sufiks "_2026".
+            ->orderByRaw('CAST(SUBSTRING_INDEX(nomor_agenda, "_", 1) AS UNSIGNED) DESC')
             ->orderBy('created_at', 'desc');
 
         // Search functionality
@@ -134,8 +133,6 @@ class BagianDokumenController extends Controller
         $availableColumns = [
             'nomor_spp' => 'Nomor SPP',
             'nomor_agenda' => 'Nomor Agenda',
-            'bulan' => 'Bulan',
-            'tahun' => 'Tahun',
             'tanggal_spp' => 'Tanggal SPP',
             'tanggal_masuk' => 'Tanggal Masuk',
             'dibayar_kepada' => 'Dibayar Kepada',
@@ -154,8 +151,6 @@ class BagianDokumenController extends Controller
         $defaultColumns = [
             'nomor_spp',
             'nomor_agenda',
-            'bulan',
-            'tahun',
             'dibayar_kepada',
             'uraian_spp',
             'nilai_rupiah',
@@ -168,10 +163,10 @@ class BagianDokumenController extends Controller
 
         // If columns are provided in request, save to session
         if ($request->has('columns') && !empty($selectedColumns)) {
-            session(['bagian_dokumens_table_columns_v4' => $selectedColumns]);
+            session(['bagian_dokumens_table_columns_v5' => $selectedColumns]);
         } else {
             // Load from session or use default
-            $selectedColumns = session('bagian_dokumens_table_columns_v4', $defaultColumns);
+            $selectedColumns = session('bagian_dokumens_table_columns_v5', $defaultColumns);
 
             // If empty after filtering, use default
             if (empty($selectedColumns)) {
@@ -179,7 +174,7 @@ class BagianDokumenController extends Controller
             }
 
             // Update session to keep it in sync
-            session(['bagian_dokumens_table_columns_v4' => $selectedColumns]);
+            session(['bagian_dokumens_table_columns_v5' => $selectedColumns]);
         }
 
         // Filter akhir: buang kolom terlarang dari session lama.

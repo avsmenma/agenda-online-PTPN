@@ -333,12 +333,6 @@
     #bagianDaftarTable .data-table td.col-nomor_agenda {
       min-width: 150px;
     }
-    #bagianDaftarTable .data-table th.col-bulan,
-    #bagianDaftarTable .data-table td.col-bulan,
-    #bagianDaftarTable .data-table th.col-tahun,
-    #bagianDaftarTable .data-table td.col-tahun {
-      min-width: 74px;
-    }
     #bagianDaftarTable .data-table th.col-nilai_rupiah,
     #bagianDaftarTable .data-table td.col-nilai_rupiah {
       min-width: 150px;
@@ -1472,10 +1466,6 @@
                               @endif
                             @elseif($col == 'tanggal_dibayar')
                               {{ $doc->tanggal_dibayar ? \Carbon\Carbon::parse($doc->tanggal_dibayar)->format('d/m/Y') : '-' }}
-                            @elseif($col == 'bulan')
-                              {{ $doc->bulan ?? '-' }}
-                            @elseif($col == 'tahun')
-                              {{ $doc->tahun ?? '-' }}
                             @elseif($col == 'npwp')
                               {{ $doc->npwp ?? '-' }}
                             @elseif($col == 'link_dokumen_pajak')
