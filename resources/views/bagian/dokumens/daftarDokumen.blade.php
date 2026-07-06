@@ -353,8 +353,9 @@
        sejajar dan offset sticky presisi. */
     #documentTableContainer .data-table th.col-no,
     #documentTableContainer .data-table td.col-no {
-      position: sticky;
-      left: 0;
+      position: -webkit-sticky !important;
+      position: sticky !important;
+      left: 0 !important;
       width: 64px;
       min-width: 64px;
       max-width: 64px;
@@ -363,8 +364,9 @@
     }
     #documentTableContainer .data-table th.col-nomor_spp,
     #documentTableContainer .data-table td.col-nomor_spp {
-      position: sticky;
-      left: 64px; /* selebar kolom No */
+      position: -webkit-sticky !important;
+      position: sticky !important;
+      left: 64px !important; /* selebar kolom No */
       width: 160px;
       min-width: 160px;
       max-width: 160px;
@@ -373,8 +375,9 @@
     }
     #documentTableContainer .data-table th.col-status_pembayaran,
     #documentTableContainer .data-table td.col-status_pembayaran {
-      position: sticky;
-      right: 0;
+      position: -webkit-sticky !important;
+      position: sticky !important;
+      right: 0 !important;
       width: 185px;
       min-width: 185px;
       max-width: 185px;
@@ -1491,7 +1494,7 @@
             </span>
           </div>
           <div>
-            {{ $dokumens->appends(request()->query())->links() }}
+            {{ $dokumens->appends(request()->query())->links('pagination::bootstrap-5') }}
           </div>
         </div>
       @else
