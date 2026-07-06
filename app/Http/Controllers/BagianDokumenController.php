@@ -141,9 +141,10 @@ class BagianDokumenController extends Controller
             'dibayar_kepada' => 'Dibayar Kepada',
             'uraian_spp' => 'Uraian SPP',
             'nilai_rupiah' => 'Nilai Rupiah',
-            'status_pembayaran' => 'Status Pembayaran',
             'umur_dokumen' => 'Waktu Pengerjaan',
         ];
+        // Catatan: "Status Pembayaran" TIDAK di sini — dirender sebagai kolom tetap
+        // paling kanan (beku kanan) di view, bukan kolom yang bisa dikustom.
 
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
@@ -158,7 +159,6 @@ class BagianDokumenController extends Controller
             'dibayar_kepada',
             'uraian_spp',
             'nilai_rupiah',
-            'status_pembayaran',
             'umur_dokumen',
         ];
 
@@ -167,10 +167,10 @@ class BagianDokumenController extends Controller
 
         // If columns are provided in request, save to session
         if ($request->has('columns') && !empty($selectedColumns)) {
-            session(['bagian_dokumens_table_columns_v2' => $selectedColumns]);
+            session(['bagian_dokumens_table_columns_v3' => $selectedColumns]);
         } else {
             // Load from session or use default
-            $selectedColumns = session('bagian_dokumens_table_columns_v2', $defaultColumns);
+            $selectedColumns = session('bagian_dokumens_table_columns_v3', $defaultColumns);
 
             // If empty after filtering, use default
             if (empty($selectedColumns)) {
@@ -178,7 +178,7 @@ class BagianDokumenController extends Controller
             }
 
             // Update session to keep it in sync
-            session(['bagian_dokumens_table_columns_v2' => $selectedColumns]);
+            session(['bagian_dokumens_table_columns_v3' => $selectedColumns]);
         }
 
         // Filter akhir: buang kolom terlarang dari session lama.

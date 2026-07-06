@@ -340,7 +340,7 @@
 
     .data-table tbody tr {
       transition: all 0.3s ease;
-      cursor: pointer;
+      cursor: default;
     }
 
     .data-table tbody tr:hover {
@@ -348,82 +348,55 @@
     }
 
     /* Kolom beku Bagian (tema hijau #083E40).
-       KIRI : No + Nomor SPP.  KANAN : Status Pembayaran, Waktu Pengerjaan,
-       Pengurus Dokumen (dibekukan sebagai blok kontigu). Offset kanan dihitung
-       kanan→kiri berdasarkan lebar kolom di kanannya. */
+       KIRI : No + Nomor SPP.  KANAN : Status Pembayaran (kolom paling kanan,
+       tunggal — tak ada kolom beku tambahan). Lebar dikunci agar header & body
+       sejajar dan offset sticky presisi. */
     #documentTableContainer .data-table th.col-no,
     #documentTableContainer .data-table td.col-no {
       position: sticky;
       left: 0;
-      width: 70px;
-      min-width: 70px;
+      width: 64px;
+      min-width: 64px;
+      max-width: 64px;
       white-space: nowrap;
       z-index: 5;
     }
     #documentTableContainer .data-table th.col-nomor_spp,
     #documentTableContainer .data-table td.col-nomor_spp {
       position: sticky;
-      left: 70px; /* selebar kolom No */
-      width: 150px;
-      min-width: 150px;
+      left: 64px; /* selebar kolom No */
+      width: 160px;
+      min-width: 160px;
+      max-width: 160px;
       z-index: 5;
+      box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.25);
     }
-    #documentTableContainer .data-table th.col-pengurus,
-    #documentTableContainer .data-table td.col-pengurus {
+    #documentTableContainer .data-table th.col-status_pembayaran,
+    #documentTableContainer .data-table td.col-status_pembayaran {
       position: sticky;
       right: 0;
-      width: 150px;
-      min-width: 150px;
+      width: 185px;
+      min-width: 185px;
+      max-width: 185px;
       z-index: 5;
-    }
-    #documentTableContainer .data-table th.col-umur_dokumen,
-    #documentTableContainer .data-table td.col-umur_dokumen {
-      position: sticky;
-      right: 150px; /* selebar Pengurus Dokumen */
-      width: 165px;
-      min-width: 165px;
-      z-index: 5;
-    }
-    #documentTableContainer .data-table th.col-status_pembayaran,
-    #documentTableContainer .data-table td.col-status_pembayaran {
-      position: sticky;
-      right: 315px; /* Pengurus (150) + Waktu Pengerjaan (165) */
-      width: 175px;
-      min-width: 175px;
-      z-index: 5;
-    }
-
-    /* Bayangan pemisah di tepi blok beku */
-    #documentTableContainer .data-table th.col-nomor_spp,
-    #documentTableContainer .data-table td.col-nomor_spp {
-      box-shadow: 4px 0 6px -4px rgba(0, 0, 0, 0.18);
-    }
-    #documentTableContainer .data-table th.col-status_pembayaran,
-    #documentTableContainer .data-table td.col-status_pembayaran {
-      box-shadow: -4px 0 6px -4px rgba(0, 0, 0, 0.18);
+      box-shadow: -6px 0 8px -6px rgba(0, 0, 0, 0.25);
     }
 
     /* Latar opaque agar isi kolom lain tak tembus saat scroll horizontal */
     #documentTableContainer .data-table tbody td.col-no,
     #documentTableContainer .data-table tbody td.col-nomor_spp,
-    #documentTableContainer .data-table tbody td.col-status_pembayaran,
-    #documentTableContainer .data-table tbody td.col-umur_dokumen,
-    #documentTableContainer .data-table tbody td.col-pengurus {
+    #documentTableContainer .data-table tbody td.col-status_pembayaran {
       background: #ffffff;
     }
     #documentTableContainer .data-table thead th.col-no,
     #documentTableContainer .data-table thead th.col-nomor_spp,
-    #documentTableContainer .data-table thead th.col-status_pembayaran,
-    #documentTableContainer .data-table thead th.col-umur_dokumen,
-    #documentTableContainer .data-table thead th.col-pengurus {
+    #documentTableContainer .data-table thead th.col-status_pembayaran {
       background: #083E40; /* samakan dengan thead hijau */
       z-index: 6;          /* header di atas sel body yang beku */
     }
     #documentTableContainer .data-table tbody tr:hover td.col-no,
     #documentTableContainer .data-table tbody tr:hover td.col-nomor_spp,
-    #documentTableContainer .data-table tbody tr:hover td.col-status_pembayaran,
-    #documentTableContainer .data-table tbody tr:hover td.col-umur_dokumen,
-    #documentTableContainer .data-table tbody tr:hover td.col-pengurus {
+    #documentTableContainer .data-table tbody tr:hover td.col-status_pembayaran {
       background: #f3faf9;
     }
 
@@ -1214,6 +1187,7 @@
                   <th class="col-{{ $col }}">{{ $availableColumns[$col] ?? $col }}</th>
                 @endforeach
                 <th class="col-pengurus">Pengurus Dokumen</th>
+                <th class="col-status_pembayaran">Status Pembayaran</th>
               </tr>
             </thead>
             <tbody>
@@ -1223,34 +1197,7 @@
                 // Bagian bisa edit saat status belum dikirim atau dikembalikan
                 $canInlineEdit = false; // Bagian bersifat view-only: inline-edit dinonaktifkan
               @endphp
-              <tr onclick="showDocumentDetail({{ json_encode([
-                  'id' => $doc->id,
-                  'nomor_agenda' => $doc->nomor_agenda,
-                  'nomor_spp' => $doc->nomor_spp,
-                  'tanggal_spp' => $doc->tanggal_spp ? $doc->tanggal_spp->format('d/m/Y H:i') : '-',
-                  'tanggal_masuk' => $doc->tanggal_masuk ? $doc->tanggal_masuk->format('d/m/Y H:i') : '-',
-                  'bulan' => $doc->bulan ?? '-',
-                  'tahun' => $doc->tahun ?? '-',
-                  'nilai_rupiah' => 'Rp. ' . number_format($doc->nilai_rupiah, 0, ',', '.'),
-                  'ejaan_nilai_rupiah' => \App\Helpers\TerbilangHelper::terbilang($doc->nilai_rupiah),
-                  'uraian_spp' => $doc->uraian_spp ?? '-',
-                  'bagian' => $doc->bagian ?? '-',
-                  'nama_pengirim' => $doc->nama_pengirim ?? '-',
-                  'kebun' => $doc->kebun ?? '-',
-                  'no_spk' => $doc->no_spk ?? '-',
-                  'tanggal_spk' => $doc->tanggal_spk ? $doc->tanggal_spk->format('d/m/Y') : '-',
-                  'tanggal_berakhir_spk' => $doc->tanggal_berakhir_spk ? $doc->tanggal_berakhir_spk->format('d/m/Y') : '-',
-                  'no_berita_acara' => $doc->no_berita_acara ?? '-',
-                  'tanggal_berita_acara' => $doc->tanggal_berita_acara ? $doc->tanggal_berita_acara->format('d/m/Y') : '-',
-                  'dokumen_pos' => $doc->dokumenPos ? $doc->dokumenPos->map(fn($po) => ['nomor_po' => $po->nomor_po])->values() : [],
-                  'dokumen_prs' => $doc->dokumenPrs ? $doc->dokumenPrs->map(fn($pr) => ['nomor_pr' => $pr->nomor_pr])->values() : [],
-                  'kriteria_cf' => $doc->kategori ?? '-',
-                  'sub_kriteria' => $doc->jenis_dokumen ?? '-',
-                  'item_sub_kriteria' => $doc->jenis_sub_pekerjaan ?? '-',
-                  'jenis_pembayaran' => $doc->jenis_pembayaran ?? '-',
-                  'dibayar_kepada' => $doc->dibayarKepadas->pluck('nama_penerima')->join(', ') ?: '-',
-                  'status' => ucwords(str_replace('_', ' ', $doc->status ?? 'Belum Dikirim'))
-                ]) }})">
+              <tr>
                         <td class="col-no">{{ $dokumens->firstItem() + $index }}</td>
                         @foreach($selectedColumns as $col)
                           @if(in_array($col, ['nomor_spp', 'uraian_spp', 'nilai_rupiah', 'tanggal_spp']) && $canInlineEdit)
@@ -1484,6 +1431,43 @@
                         <td class="col-pengurus" onclick="event.stopPropagation()">
                           {{-- Bagian view-only: posisi dokumen ditampilkan read-only (bukan dropdown yang bisa mengubah) --}}
                           <span class="text-muted">{{ \App\Models\Dokumen::getRoleDisplayNameIndo($doc->current_handler ?? 'operator') }}</span>
+                        </td>
+                        <td class="col-status_pembayaran">
+                          @php
+                            // Status pembayaran (kolom tetap paling kanan, beku).
+                            $isPaid = $doc->status_pembayaran === 'sudah_dibayar' || !empty($doc->tanggal_dibayar);
+                            $isInPembayaran = str_contains(strtolower($doc->current_handler ?? ''), 'pembayaran');
+                            $statusChangeDate = null;
+                            if ($isPaid) {
+                              $paymentStatusClass = 'sudah-dibayar';
+                              $paymentStatusText = 'Sudah Dibayar';
+                              $paymentStatusIcon = 'fa-check-circle';
+                              $statusChangeDate = $doc->tanggal_dibayar;
+                            } elseif ($isInPembayaran) {
+                              $paymentStatusClass = 'siap-dibayar';
+                              $paymentStatusText = 'Siap Dibayar';
+                              $paymentStatusIcon = 'fa-money-bill-wave';
+                              $pembayaranRoleData = $doc->getDataForRole('pembayaran');
+                              $statusChangeDate = $pembayaranRoleData?->received_at;
+                            } else {
+                              $paymentStatusClass = 'belum-dibayar';
+                              $paymentStatusText = 'Belum Siap Dibayar';
+                              $paymentStatusIcon = 'fa-clock';
+                              $statusChangeDate = $doc->sent_at ?? $doc->created_at;
+                            }
+                          @endphp
+                          <div class="payment-status-container"
+                            style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span class="payment-status-badge {{ $paymentStatusClass }}">
+                              <i class="fa-solid {{ $paymentStatusIcon }}"></i>
+                              {{ $paymentStatusText }}
+                            </span>
+                            @if($statusChangeDate)
+                              <small style="font-size: 10px; color: #6c757d; text-align: center;">
+                                {{ \Carbon\Carbon::parse($statusChangeDate)->format('d M Y, H:i') }}
+                              </small>
+                            @endif
+                          </div>
                         </td>
                       </tr>
               @endforeach
@@ -1757,250 +1741,6 @@
     </div>
   </div>
 
-  <!-- Document Detail Modal - Modern Redesign -->
-  <div class="modal-overlay" id="documentDetailModal">
-    <div class="modal-content-custom">
-      <!-- Hero Header with Status -->
-      <div class="modal-header-custom">
-        <div class="header-content">
-          <div class="header-icon">
-            <i class="fa-solid fa-file-invoice"></i>
-          </div>
-          <div class="header-text">
-            <h4>Detail Dokumen Lengkap</h4>
-            <span class="doc-id" id="modal-header-agenda">-</span>
-          </div>
-        </div>
-        <div class="header-actions">
-          <span class="status-pill" id="modal-header-status">-</span>
-          <button class="modal-close" onclick="closeModal()">
-            <i class="fa-solid fa-times"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- Tabs Navigation -->
-      <div class="modal-tabs">
-        <button class="tab-btn active" onclick="switchTab('info')" data-tab="info">
-          <i class="fa-solid fa-info-circle"></i>
-          <span>Info Utama</span>
-        </button>
-        <button class="tab-btn" onclick="switchTab('keuangan')" data-tab="keuangan">
-          <i class="fa-solid fa-wallet"></i>
-          <span>Keuangan & Vendor</span>
-        </button>
-        <button class="tab-btn" onclick="switchTab('spk')" data-tab="spk">
-          <i class="fa-solid fa-file-contract"></i>
-          <span>SPK & Berita Acara</span>
-        </button>
-      </div>
-
-      <div class="modal-body-custom">
-        <!-- Tab: Info Utama -->
-        <div class="tab-content active" id="tab-info">
-          <!-- Quick Stats Cards -->
-          <div class="stats-row">
-            <div class="stat-card primary">
-              <div class="stat-icon"><i class="fa-solid fa-hashtag"></i></div>
-              <div class="stat-info">
-                <span class="stat-label">Nomor Agenda</span>
-                <span class="stat-value" id="modal-nomor-agenda">-</span>
-              </div>
-            </div>
-            <div class="stat-card success">
-              <div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
-              <div class="stat-info">
-                <span class="stat-label">Nilai Rupiah</span>
-                <span class="stat-value" id="modal-nilai-rupiah">-</span>
-              </div>
-            </div>
-            <div class="stat-card info">
-              <div class="stat-icon"><i class="fa-solid fa-calendar"></i></div>
-              <div class="stat-info">
-                <span class="stat-label">Periode</span>
-                <span class="stat-value" id="modal-periode">-</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Detail Sections -->
-          <div class="detail-section">
-            <div class="section-header">
-              <i class="fa-solid fa-file-alt"></i>
-              <h5>Informasi SPP</h5>
-            </div>
-            <div class="section-grid">
-              <div class="info-card">
-                <span class="info-label">Nomor SPP</span>
-                <span class="info-value" id="modal-nomor-spp">-</span>
-              </div>
-              <div class="info-card">
-                <span class="info-label">Tanggal SPP</span>
-                <span class="info-value" id="modal-tanggal-spp">-</span>
-              </div>
-              <div class="info-card">
-                <span class="info-label">Tanggal Masuk</span>
-                <span class="info-value" id="modal-tanggal-masuk">-</span>
-              </div>
-              <div class="info-card">
-                <span class="info-label">Status</span>
-                <span class="info-value status-badge" id="modal-status">-</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <div class="section-header">
-              <i class="fa-solid fa-building"></i>
-              <h5>Informasi Bagian</h5>
-            </div>
-            <div class="section-grid cols-3">
-              <div class="info-card">
-                <span class="info-label">Bagian</span>
-                <span class="info-value" id="modal-bagian">-</span>
-              </div>
-              <div class="info-card">
-                <span class="info-label">Nama Pengirim</span>
-                <span class="info-value" id="modal-nama-pengirim">-</span>
-              </div>
-              <div class="info-card">
-                <span class="info-label">Kebun/Unit Kerja</span>
-                <span class="info-value" id="modal-kebun">-</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <div class="section-header">
-              <i class="fa-solid fa-align-left"></i>
-              <h5>Uraian SPP</h5>
-            </div>
-            <div class="uraian-box" id="modal-uraian-spp">-</div>
-          </div>
-        </div>
-
-        <!-- Tab: Keuangan & Vendor -->
-        <div class="tab-content" id="tab-keuangan">
-          <div class="detail-section">
-            <div class="section-header">
-              <i class="fa-solid fa-coins"></i>
-              <h5>Detail Nilai</h5>
-            </div>
-            <div class="money-display">
-              <div class="money-amount" id="modal-nilai-rupiah-2">-</div>
-              <div class="money-words" id="modal-ejaan-nilai-rupiah">-</div>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <div class="section-header">
-              <i class="fa-solid fa-store"></i>
-              <h5>Informasi Vendor</h5>
-            </div>
-            <div class="vendor-card">
-              <div class="vendor-icon">
-                <i class="fa-solid fa-building"></i>
-              </div>
-              <div class="vendor-info">
-                <span class="vendor-label">Dibayarkan Kepada</span>
-                <span class="vendor-name" id="modal-dibayar-kepada">-</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <div class="section-header">
-              <i class="fa-solid fa-tags"></i>
-              <h5>Kategori & Klasifikasi</h5>
-            </div>
-            <div class="section-grid cols-2">
-              <div class="info-card highlight">
-                <span class="info-label">Kriteria CF</span>
-                <span class="info-value tag" id="modal-kriteria-cf">-</span>
-              </div>
-              <div class="info-card">
-                <span class="info-label">Sub Kriteria</span>
-                <span class="info-value" id="modal-sub-kriteria">-</span>
-              </div>
-              <div class="info-card">
-                <span class="info-label">Item Sub Kriteria</span>
-                <span class="info-value" id="modal-item-sub-kriteria">-</span>
-              </div>
-              <div class="info-card">
-                <span class="info-label">Jenis Pembayaran</span>
-                <span class="info-value" id="modal-jenis-pembayaran">-</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab: SPK & Berita Acara -->
-        <div class="tab-content" id="tab-spk">
-          <div class="detail-section">
-            <div class="section-header">
-              <i class="fa-solid fa-file-signature"></i>
-              <h5>Data SPK (Surat Perintah Kerja)</h5>
-            </div>
-            <div class="section-grid cols-3">
-              <div class="info-card">
-                <span class="info-label">No SPK</span>
-                <span class="info-value mono" id="modal-no-spk">-</span>
-              </div>
-              <div class="info-card">
-                <span class="info-label">Tanggal SPK</span>
-                <span class="info-value" id="modal-tanggal-spk">-</span>
-              </div>
-              <div class="info-card">
-                <span class="info-label">Tanggal Berakhir SPK</span>
-                <span class="info-value" id="modal-tanggal-berakhir-spk">-</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <div class="section-header">
-              <i class="fa-solid fa-clipboard-check"></i>
-              <h5>Data Berita Acara</h5>
-            </div>
-            <div class="section-grid cols-2">
-              <div class="info-card">
-                <span class="info-label">No Berita Acara</span>
-                <span class="info-value mono" id="modal-no-berita-acara">-</span>
-              </div>
-              <div class="info-card">
-                <span class="info-label">Tanggal Berita Acara</span>
-                <span class="info-value" id="modal-tanggal-berita-acara">-</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <div class="section-header">
-              <i class="fa-solid fa-receipt"></i>
-              <h5>Data PO & PR</h5>
-            </div>
-            <div class="section-grid cols-2">
-              <div class="info-card">
-                <span class="info-label">No. PO</span>
-                <span class="info-value mono" id="modal-no-po">-</span>
-              </div>
-              <div class="info-card">
-                <span class="info-label">No. PR</span>
-                <span class="info-value mono" id="modal-no-pr">-</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer-custom">
-        <button class="btn-footer secondary" onclick="closeModal()">
-          <i class="fa-solid fa-times"></i>
-          <span>Tutup</span>
-        </button>
-      </div>
-    </div>
-  </div>
 
   <style>
     /* Modern Modal Styles */
@@ -2926,98 +2666,10 @@
       window.location.href = url.toString();
     }
 
-    function showDocumentDetail(doc) {
-      // Simplified status mapping for Bagian view
-      function getSimplifiedStatus(status) {
-        const statusLower = (status || '').toLowerCase();
-        if (statusLower === 'belum dikirim') {
-          return 'Belum Dikirim';
-        } else if (statusLower === 'menunggu_approval_keuangan') {
-          return 'Menunggu Approve';
-        } else {
-          return 'Terkirim';
-        }
-      }
-
-      const simplifiedStatus = getSimplifiedStatus(doc.status);
-
-      // Header fields
-      document.getElementById('modal-header-agenda').textContent = doc.nomor_agenda || '-';
-      document.getElementById('modal-header-status').textContent = simplifiedStatus;
-
-      // Tab Info Utama
-      document.getElementById('modal-nomor-agenda').textContent = doc.nomor_agenda || '-';
-      document.getElementById('modal-status').textContent = simplifiedStatus;
-      document.getElementById('modal-nomor-spp').textContent = doc.nomor_spp || '-';
-      document.getElementById('modal-tanggal-spp').textContent = doc.tanggal_spp || '-';
-      document.getElementById('modal-periode').textContent = (doc.bulan || '-') + ' ' + (doc.tahun || '');
-      document.getElementById('modal-tanggal-masuk').textContent = doc.tanggal_masuk || '-';
-      document.getElementById('modal-nilai-rupiah').textContent = doc.nilai_rupiah || '-';
-      document.getElementById('modal-bagian').textContent = doc.bagian || '-';
-      document.getElementById('modal-nama-pengirim').textContent = doc.nama_pengirim || '-';
-      document.getElementById('modal-kebun').textContent = doc.kebun || '-';
-      document.getElementById('modal-uraian-spp').textContent = doc.uraian_spp || '-';
-
-      // Tab Keuangan & Vendor
-      document.getElementById('modal-nilai-rupiah-2').textContent = doc.nilai_rupiah || '-';
-      document.getElementById('modal-ejaan-nilai-rupiah').textContent = doc.ejaan_nilai_rupiah || '-';
-      document.getElementById('modal-dibayar-kepada').textContent = doc.dibayar_kepada || '-';
-      document.getElementById('modal-kriteria-cf').textContent = doc.kriteria_cf || '-';
-      document.getElementById('modal-sub-kriteria').textContent = doc.sub_kriteria || '-';
-      document.getElementById('modal-item-sub-kriteria').textContent = doc.item_sub_kriteria || '-';
-      document.getElementById('modal-jenis-pembayaran').textContent = doc.jenis_pembayaran || '-';
-
-      // Tab SPK & Berita Acara
-      document.getElementById('modal-no-spk').textContent = doc.no_spk || '-';
-      document.getElementById('modal-tanggal-spk').textContent = doc.tanggal_spk || '-';
-      document.getElementById('modal-tanggal-berakhir-spk').textContent = doc.tanggal_berakhir_spk || '-';
-      document.getElementById('modal-no-berita-acara').textContent = doc.no_berita_acara || '-';
-      document.getElementById('modal-tanggal-berita-acara').textContent = doc.tanggal_berita_acara || '-';
-      // PO: dokumen_pos is an array of {nomor_po: '...'}
-      const poList = (doc.dokumen_pos && doc.dokumen_pos.length > 0)
-        ? doc.dokumen_pos.map(p => p.nomor_po).filter(Boolean).join(', ')
-        : '-';
-      document.getElementById('modal-no-po').textContent = poList;
-
-      // PR: dokumen_prs is an array of {nomor_pr: '...'}
-      const prList = (doc.dokumen_prs && doc.dokumen_prs.length > 0)
-        ? doc.dokumen_prs.map(p => p.nomor_pr).filter(Boolean).join(', ')
-        : '-';
-      document.getElementById('modal-no-pr').textContent = prList;
-
-      // Reset to first tab
-      switchTab('info');
-
-      document.getElementById('documentDetailModal').classList.add('show');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function switchTab(tabName) {
-      // Remove active from all tabs and contents
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-      // Add active to selected
-      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-      document.getElementById(`tab-${tabName}`).classList.add('active');
-    }
-
-    function closeModal() {
-      document.getElementById('documentDetailModal').classList.remove('show');
-      document.body.style.overflow = '';
-    }
-
-    // Close modal on overlay click
-    document.getElementById('documentDetailModal').addEventListener('click', function (e) {
-      if (e.target === this) {
-        closeModal();
-      }
-    });
 
     // Close modal on Escape key
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
-        closeModal();
         closeDeleteModal();
         closeSendModal();
       }
