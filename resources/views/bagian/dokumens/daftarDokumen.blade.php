@@ -343,6 +343,10 @@
     #bagianDaftarTable .data-table td.col-nilai_rupiah {
       min-width: 150px;
     }
+    #bagianDaftarTable .data-table th.col-tanggal_masuk,
+    #bagianDaftarTable .data-table td.col-tanggal_masuk {
+      min-width: 150px;
+    }
     #bagianDaftarTable .data-table th.col-umur_dokumen,
     #bagianDaftarTable .data-table td.col-umur_dokumen {
       min-width: 185px;
@@ -1389,10 +1393,6 @@
                                 }
                               @endphp
                               <div class="document-age-badge {{ $isPaid ? 'completed' : 'active' }}">
-                                <div class="age-date">
-                                  <span class="age-dot"></span>
-                                  {{ $startDate ? $startDate->format('d M Y, H:i') : '-' }}
-                                </div>
                                 <div class="age-duration">
                                   <i class="fa-solid fa-clock"></i>
                                   {{ $durationText }}
