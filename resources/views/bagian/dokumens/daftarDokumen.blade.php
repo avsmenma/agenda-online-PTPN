@@ -461,16 +461,6 @@
       color: white;
     }
 
-    .btn-tracking {
-      background: #083E40;
-      color: white;
-    }
-
-    .btn-tracking:hover {
-      background: #0a4f52;
-      color: white;
-    }
-
     .btn-delete {
       background: #dc3545;
       color: white;
@@ -1117,7 +1107,6 @@
                   <th class="{{ $col == 'nomor_agenda' ? 'col-nomor_agenda' : '' }}">{{ $availableColumns[$col] ?? $col }}</th>
                 @endforeach
                 <th>Pengurus Dokumen</th>
-                <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -1388,13 +1377,6 @@
                         <td onclick="event.stopPropagation()">
                           {{-- Bagian view-only: posisi dokumen ditampilkan read-only (bukan dropdown yang bisa mengubah) --}}
                           <span class="text-muted">{{ \App\Models\Dokumen::getRoleDisplayNameIndo($doc->current_handler ?? 'operator') }}</span>
-                        </td>
-                        <td onclick="event.stopPropagation()">
-                          <div class="action-buttons">
-                            <a href="{{ route('bagian.tracking') }}" class="btn-action btn-tracking" title="Lihat Tracking">
-                              <i class="fa-solid fa-route"></i>
-                            </a>
-                          </div>
                         </td>
                       </tr>
               @endforeach

@@ -4924,8 +4924,7 @@
           @php
             $isBagianDocumentsActive = request()->is('*bagian/documents*') || request()->routeIs('bagian.documents.*');
             $isBagianTambahActive = request()->routeIs('bagian.documents.create') || request()->is('*bagian/documents/create*');
-            $isBagianTrackingActive = request()->routeIs('bagian.tracking') || request()->is('*bagian/tracking*');
-            $isBagianTreeOpen = $isBagianDocumentsActive || $isBagianTambahActive || $isBagianTrackingActive;
+            $isBagianTreeOpen = $isBagianDocumentsActive || $isBagianTambahActive;
           @endphp
           <div class="agenda-tree {{ $isBagianTreeOpen ? 'menu-open menu-is-opening' : '' }}">
             <a href="#"
@@ -4938,9 +4937,6 @@
             <div class="nav-treeview">
               <a href="{{ route('bagian.documents.index') }}" class="{{ $isBagianDocumentsActive ? 'active' : '' }}">
                 <i class="fa-solid fa-list"></i> Daftar Dokumen
-              </a>
-              <a href="{{ route('bagian.tracking') }}" class="{{ $isBagianTrackingActive ? 'active' : '' }}">
-                <i class="fa-solid fa-route"></i> Tracking Dokumen
               </a>
             </div>
           </div>
@@ -5105,8 +5101,7 @@
         request()->routeIs('returns.verifikasi.*') ||
         request()->is('*documents/verifikasi*');
     } elseif ($isBagianUser) {
-      $isSubmenuPage = request()->is('*bagian/documents*') ||
-        request()->is('*bagian/tracking*');
+      $isSubmenuPage = request()->is('*bagian/documents*');
     } else {
       $isSubmenuPage = request()->is('*dokumens*') ||
         request()->is('*rekapan*') ||
@@ -5180,9 +5175,6 @@
         @endphp
         <a href="{{ route('bagian.documents.index') }}" class="{{ $isDaftarActive ? 'active' : '' }}">
           <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
-        </a>
-        <a href="{{ route('bagian.tracking') }}" class="{{ request()->routeIs('bagian.tracking') ? 'active' : '' }}">
-          <i class="fa-solid fa-route me-2"></i> Tracking Dokumen
         </a>
       @else
         <!-- Operator -->

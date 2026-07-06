@@ -563,10 +563,6 @@ Route::middleware(['auth', 'bagian'])
             Route::get('/{dokumen}/detail', [\App\Http\Controllers\BagianDokumenController::class, 'getDocumentDetail'])->name('detail');
         });
 
-        // Tracking
-        Route::get('bagian/tracking', [\App\Http\Controllers\BagianDokumenController::class, 'tracking'])
-            ->name('bagian.tracking');
-
         // Return detail API - reads return_reason directly from dokumens table
         Route::get('/api/bagian/documents/{dokumen}/return-detail', [\App\Http\Controllers\BagianDokumenController::class, 'getReturnDetail'])
             ->name('api.bagian.documents.return-detail');
