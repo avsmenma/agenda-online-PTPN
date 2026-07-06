@@ -80,36 +80,22 @@ class BagianDokumenController extends Controller
         if ($request->has('status') && $request->status) {
             $statusFilter = $request->status;
 
-            if ($statusFilter === 'belum_dikirim') {
-                // Documents not yet sent
-                $query->where('status', 'belum dikirim');
-            } elseif ($statusFilter === 'menunggu_approve') {
-                // Documents waiting for approval (sent to verifikasi but not yet approved)
-                $query->where('status', 'menunggu_approval_keuangan');
-            } elseif ($statusFilter === 'terkirim') {
-                // Documents that have been sent (not 'belum dikirim' and not 'menunggu_approval_keuangan')
-                $query->whereNotIn('status', ['belum dikirim', 'menunggu_approval_keuangan']);
-            } elseif ($statusFilter === 'belum_dibayar') {
-                // Documents not yet at payment stage and not paid
+            // Hanya 2 filter status (selaras dgn kartu info): sudah / belum dibayar.
+            // "Sudah dibayar" = ada tanggal_dibayar ATAU status_pembayaran final.
+            if ($statusFilter === 'sudah_dibayar') {
                 $query->where(function ($q) {
-                    $q->where('current_handler', '!=', 'pembayaran')
-                        ->whereNull('tanggal_dibayar');
+                    $q->whereNotNull('tanggal_dibayar')
+                        ->orWhere('status_pembayaran', 'sudah_dibayar');
                 });
-            } elseif ($statusFilter === 'siap_dibayar') {
-                // Documents at payment stage but not yet paid
-                $query->where('current_handler', 'pembayaran')
-                    ->whereNull('tanggal_dibayar');
-            } elseif ($statusFilter === 'sudah_dibayar') {
-                // Documents that have been paid
-                $query->whereNotNull('tanggal_dibayar');
-            } elseif ($statusFilter === 'dikembalikan') {
-                // Documents returned from Team Verifikasi
-                $query->where('status', 'returned_to_bidang')
-                    ->where('return_source', $bagianCode);
-            } else {
-                // Fallback: try exact match
-                $query->where('status', $statusFilter);
+            } elseif ($statusFilter === 'belum_dibayar') {
+                // Kebalikannya: belum ada tanggal bayar & belum berstatus final.
+                $query->whereNull('tanggal_dibayar')
+                    ->where(function ($q) {
+                        $q->whereNull('status_pembayaran')
+                            ->orWhere('status_pembayaran', '!=', 'sudah_dibayar');
+                    });
             }
+            // Nilai status lain (peninggalan lama) diabaikan.
         }
 
         // Year filter

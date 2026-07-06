@@ -1118,6 +1118,9 @@
       display: flex;
       align-items: center;
       gap: 16px;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
       background: #ffffff;
       border: 1px solid #e8eef0;
       border-radius: 16px;
@@ -1136,6 +1139,9 @@
     .bic-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 22px rgba(8, 62, 64, 0.10);
+    }
+    .bic-card.bic-active {
+      box-shadow: 0 0 0 2px #0f4c3a, 0 8px 22px rgba(8, 62, 64, 0.14);
     }
     .bic-icon {
       flex: 0 0 auto;
@@ -1163,27 +1169,30 @@
   <div class="container-fluid py-4">
     <!-- Kartu Informasi -->
     <div class="bagian-info-cards">
-      <div class="bic-card bic-total">
+      <a class="bic-card bic-total {{ !request('status') ? 'bic-active' : '' }}"
+        href="{{ route('bagian.documents.index') }}" title="Tampilkan semua dokumen">
         <div class="bic-icon"><i class="fa-solid fa-folder-open"></i></div>
         <div class="bic-body">
           <div class="bic-value">{{ number_format($totalDokumen, 0, ',', '.') }}</div>
           <div class="bic-label">Total Dokumen {{ $bagianCode }}</div>
         </div>
-      </div>
-      <div class="bic-card bic-belum">
+      </a>
+      <a class="bic-card bic-belum {{ request('status') == 'belum_dibayar' ? 'bic-active' : '' }}"
+        href="{{ route('bagian.documents.index', ['status' => 'belum_dibayar']) }}" title="Filter: belum dibayar">
         <div class="bic-icon"><i class="fa-solid fa-hourglass-half"></i></div>
         <div class="bic-body">
           <div class="bic-value">{{ number_format($totalBelumDibayar, 0, ',', '.') }}</div>
           <div class="bic-label">Dokumen Belum Dibayar</div>
         </div>
-      </div>
-      <div class="bic-card bic-sudah">
+      </a>
+      <a class="bic-card bic-sudah {{ request('status') == 'sudah_dibayar' ? 'bic-active' : '' }}"
+        href="{{ route('bagian.documents.index', ['status' => 'sudah_dibayar']) }}" title="Filter: sudah dibayar">
         <div class="bic-icon"><i class="fa-solid fa-circle-check"></i></div>
         <div class="bic-body">
           <div class="bic-value">{{ number_format($totalSudahDibayar, 0, ',', '.') }}</div>
           <div class="bic-label">Dokumen Sudah Dibayar</div>
         </div>
-      </div>
+      </a>
     </div>
 
     <!-- Search & Filter -->
@@ -1212,15 +1221,8 @@
 
         <select name="status" class="btn-status-select">
           <option value="">Semua Status</option>
-          <option value="belum_dikirim" {{ request('status') == 'belum_dikirim' ? 'selected' : '' }}>Belum Dikirim</option>
-          <option value="menunggu_approve" {{ request('status') == 'menunggu_approve' ? 'selected' : '' }}>Menunggu Approve
-          </option>
-          <option value="terkirim" {{ request('status') == 'terkirim' ? 'selected' : '' }}>Terkirim</option>
-          <option value="belum_dibayar" {{ request('status') == 'belum_dibayar' ? 'selected' : '' }}>Belum Siap Dibayar
-          </option>
-          <option value="siap_dibayar" {{ request('status') == 'siap_dibayar' ? 'selected' : '' }}>Siap Dibayar</option>
+          <option value="belum_dibayar" {{ request('status') == 'belum_dibayar' ? 'selected' : '' }}>Belum Dibayar</option>
           <option value="sudah_dibayar" {{ request('status') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
-          <option value="dikembalikan" {{ request('status') == 'dikembalikan' ? 'selected' : '' }}>Dikembalikan</option>
         </select>
 
         <button type="submit" class="btn-filter">
