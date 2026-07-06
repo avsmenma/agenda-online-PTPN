@@ -1366,11 +1366,14 @@
                                 // Determine if document is paid
                                 $isPaid = $doc->status_pembayaran === 'sudah_dibayar' || !empty($doc->tanggal_dibayar);
 
-                                // Calculate age
-                                $startDate = $doc->created_at;
-                                $endDate = $isPaid && $doc->tanggal_dibayar ? \Carbon\Carbon::parse($doc->tanggal_dibayar) : now();
+                                // Titik awal = TANGGAL MASUK (bukan created_at/waktu import).
+                                // Fallback ke created_at bila tanggal_masuk kosong.
+                                $startRaw  = $doc->tanggal_masuk ?: $doc->created_at;
+                                $startDate = $startRaw ? \Carbon\Carbon::parse($startRaw) : null;
+                                $endDate   = $isPaid && $doc->tanggal_dibayar ? \Carbon\Carbon::parse($doc->tanggal_dibayar) : now();
 
-                                if ($startDate) {
+                                // Hanya hitung bila titik awal ada & tak janggal (akhir >= awal).
+                                if ($startDate && $endDate->greaterThanOrEqualTo($startDate)) {
                                   $diff = $startDate->diff($endDate);
                                   $days = $diff->days;
                                   $hours = $diff->h;
