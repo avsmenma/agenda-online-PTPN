@@ -23,7 +23,7 @@ use App\Helpers\ActivityLogHelper;
 class DokumenController extends Controller
 {
     /**
-     * Build the base operator document query (shared between index and ajaxRows)
+     * Build the base operator document query (dipakai index, termasuk jalur virtual_chunk)
      */
     private function buildOperatorQuery(Request $request): \Illuminate\Database\Eloquent\Builder
     {
@@ -254,46 +254,6 @@ class DokumenController extends Controller
         return view('operator.dokumens.daftarDokumen', $data);
     }
 
-    /**
-     * AJAX chunked row loader — returns only <tr> HTML for "Semua" mode
-     * Accepts: ?chunk_page=1&chunk_size=200 + all existing filter params
-     */
-    public function ajaxRows(Request $request)
-    {
-        $query = $this->buildOperatorQuery($request);
-
-        $chunkSize = min((int) $request->get('chunk_size', 200), 500);
-        $chunkPage = max(1, (int) $request->get('chunk_page', 1));
-
-        $paginator = $query->paginate($chunkSize, ['*'], 'page', $chunkPage)
-                           ->appends($request->except(['chunk_page', 'chunk_size']));
-
-        $availableColumns = $this->operatorDocumentColumns();
-
-        $defaultColumns = $this->defaultOperatorDocumentColumns($availableColumns);
-        $selectedColumns = session('dokumens_table_columns', $defaultColumns);
-        if ($this->isLegacyOperatorDefaultColumns($selectedColumns)) {
-            $selectedColumns = $defaultColumns;
-            session(['dokumens_table_columns' => $selectedColumns]);
-        }
-        $selectedColumns = array_filter($selectedColumns, fn($c) => isset($availableColumns[$c]));
-
-        $html = view('operator.dokumens._tableRowsAjax', [
-            'dokumens'        => $paginator,
-            'selectedColumns' => array_values($selectedColumns),
-            'availableColumns'=> $availableColumns,
-        ])->render();
-
-        return response()->json([
-            'html'      => $html,
-            'total'     => $paginator->total(),
-            'page'      => $paginator->currentPage(),
-            'last_page' => $paginator->lastPage(),
-            'has_more'  => $paginator->hasMorePages(),
-            'from'      => $paginator->firstItem() ?? 0,
-            'to'        => $paginator->lastItem() ?? 0,
-        ]);
-    }
 
     /**
      * Membuat satu baris dokumen draft langsung dari daftar dokumen (inline add).
@@ -334,7 +294,7 @@ class DokumenController extends Controller
         // Eager-load relasi yang dipakai partial agar markup baris identik
         $dokumen->load(['roleStatuses', 'dibayarKepadas', 'dokumenPos']);
 
-        // Resolusi kolom sama seperti ajaxRows()
+        // Resolusi kolom sama seperti index()
         $availableColumns = $this->operatorDocumentColumns();
         $defaultColumns   = $this->defaultOperatorDocumentColumns($availableColumns);
         $selectedColumns  = session('dokumens_table_columns', $defaultColumns);
@@ -353,46 +313,6 @@ class DokumenController extends Controller
         ]);
     }
 
-    public function getAllData(Request $request)
-    {
-        $query = $this->buildOperatorQuery($request);
-        $availableColumns = $this->operatorDocumentColumns();
-        $selectedColumns = $this->resolveOperatorSelectedColumns($request, $availableColumns);
-        $filteredColumns = array_values(array_filter($selectedColumns, function ($col) use ($availableColumns) {
-            return $col !== 'nomor_mirror' && isset($availableColumns[$col]);
-        }));
-
-        $documents = $query->get();
-        $handlerBagianOptions = Bagian::active()
-            ->ordered()
-            ->get(['kode', 'nama'])
-            ->map(fn($bagian) => [
-                'value' => 'bagian_' . strtolower($bagian->kode),
-                'label' => $bagian->nama ?: $bagian->kode,
-            ])
-            ->values();
-
-        $rows = $documents->values()->map(function (Dokumen $dokumen, int $index) {
-            return $this->formatOperatorTabulatorRow($dokumen, $index);
-        });
-
-        return response()->json([
-            'data' => $rows,
-            'columns' => $filteredColumns,
-            'availableColumns' => $availableColumns,
-            'handlerOptions' => [
-                'base' => [
-                    ['value' => 'operator', 'label' => 'Operator'],
-                    ['value' => 'team_verifikasi', 'label' => 'Tim Verifikasi'],
-                    ['value' => 'perpajakan', 'label' => 'Tim Perpajakan'],
-                    ['value' => 'akutansi', 'label' => 'Tim Akuntansi'],
-                    ['value' => 'pembayaran', 'label' => 'Tim Pembayaran'],
-                ],
-                'bagian' => $handlerBagianOptions,
-            ],
-            'total' => $rows->count(),
-        ]);
-    }
 
     private function operatorDocumentColumns(): array
     {
@@ -442,31 +362,6 @@ class DokumenController extends Controller
         ];
     }
 
-    private function resolveOperatorSelectedColumns(Request $request, array $availableColumns): array
-    {
-        $selectedColumns = $request->get('columns', []);
-        $selectedColumns = array_values(array_filter((array) $selectedColumns, fn($col) => $col !== 'nomor_mirror'));
-
-        if ($request->has('columns') && !empty($selectedColumns)) {
-            session(['dokumens_table_columns' => $selectedColumns]);
-            return $selectedColumns;
-        }
-
-        $defaultColumns = $this->defaultOperatorDocumentColumns($availableColumns);
-        $selectedColumns = session('dokumens_table_columns', $defaultColumns);
-
-        if ($this->isLegacyOperatorDefaultColumns($selectedColumns)) {
-            $selectedColumns = $defaultColumns;
-        }
-
-        $selectedColumns = array_values(array_filter((array) $selectedColumns, function ($col) use ($availableColumns) {
-            return $col !== 'nomor_mirror' && isset($availableColumns[$col]);
-        }));
-
-        session(['dokumens_table_columns' => $selectedColumns]);
-
-        return $selectedColumns;
-    }
 
     private function defaultOperatorDocumentColumns(array $availableColumns): array
     {
@@ -484,243 +379,10 @@ class DokumenController extends Controller
         return collect($legacyDefaults)->contains(fn($legacy) => $selectedColumns === $legacy);
     }
 
-    private function formatOperatorTabulatorRow(Dokumen $dokumen, int $index): array
-    {
-        $state = $this->operatorDocumentState($dokumen);
-        $handler = $this->operatorDocumentHandlerState($dokumen);
-        $dibayarKepada = $dokumen->dibayarKepadas->count() > 0
-            ? $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ')
-            : ($dokumen->dibayar_kepada ?? '-');
 
-        return [
-            'no' => $index + 1,
-            'id' => $dokumen->id,
-            'nomor_agenda' => $dokumen->nomor_agenda,
-            'bulan' => $dokumen->bulan ?? '-',
-            'tahun' => $dokumen->tahun ?? '-',
-            'kategori' => $dokumen->kategori ?? '-',
-            'jenis_dokumen' => $dokumen->jenis_dokumen ?? '-',
-            'jenis_sub_pekerjaan' => $dokumen->jenis_sub_pekerjaan ?? '-',
-            'jenis_pembayaran' => $dokumen->jenis_pembayaran ?? '-',
-            'nomor_spp' => $dokumen->nomor_spp ?? '-',
-            'tanggal_spp' => $this->formatDateInputValue($dokumen->tanggal_spp),
-            'tanggal_masuk' => $dokumen->tanggal_masuk ? $dokumen->tanggal_masuk->format('d-m-Y H:i') : '-',
-            'dibayar_kepada' => $dibayarKepada,
-            'uraian_spp' => $dokumen->uraian_spp ?? '-',
-            'nilai_rupiah' => (float) ($dokumen->nilai_rupiah ?? 0),
-            'nilai_rupiah_fmt' => $dokumen->formatted_nilai_rupiah,
-            'tanggal_paraf' => $this->formatDateInputValue($dokumen->tanggal_paraf),
-            'pemaraf' => $dokumen->pemaraf ?? '-',
-            'tanggal_selesai_diproses' => $dokumen->tanggal_selesai_diproses ? $dokumen->tanggal_selesai_diproses->format('d/m/Y H:i') : '-',
-            'tanggal_kembali_ke_bagian' => $dokumen->tanggal_kembali_ke_bagian ?? '-',
-            'tanggal_hasil_koreksi_bagian' => $dokumen->tanggal_hasil_koreksi_bagian ?? '-',
-            'kepala_sub_bagian' => $dokumen->kepala_sub_bagian ?? '-',
-            'status_dokumen_custom' => $dokumen->status_dokumen_csv ?? '-',
-            'tanggal_dibayar' => $this->formatDateValue($dokumen->tanggal_dibayar, 'd/m/Y'),
-            'bagian' => $dokumen->bagian ?? '-',
-            'nama_pengirim' => $dokumen->nama_pengirim ?? '-',
-            'no_spk' => $dokumen->no_spk ?? '-',
-            'tanggal_spk' => $this->formatDateInputValue($dokumen->tanggal_spk),
-            'tanggal_berakhir_spk' => $this->formatDateInputValue($dokumen->tanggal_berakhir_spk),
-            'no_berita_acara' => $dokumen->no_berita_acara ?? '-',
-            'tanggal_berita_acara' => $this->formatDateInputValue($dokumen->tanggal_berita_acara),
-            'nomor_po' => $dokumen->dokumenPos->pluck('nomor_po')->filter()->join(', ') ?: ($dokumen->NO_PO ?? '-'),
-            'nomor_miro' => $dokumen->nomor_miro_display ?? '-',
-            'no_faktur' => $dokumen->no_faktur ?? '-',
-            'tanggal_faktur' => $this->formatDateInputValue($dokumen->tanggal_faktur),
-            'tanggal_selesai_verifikasi_pajak' => $this->formatDateInputValue($dokumen->tanggal_selesai_verifikasi_pajak),
-            'jenis_pph' => $dokumen->jenis_pph ?? '-',
-            'dpp_pph' => $dokumen->dpp_pph !== null ? (float) $dokumen->dpp_pph : null,
-            'dpp_pph_fmt' => $dokumen->dpp_pph !== null ? number_format((float) $dokumen->dpp_pph, 0, ',', '.') : '-',
-            'ppn_terhutang' => $dokumen->ppn_terhutang !== null ? (float) $dokumen->ppn_terhutang : null,
-            'ppn_terhutang_fmt' => $dokumen->ppn_terhutang !== null ? number_format((float) $dokumen->ppn_terhutang, 0, ',', '.') : '-',
-            'status' => $state['status_label'],
-            'status_key' => $state['status_key'],
-            'status_badge' => $state['status_badge'],
-            'kebun' => $dokumen->kebun ?? '-',
-            'npwp' => $dokumen->npwp ?? '-',
-            'link_dokumen_pajak' => $dokumen->link_dokumen_pajak ?? '',
-            'can_send' => $state['can_send'],
-            'can_edit' => $state['can_edit'],
-            'is_inline_editable' => $state['can_inline_edit'],
-            'handler_selected' => $handler['selected'],
-            'handler_disabled' => !$handler['can_change'],
-            'handler_title' => $handler['can_change'] ? 'Ubah pengurus dokumen' : 'Hanya pengurus dokumen saat ini yang dapat mengubah',
-            'handler_show_bagian' => $handler['show_bagian_options'],
-        ];
-    }
 
-    private function operatorDocumentState(Dokumen $dokumen): array
-    {
-        $allStatuses = $dokumen->roleStatuses;
-        $teamStatus = $allStatuses->whereIn('role_code', ['verifikasi', 'team_verifikasi'])
-            ->sortByDesc('status_changed_at')
-            ->first();
-        $teamRejected = $teamStatus && strtolower($teamStatus->status ?? '') === 'rejected';
-        $teamPending = $teamStatus && strtolower($teamStatus->status ?? '') === 'pending';
-        $teamApproved = $teamStatus && strtolower($teamStatus->status ?? '') === 'approved';
-        $statusLower = strtolower($dokumen->status ?? 'draft');
-        $handlerLower = strtolower($dokumen->current_handler ?? '');
-        $currentHandlerOperator = $handlerLower === 'operator';
 
-        $isRejected = $teamRejected;
-        if (!$isRejected && $statusLower === 'returned_to_operator') {
-            $isRejected = $allStatuses->where('status', 'rejected')->isNotEmpty();
-        }
 
-        $createdByOperator = strtolower($dokumen->created_by ?? '') === 'operator';
-        $isFromBagian = $currentHandlerOperator && !$createdByOperator;
-        $isReturned = $statusLower === 'returned_to_operator';
-        $isSentToTeamVerifikasi = $statusLower === 'sent_to_team_verifikasi'
-            || (($dokumen->current_handler ?? 'operator') === 'team_verifikasi' && $statusLower !== 'returned_to_operator');
-        $isSentToOtherRoles = in_array($statusLower, [
-            'sent_to_perpajakan',
-            'sent_to_akutansi',
-            'sent_to_pembayaran',
-            'pending_approval_perpajakan',
-            'pending_approval_akutansi',
-            'pending_approval_pembayaran',
-        ], true);
-        $hasOtherRoleStatus = $allStatuses->whereIn('role_code', ['perpajakan', 'akutansi', 'pembayaran'])->isNotEmpty();
-        $isSent = ($isSentToTeamVerifikasi || ($teamApproved && $isSentToOtherRoles)) && !$isRejected;
-
-        if ($isFromBagian) {
-            $isSent = false;
-        }
-
-        $canSend = false;
-        if ($isFromBagian && !$isSent) {
-            $canSend = true;
-        } elseif ($isRejected && $currentHandlerOperator && !$isSent) {
-            $canSend = true;
-        } elseif ($isReturned && $currentHandlerOperator && !$isSent) {
-            $canSend = true;
-        } elseif (in_array($statusLower, ['draft', 'sedang diproses'], true) && $currentHandlerOperator && !$isSent) {
-            $canSend = true;
-        }
-
-        $canEdit = false;
-        if ($isFromBagian && !$isSent) {
-            $canEdit = true;
-        } elseif ($isRejected && $currentHandlerOperator && !$isSent) {
-            $canEdit = true;
-        } elseif ($isReturned && $currentHandlerOperator && !$isSent) {
-            $canEdit = true;
-        } elseif ($statusLower === 'draft' && $currentHandlerOperator && !$isSent) {
-            $canEdit = true;
-        }
-
-        $canInlineEdit = ($currentHandlerOperator && in_array($statusLower, [
-            'draft',
-            'returned_to_operator',
-            'belum_dikirim',
-            'belum dikirim',
-            'menunggu_approval_keuangan',
-        ], true)) || ($isRejected && $currentHandlerOperator);
-
-        $displayStatus = $dokumen->getDisplayStatusForRole('operator');
-        if ($statusLower === 'returned_to_operator') {
-            $displayStatus = 'dikembalikan';
-        } elseif ($isRejected) {
-            $displayStatus = 'ditolak_verifikasi';
-        } elseif (!$displayStatus) {
-            if ($statusLower === 'menunggu_approval_keuangan' && $currentHandlerOperator) {
-                $displayStatus = 'draft';
-            } elseif ($teamPending || $statusLower === 'waiting_reviewer_approval' || str_contains($statusLower, 'pending_approval_team_verifikasi')) {
-                $displayStatus = 'menunggu_approval_verifikasi';
-            } elseif ($teamApproved || $hasOtherRoleStatus) {
-                $displayStatus = 'terkirim';
-            } elseif ($currentHandlerOperator && in_array($statusLower, ['draft', 'returned_to_operator'], true)) {
-                $displayStatus = 'draft';
-            } else {
-                $displayStatus = in_array($handlerLower, ['team_verifikasi', 'verifikasi', 'perpajakan', 'akutansi', 'pembayaran'], true)
-                    ? 'terkirim'
-                    : 'draft';
-            }
-        }
-
-        $statusLabel = match ($displayStatus) {
-            'draft' => 'Belum Dikirim',
-            'menunggu_approval_verifikasi' => 'Menunggu Approve Team Verifikasi',
-            'ditolak_verifikasi' => 'Dokumen Ditolak oleh Team Verifikasi',
-            'dikembalikan' => 'Dikembalikan',
-            'selesai', 'dibayar' => 'Selesai',
-            default => 'Terkirim',
-        };
-
-        $statusBadge = match ($displayStatus) {
-            'draft' => 'draft',
-            'menunggu_approval_verifikasi' => 'pending',
-            'ditolak_verifikasi', 'dikembalikan' => 'returned',
-            'selesai', 'dibayar' => 'done',
-            default => 'sent',
-        };
-
-        return [
-            'can_send' => $canSend,
-            'can_edit' => $canEdit,
-            'can_inline_edit' => $canInlineEdit,
-            'status_key' => $displayStatus,
-            'status_label' => $statusLabel,
-            'status_badge' => $statusBadge,
-        ];
-    }
-
-    private function operatorDocumentHandlerState(Dokumen $dokumen): array
-    {
-        $normalizeHandler = fn ($value) => \App\Support\Role::normalize($value);
-
-        $currentUserRole = $normalizeHandler(auth()->user()?->role ?? '');
-        $currentHandler = $normalizeHandler($dokumen->current_handler ?? 'operator');
-        $pendingStatus = $dokumen->roleStatuses
-            ->where('status', \App\Models\DokumenStatus::STATUS_PENDING)
-            ->sortByDesc('status_changed_at')
-            ->first();
-        $selectedHandler = $pendingStatus ? $normalizeHandler($pendingStatus->role_code) : $currentHandler;
-
-        if (($dokumen->status ?? null) === 'returned_to_bidang' && $dokumen->return_source) {
-            $selectedHandler = 'bagian_' . strtolower($dokumen->return_source);
-        }
-
-        $isOperationalRole = !in_array($currentUserRole, ['admin', 'programmer'], true);
-        $canChangeHandler = $isOperationalRole && !$pendingStatus && $currentUserRole === $currentHandler;
-        $isReturnedDocument = str_starts_with((string) ($dokumen->status ?? ''), 'returned_');
-        $showBagianOptions = $currentUserRole === 'team_verifikasi'
-            || $isReturnedDocument
-            || str_starts_with($selectedHandler, 'bagian_');
-
-        return [
-            'selected' => $selectedHandler,
-            'can_change' => $canChangeHandler,
-            'show_bagian_options' => $showBagianOptions,
-        ];
-    }
-
-    private function formatDateValue($value, string $format = 'd-m-Y'): string
-    {
-        if (!$value) {
-            return '-';
-        }
-
-        if ($value instanceof \Carbon\CarbonInterface) {
-            return $value->format($format);
-        }
-
-        return \Carbon\Carbon::parse($value)->format($format);
-    }
-
-    private function formatDateInputValue($value): ?string
-    {
-        if (!$value) {
-            return null;
-        }
-
-        if ($value instanceof \Carbon\CarbonInterface) {
-            return $value->format('Y-m-d');
-        }
-
-        return \Carbon\Carbon::parse($value)->format('Y-m-d');
-    }
 
     public function create()
     {

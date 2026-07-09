@@ -331,9 +331,6 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
 
     // Bulk send route (static route, before parameterized routes)
     Route::post('/bulk-send-to-verifikasi', [DokumenController::class, 'bulkSendToTeamVerifikasi'])->name('bulk-send-to-verifikasi');
-    // AJAX table rows loader (for "Semua" per-page, no full reload)
-    Route::get('/ajax-rows', [DokumenController::class, 'ajaxRows'])->name('ajax-rows');
-    Route::get('/all-data', [DokumenController::class, 'getAllData'])->name('all-data');
 
     // Inline create — tambah baris dokumen langsung di tabel daftar dokumen
     Route::post('/inline-create', [DokumenController::class, 'inlineCreate'])->name('inline-create');
