@@ -176,6 +176,15 @@ class DokumenController extends Controller
             session(['dokumens_table_columns' => $selectedColumns]);
         }
 
+        // Virtual scroll: balas hanya potongan baris tabel (ringan) tanpa layout & partial berat
+        if ($request->boolean('virtual_chunk')) {
+            return view('operator.dokumens._chunk', [
+                'dokumens'         => $dokumens,
+                'selectedColumns'  => $selectedColumns,
+                'availableColumns' => $availableColumns,
+            ]);
+        }
+
         // Load dropdown options for inline editing
         $ieKategoriList = [];
         $ieSubKriteriaList = [];

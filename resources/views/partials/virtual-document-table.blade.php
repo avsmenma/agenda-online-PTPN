@@ -39,15 +39,19 @@
       margin-left: 8px;
     }
 
-    .virtual-scroll-spacer td {
-      padding: 0 !important;
-      border: 0 !important;
-      height: var(--virtual-spacer-height, 0px);
-      background: transparent !important;
+    .virtual-scroll-loader td {
+      padding: 14px 12px !important;
+      text-align: center !important;
+      font-size: 13px;
+      font-weight: 600;
+      color: #083E40;
+      background: rgba(8, 62, 64, 0.04) !important;
     }
 
-    .virtual-scroll-spacer {
-      height: var(--virtual-spacer-height, 0px) !important;
+    .virtual-scroll-loader.has-error td {
+      color: #b02a37;
+      background: rgba(220, 53, 69, 0.06) !important;
+      cursor: pointer;
     }
 
     @if($hidePaginationUi)
@@ -73,33 +77,26 @@
         perPage: {{ $virtualPerPage }},
         lastPage: {{ $virtualLastPage }},
         initialPage: {{ max(1, (int) request('page', 1)) }},
-        rowHeight: 56
+        // Mulai memuat chunk berikutnya sebelum user benar-benar mentok di bawah.
+        prefetchPx: 600
       };
 
-      const cache = new Map();
-      let activePage = config.initialPage;
-      let loadingPage = null;
-      let raf = null;
+      let nextPage = config.initialPage + 1;
+      let loading = false;
+
+      function getParts() {
+        const container = document.querySelector(config.containerSelector);
+        if (!container) return null;
+        const scrollBox = container.querySelector('.table-responsive');
+        const table = container.querySelector('table');
+        const tbody = table ? table.querySelector('tbody') : null;
+        if (!scrollBox || !table || !tbody) return null;
+        return { container, scrollBox, table, tbody };
+      }
 
       function getColspan(table) {
         const headerRow = table.querySelector('thead tr');
         return headerRow ? Math.max(1, headerRow.children.length) : 20;
-      }
-
-      function normalizeRows(tbody) {
-        return Array.from(tbody.children)
-          .filter(row => !row.classList.contains('virtual-scroll-spacer'))
-          .map(row => row.outerHTML)
-          .join('');
-      }
-
-      function estimateRowHeight(tbody) {
-        const rows = Array.from(tbody.querySelectorAll('tr.main-row, tr.clickable-row, tr:not(.detail-row)'))
-          .filter(row => row.offsetHeight > 0)
-          .slice(0, 20);
-        if (!rows.length) return config.rowHeight;
-        const average = rows.reduce((sum, row) => sum + row.offsetHeight, 0) / rows.length;
-        return Math.max(54, Math.min(72, Math.round(average)));
       }
 
       function addStatus(container) {
@@ -108,7 +105,7 @@
         summary.dataset.virtualStatusAdded = 'true';
         const badge = document.createElement('span');
         badge.className = 'virtual-scroll-status';
-        badge.innerHTML = '<i class="fa-solid fa-bolt"></i> Semua dokumen aktif, render bertahap';
+        badge.innerHTML = '<i class="fa-solid fa-bolt"></i> Dokumen dimuat bertahap saat scroll';
         summary.insertAdjacentElement('afterend', badge);
       }
 
@@ -117,109 +114,131 @@
           .forEach(select => { select.value = 'all'; });
       }
 
-      function updateSummary(container, page) {
-        const from = ((page - 1) * config.perPage) + 1;
-        const to = Math.min(page * config.perPage, config.total);
-        const text = 'Semua ' + config.total.toLocaleString('id-ID') + ' dokumen tersedia. Baris ' +
-          from.toLocaleString('id-ID') + ' - ' + to.toLocaleString('id-ID') + ' sedang dirender virtual.';
+      function updateSummary(container) {
+        const loaded = Math.min(config.total, (nextPage - 1) * config.perPage);
+        const text = loaded >= config.total
+          ? 'Semua ' + config.total.toLocaleString('id-ID') + ' dokumen telah dimuat.'
+          : loaded.toLocaleString('id-ID') + ' dari ' + config.total.toLocaleString('id-ID') +
+            ' dokumen dimuat. Scroll ke bawah untuk memuat berikutnya.';
         container.querySelectorAll('.pagination-enhanced-summary, .perpage-top-bar span, .dtable-toolbar-subtitle, .pagination-wrapper .text-muted')
           .forEach(el => { el.textContent = text; });
       }
 
-      function renderPage(tbody, table, page, html) {
-        const colspan = getColspan(table);
-        const topRows = (page - 1) * config.perPage;
-        const bottomRows = Math.max(0, config.total - (page * config.perPage));
-        const topHeight = topRows * config.rowHeight;
-        const bottomHeight = bottomRows * config.rowHeight;
-
-        tbody.innerHTML =
-          '<tr class="virtual-scroll-spacer" style="--virtual-spacer-height:' + topHeight + 'px"><td colspan="' + colspan + '"></td></tr>' +
-          html +
-          '<tr class="virtual-scroll-spacer" style="--virtual-spacer-height:' + bottomHeight + 'px"><td colspan="' + colspan + '"></td></tr>';
+      function removeLoader(tbody) {
+        tbody.querySelectorAll('tr.virtual-scroll-loader').forEach(row => row.remove());
       }
 
-      async function fetchPage(page) {
-        if (cache.has(page)) return cache.get(page);
-        if (loadingPage === page) return null;
-
-        loadingPage = page;
-        try {
-          const url = new URL(window.location.href);
-          url.searchParams.set('per_page', String(config.perPage));
-          url.searchParams.set('page', String(page));
-          url.searchParams.set('virtual_chunk', '1');
-
-          const response = await fetch(url.toString(), {
-            headers: {
-              'X-Requested-With': 'XMLHttpRequest',
-              'Accept': 'text/html'
-            }
+      function showLoader(tbody, table, message, isError) {
+        removeLoader(tbody);
+        const row = document.createElement('tr');
+        row.className = 'virtual-scroll-loader' + (isError ? ' has-error' : '');
+        row.innerHTML = '<td colspan="' + getColspan(table) + '">' + message + '</td>';
+        if (isError) {
+          row.addEventListener('click', function() {
+            const parts = getParts();
+            if (parts) loadNextChunk(parts.scrollBox, true);
           });
+        }
+        tbody.appendChild(row);
+      }
 
-          if (!response.ok) throw new Error('Gagal memuat halaman virtual ' + page);
-          const html = await response.text();
-          const doc = new DOMParser().parseFromString(html, 'text/html');
-          const nextContainer = doc.querySelector(config.containerSelector);
-          const nextBody = nextContainer ? nextContainer.querySelector('tbody') : doc.querySelector(config.containerSelector + ' tbody');
-          const rows = nextBody ? normalizeRows(nextBody) : '';
+      async function fetchChunk(page) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('per_page', String(config.perPage));
+        url.searchParams.set('page', String(page));
+        url.searchParams.set('virtual_chunk', '1');
 
-          cache.set(page, rows);
-          return rows;
+        const response = await fetch(url.toString(), {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'text/html'
+          }
+        });
+
+        if (!response.ok) throw new Error('Gagal memuat dokumen halaman ' + page);
+        const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const nextBody = doc.querySelector(config.containerSelector + ' tbody') || doc.querySelector('tbody');
+        return nextBody ? nextBody.innerHTML : '';
+      }
+
+      function nearBottom(scrollBox) {
+        return scrollBox.scrollTop + scrollBox.clientHeight >= scrollBox.scrollHeight - config.prefetchPx;
+      }
+
+      async function loadNextChunk(scrollBox, force) {
+        if (loading || nextPage > config.lastPage) return;
+        if (!force && !nearBottom(scrollBox)) return;
+
+        loading = true;
+        const parts = getParts();
+        if (!parts) { loading = false; return; }
+
+        showLoader(parts.tbody, parts.table, '<i class="fa-solid fa-spinner fa-spin"></i> Memuat dokumen berikutnya...', false);
+        try {
+          const rowsHtml = await fetchChunk(nextPage);
+
+          // Ambil ulang referensi DOM: isi kontainer bisa saja diganti (Refresh)
+          // selama fetch berjalan — jangan menulis ke elemen yang sudah lepas.
+          const fresh = getParts();
+          if (!fresh || fresh.scrollBox.dataset.virtualScrollBound !== 'true') return;
+
+          removeLoader(fresh.tbody);
+          fresh.tbody.insertAdjacentHTML('beforeend', rowsHtml);
+          nextPage++;
+          updateSummary(fresh.container);
+
+          // Beri tahu partial lain (sticky cells, active-cell nav) ada baris baru.
+          document.dispatchEvent(new CustomEvent('virtual-rows-appended'));
+          window.dispatchEvent(new CustomEvent('virtual-rows-appended'));
+          if (typeof window.syncDocumentStickyOffsets === 'function') {
+            window.syncDocumentStickyOffsets();
+          }
+
+          // Bila viewport masih dekat dasar (mis. layar sangat tinggi),
+          // langsung muat chunk berikutnya tanpa menunggu scroll baru.
+          requestAnimationFrame(function() {
+            loadNextChunk(fresh.scrollBox, false);
+          });
+        } catch (error) {
+          console.error(error);
+          const fresh = getParts();
+          if (fresh) {
+            showLoader(fresh.tbody, fresh.table,
+              '<i class="fa-solid fa-triangle-exclamation"></i> Gagal memuat dokumen berikutnya. Klik di sini untuk mencoba lagi.', true);
+          }
         } finally {
-          loadingPage = null;
+          loading = false;
         }
       }
 
-      function wantedPage(scrollBox) {
-        const firstVisibleRow = Math.max(0, Math.floor(scrollBox.scrollTop / config.rowHeight));
-        return Math.min(config.lastPage, Math.max(1, Math.floor(firstVisibleRow / config.perPage) + 1));
-      }
-
       function init() {
-        const container = document.querySelector(config.containerSelector);
-        if (!container) return;
-        const scrollBox = container.querySelector('.table-responsive');
-        const table = container.querySelector('table');
-        const tbody = table ? table.querySelector('tbody') : null;
-        if (!scrollBox || !table || !tbody) return;
-
-        config.rowHeight = estimateRowHeight(tbody);
-        cache.set(config.initialPage, normalizeRows(tbody));
+        const parts = getParts();
+        if (!parts) return;
+        const { container, scrollBox } = parts;
+        if (scrollBox.dataset.virtualScrollBound === 'true') return;
+        scrollBox.dataset.virtualScrollBound = 'true';
 
         scrollBox.classList.add('virtual-scroll-active');
         addStatus(container);
         syncSelectors();
-        updateSummary(container, config.initialPage);
-        renderPage(tbody, table, config.initialPage, cache.get(config.initialPage));
-        scrollBox.scrollTop = (config.initialPage - 1) * config.perPage * config.rowHeight;
+        updateSummary(container);
 
         scrollBox.addEventListener('scroll', function() {
-          if (raf) cancelAnimationFrame(raf);
-          raf = requestAnimationFrame(async function() {
-            const page = wantedPage(scrollBox);
-            if (page === activePage) return;
-            activePage = page;
-
-            if (cache.has(page)) {
-              renderPage(tbody, table, page, cache.get(page));
-              updateSummary(container, page);
-              return;
-            }
-
-            const previousHtml = tbody.innerHTML;
-            try {
-              const rows = await fetchPage(page);
-              if (rows !== null) {
-                renderPage(tbody, table, page, rows);
-                updateSummary(container, page);
-              }
-            } catch (error) {
-              console.error(error);
-              tbody.innerHTML = previousHtml;
-            }
-          });
+          loadNextChunk(scrollBox, false);
         }, { passive: true });
+
+        // Layar sangat tinggi / chunk kecil: pastikan viewport terisi.
+        loadNextChunk(scrollBox, false);
+      }
+
+      function reinitAfterRefresh() {
+        const parts = getParts();
+        if (parts && parts.scrollBox.dataset.virtualScrollBound !== 'true') {
+          // Isi kontainer diganti dari server (kembali ke halaman awal) — reset state.
+          nextPage = config.initialPage + 1;
+          init();
+        }
       }
 
       if (document.readyState === 'loading') {
@@ -227,6 +246,7 @@
       } else {
         init();
       }
+      window.addEventListener('document-table-refreshed', reinitAfterRefresh);
     })();
   </script>
 @endif
