@@ -113,20 +113,9 @@ Route::get('/', function () {
 
 Route::get('/api/welcome-message', [WelcomeMessageController::class, 'getMessage'])->middleware('auth');
 
-// Professional API routes for document updates
-Route::get('/api/documents/verifikasi/check-updates', [TeamVerifikasiController::class, 'checkVerifikasiUpdates'])
-    ->middleware('auth')
-    ->name('api.documents.verifikasi.check-updates');
-
-Route::get('/api/documents/perpajakan/check-updates', [DashboardPerpajakanController::class, 'checkUpdates'])
-    ->middleware('auth')
-    ->name('api.documents.perpajakan.check-updates');
-Route::get('/api/documents/akutansi/check-updates', [DashboardAkutansiController::class, 'checkUpdates'])
-    ->middleware('auth')
-    ->name('api.documents.akutansi.check-updates');
-Route::get('/api/documents/pembayaran/check-updates', [DashboardPembayaranController::class, 'checkUpdates'])
-    ->middleware('auth')
-    ->name('api.documents.pembayaran.check-updates');
+// Route API check-updates (4 role) DIHAPUS 2026-07-09: pemanggil satu-satunya
+// blok notifikasi popup lama di layout yang rusak (SyntaxError) & tak pernah jalan;
+// auto-refresh tabel kini via partials/auto-refresh-documents.
 
 // Backward compatibility routes removed — old check-updates routes were redundant (Phase 2 cleanup)
 
@@ -430,16 +419,9 @@ Route::middleware(['auth', 'web'])->prefix('api/documents')->name('api.documents
         ->name('activity.stop');
 });
 
-// Universal Approval Routes - hanya detail + notifikasi (dipakai frontend).
-// Route approve/reject lama (menunjuk InboxController, tanpa gerbang role) DIHAPUS
-// 2026-07-05 (PL-3): duplikat mati tanpa pemanggil; approve/reject resmi via /inbox/*.
-Route::middleware(['auth'])->group(function () {
-    Route::get('/universal-approval/{dokumen}/detail', [\App\Http\Controllers\UniversalApprovalController::class, 'getDetail'])
-        ->name('universal.approval.detail');
-
-    Route::get('/universal-approval/notifications', [\App\Http\Controllers\UniversalApprovalController::class, 'checkNotifications'])
-        ->name('universal.approval.notifications');
-});
+// Universal Approval DIHAPUS TOTAL 2026-07-09: getDetail & checkNotifications
+// tak punya pemanggil frontend (pemanggil terakhir = blok notifikasi rusak di layout);
+// approve/reject resmi via /inbox/*.
 
 // Inbox Routes - Untuk Team Verifikasi, Perpajakan, Akutansi, Pembayaran (+ alias Verifikasi).
 // operator & admin DIBUANG 2026-07-05: bagian tak lagi kirim dokumen → operator tak butuh
@@ -486,8 +468,9 @@ Route::get('/returns/pembayaran', [DashboardPembayaranController::class, 'pengem
 
 // Grup route dashboard-pembayaran DIHAPUS 2026-07-05 (dead-code): duplikat mati
 // dari halaman import CSV pembayaran (view pembayaranNEW/importCsv) yang sudah
-// digantikan /csv-import (CsvImportController). Method index & checkUpdates yang
-// hidup tetap dilayani route documents.pembayaran.index & api check-updates.
+// digantikan /csv-import (CsvImportController). Method index yang hidup tetap
+// dilayani route documents.pembayaran.index. (checkUpdates ikut dihapus 2026-07-09
+// bersama sistem notifikasi popup lama.)
 
 // CSV Import Routes - Pembayaran
 Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('csv-import')->name('csv.import.')->group(function () {

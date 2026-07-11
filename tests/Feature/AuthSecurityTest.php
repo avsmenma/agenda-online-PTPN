@@ -203,9 +203,15 @@ class AuthSecurityTest extends TestCase
         $response->assertUnauthorized();
     }
 
-    public function test_api_check_updates_requires_auth(): void
+    /**
+     * Route check-updates dihapus 2026-07-09 bersama sistem notifikasi popup
+     * lama (pemanggil satu-satunya). Test ini menjaga agar tidak muncul kembali.
+     */
+    public function test_api_check_updates_sudah_dihapus(): void
     {
-        $response = $this->getJson('/api/documents/verifikasi/check-updates');
-        $response->assertUnauthorized();
+        $this->getJson('/api/documents/verifikasi/check-updates')->assertNotFound();
+        $this->getJson('/api/documents/perpajakan/check-updates')->assertNotFound();
+        $this->getJson('/api/documents/akutansi/check-updates')->assertNotFound();
+        $this->getJson('/api/documents/pembayaran/check-updates')->assertNotFound();
     }
 }
