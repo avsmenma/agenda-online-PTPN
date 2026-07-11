@@ -186,10 +186,11 @@ $(document).ready(function() {
         });
     });
 
-    // Detail Document
+    // Detail Document — buka daftar dokumen verifikasi pada dokumen terkait
+    // (URL lama /dokumensB/{id}/edit sudah tidak ada; edit kini via inline edit).
     $('.btn-detail').click(function() {
         const dokumenId = $(this).data('id');
-        window.open(`/dokumensB/${dokumenId}/edit`, '_blank');
+        window.open(`/documents/verifikasi#doc-${dokumenId}`, '_blank');
     });
 });
 </script>

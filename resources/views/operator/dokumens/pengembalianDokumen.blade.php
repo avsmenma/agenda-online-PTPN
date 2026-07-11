@@ -491,9 +491,6 @@
             </td>
             <td>
               <div class="action-buttons">
-                <a href="{{ route('documents.edit', $dokumen->id) }}" class="btn-action btn-view" title="Edit">
-                  <i class="fa-solid fa-edit"></i>
-                </a>
                 <button type="button" class="btn-action btn-chevron" onclick="toggleDetail({{ $dokumen->id }})"
                   title="Lihat Detail">
                   <i class="fa-solid fa-chevron-down chevron-icon" id="chevron-{{ $dokumen->id }}"></i>

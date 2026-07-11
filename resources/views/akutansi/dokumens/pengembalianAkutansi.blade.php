@@ -783,12 +783,7 @@
                   </td>
                   <td onclick="event.stopPropagation()">
                     <div class="action-buttons">
-                      <a href="{{ route('documents.akutansi.edit', $dokumen->id) }}" class="btn-action btn-fix"
-                        title="Lihat atau edit data"
-                        style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
-                        <i class="fa-solid fa-pen"></i>
-                        <span>Lihat/Edit</span>
-                      </a>
+                      {{-- Tombol Lihat/Edit dihapus: pengeditan kini via inline edit di daftar dokumen --}}
                     </div>
                   </td>
                 </tr>
@@ -933,9 +928,6 @@
     function openViewDocumentModal(docId) {
       // Set document ID
       document.getElementById('view-dokumen-id').value = docId;
-
-      // Set edit button URL
-      document.getElementById('view-edit-btn').href = `/documents/akutansi/${docId}/edit`;
 
       // Load document data via AJAX
       fetch(`/documents/akutansi/${docId}/detail`, {
@@ -1108,9 +1100,6 @@
           </div>
         </div>
         <div class="modal-footer" style="border: none; background: #f8f9fa; padding: 16px 24px;">
-          <a id="view-edit-btn" href="#" class="btn btn-warning" style="font-weight: 600;">
-            <i class="fa-solid fa-wrench me-2"></i>Perbaiki Data
-          </a>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="font-weight: 600;">
             <i class="fa-solid fa-times me-2"></i>Tutup
           </button>

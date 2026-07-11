@@ -2776,10 +2776,6 @@
                 });
             }
 
-            function editDocument(id) {
-              // Implement edit functionality
-              window.location.href = `/documents/akutansi/${id}/edit`;
-            }
 
             function sendToPembayaran(id) {
               // Set document ID in modal
@@ -3971,9 +3967,6 @@
               // Set document ID
               document.getElementById('view-dokumen-id').value = docId;
 
-              // Set edit button URL
-              document.getElementById('view-edit-btn').href = `/documents/akutansi/${docId}/edit`;
-
               // CRITICAL: Reset all fields to loading state BEFORE fetch to prevent caching issues
               const fieldsToReset = [
                 'view-nomor-agenda', 'view-nomor-spp', 'view-tanggal-spp', 'view-bulan', 'view-tahun',
@@ -4105,22 +4098,6 @@
 
               // Note: modal.show() is now called earlier with loading state
 
-              // Ensure edit button works correctly - prevent any interference
-              const editBtn = document.getElementById('view-edit-btn');
-              if (editBtn) {
-                // Remove any existing event listeners by cloning and replacing
-                const newEditBtn = editBtn.cloneNode(true);
-                editBtn.parentNode.replaceChild(newEditBtn, editBtn);
-
-                // Add click handler to ensure navigation works
-                newEditBtn.addEventListener('click', function(e) {
-                  const href = this.getAttribute('href');
-                  if (href && href !== '#' && !href.startsWith('#')) {
-                    // Valid URL, allow navigation
-                    window.location.href = href;
-                  }
-                });
-              }
             }
 
             // Helper functions for formatting
@@ -4528,9 +4505,6 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px;">
                       <i class="fa-solid fa-times me-2"></i>Tutup
                     </button>
-                    <a href="#" id="view-edit-btn" class="btn" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); color: white; padding: 10px 24px;">
-                      <i class="fa-solid fa-pen me-2"></i>Edit Dokumen
-                    </a>
                   </div>
                 </div>
               </div>

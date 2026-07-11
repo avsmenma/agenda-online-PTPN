@@ -320,10 +320,6 @@
 
                     <!-- Action Buttons -->
                     <div class="action-buttons">
-                        <a href="{{ route('documents.verifikasi.edit', $dokumen) }}" class="btn-edit">
-                            <i class="fas fa-edit"></i>
-                            Edit Dokumen
-                        </a>
                         <a href="{{ route('documents.verifikasi.index') }}" class="btn-back">
                             <i class="fas fa-arrow-left"></i>
                             Kembali ke Daftar

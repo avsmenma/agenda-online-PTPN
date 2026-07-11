@@ -4478,13 +4478,6 @@
         'operator' => '/documents/create',
         default    => null
       };
-      $editDokumenUrl = match ($module) {
-        'pembayaran'      => '/dashboard/pembayaran',
-        'akutansi'        => '/documents/akutansi',
-        'perpajakan'      => '/documents/perpajakan',
-        'team_verifikasi' => '/documents/verifikasi',
-        default           => null
-      };
     @endphp
 
     @php
@@ -4522,9 +4515,7 @@
         @if($isOperatorShell)
         @php
           $isOperatorDocumentsActive = request()->routeIs('documents.index') ||
-            request()->routeIs('documents.edit') ||
-            request()->is('documents') ||
-            request()->is('documents/*/edit');
+            request()->is('documents');
           $isOperatorCreateActive = request()->routeIs('documents.create') || request()->is('documents/create');
           $isOperatorImportActive = request()->routeIs('documents.import.*') || request()->is('documents/import*');
           $isOperatorReportActive = request()->routeIs('reports.analytics') || request()->is('reports/analytics');
@@ -4975,7 +4966,7 @@
               'akutansi' => request()->routeIs('documents.akutansi.*') || request()->is('*documents/akutansi*'),
               'perpajakan' => request()->routeIs('documents.perpajakan.*') || request()->is('*documents/perpajakan*'),
               'team_verifikasi' => request()->routeIs('documents.verifikasi.*') || request()->is('*documents/verifikasi*'),
-              default => request()->routeIs('documents.index') || request()->routeIs('documents.create') || request()->routeIs('documents.edit') || request()->is('documents') || request()->is('documents/create') || request()->is('documents/*/edit')
+              default => request()->routeIs('documents.index') || request()->routeIs('documents.create') || request()->is('documents') || request()->is('documents/create')
             };
             $isImportActive = request()->routeIs('documents.import.*') || request()->is('*documents/import*');
             $isReportsActive = match ($module) {
@@ -5169,9 +5160,6 @@
         {{-- Bagian submenu (same pattern as Operator) --}}
         @php
           $isDaftarActive = request()->routeIs('bagian.documents.index') || request()->is('*bagian/documents');
-          $isTambahActive = request()->routeIs('bagian.documents.create') || request()->is('*bagian/documents/create*');
-          $isEditActive = request()->routeIs('bagian.documents.edit') || request()->is('*bagian/documents/*/edit*');
-          $isRekapanActive = request()->routeIs('bagian.rekapan') || request()->is('*bagian/rekapan*');
         @endphp
         <a href="{{ route('bagian.documents.index') }}" class="{{ $isDaftarActive ? 'active' : '' }}">
           <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
@@ -5866,16 +5854,15 @@
         window.location.reload();
       };
 
-      // View document
+      // View document — arahkan ke daftar dokumen role (halaman edit sudah dihapus,
+      // pengeditan via inline edit di daftar).
       window.viewDocument = function(docId) {
         if (isAkutansi) {
-          window.location.href = `/dokumensAkutansi#doc-${docId}`;
+          window.location.href = `/documents/akutansi#doc-${docId}`;
         } else if (isPerpajakan) {
-          window.location.href = `/dokumensPerpajakan#doc-${docId}`;
-        } else if (isTeam Verifikasi) {
-          window.location.href = `/dokumensB/${docId}/edit`;
+          window.location.href = `/documents/perpajakan#doc-${docId}`;
         } else {
-          window.location.href = `/dokumens/${docId}/edit`;
+          window.location.href = `/documents#doc-${docId}`;
         }
       };
 

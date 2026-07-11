@@ -691,13 +691,6 @@
                       <span>Kirim Data</span>
                     </button>
                     <div class="action-row">
-                      <a href="{{ route('documents.perpajakan.edit', $dokumen->id) }}" title="Edit Dokumen"
-                        style="flex: 1; text-decoration: none;">
-                        <button class="btn-action btn-edit" style="width: 100%;">
-                          <i class="fa-solid fa-pen"></i>
-                          <span>Edit</span>
-                        </button>
-                      </a>
                       <button type="button" class="btn-action btn-kembalikan" style="flex: 1;"
                         onclick="openReturnModal({{ $dokumen->id }})" title="Kirim kembali ke Team Verifikasi">
                         <i class="fa-solid fa-paper-plane"></i>

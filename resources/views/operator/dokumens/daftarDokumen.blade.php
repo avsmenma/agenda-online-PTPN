@@ -3194,7 +3194,7 @@
             }
 
             // Add smooth scroll behavior - only for hash links (exclude modal links)
-            document.querySelectorAll('a[href^="#"]:not(#view-edit-btn):not([id^="view-"])').forEach(anchor => {
+            document.querySelectorAll('a[href^="#"]:not([id^="view-"])').forEach(anchor => {
               // Skip if anchor is inside a modal
               if (anchor.closest('.modal')) {
                 return;
@@ -3959,9 +3959,6 @@
             // Set document ID
             document.getElementById('view-dokumen-id').value = docId;
 
-            // Set edit button URL
-            document.getElementById('view-edit-btn').href = `/documents/${docId}/edit`;
-
             // Load document data via AJAX
             fetch(`/documents/${docId}/detail`, {
               headers: {
@@ -4039,23 +4036,6 @@
                   // Show modal after data is loaded
                   const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
                   modal.show();
-
-                  // Ensure edit button works correctly - prevent any interference
-                  const editBtn = document.getElementById('view-edit-btn');
-                  if (editBtn) {
-                    // Remove any existing event listeners by cloning and replacing
-                    const newEditBtn = editBtn.cloneNode(true);
-                    editBtn.parentNode.replaceChild(newEditBtn, editBtn);
-
-                    // Add click handler to ensure navigation works
-                    newEditBtn.addEventListener('click', function(e) {
-                      const href = this.getAttribute('href');
-                      if (href && href !== '#' && !href.startsWith('#')) {
-                        // Valid URL, allow navigation
-                        window.location.href = href;
-                      }
-                    });
-                  }
                 } else {
                   console.error('Invalid response format:', data);
                   alert('Gagal memuat data dokumen: ' + (data.message || 'Format respons tidak valid'));
@@ -4410,9 +4390,6 @@
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fa-solid fa-times me-2"></i>Tutup
                   </button>
-                  <a href="#" id="view-edit-btn" class="btn btn-primary" style="background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border: none;">
-                    <i class="fa-solid fa-pen me-2"></i>Edit Dokumen
-                  </a>
                 </div>
 
               </div>

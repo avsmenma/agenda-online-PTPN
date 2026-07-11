@@ -336,10 +336,9 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
     Route::post('/inline-create', [DokumenController::class, 'inlineCreate'])->name('inline-create');
 
     // Routes with {dokumen} parameter - MUST be after static routes
-    Route::get('/{dokumen}/edit', [DokumenController::class, 'edit'])->name('edit');
+    // Halaman edit dihapus 2026-07-09 — semua pengeditan via inline edit (documents.inline-update).
     Route::get('/{dokumen}/detail', [DokumenController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/progress', [DokumenController::class, 'getDocumentProgressForOperator'])->name('progress');
-    Route::put('/{dokumen}', [DokumenController::class, 'update'])->name('update');
     Route::delete('/{dokumen}', [DokumenController::class, 'destroy'])->name('destroy');
     Route::post('/{dokumen}/send-to-verifikasi', [DokumenController::class, 'sendToTeamVerifikasi'])->name('send-to-verifikasi');
     Route::post('/{dokumen}/approve', [DokumenController::class, 'approveDocument'])->name('approve');
@@ -388,8 +387,6 @@ Route::get('/pengembalian-dokumens', [PengembalianDokumenController::class, 'ind
 Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::get('/', [TeamVerifikasiController::class, 'dokumens'])->name('index');
     Route::get('/{dokumen}/detail', [TeamVerifikasiController::class, 'getDocumentDetail'])->name('detail');
-    Route::get('/{dokumen}/edit', [TeamVerifikasiController::class, 'editDokumen'])->name('edit');
-    Route::put('/{dokumen}', [TeamVerifikasiController::class, 'updateDokumen'])->name('update');
     Route::post('/{dokumen}/return-to-department', [TeamVerifikasiController::class, 'returnToDepartment'])->name('return-to-department');
     Route::post('/{dokumen}/send-to-next', [TeamVerifikasiController::class, 'sendToNextHandler'])->name('send-to-next');
     Route::post('/{dokumen}/set-deadline', [TeamVerifikasiController::class, 'setDeadline'])->name('set-deadline');
@@ -506,9 +503,7 @@ Route::middleware(['auth', 'role:admin,akutansi'])->prefix('documents/akutansi')
     Route::get('/', [DashboardAkutansiController::class, 'dokumens'])->name('index');
     Route::get('/create', [DashboardAkutansiController::class, 'createDokumen'])->name('create');
     Route::post('/', [DashboardAkutansiController::class, 'storeDokumen'])->name('store');
-    Route::get('/{dokumen}/edit', [DashboardAkutansiController::class, 'editDokumen'])->name('edit');
     Route::get('/{dokumen}/detail', [DashboardAkutansiController::class, 'getDocumentDetail'])->name('detail');
-    Route::put('/{dokumen}', [DashboardAkutansiController::class, 'updateDokumen'])->name('update');
     Route::delete('/{dokumen}', [DashboardAkutansiController::class, 'destroyDokumen'])->name('destroy');
     Route::post('/{dokumen}/set-deadline', [DashboardAkutansiController::class, 'setDeadline'])->name('set-deadline');
     Route::post('/{dokumen}/send-to-pembayaran', [DashboardAkutansiController::class, 'sendToPembayaran'])->name('send-to-pembayaran');
@@ -530,8 +525,6 @@ Route::get('/returns/akutansi', [DashboardAkutansiController::class, 'pengembali
 Route::middleware(['auth', 'role:admin,perpajakan'])->prefix('documents/perpajakan')->name('documents.perpajakan.')->group(function () {
     Route::get('/', [DashboardPerpajakanController::class, 'dokumens'])->name('index');
     Route::get('/{dokumen}/detail', [DashboardPerpajakanController::class, 'getDocumentDetail'])->name('detail');
-    Route::get('/{dokumen}/edit', [DashboardPerpajakanController::class, 'editDokumen'])->name('edit');
-    Route::put('/{dokumen}', [DashboardPerpajakanController::class, 'updateDokumen'])->name('update');
     Route::post('/{dokumen}/set-deadline', [DashboardPerpajakanController::class, 'setDeadline'])->name('set-deadline');
     Route::post('/{dokumen}/send-to-next', [DashboardPerpajakanController::class, 'sendToNext'])->name('send-to-next');
     Route::post('/{dokumen}/send-to-akutansi', [DashboardPerpajakanController::class, 'sendToAkutansi'])->name('send-to-akutansi');
