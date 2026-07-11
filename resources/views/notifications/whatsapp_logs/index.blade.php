@@ -1,6 +1,8 @@
-@extends('layouts.app')
+@extends('layouts.programmer')
 
 @section('title', 'Log Notifikasi')
+@section('page_title', 'Log Notifikasi')
+@section('page_breadcrumb', 'Programmer → Log Notifikasi')
 
 @section('content')
   <div class="container-fluid px-4 py-4">

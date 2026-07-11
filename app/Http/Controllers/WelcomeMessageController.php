@@ -16,15 +16,6 @@ final class WelcomeMessageController extends Controller
         private WelcomeMessageService $welcomeMessageService
     ) {}
 
-    /**
-     * Display welcome messages management page
-     */
-    public function index(): View
-    {
-        $messages = WelcomeMessage::orderBy('module')->get();
-
-        return view('admin.welcome-messages.index', compact('messages'));
-    }
 
     /**
      * Get welcome message for specific module (AJAX)
@@ -77,29 +68,6 @@ final class WelcomeMessageController extends Controller
         }
     }
 
-    /**
-     * Delete welcome message
-     */
-    public function destroy(WelcomeMessage $welcomeMessage): JsonResponse
-    {
-        try {
-            $module = $welcomeMessage->module;
-            $welcomeMessage->delete();
-
-            // Clear cache for this module
-            $this->welcomeMessageService->clearCache($module);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Welcome message deleted successfully',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete welcome message: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
 
     /**
      * Clear all welcome message caches

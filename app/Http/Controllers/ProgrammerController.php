@@ -780,13 +780,6 @@ final class ProgrammerController extends Controller
         ]);
     }
 
-    /**
-     * Check if user is programmer
-     */
-    public function isProgrammer(): bool
-    {
-        return Auth::user()?->role === 'programmer';
-    }
 
     // ============================================
     // USER MANAGEMENT METHODS

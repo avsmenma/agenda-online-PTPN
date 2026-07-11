@@ -504,6 +504,10 @@
        class="{{ request()->routeIs('programmer.activity-logs') ? 'active' : '' }}" title="Riwayat Aktivitas">
       <i class="fas fa-history nav-icon"></i> Riwayat Aktivitas
     </a>
+    <a href="{{ route('programmer.notification-logs') }}"
+       class="{{ request()->routeIs('programmer.notification-logs') ? 'active' : '' }}" title="Log Notifikasi">
+      <i class="fas fa-bell nav-icon"></i> Log Notifikasi
+    </a>
 
     <div class="prog-nav-label">Users & Keamanan</div>
     <a href="{{ route('programmer.user-management') }}"

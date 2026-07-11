@@ -1991,27 +1991,6 @@ class TeamVerifikasiController extends Controller
         }
     }
 
-    /**
-     * Menampilkan halaman pending approval
-     */
-    public function pendingApproval(Request $request)
-    {
-        // Get dokumen yang pending approval untuk Team Verifikasi
-        $dokumensPending = Dokumen::where('status', 'pending_approval_team_verifikasi')
-            ->where('pending_approval_for', 'team_verifikasi')
-            ->latest('pending_approval_at')
-            ->get();
-
-        $data = [
-            'title' => 'Dokumen Menunggu Persetujuan',
-            'module' => 'team_verifikasi',
-            'menuDokumen' => 'active',
-            'menuPendingApproval' => 'active',
-            'dokumensPending' => $dokumensPending,
-        ];
-
-        return view('team_verifikasi.dokumens.pendingApproval', $data);
-    }
 
     /**
      * Daftar bagian yang tersedia

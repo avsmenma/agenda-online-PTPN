@@ -301,34 +301,6 @@ class OwnerDashboardController extends Controller
             ->with('search', $request->get('search', ''));
     }
 
-    /**
-     * AJAX endpoint: return filtered documents as JSON (no page refresh)
-     */
-    public function filterDocuments(Request $request): JsonResponse
-    {
-        $perPage = $request->get('per_page', session('owner_per_page', 10));
-        if ($perPage === 'all') {
-            $perPage = 999999;
-        } else {
-            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
-        }
-        session(['owner_per_page' => $perPage]);
-
-        $documents = $this->getDocumentsWithTracking($request, $perPage);
-
-        return response()->json([
-            'success' => true,
-            'documents' => array_values($documents->items()),
-            'pagination' => [
-                'current_page' => $documents->currentPage(),
-                'last_page' => $documents->lastPage(),
-                'per_page' => $documents->perPage(),
-                'total' => $documents->total(),
-                'from' => $documents->firstItem(),
-                'to' => $documents->lastItem(),
-            ],
-        ]);
-    }
 
     /**
      * Display the owner home page with bagian statistics cards
@@ -1045,39 +1017,6 @@ class OwnerDashboardController extends Controller
         return $paginatedDocuments;
     }
 
-    /**
-     * Get dashboard statistics
-     */
-    private function getDashboardStats()
-    {
-        $now = Carbon::now();
-
-        return [
-            'total_documents' => Dokumen::count(),
-            'active_processing' => Dokumen::whereNotIn('status', ['approved_data_sudah_terkirim', 'rejected_data_tidak_lengkap'])->count(),
-            'completed_today' => Dokumen::where('status', 'approved_data_sudah_terkirim')
-                ->whereDate('updated_at', $now->toDateString())
-                ->count(),
-            'overdue_documents' => Dokumen::whereNotNull('deadline_at')
-                ->where('deadline_at', '<', $now)
-                ->whereNotIn('status', [
-                    'approved_data_sudah_terkirim',
-                    'rejected_data_tidak_lengkap',
-                    'selesai',
-                    'completed',
-                    'sent_to_perpajakan',
-                    'sent_to_akutansi',
-                    'sent_to_pembayaran',
-                    'pending_approval_perpajakan',
-                    'pending_approval_akutansi',
-                    'pending_approval_pembayaran',
-                ])
-                ->count(),
-            'avg_processing_time' => $this->calculateAverageProcessingTime(),
-            'fastest_department' => $this->getFastestDepartment(),
-            'slowest_department' => $this->getSlowestDepartment(),
-        ];
-    }
 
     /**
      * Calculate progress percentage based on status
@@ -1661,19 +1600,6 @@ class OwnerDashboardController extends Controller
         ];
     }
 
-    /**
-     * Get return destination
-     */
-    private function getReturnDestination($dokumen)
-    {
-        if ($dokumen->returned_at)
-            return 'Operator';
-        if ($dokumen->return_source === 'perpajakan' || $dokumen->return_source === 'akutansi' || $dokumen->return_source === 'pembayaran')
-            return 'Ibu Tarapul (Department)';
-        if ($dokumen->returned_at)
-            return 'Team Verifikasi';
-        return 'Tidak Diketahui';
-    }
 
     /**
      * Get status display name in Indonesian
@@ -2477,86 +2403,6 @@ class OwnerDashboardController extends Controller
             ->header('Cache-Control', 'max-age=0');
     }
 
-    /**
-     * Get statistics for rekapan
-     */
-    private function getRekapanStatistics($filterBagian = '')
-    {
-        $query = Dokumen::query();
-
-        if ($filterBagian) {
-            $query->where('bagian', $filterBagian);
-        }
-
-        $total = $query->count();
-
-        // Count completed documents (status = 'selesai' or 'approved_data_sudah_terkirim' or current_handler = 'pembayaran')
-        $completedQuery = Dokumen::query();
-        if ($filterBagian) {
-            $completedQuery->where('bagian', $filterBagian);
-        }
-        $completedCount = $completedQuery->where(function ($q) {
-            $q->where('status', 'selesai')
-                ->orWhere('status', 'approved_data_sudah_terkirim')
-                ->orWhere('current_handler', 'pembayaran');
-        })->count();
-
-        // Count documents by handler
-        $operatorQuery = Dokumen::query();
-        $ibuYuniQuery = Dokumen::query();
-        $perpajakanQuery = Dokumen::query();
-        $akutansiQuery = Dokumen::query();
-
-        if ($filterBagian) {
-            $operatorQuery->where('bagian', $filterBagian);
-            $ibuYuniQuery->where('bagian', $filterBagian);
-            $perpajakanQuery->where('bagian', $filterBagian);
-            $akutansiQuery->where('bagian', $filterBagian);
-        }
-
-        // Ibu Tarapul: dokumen dengan current_handler = 'operator' atau status draft
-        $operatorCount = $operatorQuery->where(function ($q) {
-            $q->where('current_handler', 'operator')
-                ->orWhere(function ($subQ) {
-                    $subQ->where('status', 'draft')
-                        ->where(function ($subSubQ) {
-                            $subSubQ->whereNull('current_handler')
-                                ->orWhere('current_handler', 'operator');
-                        });
-                });
-        })->count();
-
-        // Ibu Yuni: dokumen dengan current_handler = 'team_verifikasi' atau status sent_to_team_verifikasi
-        $ibuYuniCount = $ibuYuniQuery->where(function ($q) {
-            $q->where('current_handler', 'team_verifikasi')
-                ->orWhere('status', 'sent_to_team_verifikasi')
-                ->orWhere('status', 'pending_approval_team_verifikasi')
-                ->orWhere('status', 'proses_Team Verifikasi');
-        })->count();
-
-        // Team Perpajakan: dokumen dengan current_handler = 'perpajakan' atau status sent_to_perpajakan
-        $perpajakanCount = $perpajakanQuery->where(function ($q) {
-            $q->where('current_handler', 'perpajakan')
-                ->orWhere('status', 'sent_to_perpajakan')
-                ->orWhere('status', 'proses_perpajakan');
-        })->count();
-
-        // Team Akutansi: dokumen dengan current_handler = 'akutansi' atau status sent_to_akutansi
-        $akutansiCount = $akutansiQuery->where(function ($q) {
-            $q->where('current_handler', 'akutansi')
-                ->orWhere('status', 'sent_to_akutansi')
-                ->orWhere('status', 'proses_akutansi');
-        })->count();
-
-        return [
-            'total_documents' => $total,
-            'completed_documents' => $completedCount,
-            'ibu_tarapul' => $operatorCount,
-            'ibu_yuni' => $ibuYuniCount,
-            'perpajakan' => $perpajakanCount,
-            'akutansi' => $akutansiCount
-        ];
-    }
 
     
 
@@ -4038,131 +3884,6 @@ class OwnerDashboardController extends Controller
         }
     }
 
-    /**
-     * GET /owner/dokumen/{id}/history
-     * Returns the DocumentTracking timeline for a Dokumen record.
-     */
-    public function getHistory(int $id): \Illuminate\Http\JsonResponse
-    {
-        $dokumen = Dokumen::findOrFail($id);
-
-        $entries = \App\Models\DocumentTracking::where('document_id', $id)
-            ->orderBy('action_at', 'asc')
-            ->get();
-
-        $actorLabels = [
-            'operator'       => 'Operator',
-            'team_verifikasi'=> 'Team Verifikasi',
-            'perpajakan'     => 'Perpajakan',
-            'akutansi'       => 'Akutansi',
-            'pembayaran'     => 'Pembayaran',
-            'system'         => 'System',
-        ];
-
-        $actionLabels = [
-            'created'                    => 'Dokumen Dibuat',
-            'sent_to_team_verifikasi'    => 'Dikirim ke Team Verifikasi',
-            'sent_to_perpajakan'         => 'Dikirim ke Perpajakan',
-            'sent_to_akutansi'           => 'Dikirim ke Akutansi',
-            'sent_to_pembayaran'         => 'Dikirim ke Pembayaran',
-            'returned_to_perpajakan'     => 'Dikembalikan ke Perpajakan',
-            'returned_to_akutansi'       => 'Dikembalikan ke Akutansi',
-            'returned_to_operator'       => 'Dikembalikan ke Operator',
-            'returned_to_verifikasi'     => 'Dikembalikan ke Verifikasi',
-            'deadline_set'               => 'Deadline Ditetapkan',
-            'processed_perpajakan'       => 'Diproses Perpajakan',
-            'processed_akutansi'         => 'Diproses Akutansi',
-            'processed_pembayaran'       => 'Pembayaran Dikonfirmasi',
-            'urgency_sent'               => 'Urgency Dikirim',
-        ];
-
-        $actionColors = [
-            'created'                 => '#10b981', // green
-            'sent_to_team_verifikasi' => '#3b82f6', // blue
-            'sent_to_perpajakan'      => '#6366f1', // indigo
-            'sent_to_akutansi'        => '#f59e0b', // amber
-            'sent_to_pembayaran'      => '#14b8a6', // teal
-            'returned_to_perpajakan'  => '#ef4444', // red
-            'returned_to_akutansi'    => '#ef4444',
-            'returned_to_operator'    => '#ef4444',
-            'deadline_set'            => '#f59e0b',
-            'processed_perpajakan'    => '#6366f1',
-            'processed_akutansi'      => '#f59e0b',
-            'processed_pembayaran'    => '#10b981',
-            'urgency_sent'            => '#f97316', // orange
-        ];
-
-        $actionIcons = [
-            'created'                 => 'fa-plus-circle',
-            'sent_to_team_verifikasi' => 'fa-paper-plane',
-            'sent_to_perpajakan'      => 'fa-file-invoice',
-            'sent_to_akutansi'        => 'fa-calculator',
-            'sent_to_pembayaran'      => 'fa-money-bill-wave',
-            'returned_to_perpajakan'  => 'fa-undo',
-            'returned_to_akutansi'    => 'fa-undo',
-            'returned_to_operator'    => 'fa-undo',
-            'deadline_set'            => 'fa-clock',
-            'processed_perpajakan'    => 'fa-stamp',
-            'processed_akutansi'      => 'fa-check-double',
-            'processed_pembayaran'    => 'fa-check-circle',
-            'urgency_sent'            => 'fa-bell',
-        ];
-
-        $nodes = $entries->map(function ($entry, $index) use (
-            $entries, $actionLabels, $actorLabels, $actionColors, $actionIcons
-        ) {
-            $next      = $entries->get($index + 1);
-            $durationSec = $next
-                ? $entry->action_at->diffInSeconds($next->action_at)
-                : null;
-
-            return [
-                'id'           => $entry->id,
-                'action'       => $entry->action,
-                'action_label' => $actionLabels[$entry->action] ?? ucfirst(str_replace('_', ' ', $entry->action)),
-                'actor'        => $entry->actor,
-                'actor_label'  => $actorLabels[$entry->actor] ?? $entry->actor,
-                'action_at'    => $entry->action_at->format('d M Y H:i'),
-                'action_at_iso'=> $entry->action_at->toISOString(),
-                'metadata'     => $entry->metadata ?? [],
-                'color'        => $actionColors[$entry->action] ?? '#64748b',
-                'icon'         => $actionIcons[$entry->action]  ?? 'fa-circle',
-                'duration_sec' => $durationSec,
-                'duration_label' => $durationSec !== null ? $this->formatDuration($durationSec) : null,
-                'is_last'      => $index === $entries->count() - 1,
-            ];
-        })->values();
-
-        // Identify slowest stage (for red highlight)
-        $maxDuration = $nodes->max('duration_sec');
-
-        $nodes = $nodes->map(function ($node) use ($maxDuration) {
-            $node['is_slowest'] = $maxDuration && $node['duration_sec'] === $maxDuration && $maxDuration > 86400;
-            return $node;
-        });
-
-        // Summary
-        $totalSec = $entries->count() > 1
-            ? $entries->first()->action_at->diffInSeconds($entries->last()->action_at)
-            : null;
-
-        return response()->json([
-            'success'       => true,
-            'document'      => [
-                'id'           => $dokumen->id,
-                'nomor_agenda' => $dokumen->nomor_agenda,
-                'nomor_spp'    => $dokumen->nomor_spp,
-                'dibayar_kepada' => $dokumen->dibayar_kepada,
-                'status'       => $dokumen->status,
-            ],
-            'nodes'         => $nodes,
-            'summary'       => [
-                'total_events'  => $entries->count(),
-                'total_duration'=> $totalSec ? $this->formatDuration($totalSec) : '-',
-                'total_sec'     => $totalSec,
-            ],
-        ]);
-    }
 
     /** Format seconds into "X hari Y jam Z menit" */
     private function formatDuration(int $seconds): string

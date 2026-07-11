@@ -193,10 +193,7 @@ Route::get('owner/dokumen', [OwnerDashboardController::class, 'index'])
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.dokumen');
 
-// AJAX filter endpoint for live filtering (no page refresh)
-Route::get('owner/dokumen/filter', [OwnerDashboardController::class, 'filterDocuments'])
-    ->middleware('auth', 'role:admin,owner')
-    ->name('owner.dokumen.filter');
+// Route owner/dokumen/filter DIHAPUS 2026-07-11: nol pemanggil frontend.
 
 Route::get('owner/asisten-virtual', [OwnerVirtualAssistantController::class, 'index'])
     ->middleware('auth', 'role:admin,owner')
@@ -215,9 +212,7 @@ Route::get('owner/dashboard', fn() => redirect()->route('owner.home'))
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.dashboard');
 
-Route::get('owner/api/real-time-updates', [OwnerDashboardController::class, 'getRealTimeUpdates'])
-    ->middleware('auth', 'role:admin,owner')
-    ->name('owner.api.real-time-updates');
+// Route owner/api/real-time-updates DIHAPUS 2026-07-11: nol pemanggil frontend.
 
 // Recent documents API for dashboard polling
 Route::get('owner/api/recent-documents', [OwnerDashboardController::class, 'getRecentDocuments'])
@@ -268,9 +263,8 @@ Route::get('rekapan-keterlambatan-export/{roleCode}', [OwnerDashboardController:
 Route::get('owner/analytics', fn() => redirect()->route('rekapan-keterlambatan.index'))
     ->middleware('auth', 'role:admin,owner')
     ->name('analytics.index');
-Route::get('owner/analytics/data', [\App\Http\Controllers\AnalyticsController::class, 'getAnalyticsData'])
-    ->middleware('auth', 'role:admin,owner')
-    ->name('analytics.data');
+// Route owner/analytics/data + AnalyticsController DIHAPUS 2026-07-11: nol pemanggil
+// (halaman analytics hidup dilayani reports/analytics via DokumenRekapanController).
 
 // (dihapus 2026-07-05, dead-code) admin/monitoring — duplikat /owner/dokumen
 // (OwnerDashboardController@index), tak ditaut di mana pun.
@@ -293,10 +287,7 @@ Route::post('owner/dokumen/{id}/priority-whatsapp', [OwnerDashboardController::c
     ->middleware('auth', 'role:admin,owner')
     ->name('owner.dokumen.priority-whatsapp');
 
-// Document History / Timeline API
-Route::get('owner/dokumen/{id}/history', [OwnerDashboardController::class, 'getHistory'])
-    ->middleware('auth', 'role:admin,owner')
-    ->name('owner.dokumen.history');
+// Route owner/dokumen/{id}/history DIHAPUS 2026-07-11: nol pemanggil frontend.
 
 // Active urgencies polling API – all authenticated roles can call this
 Route::get('/api/documents/urgency/active', [OwnerDashboardController::class, 'getActiveUrgencies'])
@@ -405,8 +396,8 @@ Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('do
         ->name('accept');
     Route::post('/{dokumen}/reject', [TeamVerifikasiController::class, 'rejectDocument'])
         ->name('reject');
-    Route::get('/pending-approval', [TeamVerifikasiController::class, 'pendingApproval'])
-        ->name('pending-approval');
+    // Halaman pending-approval DIHAPUS 2026-07-11: tak pernah di-link dari UI,
+    // error 500 saat diakses langsung; fungsinya sudah digantikan Inbox.
 });
 
 // Document Activity Tracking Routes
@@ -484,10 +475,9 @@ Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('csv-import')->name
 // Professional Document Routes - Akutansi
 Route::middleware(['auth', 'role:admin,akutansi'])->prefix('documents/akutansi')->name('documents.akutansi.')->group(function () {
     Route::get('/', [DashboardAkutansiController::class, 'dokumens'])->name('index');
-    Route::get('/create', [DashboardAkutansiController::class, 'createDokumen'])->name('create');
-    Route::post('/', [DashboardAkutansiController::class, 'storeDokumen'])->name('store');
+    // create/store/destroy DIHAPUS 2026-07-11: tak pernah di-link dari UI (create
+    // error 500 karena view-nya tak ada; store/destroy hanya stub kosong).
     Route::get('/{dokumen}/detail', [DashboardAkutansiController::class, 'getDocumentDetail'])->name('detail');
-    Route::delete('/{dokumen}', [DashboardAkutansiController::class, 'destroyDokumen'])->name('destroy');
     Route::post('/{dokumen}/set-deadline', [DashboardAkutansiController::class, 'setDeadline'])->name('set-deadline');
     Route::post('/{dokumen}/send-to-pembayaran', [DashboardAkutansiController::class, 'sendToPembayaran'])->name('send-to-pembayaran');
     Route::post('/{dokumen}/return', [DashboardAkutansiController::class, 'returnDocument'])->name('return');

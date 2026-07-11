@@ -511,31 +511,10 @@ class DashboardAkutansiController extends Controller
     }
 
 
-    public function createDokumen()
-    {
-        $data = array(
-            "title" => "Tambah Akutansi",
-            "module" => "akutansi",
-            "menuDashboard" => "",
-            'menuDokumen' => 'Active',
-            'menuTambahDokumen' => 'Active',
-        );
-        return view('akutansi.dokumens.tambahAkutansi', $data);
-    }
-
-    public function storeDokumen(Request $request)
-    {
-        // Implementation for storing document
-        return redirect()->route('documents.akutansi.index')->with('success', 'Akutansi berhasil ditambahkan');
-    }
 
 
 
-    public function destroyDokumen($id)
-    {
-        // Implementation for deleting document
-        return redirect()->route('documents.akutansi.index')->with('success', 'Akutansi berhasil dihapus');
-    }
+
 
     /**
      * Set deadline for Akutansi to unlock document processing
