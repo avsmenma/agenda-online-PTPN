@@ -3900,9 +3900,11 @@
   $usesOperatorShell = $layoutUserRoleLower === 'operator' || $layoutModuleLower === 'operator';
   $usesPaymentShell = $layoutUserRoleLower === 'pembayaran' || (($module ?? null) === 'pembayaran');
   $usesWorkflowShell = in_array($layoutUserRoleLower, $modernWorkflowRoles, true) || in_array($layoutModuleLower, $modernWorkflowModules, true);
-  $usesModernSidebarShell = $usesOwnerShell || $usesOperatorShell || $usesPaymentShell || $usesWorkflowShell;
+  // Bagian (role diawali "bagian_") kini memakai sidebar modern yang sama dengan role keuangan.
+  $usesBagianShell = str_starts_with($layoutUserRoleLower, 'bagian_');
+  $usesModernSidebarShell = $usesOwnerShell || $usesOperatorShell || $usesPaymentShell || $usesWorkflowShell || $usesBagianShell;
 @endphp
-<body class="{{ $usesModernSidebarShell ? 'owner-layout' : '' }} {{ $usesOperatorShell ? 'operator-layout' : '' }} {{ $usesPaymentShell ? 'payment-layout' : '' }} {{ $usesWorkflowShell ? 'workflow-layout' : '' }}">
+<body class="{{ $usesModernSidebarShell ? 'owner-layout' : '' }} {{ $usesOperatorShell ? 'operator-layout' : '' }} {{ $usesPaymentShell ? 'payment-layout' : '' }} {{ $usesWorkflowShell ? 'workflow-layout' : '' }} {{ $usesBagianShell ? 'bagian-layout' : '' }}">
   @php
     // Pre-calculate shouldShowSecondarySidebar for header
     // Check if user is owner
@@ -3911,6 +3913,7 @@
     $isOperatorShell = $usesOperatorShell;
     $isPaymentShell = $usesPaymentShell;
     $isWorkflowShell = $usesWorkflowShell;
+    $isBagianShell = $usesBagianShell;
     $isModernSidebarShell = $usesModernSidebarShell;
 
     $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
@@ -4396,6 +4399,18 @@
             <path d="M7 15l4-4 3 3 5-7"/>
           </svg>
           Rekapan Dokumen
+        </a>
+        @elseif($isBagianShell)
+        {{-- Bagian: view-only, hanya memantau dokumennya (satu menu Daftar Dokumen). --}}
+        @php
+          $isBagianDocumentsActive = request()->routeIs('bagian.documents.*') || request()->is('*bagian/documents*');
+        @endphp
+        <a href="{{ route('bagian.documents.index') }}" class="owner-nav-item {{ $isBagianDocumentsActive ? 'active' : '' }}" title="Daftar Dokumen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+          </svg>
+          Daftar Dokumen
         </a>
         @else
         {{-- 1. Dashboard --}}
