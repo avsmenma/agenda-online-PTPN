@@ -7,9 +7,9 @@ use App\Models\SyncLog;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Backfill sekali-jalan: isi tanggal_dibayar dokumen Agenda dari tanggal
- * bank keluar Cash Bank. Satu arah (CB → AO), hanya bila kosong, pakai
- * tanggal TERAWAL bila ada beberapa baris. Tidak menimpa data yang sudah ada.
+ * Backfill sekali-jalan: isi tanggal_dibayar (dan status_pembayaran) dokumen
+ * Agenda dari tanggal bank keluar Cash Bank. Satu arah (CB → AO), hanya bila
+ * tanggal_dibayar kosong, pakai tanggal TERAWAL. Tidak menimpa tanggal yang ada.
  */
 class BackfillTanggalBayarService
 {
@@ -23,17 +23,19 @@ class BackfillTanggalBayarService
      */
     public function run(bool $dryRun = false, ?int $limit = null): array
     {
-        // 1. Muat peta dokumen Agenda ke memori (id → data, dan nomor_agenda → [id]).
-        $dokById    = [];
-        $idsByNomor = [];
+        // 1. Muat peta dokumen Agenda ke memori.
+        $dokById         = [];   // id => object{nomor_agenda, tahun, tanggal_dibayar}
+        $idsByNomor      = [];   // nomor_agenda => [id, ...]
+        $idsByNomorTahun = [];   // "nomor|tahun" => [id, ...]
 
         Dokumen::query()
-            ->select(['id', 'nomor_agenda', 'tanggal_dibayar'])
-            ->chunk(500, function ($rows) use (&$dokById, &$idsByNomor) {
+            ->select(['id', 'nomor_agenda', 'tahun', 'tanggal_dibayar'])
+            ->chunk(500, function ($rows) use (&$dokById, &$idsByNomor, &$idsByNomorTahun) {
                 foreach ($rows as $d) {
                     $dokById[$d->id] = $d;
                     if (!empty($d->nomor_agenda)) {
                         $idsByNomor[$d->nomor_agenda][] = $d->id;
+                        $idsByNomorTahun[$d->nomor_agenda . '|' . $d->tahun][] = $d->id;
                     }
                 }
             });
@@ -48,34 +50,16 @@ class BackfillTanggalBayarService
             ->whereNotNull('tanggal')
             ->where('tanggal', '!=', '')
             ->orderBy('id_bank_keluar')
-            ->chunk(1000, function ($rows) use (&$earliestByDokId, &$unmatchedKeys, $dokById, $idsByNomor) {
+            ->chunk(1000, function ($rows) use (&$earliestByDokId, &$unmatchedKeys, $dokById, $idsByNomor, $idsByNomorTahun) {
                 foreach ($rows as $r) {
                     $tgl = substr((string) $r->tanggal, 0, 10);
                     if ($tgl === '' || $tgl === '0000-00-00') {
                         continue;
                     }
 
-                    $dokId = null;
-                    if (!empty($r->dokumen_id) && isset($dokById[$r->dokumen_id])) {
-                        $dokId = (int) $r->dokumen_id;
-                    } else {
-                        $nomor = $r->agenda_tahun ?: $r->no_agenda;
-                        if (!empty($nomor) && isset($idsByNomor[$nomor])) {
-                            if (count($idsByNomor[$nomor]) === 1) {
-                                $dokId = $idsByNomor[$nomor][0];
-                            } else {
-                                $unmatchedKeys['agenda:' . $nomor] = true; // ambigu
-                                continue;
-                            }
-                        }
-                    }
-
+                    $dokId = $this->resolveDokumenId($r, $dokById, $idsByNomor, $idsByNomorTahun, $unmatchedKeys);
                     if ($dokId === null) {
-                        $key = !empty($r->dokumen_id)
-                            ? 'id:' . $r->dokumen_id
-                            : 'agenda:' . ($r->agenda_tahun ?: $r->no_agenda ?: '?');
-                        $unmatchedKeys[$key] = true;
-                        continue;
+                        continue; // resolveDokumenId sudah mencatat unmatched
                     }
 
                     if (!isset($earliestByDokId[$dokId]) || $tgl < $earliestByDokId[$dokId]) {
@@ -107,13 +91,16 @@ class BackfillTanggalBayarService
 
             if ($existing === null || $existing === '' || $existing === '0000-00-00') {
                 if (!$dryRun) {
-                    // Sengaja TIDAK menyentuh updated_at. Fallback poller
-                    // `dokumen:sync-cashbank --since` mencari Dokumen dengan
-                    // updated_at terbaru lalu mendorongnya balik ke Cash Bank;
-                    // membiarkan updated_at apa adanya mencegah push-balik
-                    // (raw update sudah menghindari jalur DokumenObserver).
+                    // Set tanggal_dibayar + status_pembayaran. Sengaja TIDAK
+                    // menyentuh updated_at: fallback poller `dokumen:sync-cashbank
+                    // --since` mencari updated_at terbaru lalu mendorong balik ke
+                    // Cash Bank; membiarkan updated_at apa adanya mencegah push-balik.
+                    // Perubahan status_pembayaran via raw write akan memicu MySQL
+                    // trigger auto-forward (ProcessAutoForwardQueue) di produksi —
+                    // sesuai keputusan bisnis (dokumen historis mengalir ke Pembayaran).
                     DB::table('dokumens')->where('id', $dokId)->update([
-                        'tanggal_dibayar' => $earliest,
+                        'tanggal_dibayar'   => $earliest,
+                        'status_pembayaran' => 'sudah_dibayar',
                     ]);
                 }
                 $summary['diisi']++;
@@ -143,5 +130,59 @@ class BackfillTanggalBayarService
         }
 
         return $summary;
+    }
+
+    /**
+     * Resolusikan satu baris bank_keluar ke id dokumen Agenda.
+     * Prioritas: dokumen_id → agenda_tahun → no_agenda.
+     * agenda_tahun/no_agenda bisa polos ('0004') atau komposit ('0004_2026').
+     * Komposit dicocokkan ke (nomor_agenda + tahun); polos ke nomor_agenda saja
+     * dan HANYA bila unik (bila >1 dokumen → ambigu, dilewati demi keamanan).
+     */
+    private function resolveDokumenId(
+        object $r,
+        array $dokById,
+        array $idsByNomor,
+        array $idsByNomorTahun,
+        array &$unmatchedKeys
+    ): ?int {
+        if (!empty($r->dokumen_id) && isset($dokById[$r->dokumen_id])) {
+            return (int) $r->dokumen_id;
+        }
+
+        foreach ([$r->agenda_tahun, $r->no_agenda] as $raw) {
+            if (empty($raw)) {
+                continue;
+            }
+
+            // Komposit: '{nomor}_{tahun}' (tahun 4 digit).
+            if (preg_match('/^(.+)_(\d{4})$/', (string) $raw, $m)) {
+                $key = $m[1] . '|' . $m[2];
+                if (isset($idsByNomorTahun[$key])) {
+                    if (count($idsByNomorTahun[$key]) === 1) {
+                        return (int) $idsByNomorTahun[$key][0];
+                    }
+                    $unmatchedKeys['ambigu:' . $key] = true;
+                    return null;
+                }
+                // Komposit tak ketemu → coba nomor polos hasil pisah.
+                $raw = $m[1];
+            }
+
+            // Polos: cocokkan nomor_agenda, hanya bila unik.
+            if (isset($idsByNomor[$raw])) {
+                if (count($idsByNomor[$raw]) === 1) {
+                    return (int) $idsByNomor[$raw][0];
+                }
+                $unmatchedKeys['ambigu:' . $raw] = true;
+                return null;
+            }
+        }
+
+        $key = !empty($r->dokumen_id)
+            ? 'id:' . $r->dokumen_id
+            : 'agenda:' . ($r->agenda_tahun ?: $r->no_agenda ?: '?');
+        $unmatchedKeys[$key] = true;
+        return null;
     }
 }
