@@ -107,9 +107,13 @@ class BackfillTanggalBayarService
 
             if ($existing === null || $existing === '' || $existing === '0000-00-00') {
                 if (!$dryRun) {
+                    // Sengaja TIDAK menyentuh updated_at. Fallback poller
+                    // `dokumen:sync-cashbank --since` mencari Dokumen dengan
+                    // updated_at terbaru lalu mendorongnya balik ke Cash Bank;
+                    // membiarkan updated_at apa adanya mencegah push-balik
+                    // (raw update sudah menghindari jalur DokumenObserver).
                     DB::table('dokumens')->where('id', $dokId)->update([
                         'tanggal_dibayar' => $earliest,
-                        'updated_at'      => now(),
                     ]);
                 }
                 $summary['diisi']++;
