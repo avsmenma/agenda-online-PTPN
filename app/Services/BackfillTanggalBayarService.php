@@ -48,7 +48,10 @@ class BackfillTanggalBayarService
             ->table('bank_keluars')
             ->select(['id_bank_keluar', 'dokumen_id', 'no_agenda', 'agenda_tahun', 'tanggal'])
             ->whereNotNull('tanggal')
-            ->where('tanggal', '!=', '')
+            // JANGAN pakai ->where('tanggal','!=','') : pada kolom DATE MySQL,
+            // membandingkan ke '' membuat seluruh predikat NULL sehingga SEMUA
+            // baris terfilter (hasil 0). Baris '0000-00-00' sudah disaring di PHP
+            // (cek substr di bawah). Bug ini lolos di test karena SQLite berbeda.
             ->orderBy('id_bank_keluar')
             ->chunk(1000, function ($rows) use (&$earliestByDokId, &$unmatchedKeys, $dokById, $idsByNomor, $idsByNomorTahun) {
                 foreach ($rows as $r) {
