@@ -45,8 +45,16 @@ mengisi `tanggal_dibayar` dokumen Agenda dari tanggal bank keluar Cash Bank.
    ke laporan/`sync_logs` untuk ditinjau manual — tidak ditimpa.
 4. **Tanggal yang dipakai**: bila satu dokumen punya banyak baris `bank_keluars`
    (mis. pembayaran split) dengan tanggal berbeda, dipakai tanggal **TERAWAL** (`MIN`).
-5. **Lingkup field**: hanya `tanggal_dibayar`. Tidak menyentuh `status_pembayaran`,
-   nilai, kategori, atau field lain (menghindari gangguan pada alur dokumen berjalan).
+5. **Lingkup field**: `tanggal_dibayar` **dan** `status_pembayaran='sudah_dibayar'`
+   (revisi pasca-review, keputusan user). Field lain (nilai, kategori, dll.) tidak
+   disentuh. Catatan: perubahan `status_pembayaran` via raw write memicu MySQL
+   trigger auto-forward (`ProcessAutoForwardQueue`) di produksi sehingga dokumen
+   historis mengalir ke Pembayaran — ini DITERIMA sebagai keputusan bisnis.
+6. **Pencocokan komposit** (revisi pasca-review): `bank_keluars.agenda_tahun`
+   produksi campuran — polos (`'0004'`) untuk entri manual, komposit (`'0004_2026'`)
+   untuk entri impor. `nomor_agenda` di `dokumens` unik komposit `(nomor_agenda,
+   created_by)` sehingga bisa berulang. Matcher: komposit dicocokkan ke
+   (nomor_agenda + tahun); polos hanya bila unik (bila >1 → ambigu, dilewati).
 6. **Eksekusi produksi bertahap**: jalankan `--dry-run` (read-only) dulu untuk
    memperlihatkan dampak, lalu **berhenti minta izin eksplisit** sebelum menulis ke
    DB produksi.
@@ -115,7 +123,7 @@ balik tidak diperlukan.
   edit dari-sekarang.
 - Tidak ada arah backfill sebaliknya (Agenda → Cash Bank).
 - Tidak menimpa `tanggal_dibayar` Agenda yang sudah terisi.
-- Tidak menyentuh field selain `tanggal_dibayar`.
+- Tidak menyentuh field selain `tanggal_dibayar` dan `status_pembayaran`.
 - Tidak menjadwalkan command ini (sekali jalan; boleh diulang kapan pun secara manual
   karena idempoten untuk baris yang sudah terisi).
 

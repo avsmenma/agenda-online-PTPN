@@ -11,6 +11,7 @@
 ## Global Constraints
 
 - PHP 8.3, Laravel 12. Ikuti pola command yang ada (`app/Console/Commands/SyncCashBankCommand.php`) — Laravel 12 meng-auto-discover command, tidak perlu registrasi manual.
+- **REVISI pasca-review (lihat `.superpowers/sdd/task-1-revision-brief.md` untuk kode lengkap):** (a) saat mengisi, set `tanggal_dibayar` **dan** `status_pembayaran='sudah_dibayar'` (bukan hanya tanggal); auto-forward yang terpicu diterima sebagai keputusan bisnis. (b) Matcher `nomor_agenda` menangani `agenda_tahun` komposit `'{nomor}_{tahun}'` (cocok ke nomor_agenda+tahun) maupun polos (hanya bila unik; >1 → ambigu dilewati), karena `nomor_agenda` unik komposit `(nomor_agenda, created_by)`.
 - `git add` **per-file** (jangan `git add .`/`-A`). Pesan commit **Bahasa Indonesia**.
 - Nama koneksi Cash Bank: `config('sync.cashbank_connection', 'cash_bank_new')` (pola identik `DokumenSyncService`).
 - **Hanya** sentuh field `tanggal_dibayar`. Jangan ubah `status_pembayaran` atau field lain.
