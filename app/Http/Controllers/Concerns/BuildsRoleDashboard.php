@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Concerns;
 
 use App\Models\Dokumen;
+use App\Support\KeterlambatanClassifier;
 use Carbon\Carbon;
 
 /**
@@ -150,7 +151,7 @@ trait BuildsRoleDashboard
             ->with(['roleData' => function ($q) use ($cfg) {
                 $q->where('role_code', $cfg['roleCode']);
             }])
-            ->get(['id', 'status', 'current_handler', 'bagian']);
+            ->get(['id', 'status', 'current_handler', 'bagian', 'status_pembayaran']);
 
         $aman = $peringatan = $terlambat = 0;
         $bagianCounter = [];
@@ -160,27 +161,28 @@ trait BuildsRoleDashboard
             $bagianName = trim((string) $doc->bagian) !== '' ? $doc->bagian : 'Tanpa Bagian';
             $bagianCounter[$bagianName] = ($bagianCounter[$bagianName] ?? 0) + 1;
 
-            // Bucket keterlambatan.
+            // Bucket keterlambatan — pakai sumber kebenaran tunggal yang sama
+            // dengan halaman Rekap Keterlambatan (per role: ambang mingguan untuk
+            // pembayaran + selesai bila sudah_dibayar; harian untuk role lain).
+            // Ini memperbaiki dashboard pembayaran yang dulu salah menghitung
+            // dokumen sudah dibayar sebagai 'peringatan' (umur terus berjalan ke now).
             $roleData = $doc->roleData->first();
-            $isSent = !in_array($doc->current_handler, $cfg['handlers'], true);
+            $bucket = KeterlambatanClassifier::bucket(
+                $cfg['roleCode'],
+                ($roleData && $roleData->received_at) ? Carbon::parse($roleData->received_at) : null,
+                ($roleData && $roleData->processed_at) ? Carbon::parse($roleData->processed_at) : null,
+                $doc->status_pembayaran,
+                $now
+            );
 
-            if ($roleData && $roleData->received_at) {
-                $receivedAt = Carbon::parse($roleData->received_at);
-                $hoursDiff = ($isSent && $roleData->processed_at)
-                    ? $receivedAt->diffInHours(Carbon::parse($roleData->processed_at))
-                    : $receivedAt->diffInHours($now);
-
-                if ($hoursDiff < 24) {
-                    $aman++;
-                } elseif ($hoursDiff < 72) {
-                    $peringatan++;
-                } else {
-                    $terlambat++;
-                }
-            } else {
-                // Tanpa received_at (belum diterima): NETRAL — tidak dihitung aman/peringatan/terlambat.
-                // (dulu tidak konsisten: menggantung dihitung 'terlambat', sudah diteruskan dihitung 'aman')
+            if ($bucket === 'aman') {
+                $aman++;
+            } elseif ($bucket === 'peringatan') {
+                $peringatan++;
+            } elseif ($bucket === 'terlambat') {
+                $terlambat++;
             }
+            // null → NETRAL (belum diterima), tidak dihitung.
         }
 
         // Urutkan sebaran bagian dari terbanyak.
