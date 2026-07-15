@@ -3902,9 +3902,13 @@
   $usesWorkflowShell = in_array($layoutUserRoleLower, $modernWorkflowRoles, true) || in_array($layoutModuleLower, $modernWorkflowModules, true);
   // Bagian (role diawali "bagian_") kini memakai sidebar modern yang sama dengan role keuangan.
   $usesBagianShell = str_starts_with($layoutUserRoleLower, 'bagian_');
-  $usesModernSidebarShell = $usesOwnerShell || $usesOperatorShell || $usesPaymentShell || $usesWorkflowShell || $usesBagianShell;
+  // Programmer di halaman berbagi (layouts/app: 2FA, dsb) — dapat sidebar modern minimal.
+  $usesProgrammerShell = $layoutUserRoleLower === 'programmer';
+  // Sidebar legacy sudah dihapus total: SEMUA role kini memakai modern sidebar shell.
+  // Role yang tak terpetakan ke sub-shell tertentu jatuh ke fallback menu minimal.
+  $usesModernSidebarShell = true;
 @endphp
-<body class="{{ $usesModernSidebarShell ? 'owner-layout' : '' }} {{ $usesOperatorShell ? 'operator-layout' : '' }} {{ $usesPaymentShell ? 'payment-layout' : '' }} {{ $usesWorkflowShell ? 'workflow-layout' : '' }} {{ $usesBagianShell ? 'bagian-layout' : '' }}">
+<body class="{{ $usesModernSidebarShell ? 'owner-layout' : '' }} {{ $usesOperatorShell ? 'operator-layout' : '' }} {{ $usesPaymentShell ? 'payment-layout' : '' }} {{ $usesWorkflowShell ? 'workflow-layout' : '' }} {{ $usesBagianShell ? 'bagian-layout' : '' }} {{ $usesProgrammerShell ? 'programmer-shared-layout' : '' }}">
   @php
     // Pre-calculate shouldShowSecondarySidebar for header
     // Check if user is owner
@@ -3914,6 +3918,7 @@
     $isPaymentShell = $usesPaymentShell;
     $isWorkflowShell = $usesWorkflowShell;
     $isBagianShell = $usesBagianShell;
+    $isProgrammerShell = $usesProgrammerShell;
     $isModernSidebarShell = $usesModernSidebarShell;
 
     $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
@@ -4100,56 +4105,11 @@
       </div>
     </div>
 
-  {{-- ═══════ OTHER ROLES — standard header with topbar ═══════ --}}
-  @elseif(!$isModernSidebarShell)
-    <header>
-      <div class="topbar mb-0 mt-0 {{ $shouldShowSecondarySidebarForHeader ? 'with-secondary-sidebar' : '' }}">
-        <h5 class="mb-0 welcome-message">{{ $welcomeMessage ?? 'Selamat datang di Agenda Online PTPN' }}</h5>
-        <div class="d-flex align-items-center ms-auto">
-          <!-- Dark Mode Toggle Button -->
-          <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle dark mode">
-            <i class="fas fa-moon theme-toggle-icon moon"></i>
-            <i class="fas fa-sun theme-toggle-icon sun"></i>
-          </button>
-          <i class="fa-solid fa-bell me-3" style="font-size: 20px; color: #666; cursor: pointer;"></i>
-
-          <!-- Profile Dropdown -->
-          <div class="profile-dropdown-container" style="position: relative;">
-            <i class="fa-solid fa-user profile-icon" id="profileDropdownToggle"
-              style="font-size: 18px; color: #666; cursor: pointer; position: relative;">
-            </i>
-            <div class="profile-dropdown-menu" id="profileDropdownMenu" style="display: none;">
-              <a href="{{ route('profile.account') }}" class="profile-dropdown-item">
-                <i class="fa-solid fa-user-circle me-2"></i>
-                Akun
-              </a>
-              <a href="{{ route('2fa.setup') }}" class="profile-dropdown-item">
-                <i class="fa-solid fa-shield-alt me-2"></i>
-                Keamanan 2FA
-              </a>
-              <div class="profile-dropdown-divider"></div>
-              <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-                @csrf
-                <button type="submit" class="profile-dropdown-item"
-                  style="width: 100%; text-align: left; border: none; background: none; padding: 8px 16px; cursor: pointer;">
-                  <i class="fa-solid fa-sign-out-alt me-2"></i>
-                  Logout
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-    </header>
   @endif
 
   <!-- Sidebar (hidden for operator spreadsheet mode via CSS) -->
   @if(!($isOperatorSpreadsheet ?? false))
-  <div class="{{ $isModernSidebarShell ? 'sidebar-owner' : 'sidebar' }}">
-    @if(!$isModernSidebarShell)
-    <h4 class="text-center mb-4"><img src="{{ asset('images/logo_ptpn.png') }}" alt="Logo PTPN" class="sidebar-logo-img"> Agenda Online</h4>
-    <hr>
-    @endif
-
+  <div class="sidebar-owner">
     @php
       // Normalize module to lowercase untuk konsistensi
       // Note: $isOwner is already defined at the top of the body section
@@ -4198,8 +4158,7 @@
 
     <script>window._userModule = @json($module);</script>
 
-    @if($isModernSidebarShell)
-      {{-- Modern role sidebar (Owner/Admin/Pembayaran) --}}
+      {{-- Sidebar modern — kini dipakai SEMUA role (sidebar legacy sudah dihapus). --}}
 
       {{-- Logo / Brand --}}
       <div class="owner-sidebar-logo">
@@ -4412,7 +4371,7 @@
           </svg>
           Daftar Dokumen
         </a>
-        @else
+        @elseif($isOwner)
         {{-- 1. Dashboard --}}
         <a href="{{ url('/owner/home') }}" class="owner-nav-item {{ $menuHome ?? '' }}" title="Dashboard">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
@@ -4491,6 +4450,17 @@
           </svg>
           Audit Trail
         </a>
+        @elseif($isProgrammerShell)
+        {{-- Programmer di halaman berbagi (mis. 2FA): satu tautan balik ke dashboard-nya. --}}
+        <a href="{{ route('programmer.dashboard') }}" class="owner-nav-item {{ request()->routeIs('programmer.dashboard') ? 'active' : '' }}" title="Dashboard Programmer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
+        </a>
+        @else
+        {{-- Role tak terpetakan: sidebar modern minimal (hanya logo + kartu user + logout). --}}
         @endif
       </div>
 
@@ -4532,366 +4502,10 @@
         </div>
       </div>
 
-    @else
-    <!-- Regular Menu for other roles -->
-    <div style="flex: 1; display: flex; flex-direction: column;">
-      {{-- Bagian TIDAK punya menu Home lagi (landing = Daftar Dokumen /bagian/documents). --}}
-      @if(!$isBagianUser && !in_array($module, ['operator', 'team_verifikasi', 'perpajakan', 'akutansi']))
-        <a href="{{ url($dashboardUrl) }}" class="{{ $menuDashboard ?? '' }}"><i class="fa-solid fa-house"></i> Home</a>
-      @endif
-
-      <!-- Owner Dashboard - Only for Admin users -->
-      @if(auth()->check() && (auth()->user()->role === 'Admin' || auth()->user()->role === 'admin'))
-        <a href="{{ url('/owner/dashboard') }}" class="nav-link">
-          <i class="fa-solid fa-satellite-dish"></i> Owner Dashboard
-        </a>
-        
-        <!-- Audit Trail Menu - Only for Admin users -->
-        <a href="{{ url('/owner/programmer-logs') }}" class="nav-link">
-          <i class="fa-solid fa-shield-halved"></i> Audit Trail
-        </a>
-      @endif
-
-      <!-- Inbox Menu - Untuk Team Verifikasi, Perpajakan, Akutansi -->
-      @php
-        $currentUserRole = 'operator'; // Default
-        if (auth()->check()) {
-          $user = auth()->user();
-          // Prioritize role field first (most accurate)
-          if (isset($user->role) && !empty($user->role)) {
-            $currentUserRole = $user->role;
-          } elseif (isset($user->name)) {
-            // Fallback to name mapping if role is not set
-            $nameToRole = [
-              'Operator' => 'operator',
-              'operator' => 'operator',
-              'Operator' => 'operator',
-              'team_verifikasi' => 'team_verifikasi',
-              'Ibu B' => 'team_verifikasi',
-              'Ibu Yuni' => 'team_verifikasi',
-              'Team Verifikasi' => 'team_verifikasi',
-              'Perpajakan' => 'Perpajakan',
-              'Team Perpajakan' => 'Perpajakan',
-              'Akutansi' => 'Akutansi',
-              'Team Akutansi' => 'Akutansi',
-              'Pembayaran' => 'Pembayaran',
-              'Team Pembayaran' => 'Pembayaran'
-            ];
-            $currentUserRole = $nameToRole[$user->name] ?? 'operator';
-          }
-        }
-
-        // Normalize role to check (case-insensitive comparison)
-        $currentUserRoleLower = strtolower($currentUserRole);
-        // Include all possible variations of role names after lowercase
-        $OperatorRoles = ['operator', 'Operator', 'Operator', 'operator'];
-        $inboxRoles = array_merge($OperatorRoles, ['team_verifikasi', 'ibu b', 'verifikasi', 'team verifikasi', 'perpajakan', 'team perpajakan', 'akutansi', 'team akutansi', 'pembayaran', 'team pembayaran']);
-        $showInbox = in_array($currentUserRoleLower, $inboxRoles);
-
-        // Map role to inbox query format
-        $inboxRoleForQuery = 'team_verifikasi';
-        if (in_array($currentUserRoleLower, $OperatorRoles)) {
-          $inboxRoleForQuery = 'operator';
-        } elseif (in_array($currentUserRoleLower, ['perpajakan', 'team perpajakan'])) {
-          $inboxRoleForQuery = 'Perpajakan';
-        } elseif (in_array($currentUserRoleLower, ['akutansi', 'team akutansi'])) {
-          $inboxRoleForQuery = 'Akutansi';
-        } elseif (in_array($currentUserRoleLower, ['pembayaran', 'team pembayaran'])) {
-          $inboxRoleForQuery = 'Pembayaran';
-        } elseif (in_array($currentUserRoleLower, ['verifikasi', 'team verifikasi', 'team_verifikasi', 'ibu b'])) {
-          $inboxRoleForQuery = 'team_verifikasi'; // Verifikasi uses Team Verifikasi inbox
-        }
-      @endphp
-
-      @if($showInbox)
-        <a href="{{ url('/inbox') }}"
-          class="{{ request()->is('inbox') || request()->routeIs('inbox.*') ? 'active' : '' }}">
-          <i class="fa-solid fa-inbox"></i>
-          Inbox
-          @php
-            try {
-              $inboxCount = \App\Models\Dokumen::where('inbox_approval_for', $inboxRoleForQuery)
-                ->where('inbox_approval_status', 'pending')
-                ->count();
-            } catch (\Exception $e) {
-              $inboxCount = 0;
-            }
-          @endphp
-          @if($inboxCount > 0)
-            <span class="badge badge-danger right">{{ $inboxCount }}</span>
-          @endif
-        </a>
-      @endif
-
-      @unless($isOwner)
-        @if($isBagianUser)
-          {{-- Bagian-specific menu --}}
-          @php
-            $isBagianDocumentsActive = request()->is('*bagian/documents*') || request()->routeIs('bagian.documents.*');
-            $isBagianTambahActive = request()->routeIs('bagian.documents.create') || request()->is('*bagian/documents/create*');
-            $isBagianTreeOpen = $isBagianDocumentsActive || $isBagianTambahActive;
-          @endphp
-          <div class="agenda-tree {{ $isBagianTreeOpen ? 'menu-open menu-is-opening' : '' }}">
-            <a href="#"
-              class="agenda-tree-toggle {{ $isBagianTreeOpen ? 'active' : '' }}"
-              aria-expanded="{{ $isBagianTreeOpen ? 'true' : 'false' }}">
-              <i class="fa-solid fa-file-lines"></i>
-              Dokumen
-              <i class="right fa-solid fa-angle-left"></i>
-            </a>
-            <div class="nav-treeview">
-              <a href="{{ route('bagian.documents.index') }}" class="{{ $isBagianDocumentsActive ? 'active' : '' }}">
-                <i class="fa-solid fa-list"></i> Daftar Dokumen
-              </a>
-            </div>
-          </div>
-        @else
-          {{-- Regular Dokumen menu for other roles --}}
-          @php
-            // Determine route based on module — gunakan route() helper sesuai web.php
-            $menuRoute = match ($module) {
-              'akutansi'        => route('documents.akutansi.index'),
-              'perpajakan'      => route('documents.perpajakan.index'),
-              'team_verifikasi' => route('documents.verifikasi.index'),
-              default           => url($dokumenUrl)
-            };
-
-            // Check if current route is within this module
-            $isModuleActive = match ($module) {
-              'akutansi' => request()->routeIs('documents.akutansi.*') ||
-              request()->routeIs('reports.akutansi.*') ||
-              request()->routeIs('returns.akutansi.*') ||
-              request()->is('*documents/akutansi*'),
-              'perpajakan' => request()->routeIs('documents.perpajakan.*') ||
-              request()->routeIs('reports.perpajakan.*') ||
-              request()->routeIs('returns.perpajakan.*') ||
-              request()->is('*documents/perpajakan*'),
-              'team_verifikasi' => request()->routeIs('documents.verifikasi.*') ||
-              request()->routeIs('reports.verifikasi.*') ||
-              request()->routeIs('returns.verifikasi.*') ||
-              request()->is('*documents/verifikasi*'),
-              default => request()->routeIs('documents.*') ||
-                request()->routeIs('reports.*') ||
-                request()->is('documents*') ||
-                request()->is('reports*')
-            };
-
-            $isDaftarDokumenActive = match ($module) {
-              'akutansi' => request()->routeIs('documents.akutansi.*') || request()->is('*documents/akutansi*'),
-              'perpajakan' => request()->routeIs('documents.perpajakan.*') || request()->is('*documents/perpajakan*'),
-              'team_verifikasi' => request()->routeIs('documents.verifikasi.*') || request()->is('*documents/verifikasi*'),
-              default => request()->routeIs('documents.index') || request()->routeIs('documents.create') || request()->is('documents') || request()->is('documents/create')
-            };
-            $isImportActive = request()->routeIs('documents.import.*') || request()->is('*documents/import*');
-            $isReportsActive = match ($module) {
-              'akutansi' => request()->routeIs('reports.akutansi.*') || request()->is('*rekapan-keterlambatan/akutansi*'),
-              'perpajakan' => request()->routeIs('reports.perpajakan.*') || request()->is('*rekapan-keterlambatan/perpajakan*'),
-              'team_verifikasi' => request()->routeIs('reports.verifikasi.*') || request()->is('*rekapan-keterlambatan*'),
-              default => request()->routeIs('reports.*') || request()->is('*reports*')
-            };
-            $isReturnsActive = match ($module) {
-              'akutansi' => request()->routeIs('returns.akutansi.*') || request()->is('*returns/akutansi*'),
-              'perpajakan' => request()->routeIs('returns.perpajakan.*') || request()->is('*returns/perpajakan*'),
-              'team_verifikasi' => request()->routeIs('returns.verifikasi.*') || request()->is('*returns/verifikasi*'),
-              default => request()->is('*pengembalian*')
-            };
-          @endphp
-          <div class="agenda-tree {{ $isModuleActive ? 'menu-open menu-is-opening' : '' }}">
-            <a href="#"
-              class="{{ ($menuDokumen ?? '') . ($isModuleActive ? ' active' : '') }} agenda-tree-toggle sidebar-menu-trigger"
-              data-submenu="dokumen" id="btn-pembayaran" aria-expanded="{{ $isModuleActive ? 'true' : 'false' }}">
-              <i class="fa-solid fa-file-lines"></i>
-              @if($module === 'akutansi')
-                Akutansi
-              @elseif($module === 'perpajakan')
-                Perpajakan
-              @elseif($module === 'team_verifikasi')
-                Dokumen
-              @else
-                Dokumen
-              @endif
-              <i class="right fa-solid fa-angle-left"></i>
-            </a>
-            <div class="nav-treeview">
-              @if($module === 'akutansi')
-                <a href="{{ route('documents.akutansi.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-list"></i> Daftar Akutansi
-                </a>
-                <a href="{{ route('rekapan-keterlambatan.role', 'akutansi') }}"
-                  class="{{ request()->is('*rekapan-keterlambatan/akutansi*') ? 'active' : '' }}">
-                  <i class="fa-solid fa-clock-rotate-left"></i> Rekap Keterlambatan
-                </a>
-              @elseif($module === 'perpajakan')
-                <a href="{{ route('documents.perpajakan.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-list"></i> Daftar Perpajakan
-                </a>
-                <a href="{{ route('rekapan-keterlambatan.role', 'perpajakan') }}"
-                  class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
-                  <i class="fa-solid fa-clock-rotate-left"></i> Rekap Keterlambatan
-                </a>
-              @elseif($module === 'team_verifikasi')
-                <a href="{{ route('documents.verifikasi.index') }}" class="{{ $isDaftarDokumenActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-list"></i> Daftar Dokumen
-                </a>
-                <a href="{{ route('returns.verifikasi.bagian') }}"
-                  class="{{ request()->routeIs('returns.verifikasi.bagian') ? 'active' : '' }}">
-                  <i class="fa-solid fa-arrow-left"></i> Pengembalian Ke Bagian
-                </a>
-                <a href="{{ route('rekapan-keterlambatan.role', 'team_verifikasi') }}"
-                  class="{{ request()->is('*rekapan-keterlambatan/team_verifikasi*') ? 'active' : '' }}">
-                  <i class="fa-solid fa-clock-rotate-left"></i> Rekap Keterlambatan
-                </a>
-              @else
-                <a href="{{ route('documents.index') }}" class="{{ request()->routeIs('documents.index') ? 'active' : '' }}">
-                  <i class="fa-solid fa-list"></i> Daftar Dokumen
-                </a>
-                @if($tambahDokumenUrl)
-                  <a href="{{ route('documents.create') }}" class="{{ request()->routeIs('documents.create') ? 'active' : '' }}">
-                    <i class="fa-solid fa-plus"></i> Tambah Dokumen
-                  </a>
-                @endif
-                <a href="{{ route('documents.import.index') }}" class="{{ $isImportActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-file-import"></i> Import CSV
-                </a>
-                <a href="{{ route('reports.analytics') }}" class="{{ $isReportsActive ? 'active' : '' }}">
-                  <i class="fa-solid fa-chart-pie"></i> Rekapan Dokumen
-                </a>
-              @endif
-            </div>
-          </div>
-        @endif
-
-      @endunless
-
-    </div>
-
-    <!-- Logout Button - Pindahkan ke paling bawah -->
-    @unless($isOwner)
-      <div style="margin-top: auto; padding-bottom: 20px;">
-        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-          @csrf
-        </form>
-        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-          class="logout-link">
-          <i class="fa-solid fa-right-from-bracket"></i> Logout
-        </a>
-      </div>
-    @endunless
-    @endif
   </div>
   @endif {{-- end !isOperatorSpreadsheet --}}
 
-  <!-- Secondary Sidebar (Submenu Panel) - Mekari Style -->
-  @if($isModernSidebarShell)
-    {{-- Modern sidebar layouts intentionally use only the primary sidebar. --}}
-  @else
-  @php
-    // Check if user is on a submenu page or menu dokumen is active
-    $hasSubmenu = isset($menuDokumen) && !empty($menuDokumen);
-
-    $isSubmenuPage = false;
-    if ($module === 'akutansi') {
-      $isSubmenuPage = request()->routeIs('documents.akutansi.*') ||
-        request()->routeIs('reports.akutansi.*') ||
-        request()->routeIs('returns.akutansi.*') ||
-        request()->is('*documents/akutansi*');
-    } elseif ($module === 'perpajakan') {
-      $isSubmenuPage = request()->routeIs('documents.perpajakan.*') ||
-        request()->routeIs('reports.perpajakan.*') ||
-        request()->routeIs('returns.perpajakan.*') ||
-        request()->is('*documents/perpajakan*');
-    } elseif ($module === 'team_verifikasi') {
-      $isSubmenuPage = request()->routeIs('documents.verifikasi.*') ||
-        request()->routeIs('reports.verifikasi.*') ||
-        request()->routeIs('returns.verifikasi.*') ||
-        request()->is('*documents/verifikasi*');
-    } elseif ($isBagianUser) {
-      $isSubmenuPage = request()->is('*bagian/documents*');
-    } else {
-      $isSubmenuPage = request()->is('*dokumens*') ||
-        request()->is('*rekapan*') ||
-        request()->is('*reports*') ||
-        request()->is('*pengembalian*');
-    }
-
-    $shouldShowSecondarySidebar = $hasSubmenu || $isSubmenuPage;
-
-    $submenuTitle = '';
-    if ($module === 'akutansi') {
-      $submenuTitle = 'MENU AKUTANSI';
-    } elseif ($module === 'perpajakan') {
-      $submenuTitle = 'MENU PERPAJAKAN';
-    } elseif ($module === 'team_verifikasi') {
-      $submenuTitle = 'MENU DOKUMEN';
-    } elseif ($isBagianUser) {
-      $submenuTitle = 'MENU DOKUMEN';
-    } else {
-      $submenuTitle = 'MENU DOKUMEN';
-    }
-  @endphp
-  @if(!($isOperatorSpreadsheet ?? false))
-  <div class="secondary-sidebar {{ $shouldShowSecondarySidebar ? 'active' : '' }}" id="sidebar-pembayaran"
-    role="complementary" aria-label="Submenu Panel">
-    <div class="secondary-sidebar-header">
-      {{ $submenuTitle }}
-    </div>
-    <div class="secondary-sidebar-content">
-      @if($module === 'akutansi')
-        <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
-          <i class="fa-solid fa-list me-2"></i> Daftar Akutansi
-        </a>
-        <a href="{{ route('rekapan-keterlambatan.role', 'akutansi') }}"
-          class="{{ request()->is('*rekapan-keterlambatan/akutansi*') ? 'active' : '' }}">
-          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
-        </a>
-      @elseif($module === 'perpajakan')
-        <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
-          <i class="fa-solid fa-list me-2"></i> Daftar Perpajakan
-        </a>
-        <a href="{{ route('rekapan-keterlambatan.role', 'perpajakan') }}"
-          class="{{ request()->is('*rekapan-keterlambatan/perpajakan*') ? 'active' : '' }}">
-          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
-        </a>
-      @elseif($module === 'team_verifikasi')
-        <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}" id="menu-daftar-dokumen">
-          <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
-        </a>
-        <a href="{{ route('returns.verifikasi.bagian') }}" class="{{ $menuPengembalianKeBidang ?? '' }}">
-          <i class="fa-solid fa-arrow-left me-2"></i> Pengembalian Ke Bagian
-        </a>
-        <a href="{{ route('rekapan-keterlambatan.role', 'team_verifikasi') }}"
-          class="{{ request()->is('*rekapan-keterlambatan/team_verifikasi*') ? 'active' : '' }}">
-          <i class="fa-solid fa-clock-rotate-left me-2"></i> Rekap Keterlambatan
-        </a>
-      @elseif($isBagianUser)
-        {{-- Bagian submenu (same pattern as Operator) --}}
-        @php
-          $isDaftarActive = request()->routeIs('bagian.documents.index') || request()->is('*bagian/documents');
-        @endphp
-        <a href="{{ route('bagian.documents.index') }}" class="{{ $isDaftarActive ? 'active' : '' }}">
-          <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
-        </a>
-      @else
-        <!-- Operator -->
-        <a href="{{ url($dokumenUrl) }}" class="{{ $menuDaftarDokumen ?? '' }}">
-          <i class="fa-solid fa-list me-2"></i> Daftar Dokumen
-        </a>
-        @if($tambahDokumenUrl)
-          <a href="{{ url($tambahDokumenUrl) }}" class="{{ $menuTambahDokumen ?? '' }}">
-            <i class="fa-solid fa-plus me-2"></i> Tambah Dokumen
-          </a>
-        @endif
-        <a href="{{ url('/documents/import') }}" class="{{ request()->is('*documents/import*') ? 'active' : '' }}">
-          <i class="fa-solid fa-file-import me-2"></i> Import CSV
-        </a>
-        <a href="{{ url('/reports/analytics') }}" class="{{ $menuRekapan ?? '' }}">
-          <i class="fa-solid fa-chart-pie me-2"></i> Rekapan Dokumen
-        </a>
-      @endif
-    </div>
-  </div>
-  @endif {{-- end !isOperatorSpreadsheet for secondary sidebar --}}
-  @endunless
+  {{-- Secondary sidebar legacy dihapus: modern shell hanya memakai primary sidebar. --}}
 
   <!-- Content -->
   <div class="content {{ ($isOperatorSpreadsheet ?? false) ? '' : (($shouldShowSecondarySidebar ?? false) ? 'with-secondary-sidebar' : '') }}">
