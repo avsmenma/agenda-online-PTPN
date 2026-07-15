@@ -611,6 +611,18 @@
                                 <td>{{ $dokumen->uraian_spp ?? '-' }}</td>
                             </tr>
                             <tr>
+                                <th>Dibayar Kepada</th>
+                                <td>
+                                    @if($dokumen->dibayarKepadas->count() > 0)
+                                        {{ $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') }}
+                                    @elseif($dokumen->dibayar_kepada)
+                                        {{ $dokumen->dibayar_kepada }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
                                 <th>Nilai Rupiah</th>
                                 <td><strong>Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong></td>
                             </tr>
