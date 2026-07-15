@@ -623,6 +623,10 @@
                                 </td>
                             </tr>
                             <tr>
+                                <th>Bagian</th>
+                                <td>{{ $dokumen->bagian ?? '-' }}</td>
+                            </tr>
+                            <tr>
                                 <th>Nilai Rupiah</th>
                                 <td><strong>Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong></td>
                             </tr>
@@ -637,10 +641,6 @@
                             <tr>
                                 <th>Item Sub Kriteria</th>
                                 <td>{{ $dokumen->jenis_sub_pekerjaan ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Bagian</th>
-                                <td>{{ $dokumen->bagian ?? '-' }}</td>
                             </tr>
                             <tr>
                                 <th>Pengirim</th>
@@ -665,14 +665,6 @@
                                     $sentAt = $roleStatus?->status_changed_at ?? $roleData?->received_at ?? null;
                                 @endphp
                                 <td>{{ $sentAt ? $sentAt->format('d/m/Y H:i') : '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Bulan</th>
-                                <td>{{ $dokumen->bulan ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Tahun</th>
-                                <td>{{ $dokumen->tahun ?? '-' }}</td>
                             </tr>
                         </table>
                     </div>
