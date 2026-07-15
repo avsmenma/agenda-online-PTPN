@@ -2735,9 +2735,9 @@
       display: flex;
       flex-direction: column;
       position: fixed;
-      top: 0; left: 0; bottom: 0;
+      top: 60px; left: 0; bottom: 0; /* mulai di bawah topbar (60px) */
       z-index: 1000;
-      padding: 0 0 16px;
+      padding: 16px 0 16px;
       overflow: hidden;
       font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
       transition: width 0.22s ease, background-color 0.3s ease, border-color 0.3s ease;
@@ -2749,65 +2749,63 @@
       border-right-color: #334155;
     }
 
-    /* Owner sidebar logo */
-    .owner-sidebar-logo {
-      display: flex; align-items: center; gap: 10px;
-      padding: 20px 52px 16px 20px;
-      border-bottom: 1px solid #e8ecf4;
-      position: relative;
-      min-height: 82px;
-    }
-    .dark .owner-sidebar-logo { border-bottom-color: #334155; }
-    .owner-logo-icon {
-      width: 44px; height: 44px;
+    /* ===== Topbar global (semua role) — brand + hamburger ===== */
+    .app-topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
       background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
+      border-bottom: 1px solid #E2E8F0;
+      z-index: 1100; /* di atas sidebar (1000) */
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+    .dark .app-topbar { background: #1e293b; border-bottom-color: #334155; }
+
+    .app-topbar-burger {
+      width: 40px; height: 40px;
       flex-shrink: 0;
-      padding: 4px;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
-    }
-    .owner-logo-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
-    .dark .owner-logo-icon { background: #f8fafc; border-color: #475569; }
-    .owner-logo-text { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 13px; color: #1a2340; line-height: 1.2; }
-    .owner-logo-sub { font-size: 10px; color: #a0aec0; font-weight: 400; }
-    .dark .owner-logo-text { color: #f1f5f9; }
-    .dark .owner-logo-sub { color: #94a3b8; }
-    .owner-sidebar-toggle {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 32px;
-      height: 32px;
-      border: 1px solid #dbe3ef;
+      border: 1px solid #E2E8F0;
       border-radius: 10px;
       background: #ffffff;
-      color: #64748b;
+      color: #475569;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
-      transition: background-color .16s ease, color .16s ease, border-color .16s ease, transform .16s ease;
+      font-size: 16px;
+      transition: background-color .16s ease, color .16s ease, border-color .16s ease;
     }
-    .owner-sidebar-toggle:hover {
-      background: #eff4ff;
-      border-color: #bfdbfe;
-      color: #2563eb;
+    .app-topbar-burger:hover { background: #f1f5f9; border-color: #cbd5e1; color: #0f4c3a; }
+    .app-topbar-burger:focus-visible { outline: 2px solid #0f4c3a; outline-offset: 2px; }
+    .dark .app-topbar-burger { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+    .dark .app-topbar-burger:hover { background: #334155; color: #f1f5f9; }
+
+    .app-topbar-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .app-topbar-brand img {
+      width: 40px; height: 40px;
+      object-fit: contain;
+      flex-shrink: 0;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 3px;
     }
-    .owner-sidebar-toggle:focus-visible {
-      outline: 2px solid #2563eb;
-      outline-offset: 2px;
+    .dark .app-topbar-brand img { background: #f8fafc; border-color: #475569; }
+    .app-topbar-title {
+      font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700; font-size: 15px; color: #1a2340; line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .owner-sidebar-toggle i { font-size: 13px; line-height: 1; }
-    .owner-sidebar-toggle .owner-toggle-expand { display: none; }
-    .dark .owner-sidebar-toggle {
-      background: #1f2937;
-      border-color: #334155;
-      color: #cbd5e1;
+    .app-topbar-sub {
+      font-size: 11px; color: #94a3b8; font-weight: 400; line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    .dark .app-topbar-title { color: #f1f5f9; }
+    .dark .app-topbar-sub { color: #94a3b8; }
 
     /* Owner sidebar nav section */
     .owner-sidebar-section { padding: 16px 12px 4px; }
@@ -2899,6 +2897,7 @@
     /* Owner content area — wider margin for fixed sidebar */
     body.owner-layout .content {
       margin-left: var(--modern-sidebar-width) !important;
+      margin-top: 60px; /* jarak untuk topbar fixed */
       width: var(--modern-content-width);
       max-width: var(--modern-content-width);
       min-width: 0;
@@ -2921,30 +2920,11 @@
     .sidebar-collapsed body.owner-layout .sidebar-owner {
       width: var(--modern-sidebar-width) !important;
     }
-    .sidebar-collapsed body.owner-layout .owner-sidebar-logo {
-      padding: 16px 8px 14px 10px;
-      gap: 0;
-    }
-    .sidebar-collapsed body.owner-layout .owner-logo-icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
-      padding: 3px;
-    }
-    .sidebar-collapsed body.owner-layout .owner-logo-text,
-    .sidebar-collapsed body.owner-layout .owner-logo-sub,
     .sidebar-collapsed body.owner-layout .owner-sidebar-label,
     .sidebar-collapsed body.owner-layout .owner-user-info,
     .sidebar-collapsed body.owner-layout .owner-profile-icon {
       display: none;
     }
-    .sidebar-collapsed body.owner-layout .owner-sidebar-toggle {
-      right: 7px;
-      width: 30px;
-      height: 30px;
-    }
-    .sidebar-collapsed body.owner-layout .owner-sidebar-toggle .owner-toggle-collapse { display: none; }
-    .sidebar-collapsed body.owner-layout .owner-sidebar-toggle .owner-toggle-expand { display: inline-block; }
     .sidebar-collapsed body.owner-layout .owner-sidebar-section {
       padding: 12px 8px 4px;
     }
@@ -2989,14 +2969,6 @@
       body.owner-layout .sidebar-owner {
         width: var(--modern-sidebar-width) !important;
       }
-      body.owner-layout .owner-sidebar-logo {
-        justify-content: center; padding: 16px 0 12px;
-      }
-      body.owner-layout .owner-sidebar-toggle {
-        display: none;
-      }
-      body.owner-layout .owner-logo-text,
-      body.owner-layout .owner-logo-sub,
       body.owner-layout .owner-sidebar-label,
       body.owner-layout .owner-user-info,
       body.owner-layout .owner-profile-icon {
@@ -3279,6 +3251,23 @@
 
   @endif
 
+  <!-- Topbar global (semua role): hamburger + logo + judul aplikasi -->
+  @if(!($isOperatorSpreadsheet ?? false))
+  <header class="app-topbar">
+    <button type="button" class="app-topbar-burger" data-sidebar-toggle
+            aria-label="Buka/tutup sidebar" title="Buka/tutup sidebar">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="app-topbar-brand">
+      <img src="{{ asset('images/logoPTPNNew.png') }}" alt="Logo PTPN">
+      <div style="min-width:0;">
+        <div class="app-topbar-title">Agenda Online</div>
+        <div class="app-topbar-sub">Sistem Monitoring Dokumen Keuangan</div>
+      </div>
+    </div>
+  </header>
+  @endif
+
   <!-- Sidebar (hidden for operator spreadsheet mode via CSS) -->
   @if(!($isOperatorSpreadsheet ?? false))
   <div class="sidebar-owner">
@@ -3321,22 +3310,7 @@
 
     <script>window._userModule = @json($module);</script>
 
-      {{-- Sidebar modern — kini dipakai SEMUA role (sidebar legacy sudah dihapus). --}}
-
-      {{-- Logo / Brand --}}
-      <div class="owner-sidebar-logo">
-        <div class="owner-logo-icon">
-          <img src="{{ asset('images/logoPTPNNew.png') }}" alt="Logo PTPN">
-        </div>
-        <div>
-          <div class="owner-logo-text">Agenda Online</div>
-          <div class="owner-logo-sub">PTPN IV Regional V</div>
-        </div>
-        <button type="button" class="owner-sidebar-toggle" data-sidebar-toggle aria-label="Kecilkan sidebar" title="Kecilkan sidebar">
-          <i class="fa-solid fa-angles-left owner-toggle-collapse" aria-hidden="true"></i>
-          <i class="fa-solid fa-angles-right owner-toggle-expand" aria-hidden="true"></i>
-        </button>
-      </div>
+      {{-- Sidebar modern — kini dipakai SEMUA role. Brand + toggle pindah ke topbar global. --}}
 
       {{-- MENU Section --}}
       <div class="owner-sidebar-section" style="flex:0 0 auto;">
