@@ -137,6 +137,21 @@ class BackfillTanggalBayarTest extends TestCase
         $this->assertSame(1, $s['diisi']);
     }
 
+    public function test_cocok_langsung_saat_nomor_agenda_komposit(): void
+    {
+        // Data produksi: kedua sisi menyimpan komposit yang sama, mis.
+        // dokumens.nomor_agenda='5000_2026' dan bank_keluars.agenda_tahun='5000_2026'.
+        // Harus cocok LANGSUNG (bukan lewat pisah nomor+tahun).
+        $id = $this->buatDokumen(['nomor_agenda' => '5000_2026', 'tahun' => 2026, 'tanggal_dibayar' => null]);
+        $this->buatBankKeluar(['dokumen_id' => null, 'agenda_tahun' => '5000_2026', 'no_agenda' => '5000_2026', 'tanggal' => '2026-07-14']);
+
+        $s = $this->service()->run(false);
+
+        $this->assertSame('2026-07-14', $this->tanggalDibayar($id));
+        $this->assertSame(1, $s['diisi']);
+        $this->assertSame(0, $s['tidak_ketemu']);
+    }
+
     public function test_komposit_disambiguasi_antar_tahun(): void
     {
         // created_by berbeda: nomor_agenda unik komposit (nomor_agenda, created_by),

@@ -157,9 +157,22 @@ class BackfillTanggalBayarService
             if (empty($raw)) {
                 continue;
             }
+            $raw = (string) $raw;
 
-            // Komposit: '{nomor}_{tahun}' (tahun 4 digit).
-            if (preg_match('/^(.+)_(\d{4})$/', (string) $raw, $m)) {
+            // 1. Cocok LANGSUNG ke nomor_agenda. Ini kasus data nyata: kedua sisi
+            //    menyimpan format sama, mis. dokumens.nomor_agenda='5000_2026' dan
+            //    bank_keluars.agenda_tahun='5000_2026' (atau sama-sama polos '5000').
+            if (isset($idsByNomor[$raw])) {
+                if (count($idsByNomor[$raw]) === 1) {
+                    return (int) $idsByNomor[$raw][0];
+                }
+                $unmatchedKeys['ambigu:' . $raw] = true;
+                return null;
+            }
+
+            // 2. Fallback: raw komposit '{nomor}_{tahun}' sedangkan nomor_agenda
+            //    tersimpan polos → cocokkan (nomor_agenda + tahun).
+            if (preg_match('/^(.+)_(\d{4})$/', $raw, $m)) {
                 $key = $m[1] . '|' . $m[2];
                 if (isset($idsByNomorTahun[$key])) {
                     if (count($idsByNomorTahun[$key]) === 1) {
@@ -168,17 +181,14 @@ class BackfillTanggalBayarService
                     $unmatchedKeys['ambigu:' . $key] = true;
                     return null;
                 }
-                // Komposit tak ketemu → coba nomor polos hasil pisah.
-                $raw = $m[1];
-            }
-
-            // Polos: cocokkan nomor_agenda, hanya bila unik.
-            if (isset($idsByNomor[$raw])) {
-                if (count($idsByNomor[$raw]) === 1) {
-                    return (int) $idsByNomor[$raw][0];
+                // 3. Fallback terakhir: nomor polos hasil pisah, hanya bila unik.
+                if (isset($idsByNomor[$m[1]])) {
+                    if (count($idsByNomor[$m[1]]) === 1) {
+                        return (int) $idsByNomor[$m[1]][0];
+                    }
+                    $unmatchedKeys['ambigu:' . $m[1]] = true;
+                    return null;
                 }
-                $unmatchedKeys['ambigu:' . $raw] = true;
-                return null;
             }
         }
 
