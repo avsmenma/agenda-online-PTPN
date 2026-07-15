@@ -92,64 +92,6 @@
             margin-bottom: 24px;
         }
 
-        /* Executive Summary Grid */
-        .exec-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .summary-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            padding: 16px;
-            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            transition: all 0.3s ease;
-        }
-
-        .summary-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(8, 62, 64, 0.1);
-            border-color: #083E40;
-        }
-
-        .summary-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            flex-shrink: 0;
-            background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-            color: white;
-        }
-
-        .summary-content {
-            flex: 1;
-        }
-
-        .summary-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .summary-value {
-            font-size: 16px;
-            font-weight: 700;
-            color: #1e293b;
-            word-break: break-word;
-        }
-
         /* Timeline */
         .timeline-card {
             background: white;
@@ -455,13 +397,6 @@
             background: #f8fafc;
         }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .exec-summary-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
         /* Notification Toast Styles */
         .notification-toast {
             position: fixed;
@@ -617,7 +552,7 @@
 @endpush
 
 @section('content')
-    <div class="content-wrapper" x-data="{ activeTab: 'summary' }">
+    <div class="content-wrapper" x-data="{ activeTab: 'full' }">
         <!-- Hero Section -->
         <div class="hero-banner">
             <div class="row align-items-center">
@@ -645,11 +580,6 @@
                 <!-- Tab Navigation -->
                 <div class="content-card">
                     <div class="tab-nav">
-                        <button class="tab-button" :class="{ active: activeTab === 'summary' }"
-                            @click="activeTab = 'summary'">
-                            <i class="fas fa-chart-line me-2"></i>
-                            Ringkasan Dokumen
-                        </button>
                         <button class="tab-button" :class="{ active: activeTab === 'full' }" @click="activeTab = 'full'">
                             <i class="fas fa-table me-2"></i>
                             Data Lengkap
@@ -659,79 +589,6 @@
                             <i class="fas fa-file-pdf me-2"></i>
                             Dokumen Fisik
                         </button>
-                    </div>
-
-                    <!-- Tab Content: Ringkasan Dokumen -->
-                    <div x-show="activeTab === 'summary'" x-transition>
-                        <div class="exec-summary-grid">
-                            <div class="summary-item">
-                                <div class="summary-icon">
-                                    <i class="fas fa-file-invoice"></i>
-                                </div>
-                                <div class="summary-content">
-                                    <div class="summary-label">Nomor SPP</div>
-                                    <div class="summary-value">
-                                        {{ $dokumen->nomor_spp ?? '-' }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="summary-item">
-                                <div class="summary-icon">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </div>
-                                <div class="summary-content">
-                                    <div class="summary-label">Tanggal SPP</div>
-                                    <div class="summary-value">
-                                        {{ $dokumen->tanggal_spp ? $dokumen->tanggal_spp->format('d/m/Y') : '-' }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="summary-item">
-                                <div class="summary-icon">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                </div>
-                                <div class="summary-content">
-                                    <div class="summary-label">Nilai Rupiah</div>
-                                    <div class="summary-value">
-                                        <strong>Rp {{ number_format($dokumen->nilai_rupiah ?? 0, 0, ',', '.') }}</strong>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="summary-item">
-                                <div class="summary-icon">
-                                    <i class="fas fa-building"></i>
-                                </div>
-                                <div class="summary-content">
-                                    <div class="summary-label">Dibayar Kepada (Vendor)</div>
-                                    <div class="summary-value">
-                                        @if($dokumen->dibayarKepadas->count() > 0)
-                                            {{ $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') }}
-                                        @elseif($dokumen->dibayar_kepada)
-                                            {{ $dokumen->dibayar_kepada }}
-                                        @else
-                                            -
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Uraian SPP - Full Width -->
-                        <div class="summary-item" style="grid-column: 1 / -1; margin-top: 20px;">
-                            <div class="summary-icon">
-                                <i class="fas fa-file-alt"></i>
-                            </div>
-                            <div class="summary-content" style="width: 100%;">
-                                <div class="summary-label">Uraian SPP</div>
-                                <div class="summary-value"
-                                    style="font-size: 14px; font-weight: 500; line-height: 1.6; white-space: pre-wrap;">
-                                    {{ $dokumen->uraian_spp ?? '-' }}
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Tab Content: Data Lengkap -->
