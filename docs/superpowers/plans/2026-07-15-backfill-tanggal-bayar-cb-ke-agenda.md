@@ -16,6 +16,7 @@
 - **Hanya** sentuh field `tanggal_dibayar`. Jangan ubah `status_pembayaran` atau field lain.
 - **Isi hanya bila kosong.** Konflik (Agenda sudah terisi & beda) → dilewati, dicatat. Tidak pernah menimpa.
 - Multi-baris per dokumen → pakai tanggal **TERAWAL** (`MIN`).
+- Saat mengisi, raw update **hanya** menulis `tanggal_dibayar` — **jangan** menyetel `updated_at`. Menyetel `updated_at` akan membuat fallback poller `dokumen:sync-cashbank --since` menarik dokumen itu dan mendorongnya balik ke Cash Bank (persis push-balik yang harus dihindari).
 - Tabel `sync_logs`: `direction` enum hanya `ao_to_cb|cb_to_ao`; `status` enum `success|failed|skipped_no_change|conflict_resolved`. Konflik dicatat sebagai `direction='cb_to_ao'`, `status='conflict_resolved'`, `source_wins='agenda_online'`.
 - **JANGAN** jalankan run sungguhan ke DB produksi tanpa izin eksplisit user. Verifikasi produksi hanya lewat `--dry-run` (lihat bagian Verifikasi Akhir).
 
@@ -299,9 +300,13 @@ class BackfillTanggalBayarService
 
             if ($existing === null || $existing === '' || $existing === '0000-00-00') {
                 if (!$dryRun) {
+                    // Sengaja TIDAK menyentuh updated_at. Fallback poller
+                    // `dokumen:sync-cashbank --since` mencari Dokumen dengan
+                    // updated_at terbaru lalu mendorongnya balik ke Cash Bank;
+                    // membiarkan updated_at apa adanya mencegah push-balik
+                    // (raw update sudah menghindari jalur DokumenObserver).
                     DB::table('dokumens')->where('id', $dokId)->update([
                         'tanggal_dibayar' => $earliest,
-                        'updated_at'      => now(),
                     ]);
                 }
                 $summary['diisi']++;
