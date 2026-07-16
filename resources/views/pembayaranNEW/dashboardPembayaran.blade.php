@@ -1866,6 +1866,7 @@
         <input type="hidden" name="filter_jenis_sub_pekerjaan" value="{{ request('filter_jenis_sub_pekerjaan') ?? '' }}">
         <input type="hidden" name="filter_kebun" value="{{ request('filter_kebun') ?? '' }}">
         <input type="hidden" name="filter_jenis_pembayaran" value="{{ request('filter_jenis_pembayaran') ?? '' }}">
+        <input type="hidden" name="filter_bagian" value="{{ request('filter_bagian') ?? '' }}">
         <input type="hidden" name="vendor_export_mode" id="vendorExportMode" value="">
         <div id="exportColumnsContainer"></div>
       </form>
@@ -2021,6 +2022,10 @@
               $activeAdvancedFilterCount++;
             if (request('filter_kebun'))
               $activeAdvancedFilterCount++;
+            if (request('filter_jenis_pembayaran'))
+              $activeAdvancedFilterCount++;
+            if (request('filter_bagian'))
+              $activeAdvancedFilterCount++;
           @endphp
 
           <button type="button" class="advanced-filter-toggle {{ $activeAdvancedFilterCount > 0 ? 'active' : '' }}"
@@ -2044,6 +2049,17 @@
       <div class="advanced-filter-panel {{ $activeAdvancedFilterCount > 0 ? 'show' : '' }}" id="advancedFilterPanel">
         <div class="advanced-filter-content">
           <div class="advanced-filter-grid">
+            <!-- Bagian Filter -->
+            <div class="filter-group">
+              <label for="filterBagian"><i class="fa-solid fa-building"></i> Bagian</label>
+              <select id="filterBagian" name="filter_bagian">
+                <option value="">Semua Bagian</option>
+                @foreach($availableBagians ?? [] as $key => $value)
+                  <option value="{{ $key }}" {{ request('filter_bagian') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                @endforeach
+              </select>
+            </div>
+
             <!-- Vendor Filter -->
             <div class="filter-group">
               <label for="filterVendor"><i class="fa-solid fa-store"></i> Vendor</label>
@@ -3207,6 +3223,7 @@
 
     // Reset Advanced Filters
     function resetAdvancedFilters() {
+      document.getElementById('filterBagian').value = '';
       document.getElementById('filterVendor').value = '';
       document.getElementById('filterKategori').value = '';
       document.getElementById('filterJenisDokumen').value = '';
@@ -3300,7 +3317,7 @@
         form.querySelector('input[name="date"]').value = dateVal ? dateVal.value : '';
 
         // Advanced filters
-        const advancedFilters = ['filter_vendor', 'filter_kategori', 'filter_jenis_dokumen', 'filter_jenis_sub_pekerjaan', 'filter_kebun', 'filter_jenis_pembayaran'];
+        const advancedFilters = ['filter_vendor', 'filter_kategori', 'filter_jenis_dokumen', 'filter_jenis_sub_pekerjaan', 'filter_kebun', 'filter_jenis_pembayaran', 'filter_bagian'];
         advancedFilters.forEach(function (filterName) {
           const sourceEl = filterForm.querySelector('[name="' + filterName + '"]');
           const targetEl = form.querySelector('input[name="' + filterName + '"]');
