@@ -327,6 +327,7 @@ class DashboardPembayaranController extends Controller
         $filterJenisSubPekerjaan = request('filter_jenis_sub_pekerjaan');
         $filterKebun = request('filter_kebun');
         $filterJenisPembayaran = request('filter_jenis_pembayaran');
+        $filterBagian = request('filter_bagian');
 
         if ($filterVendor) {
             $query->where('dibayar_kepada', $filterVendor);
@@ -348,6 +349,9 @@ class DashboardPembayaranController extends Controller
         }
         if ($filterJenisPembayaran) {
             $query->where('jenis_pembayaran', $filterJenisPembayaran);
+        }
+        if ($filterBagian) {
+            $query->where('bagian', $filterBagian);
         }
 
         // Apply rekapan detail filters
@@ -528,6 +532,13 @@ class DashboardPembayaranController extends Controller
 
         $availableKebuns = $kebunFromKebun->merge($kebunFromNamaKebuns)->unique()->sortKeys();
 
+        $availableBagians = $createFilteredQuery()
+            ->whereNotNull('bagian')
+            ->where('bagian', '!=', '')
+            ->selectRaw('DISTINCT bagian')
+            ->orderBy('bagian')
+            ->pluck('bagian', 'bagian');
+
         // Available columns for rekapan table
         $availableColumns = $this->getPembayaranDashboardAvailableColumns();
         [$ieKategoriList, $ieSubKriteriaList, $ieItemSubKriteriaList, $ieJenisPembayaranList] = $this->getPembayaranInlineEditOptions();
@@ -564,6 +575,7 @@ class DashboardPembayaranController extends Controller
             'availableJenisSubPekerjaan' => $availableJenisSubPekerjaan,
             'availableJenisPembayaran' => $availableJenisPembayaran,
             'availableKebuns' => $availableKebuns,
+            'availableBagians' => $availableBagians,
             'ieKategoriList' => $ieKategoriList,
             'ieSubKriteriaList' => $ieSubKriteriaList,
             'ieItemSubKriteriaList' => $ieItemSubKriteriaList,
@@ -744,6 +756,7 @@ class DashboardPembayaranController extends Controller
         $filterJenisSubPekerjaan = $request->get('filter_jenis_sub_pekerjaan');
         $filterKebun = $request->get('filter_kebun');
         $filterJenisPembayaran = $request->get('filter_jenis_pembayaran');
+        $filterBagian = $request->get('filter_bagian');
 
         if ($filterVendor) {
             $query->where('dibayar_kepada', $filterVendor);
@@ -765,6 +778,9 @@ class DashboardPembayaranController extends Controller
         }
         if ($filterJenisPembayaran) {
             $query->where('jenis_pembayaran', $filterJenisPembayaran);
+        }
+        if ($filterBagian) {
+            $query->where('bagian', $filterBagian);
         }
 
         if ($includeSearch && $search) {
@@ -1315,6 +1331,7 @@ class DashboardPembayaranController extends Controller
         $filterJenisSubPekerjaan = $request->get('filter_jenis_sub_pekerjaan');
         $filterKebun = $request->get('filter_kebun');
         $filterJenisPembayaran = $request->get('filter_jenis_pembayaran');
+        $filterBagian = $request->get('filter_bagian');
 
         if ($filterVendor && $filterVendor !== '') {
             $query->where('dibayar_kepada', $filterVendor);
@@ -1336,6 +1353,9 @@ class DashboardPembayaranController extends Controller
         }
         if ($filterJenisPembayaran && $filterJenisPembayaran !== '') {
             $query->where('jenis_pembayaran', $filterJenisPembayaran);
+        }
+        if ($filterBagian && $filterBagian !== '') {
+            $query->where('bagian', $filterBagian);
         }
 
         // Apply rekapan detail filters (only for rekapan_table mode)
