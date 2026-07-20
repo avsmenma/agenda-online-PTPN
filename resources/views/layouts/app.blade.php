@@ -1388,6 +1388,55 @@
       color: #f1f5f9 !important;
     }
 
+    /* Tab Kolom Tabel / Kolom Beku pada modal kustomisasi kolom.
+       Mengikuti pola .tab-btn di atas: aksen hijau terang #4ade80 untuk tab
+       aktif. Hijau tua #0f4c3a milik mode terang tidak dipakai di sini karena
+       kontrasnya terhadap panel gelap hanya sekitar 1.4:1 — tab aktif justru
+       akan kalah terbaca dibanding tab non-aktif. */
+    .dark .customization-modal .column-tabs {
+      border-bottom-color: #334155 !important;
+    }
+
+    .dark .customization-modal .column-tab {
+      color: #94a3b8 !important;
+    }
+
+    .dark .customization-modal .column-tab.active {
+      color: #4ade80 !important;
+      border-bottom-color: #4ade80 !important;
+    }
+
+    .dark .customization-modal .column-tab:hover {
+      color: #f1f5f9 !important;
+    }
+
+    /* Baris kolom beku — mengikuti pola .column-item */
+    .dark .customization-modal .frozen-row {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .dark .customization-modal .frozen-opt {
+      background: #1e293b !important;
+      border-color: #475569 !important;
+      color: #94a3b8 !important;
+    }
+
+    /* Opsi beku terpilih — mengikuti pola .column-item.selected */
+    .dark .customization-modal .frozen-opt.active {
+      background: rgba(74, 222, 128, 0.15) !important;
+      border-color: #4ade80 !important;
+      color: #4ade80 !important;
+    }
+
+    /* Peringatan lebar — mengikuti pola .dark .alert-warning */
+    .dark .customization-modal .frozen-warning {
+      background: rgba(245, 158, 11, 0.15) !important;
+      border-color: #f59e0b !important;
+      color: #fcd34d !important;
+    }
+
     /* ========================================
        FORM PAGE DARK MODE (Tambah Dokumen)
        ======================================== */

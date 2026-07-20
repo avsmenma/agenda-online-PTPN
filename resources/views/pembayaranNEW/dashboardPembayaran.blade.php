@@ -3054,11 +3054,15 @@
       renderFrozenTab();
     }
 
+    // Render bersifat NON-DESTRUKTIF: state frozenLeftOrder/frozenRightOrder tidak
+    // pernah ditugaskan ulang di sini. Dulu fungsi ini memangkas kedua array, padahal
+    // ia hanya jalan saat user membuka tab Beku — akibatnya hasil simpan ikut
+    // bergantung pada apakah tab itu pernah dibuka (bekukan X, sembunyikan X,
+    // tampilkan X lagi: X tetap beku bila tab tak dibuka, tapi lepas bila dibuka).
+    // Kondisi akhir yang sama harus memberi hasil yang sama, jadi penyaringan kolom
+    // tersembunyi hanya dilakukan untuk keperluan tampilan, dan satu-satunya titik
+    // penegakan adalah filter di saveColumnCustomization().
     function renderFrozenTab() {
-      // Kolom yang sudah tidak ditampilkan tidak boleh tetap beku.
-      frozenLeftOrder = frozenLeftOrder.filter(k => selectedColumnsOrder.includes(k));
-      frozenRightOrder = frozenRightOrder.filter(k => selectedColumnsOrder.includes(k));
-
       const list = document.getElementById('frozenList');
       if (!list) return;
 
@@ -3080,7 +3084,14 @@
       const box = document.getElementById('frozenWarning');
       if (!box) return;
 
-      const total = frozenLeftOrder.concat(frozenRightOrder).reduce(function (sum, key) {
+      // Hanya kolom yang benar-benar ditampilkan yang ikut dihitung. Penyaringan
+      // sengaja memakai variabel lokal, bukan menugaskan ulang state (lihat catatan
+      // non-destruktif di renderFrozenTab).
+      const visibleFrozen = frozenLeftOrder
+        .concat(frozenRightOrder)
+        .filter(key => selectedColumnsOrder.includes(key));
+
+      const total = visibleFrozen.reduce(function (sum, key) {
         return sum + (FROZEN_WIDTH_MAP[key] || FROZEN_WIDTH_DEFAULT);
       }, FROZEN_NO_COLUMN_WIDTH);
 
