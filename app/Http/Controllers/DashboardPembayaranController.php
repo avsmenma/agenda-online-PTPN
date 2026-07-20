@@ -141,14 +141,24 @@ class DashboardPembayaranController extends Controller
         $frozenAvailableColumns = $this->getPembayaranDashboardAvailableColumns();
         $frozenDefault = ['left' => ['nomor_agenda'], 'right' => []];
 
-        if (request()->has('frozen_left') || request()->has('frozen_right')) {
+        // Modal selalu mengirim frozen_config=1 sebagai penanda. Tanpa penanda ini,
+        // "user melepas SEMUA kolom beku" (tidak ada frozen_left/frozen_right yang
+        // terkirim) tampak sama persis dengan "request tidak membawa konfigurasi beku"
+        // di sisi server — akibatnya preferensi lama dipakai ulang dan kolom membeku
+        // kembali dengan sendirinya. frozen_left/frozen_right tetap ikut diperiksa agar
+        // uji manual lewat URL (?frozen_left[]=nomor_agenda) tetap jalan.
+        $hasFrozenRequest = request()->has('frozen_config')
+            || request()->has('frozen_left')
+            || request()->has('frozen_right');
+
+        $user = Auth::user();
+
+        if ($hasFrozenRequest) {
             $frozenRaw = [
                 'left'  => (array) request('frozen_left', []),
                 'right' => (array) request('frozen_right', []),
             ];
         } else {
-            $user = Auth::user();
-
             if ($user && isset($user->table_columns_preferences['pembayaran_dashboard_frozen'])) {
                 $frozenRaw = $user->table_columns_preferences['pembayaran_dashboard_frozen'];
             } else {
@@ -168,15 +178,11 @@ class DashboardPembayaranController extends Controller
         $frozenLeft = $frozen['left'];
         $frozenRight = $frozen['right'];
 
-        if (request()->has('frozen_left') || request()->has('frozen_right')) {
-            $user = Auth::user();
-
-            if ($user) {
-                $preferences = $user->table_columns_preferences ?? [];
-                $preferences['pembayaran_dashboard_frozen'] = $frozen;
-                $user->table_columns_preferences = $preferences;
-                $user->save();
-            }
+        if ($hasFrozenRequest && $user) {
+            $preferences = $user->table_columns_preferences ?? [];
+            $preferences['pembayaran_dashboard_frozen'] = $frozen;
+            $user->table_columns_preferences = $preferences;
+            $user->save();
         }
 
         session(['pembayaran_dashboard_frozen_columns' => $frozen]);
