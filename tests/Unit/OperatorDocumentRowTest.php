@@ -126,6 +126,19 @@ class OperatorDocumentRowTest extends TestCase
         $this->assertSame('Belum Dikirim', $row['display_status']['label']);
     }
 
+    public function test_status_belum_dikirim_saat_handler_non_operasional(): void
+    {
+        $dokumen = $this->buatDokumen([
+            'status'          => 'draft',
+            'current_handler' => 'bagian_x',
+        ]);
+
+        $row = $this->baris($dokumen);
+
+        $this->assertSame('draft', $row['display_status']['code']);
+        $this->assertSame('Belum Dikirim', $row['display_status']['label']);
+    }
+
     public function test_can_edit_true_saat_draft_di_operator(): void
     {
         $dokumen = $this->buatDokumen(['status' => 'draft', 'current_handler' => 'operator']);

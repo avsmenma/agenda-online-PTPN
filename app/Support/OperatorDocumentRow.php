@@ -101,8 +101,8 @@ class OperatorDocumentRow
         $row['ppn_terhutang_formatted'] = $dokumen->ppn_terhutang !== null
             ? 'Rp ' . number_format((float) $dokumen->ppn_terhutang, 0, ',', '.')
             : '-';
-        // Join nama penerima (kosong => '', klien merender '-'), sesuai partial :175.
-        $row['dibayar_kepada']     = $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ');
+        // Join nama penerima, fallback ke kolom flat lama bila relasi kosong (identik :173-178).
+        $row['dibayar_kepada']     = $dokumen->dibayarKepadas->pluck('nama_penerima')->join(', ') ?: ($dokumen->dibayar_kepada ?? '');
         // Join nomor PO dengan fallback ke kolom CSV NO_PO (identik :219).
         $row['nomor_po']           = $dokumen->dokumenPos->pluck('nomor_po')->filter()->join(', ') ?: ($dokumen->NO_PO ?? '-');
         $row['nomor_miro_display'] = $dokumen->nomor_miro_display;
