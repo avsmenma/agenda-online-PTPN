@@ -1,3 +1,9 @@
+@php
+    // Halaman yang memakai kolom beku pilihan user menyalakan $dynamicFrozen.
+    // Default false => perilaku lama (kolom beku di-hardcode) tidak berubah.
+    $dynamicFrozen = $dynamicFrozen ?? false;
+@endphp
+
 <style>
   #documentTableContainer .table-responsive {
     position: relative;
@@ -125,12 +131,18 @@
 
   #documentTableContainer .data-table .col-checkbox,
   #documentTableContainer .data-table .col-no,
-  #documentTableContainer .data-table .col-number,
+  #documentTableContainer .data-table .col-number {
+    position: sticky !important;
+    background-clip: padding-box;
+  }
+
+@unless($dynamicFrozen)
   #documentTableContainer .data-table .col-nomor_agenda,
   #documentTableContainer .data-table .col-handler {
     position: sticky !important;
     background-clip: padding-box;
   }
+@endunless
 
   #documentTableContainer .data-table thead .col-checkbox,
   #documentTableContainer .data-table thead .col-no,
@@ -200,6 +212,10 @@
     left: 0 !important;
   }
 
+@unless($dynamicFrozen)
+  /* Mode lama: posisi tepi kedua kolom beku ditetapkan lewat CSS.
+     Pada mode dinamis aturan ini harus absen — nilai left/right dihitung JS
+     dan ditulis sebagai inline style, yang akan kalah oleh !important di sini. */
   #documentTableContainer .data-table .col-nomor_agenda {
     left: var(--document-sticky-agenda-left, 88px) !important;
   }
@@ -207,6 +223,7 @@
   #documentTableContainer .data-table .col-handler {
     right: 0 !important;
   }
+@endunless
 
   #documentTableContainer .data-table thead .col-handler,
   body.is-fullscreen #documentTableContainer .data-table thead .col-handler,
@@ -295,7 +312,47 @@
       return column ? column.getBoundingClientRect().width : 0;
     }
 
+    // Jalur dinamis: kolom beku ditentukan user, bukan di-hardcode.
+    // config = { left: ['key', ...], right: ['key', ...] } urut dari tepi ke tengah.
+    function syncDynamicStickyOffsets(config) {
+      const container = getContainer();
+      const table = getTable(container);
+      if (!container || !table) return;
+
+      // Kolom nomor urut baris selalu beku paling kiri, jadi jadi titik awal offset.
+      const numberWidth = measureWidth(table, '.col-no, .col-number');
+      let leftOffset = numberWidth;
+
+      (config.left || []).forEach(function (key) {
+        const cells = table.querySelectorAll(`thead .col-${key}, tbody .col-${key}`);
+        if (!cells.length) return;
+        const width = cells[0].getBoundingClientRect().width;
+        cells.forEach(cell => { cell.style.left = `${Math.round(leftOffset)}px`; });
+        leftOffset += width;
+      });
+
+      let rightOffset = 0;
+
+      // Ditelusuri dari kolom terkanan agar offset menumpuk ke arah dalam.
+      (config.right || []).slice().reverse().forEach(function (key) {
+        const cells = table.querySelectorAll(`thead .col-${key}, tbody .col-${key}`);
+        if (!cells.length) return;
+        const width = cells[0].getBoundingClientRect().width;
+        cells.forEach(cell => { cell.style.right = `${Math.round(rightOffset)}px`; });
+        rightOffset += width;
+      });
+
+      container.style.setProperty('--document-sticky-left-width', `${Math.round(leftOffset)}px`);
+      container.style.setProperty('--document-sticky-right-width', `${Math.round(rightOffset)}px`);
+    }
+
     function syncDocumentStickyOffsets() {
+      const dynamicConfig = window.DOCUMENT_STICKY_CONFIG;
+      if (dynamicConfig) {
+        syncDynamicStickyOffsets(dynamicConfig);
+        return;
+      }
+
       const container = getContainer();
       const table = getTable(container);
       if (!container || !table) return;
