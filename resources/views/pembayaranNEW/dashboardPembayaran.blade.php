@@ -3024,6 +3024,12 @@
     let frozenLeftOrder = @json($frozenLeft);
     let frozenRightOrder = @json($frozenRight);
 
+    // Urutan render tabel (beku kiri -> bebas -> beku kanan) — isinya sama dengan
+    // selectedColumnsOrder, hanya urutannya berbeda. Dipakai export agar urutan
+    // kolom di Excel/CSV/PDF sama persis dengan yang terlihat di layar. Konstan
+    // karena tabel selalu dirender ulang lewat reload saat kolom disimpan.
+    const renderColumnsOrder = @json($renderColumns);
+
     // Peta lebar kolom untuk estimasi peringatan; angka mengikuti CSS di
     // partials/_documentTableStickyCells.blade.php. Hanya kolom yang lebarnya
     // memang khusus yang didaftarkan; sisanya memakai lebar default.
@@ -3524,9 +3530,12 @@
       // Clear previous columns
       columnsContainer.innerHTML = '';
 
-      // Use selectedColumnsOrder (from column customization) for exact column match with table
-      const columnsToExport = (typeof selectedColumnsOrder !== 'undefined' && selectedColumnsOrder.length > 0)
-        ? selectedColumnsOrder
+      // Pakai renderColumnsOrder — urutan yang benar-benar dipakai <thead> tabel
+      // (beku kiri -> bebas -> beku kanan). selectedColumnsOrder menyimpan urutan
+      // pilihan asli user dan berbeda begitu ada kolom tengah yang dibekukan,
+      // sehingga memakainya membuat urutan kolom export tidak cocok dengan layar.
+      const columnsToExport = (typeof renderColumnsOrder !== 'undefined' && renderColumnsOrder.length > 0)
+        ? renderColumnsOrder
         : null;
 
       if (columnsToExport) {

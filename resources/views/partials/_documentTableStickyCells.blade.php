@@ -147,41 +147,64 @@
   #documentTableContainer .data-table thead .col-checkbox,
   #documentTableContainer .data-table thead .col-no,
   #documentTableContainer .data-table thead .col-number,
-  #documentTableContainer .data-table thead .col-nomor_agenda,
-  #documentTableContainer .data-table thead .col-handler,
   body.is-fullscreen #documentTableContainer .data-table thead .col-checkbox,
   body.is-fullscreen #documentTableContainer .data-table thead .col-no,
   body.is-fullscreen #documentTableContainer .data-table thead .col-number,
-  body.is-fullscreen #documentTableContainer .data-table thead .col-nomor_agenda,
-  body.is-fullscreen #documentTableContainer .data-table thead .col-handler,
   body.document-table-only-fullscreen #documentTableContainer .data-table thead .col-checkbox,
   body.document-table-only-fullscreen #documentTableContainer .data-table thead .col-no,
-  body.document-table-only-fullscreen #documentTableContainer .data-table thead .col-number,
+  body.document-table-only-fullscreen #documentTableContainer .data-table thead .col-number {
+    background: #0d3b6e !important;
+    box-shadow: 0 2px 0 #1a5276 !important;
+    z-index: 560 !important;
+  }
+
+  @unless($dynamicFrozen)
+  /* Mode lama: nomor_agenda & handler memang selalu beku, jadi header keduanya ikut
+     ditinggikan. Pada mode dinamis aturan ini WAJIB absen — halaman induk sudah
+     memberi z-index 560 hanya pada kolom yang benar-benar dibekukan user. Bila
+     dibiarkan, header kolom yang TIDAK dibekukan tetap membawa z-index 560 (semua
+     <th> sudah position: sticky dari halaman induk) sehingga nilainya seri dengan
+     header kolom beku; pemenangnya jatuh ke urutan DOM dan header di tengah
+     melintas DI ATAS kolom beku kiri saat tabel digulir horizontal. */
+  #documentTableContainer .data-table thead .col-nomor_agenda,
+  #documentTableContainer .data-table thead .col-handler,
+  body.is-fullscreen #documentTableContainer .data-table thead .col-nomor_agenda,
+  body.is-fullscreen #documentTableContainer .data-table thead .col-handler,
   body.document-table-only-fullscreen #documentTableContainer .data-table thead .col-nomor_agenda,
   body.document-table-only-fullscreen #documentTableContainer .data-table thead .col-handler {
     background: #0d3b6e !important;
     box-shadow: 0 2px 0 #1a5276 !important;
     z-index: 560 !important;
   }
+  @endunless
 
   #documentTableContainer .data-table tbody .col-checkbox,
   #documentTableContainer .data-table tbody .col-no,
   #documentTableContainer .data-table tbody .col-number,
-  #documentTableContainer .data-table tbody .col-nomor_agenda,
-  #documentTableContainer .data-table tbody .col-handler,
   body.is-fullscreen #documentTableContainer .data-table tbody .col-checkbox,
   body.is-fullscreen #documentTableContainer .data-table tbody .col-no,
   body.is-fullscreen #documentTableContainer .data-table tbody .col-number,
-  body.is-fullscreen #documentTableContainer .data-table tbody .col-nomor_agenda,
-  body.is-fullscreen #documentTableContainer .data-table tbody .col-handler,
   body.document-table-only-fullscreen #documentTableContainer .data-table tbody .col-checkbox,
   body.document-table-only-fullscreen #documentTableContainer .data-table tbody .col-no,
-  body.document-table-only-fullscreen #documentTableContainer .data-table tbody .col-number,
+  body.document-table-only-fullscreen #documentTableContainer .data-table tbody .col-number {
+    background: #ffffff !important;
+    z-index: 30 !important;
+  }
+
+  @unless($dynamicFrozen)
+  /* Sepasang dengan blok thead di atas: latar & z-index sel badan untuk dua kolom
+     beku mode lama. Pada mode dinamis nilainya datang dari halaman induk, hanya
+     untuk kolom yang memang dibekukan. */
+  #documentTableContainer .data-table tbody .col-nomor_agenda,
+  #documentTableContainer .data-table tbody .col-handler,
+  body.is-fullscreen #documentTableContainer .data-table tbody .col-nomor_agenda,
+  body.is-fullscreen #documentTableContainer .data-table tbody .col-handler,
   body.document-table-only-fullscreen #documentTableContainer .data-table tbody .col-nomor_agenda,
   body.document-table-only-fullscreen #documentTableContainer .data-table tbody .col-handler {
     background: #ffffff !important;
     z-index: 30 !important;
   }
+  @endunless
 
   #documentTableContainer .data-table tbody tr.main-row:nth-child(even) > .col-checkbox,
   #documentTableContainer .data-table tbody tr.main-row:nth-child(even) > .col-no,
