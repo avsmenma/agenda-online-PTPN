@@ -449,21 +449,26 @@ Blok CSS di baris ~125-133 yang berbunyi:
   }
 ```
 
-Ubah menjadi: kolom nomor urut tetap beku di kedua mode, sedangkan `col-nomor_agenda` dan `col-handler` hanya beku pada mode lama.
+Ubah menjadi dua aturan terpisah: kolom nomor urut tetap beku di kedua mode, sedangkan `col-nomor_agenda` dan `col-handler` hanya beku pada mode lama.
 
 ```blade
   #documentTableContainer .data-table .col-checkbox,
   #documentTableContainer .data-table .col-no,
-  #documentTableContainer .data-table .col-number{{ $dynamicFrozen ? '' : ',' }}
-@unless($dynamicFrozen)
-  #documentTableContainer .data-table .col-nomor_agenda,
-  #documentTableContainer .data-table .col-handler
-@endunless
-  {
+  #documentTableContainer .data-table .col-number {
     position: sticky !important;
     background-clip: padding-box;
   }
+
+@unless($dynamicFrozen)
+  #documentTableContainer .data-table .col-nomor_agenda,
+  #documentTableContainer .data-table .col-handler {
+    position: sticky !important;
+    background-clip: padding-box;
+  }
+@endunless
 ```
+
+Dua deklarasi memang terduplikasi, dan itu disengaja: menyisipkan `@unless` di tengah daftar selector (mis. lewat ternary yang mencetak koma) membuat CSS-nya sulit dibaca dan gampang rusak saat diedit berikutnya.
 
 - [ ] **Step 3: Tambahkan jalur perhitungan offset dinamis**
 
