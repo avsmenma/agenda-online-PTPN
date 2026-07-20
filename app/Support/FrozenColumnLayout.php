@@ -47,10 +47,12 @@ class FrozenColumnLayout
             return $result;
         };
 
-        $left = $sanitize($left);
-        $right = array_values(array_diff($sanitize($right), $left));
+        // Pakai variabel baru, jangan menugaskan ulang $left/$right: aturan
+        // "kiri menang" tidak boleh bergantung pada urutan dua baris ini.
+        $leftClean = $sanitize($left);
+        $rightClean = array_values(array_diff($sanitize($right), $leftClean));
 
-        return ['left' => $left, 'right' => $right];
+        return ['left' => $leftClean, 'right' => $rightClean];
     }
 
     /**
