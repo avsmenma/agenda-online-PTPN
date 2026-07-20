@@ -136,13 +136,13 @@
     background-clip: padding-box;
   }
 
-@unless($dynamicFrozen)
+  @unless($dynamicFrozen)
   #documentTableContainer .data-table .col-nomor_agenda,
   #documentTableContainer .data-table .col-handler {
     position: sticky !important;
     background-clip: padding-box;
   }
-@endunless
+  @endunless
 
   #documentTableContainer .data-table thead .col-checkbox,
   #documentTableContainer .data-table thead .col-no,
@@ -212,7 +212,7 @@
     left: 0 !important;
   }
 
-@unless($dynamicFrozen)
+  @unless($dynamicFrozen)
   /* Mode lama: posisi tepi kedua kolom beku ditetapkan lewat CSS.
      Pada mode dinamis aturan ini harus absen — nilai left/right dihitung JS
      dan ditulis sebagai inline style, yang akan kalah oleh !important di sini. */
@@ -223,7 +223,7 @@
   #documentTableContainer .data-table .col-handler {
     right: 0 !important;
   }
-@endunless
+  @endunless
 
   #documentTableContainer .data-table thead .col-handler,
   body.is-fullscreen #documentTableContainer .data-table thead .col-handler,
@@ -283,8 +283,33 @@
 <script>
   (function () {
     const containerId = 'documentTableContainer';
-    const leftStickySelector = '.col-no, .col-number, .col-nomor_agenda';
-    const stickySelector = `${leftStickySelector}, .col-handler`;
+
+    // Daftar kolom beku mode lama (hardcoded). Mode dinamis memakai getStickySelector().
+    const staticStickySelector = '.col-no, .col-number, .col-nomor_agenda, .col-handler';
+
+    // Kunci kolom hanya boleh berisi karakter aman. Kunci cacat diabaikan supaya
+    // selector rusak tidak melempar exception dan mematikan penanganan klik tabel.
+    function isSafeColumnKey(key) {
+      return typeof key === 'string' && /^[A-Za-z0-9_-]+$/.test(key);
+    }
+
+    // Selector kolom beku dihitung SAAT DIPAKAI, bukan sekali di awal, karena
+    // window.DOCUMENT_STICKY_CONFIG baru terbaca saat runtime.
+    function getStickySelector() {
+      const config = window.DOCUMENT_STICKY_CONFIG;
+      if (!config) return staticStickySelector;
+
+      const frozenKeys = getConfigKeys(config.left).concat(getConfigKeys(config.right));
+
+      // Kolom nomor urut baris tetap beku di mode dinamis, jadi selalu ikut.
+      return ['.col-no', '.col-number']
+        .concat(frozenKeys.map(key => `.col-${key}`))
+        .join(', ');
+    }
+
+    function getConfigKeys(value) {
+      return (Array.isArray(value) ? value : []).filter(isSafeColumnKey);
+    }
 
     function getContainer() {
       return document.getElementById(containerId);
@@ -312,8 +337,48 @@
       return column ? column.getBoundingClientRect().width : 0;
     }
 
+    // Mengurutkan kunci kolom mengikuti urutan <th> di thead.
+    // Urutan penyimpanan config = urutan klik user, yang belum tentu sama dengan
+    // urutan DOM; hanya urutan DOM yang menentukan offset beku yang benar.
+    function orderKeysByDom(table, keys) {
+      const headers = Array.from(table.querySelectorAll('thead th'));
+      const positions = new Map();
+
+      headers.forEach(function (header, index) {
+        header.classList.forEach(function (name) {
+          if (name.indexOf('col-') === 0 && !positions.has(name)) positions.set(name, index);
+        });
+      });
+
+      return getConfigKeys(keys)
+        .filter(key => positions.has(`col-${key}`))
+        .sort((a, b) => positions.get(`col-${a}`) - positions.get(`col-${b}`));
+    }
+
+    // Menempelkan offset beku pada satu sisi, menumpuk lebar kolom sebelumnya.
+    // Kolom berlebar 0 (belum terukur / tersembunyi) dilewati, karena menghitungnya
+    // sebagai 0 membuat kolom beku sesudahnya bertumpuk.
+    function applyStickyOffsets(table, keys, edge, startOffset) {
+      let offset = startOffset;
+
+      keys.forEach(function (key) {
+        const cells = table.querySelectorAll(`thead .col-${key}, tbody .col-${key}`);
+        if (!cells.length) return;
+        const width = cells[0].getBoundingClientRect().width;
+        if (width <= 0) return;
+        cells.forEach(cell => { cell.style[edge] = `${Math.round(offset)}px`; });
+        offset += width;
+      });
+
+      return offset;
+    }
+
     // Jalur dinamis: kolom beku ditentukan user, bukan di-hardcode.
-    // config = { left: ['key', ...], right: ['key', ...] } urut dari tepi ke tengah.
+    // KONTRAK config = { left: ['key', ...], right: ['key', ...] }. Kedua array
+    // diperlakukan sebagai HIMPUNAN keanggotaan saja — urutannya tidak dipakai.
+    // Urutan visual (kolom mana menempel paling luar) diturunkan dari urutan DOM:
+    // kiri = <th> paling awal menempel paling kiri, kanan = <th> paling akhir
+    // menempel paling kanan.
     function syncDynamicStickyOffsets(config) {
       const container = getContainer();
       const table = getTable(container);
@@ -321,26 +386,13 @@
 
       // Kolom nomor urut baris selalu beku paling kiri, jadi jadi titik awal offset.
       const numberWidth = measureWidth(table, '.col-no, .col-number');
-      let leftOffset = numberWidth;
 
-      (config.left || []).forEach(function (key) {
-        const cells = table.querySelectorAll(`thead .col-${key}, tbody .col-${key}`);
-        if (!cells.length) return;
-        const width = cells[0].getBoundingClientRect().width;
-        cells.forEach(cell => { cell.style.left = `${Math.round(leftOffset)}px`; });
-        leftOffset += width;
-      });
+      const leftKeys = orderKeysByDom(table, config.left);
+      const leftOffset = applyStickyOffsets(table, leftKeys, 'left', numberWidth);
 
-      let rightOffset = 0;
-
-      // Ditelusuri dari kolom terkanan agar offset menumpuk ke arah dalam.
-      (config.right || []).slice().reverse().forEach(function (key) {
-        const cells = table.querySelectorAll(`thead .col-${key}, tbody .col-${key}`);
-        if (!cells.length) return;
-        const width = cells[0].getBoundingClientRect().width;
-        cells.forEach(cell => { cell.style.right = `${Math.round(rightOffset)}px`; });
-        rightOffset += width;
-      });
+      // Ditelusuri mundur dari kolom terkanan agar offset menumpuk ke arah dalam.
+      const rightKeys = orderKeysByDom(table, config.right).reverse();
+      const rightOffset = applyStickyOffsets(table, rightKeys, 'right', 0);
 
       container.style.setProperty('--document-sticky-left-width', `${Math.round(leftOffset)}px`);
       container.style.setProperty('--document-sticky-right-width', `${Math.round(rightOffset)}px`);
@@ -376,7 +428,7 @@
       const container = getContainer();
       const scrollBox = getScrollBox(container);
       if (!container || !scrollBox || !cell || !cell.closest(`#${containerId} tbody`)) return;
-      if (cell.matches(stickySelector)) return;
+      if (cell.matches(getStickySelector())) return;
 
       syncDocumentStickyOffsets();
 
