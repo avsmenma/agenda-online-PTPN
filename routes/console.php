@@ -47,7 +47,7 @@ Schedule::command('dokumen:sync-cashbank --since="5 minutes ago"')
 // backfill ini menutup sisa celah (jalur input baru, atau sinkron yang gagal
 // karena database kedua sedang tak terjangkau). Hanya mengisi yang kosong,
 // jadi aman diulang.
-Schedule::command('dokumen:backfill-tanggal-bayar')
+Schedule::command('dokumen:backfill-tanggal-bayar --tanggal-saja')
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->runInBackground()

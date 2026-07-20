@@ -9,7 +9,8 @@ class BackfillTanggalBayarCommand extends Command
 {
     protected $signature = 'dokumen:backfill-tanggal-bayar
         {--dry-run : Hanya laporkan, jangan tulis ke database}
-        {--limit= : Batasi jumlah dokumen yang diproses}';
+        {--limit= : Batasi jumlah dokumen yang diproses}
+        {--tanggal-saja : Hanya isi tanggal_dibayar; status_pembayaran tidak diubah sehingga dokumen tidak ikut terdorong ke Pembayaran}';
 
     protected $description = 'Isi tanggal_dibayar dokumen Agenda dari tanggal bank keluar Cash Bank (satu arah, hanya bila kosong).';
 
@@ -17,12 +18,17 @@ class BackfillTanggalBayarCommand extends Command
     {
         $dryRun = (bool) $this->option('dry-run');
         $limit  = $this->option('limit') !== null ? (int) $this->option('limit') : null;
+        $tanggalSaja = (bool) $this->option('tanggal-saja');
 
         if ($dryRun) {
             $this->warn('MODE DRY-RUN: tidak ada data yang akan ditulis.');
         }
 
-        $s = $service->run($dryRun, $limit);
+        if ($tanggalSaja) {
+            $this->line('Mode tanggal-saja: status_pembayaran tidak diubah.');
+        }
+
+        $s = $service->run($dryRun, $limit, $tanggalSaja);
 
         $this->info('Ringkasan backfill tanggal bayar (Cash Bank -> Agenda):');
         $this->table(['Metrik', 'Jumlah'], [

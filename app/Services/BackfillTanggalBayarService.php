@@ -21,7 +21,7 @@ class BackfillTanggalBayarService
     /**
      * @return array{diperiksa:int,diisi:int,sama:int,konflik:int,tidak_ketemu:int,konflik_detail:array<int,array<string,mixed>>}
      */
-    public function run(bool $dryRun = false, ?int $limit = null): array
+    public function run(bool $dryRun = false, ?int $limit = null, bool $tanggalSaja = false): array
     {
         // 1. Muat peta dokumen Agenda ke memori.
         $dokById         = [];   // id => object{nomor_agenda, tahun, tanggal_dibayar}
@@ -100,11 +100,19 @@ class BackfillTanggalBayarService
                     // Cash Bank; membiarkan updated_at apa adanya mencegah push-balik.
                     // Perubahan status_pembayaran via raw write akan memicu MySQL
                     // trigger auto-forward (ProcessAutoForwardQueue) di produksi —
-                    // sesuai keputusan bisnis (dokumen historis mengalir ke Pembayaran).
-                    DB::table('dokumens')->where('id', $dokId)->update([
-                        'tanggal_dibayar'   => $earliest,
-                        'status_pembayaran' => 'sudah_dibayar',
-                    ]);
+                    // sesuai keputusan bisnis saat backfill historis sekali-jalan
+                    // (dokumen historis mengalir ke Pembayaran).
+                    //
+                    // Mode --tanggal-saja mematikan efek itu: hanya tanggal yang
+                    // diisi, status dan alur dokumen tetap milik operator. Mode
+                    // inilah yang dipakai penjadwalan rutin, supaya jaring pengaman
+                    // tidak diam-diam mendorong dokumen ke Pembayaran.
+                    $isian = ['tanggal_dibayar' => $earliest];
+                    if (!$tanggalSaja) {
+                        $isian['status_pembayaran'] = 'sudah_dibayar';
+                    }
+
+                    DB::table('dokumens')->where('id', $dokId)->update($isian);
                 }
                 $summary['diisi']++;
             } elseif ($existing === $earliest) {
