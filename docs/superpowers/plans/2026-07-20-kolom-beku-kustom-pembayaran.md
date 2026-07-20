@@ -853,6 +853,13 @@ Di `saveColumnCustomization()` (baris ~3087), setelah blok yang menambahkan `col
       url.searchParams.delete('frozen_left[]');
       url.searchParams.delete('frozen_right[]');
 
+      // Penanda WAJIB: tanpa ini, "user melepas semua kolom beku" tidak bisa
+      // dibedakan dari "tidak ada konfigurasi beku yang dikirim", karena
+      // keduanya sama-sama tidak mengirim frozen_left/frozen_right. Akibatnya
+      // controller akan membekukan ulang dari preferensi tersimpan dan user
+      // tidak pernah bisa mengosongkan kolom beku.
+      url.searchParams.set('frozen_config', '1');
+
       // Kolom yang sudah tidak ditampilkan tidak boleh ikut dikirim sebagai beku.
       frozenLeftOrder
         .filter(col => selectedColumnsOrder.includes(col))
@@ -873,6 +880,7 @@ Jalankan seluruh 9 langkah uji dari spec §9:
 4. Lepas semua beku → tabel bergulir penuh, tidak ada sisa sticky
 5. Sembunyikan kolom yang sedang beku di tab 1 → buka tab beku → kolom itu hilang dari daftar dan status bekunya lepas
 6. Bekukan beberapa kolom lebar → peringatan lebar muncul
+6b. **Lepas SEMUA kolom beku (semua diset Bebas) → Simpan → tabel benar-benar tanpa kolom beku, dan tetap begitu setelah muat ulang.** Ini menguji penanda `frozen_config`; tanpa penanda, konfigurasi lama akan hidup kembali.
 7. **Buka keempat halaman role lain → kolom beku bawaannya tidak berubah**
 8. Muat ulang halaman → konfigurasi beku bertahan
 9. Ulangi langkah 2-4 dalam mode Fullscreen
