@@ -3944,8 +3944,13 @@
       exitBtn.type = 'button';
       exitBtn.id = 'pembayaranFsExit';
       exitBtn.className = 'pembayaran-fs-exit';
-      exitBtn.title = 'Keluar fullscreen (Esc)';
-      exitBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Keluar Fullscreen';
+      // Teks tombol TIDAK boleh mengandung "keluar fullscreen": observer di
+      // compact-document-ui memakai regex /keluar fullscreen/i pada textContent
+      // setiap tombol untuk menyimpulkan "masih di mode fullscreen". Bila label ini
+      // cocok, aksi keluar langsung dianulir (fullscreen aktif lagi seketika).
+      // "Keluar Layar Penuh" aman dari regex itu dan tetap jelas.
+      exitBtn.title = 'Keluar layar penuh (Esc)';
+      exitBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Keluar Layar Penuh';
       exitBtn.addEventListener('click', function () {
         // Picu mekanisme keluar milik tombol fullscreen global (app.blade.php).
         var globalFsBtn = document.querySelector('.btn-fullscreen-toggle');
