@@ -27,13 +27,13 @@ class FrozenColumnLayout
      */
     public static function normalize(array $left, array $right, array $selected, array $available): array
     {
-        $bersihkan = static function (array $keys) use ($selected, $available): array {
-            $hasil = [];
+        $sanitize = static function (array $keys) use ($selected, $available): array {
+            $result = [];
 
             foreach ($keys as $key) {
                 $key = is_string($key) ? trim($key) : '';
 
-                if ($key === '' || in_array($key, $hasil, true)) {
+                if ($key === '' || in_array($key, $result, true)) {
                     continue;
                 }
 
@@ -41,16 +41,16 @@ class FrozenColumnLayout
                     continue;
                 }
 
-                $hasil[] = $key;
+                $result[] = $key;
             }
 
-            return $hasil;
+            return $result;
         };
 
-        $kiri = $bersihkan($left);
-        $kanan = array_values(array_diff($bersihkan($right), $kiri));
+        $left = $sanitize($left);
+        $right = array_values(array_diff($sanitize($right), $left));
 
-        return ['left' => $kiri, 'right' => $kanan];
+        return ['left' => $left, 'right' => $right];
     }
 
     /**
@@ -64,20 +64,21 @@ class FrozenColumnLayout
      */
     public static function renderOrder(array $selected, array $left, array $right): array
     {
-        $kiri = [];
-        $tengah = [];
-        $kanan = [];
+        // Diberi awalan "frozen" agar tidak bentrok dengan parameter $left/$right.
+        $frozenLeft = [];
+        $middle = [];
+        $frozenRight = [];
 
         foreach ($selected as $key) {
             if (in_array($key, $left, true)) {
-                $kiri[] = $key;
+                $frozenLeft[] = $key;
             } elseif (in_array($key, $right, true)) {
-                $kanan[] = $key;
+                $frozenRight[] = $key;
             } else {
-                $tengah[] = $key;
+                $middle[] = $key;
             }
         }
 
-        return array_merge($kiri, $tengah, $kanan);
+        return array_merge($frozenLeft, $middle, $frozenRight);
     }
 }

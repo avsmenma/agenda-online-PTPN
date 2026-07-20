@@ -3,7 +3,7 @@
 namespace Tests\Unit;
 
 use App\Support\FrozenColumnLayout;
-use Tests\TestCase;
+use PHPUnit\Framework\TestCase;
 
 class FrozenColumnLayoutTest extends TestCase
 {
@@ -83,6 +83,18 @@ class FrozenColumnLayoutTest extends TestCase
     {
         $hasil = FrozenColumnLayout::normalize(
             ['', '   ', 'nomor_agenda'],
+            [],
+            ['nomor_agenda'],
+            $this->available
+        );
+
+        $this->assertSame(['nomor_agenda'], $hasil['left']);
+    }
+
+    public function test_membuang_masukan_yang_bukan_teks(): void
+    {
+        $hasil = FrozenColumnLayout::normalize(
+            [['array'], null, 123, 'nomor_agenda'],
             [],
             ['nomor_agenda'],
             $this->available
