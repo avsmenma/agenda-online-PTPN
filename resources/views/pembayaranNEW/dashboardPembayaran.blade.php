@@ -3697,12 +3697,20 @@
         background: #f3faf9 !important;
       }
 
-      {{-- Sel aktif: partial menyetel `position: relative` pada td.acn-active
-           dengan spesifisitas (1,2,2), yang mengalahkan aturan sticky di atas
-           (1,2,0). Tanpa pemulihan ini, sel yang diklik lepas dari kolom beku
-           dan ikut menggulir. Partial hanya memulihkannya untuk daftar kolom
-           hardcoded, sehingga kolom beku pilihan user harus ditangani di sini. --}}
-      #documentTableContainer .data-table tbody td.acn-active.col-{{ $frozenKey }} {
+      {{-- Sel aktif: partial menyetel `position: relative` pada td.acn-active.
+           Tanpa pemulihan ini, sel yang diklik lepas dari kolom beku dan ikut
+           menggulir. Partial hanya memulihkannya untuk daftar kolom hardcoded,
+           sehingga kolom beku pilihan user harus ditangani di sini.
+
+           Ketiga prefiks WAJIB dienumerasi, meniru partial. Aturan `relative`
+           di partial juga berupa tiga varian yang spesifisitasnya dihitung
+           sendiri-sendiri: varian dasar (1,2,2) tetapi varian fullscreen
+           (1,3,3). Varian dasar saja (1,3,2) menang di mode normal namun KALAH
+           di fullscreen, sehingga bug-nya kembali saat tombol fullscreen
+           halaman ini dipakai. Dengan prefiks, varian fullscreen jadi (1,4,3). --}}
+      #documentTableContainer .data-table tbody td.acn-active.col-{{ $frozenKey }},
+      body.is-fullscreen #documentTableContainer .data-table tbody td.acn-active.col-{{ $frozenKey }},
+      body.document-table-only-fullscreen #documentTableContainer .data-table tbody td.acn-active.col-{{ $frozenKey }} {
         position: sticky !important;
         z-index: 80 !important;
       }
