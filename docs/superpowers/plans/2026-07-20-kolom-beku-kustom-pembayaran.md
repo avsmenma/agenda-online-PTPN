@@ -15,7 +15,8 @@
 - Bawaan bila user belum pernah mengatur: `left = ['nomor_agenda']`, `right = []` — tampilan awal wajib identik dengan sekarang.
 - Kolom `No` (nomor urut baris, `.col-no`) selalu beku paling kiri dan tidak bisa diubah user.
 - Kolom yang tidak ditampilkan tidak boleh beku — divalidasi di server **dan** klien.
-- Komentar domain & pesan commit dalam Bahasa Indonesia; identifier dalam English (CLAUDE.md).
+- Komentar domain & pesan commit dalam Bahasa Indonesia; **identifier dalam English — termasuk variabel lokal** (CLAUDE.md). Acuan gaya: `app/Support/KeterlambatanClassifier.php` (komentar Indonesia, lokal English).
+- Test untuk kelas yang bebas framework memakai `PHPUnit\Framework\TestCase`, bukan `Tests\TestCase` (acuan: `tests/Unit/SafeUrlTest.php`).
 - `git add` per-file. Dilarang `git add .` / `git add -A`.
 - Peringatan lebar bersifat non-blocking (tidak menghalangi simpan).
 
@@ -214,13 +215,13 @@ class FrozenColumnLayout
      */
     public static function normalize(array $left, array $right, array $selected, array $available): array
     {
-        $bersihkan = static function (array $keys) use ($selected, $available): array {
-            $hasil = [];
+        $sanitize = static function (array $keys) use ($selected, $available): array {
+            $result = [];
 
             foreach ($keys as $key) {
                 $key = is_string($key) ? trim($key) : '';
 
-                if ($key === '' || in_array($key, $hasil, true)) {
+                if ($key === '' || in_array($key, $result, true)) {
                     continue;
                 }
 
@@ -228,16 +229,16 @@ class FrozenColumnLayout
                     continue;
                 }
 
-                $hasil[] = $key;
+                $result[] = $key;
             }
 
-            return $hasil;
+            return $result;
         };
 
-        $kiri = $bersihkan($left);
-        $kanan = array_values(array_diff($bersihkan($right), $kiri));
+        $leftClean = $sanitize($left);
+        $rightClean = array_values(array_diff($sanitize($right), $leftClean));
 
-        return ['left' => $kiri, 'right' => $kanan];
+        return ['left' => $leftClean, 'right' => $rightClean];
     }
 
     /**
@@ -251,21 +252,21 @@ class FrozenColumnLayout
      */
     public static function renderOrder(array $selected, array $left, array $right): array
     {
-        $kiri = [];
-        $tengah = [];
-        $kanan = [];
+        $frozenLeft = [];
+        $middle = [];
+        $frozenRight = [];
 
         foreach ($selected as $key) {
             if (in_array($key, $left, true)) {
-                $kiri[] = $key;
+                $frozenLeft[] = $key;
             } elseif (in_array($key, $right, true)) {
-                $kanan[] = $key;
+                $frozenRight[] = $key;
             } else {
-                $tengah[] = $key;
+                $middle[] = $key;
             }
         }
 
-        return array_merge($kiri, $tengah, $kanan);
+        return array_merge($frozenLeft, $middle, $frozenRight);
     }
 }
 ```
@@ -832,9 +833,9 @@ Sisipkan setelah baris ~2935 (`const availableColumnsData = @json($availableColu
         return sum + (FROZEN_WIDTH_MAP[key] || FROZEN_WIDTH_DEFAULT);
       }, FROZEN_NO_COLUMN_WIDTH);
 
-      const batas = window.innerWidth * 0.5;
+      const limit = window.innerWidth * 0.5;
 
-      if (total > batas) {
+      if (total > limit) {
         box.style.display = '';
         box.textContent = 'Kolom beku memakan sekitar ' + Math.round(total) +
           'px dari lebar layar Anda. Area yang bisa digulir jadi sempit — pertimbangkan mengurangi kolom beku.';
