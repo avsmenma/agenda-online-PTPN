@@ -2177,9 +2177,12 @@
               <i class="fa-solid fa-layer-group"></i> Group Vendor
             </button>
           </div>
-          <button type="button" class="btn-fullscreen" onclick="togglePembayaranTableFullscreen()">
-            <i class="fa-solid fa-expand"></i> Fullscreen
-          </button>
+          {{-- Tombol fullscreen lokal halaman ini DIHAPUS: ia menduplikasi tombol
+               fullscreen global yang disuntik app.blade.php (muncul di sebelah tombol
+               "Kustomisasi Kolom Tabel"), dan mekanismenya (togglePembayaranTableFullscreen)
+               hanya menyetel class document-table-only-fullscreen yang langsung dibatalkan
+               oleh observer di compact-document-ui. Fullscreen kini memakai tombol global
+               yang sama dengan 4 halaman role lain. --}}
         </div>
       </div>
 
@@ -3337,19 +3340,8 @@
       window.location.reload();
     }
 
-    function togglePembayaranTableFullscreen() {
-      document.body.classList.toggle('document-table-only-fullscreen');
-
-      setTimeout(function () {
-        if (window.jQuery && jQuery.fn && jQuery.fn.DataTable) {
-          try {
-            jQuery('#pembayaranDocumentTable').DataTable().columns.adjust();
-          } catch (error) {
-            console.warn('Gagal menyesuaikan tabel pembayaran:', error);
-          }
-        }
-      }, 150);
-    }
+    // togglePembayaranTableFullscreen() dihapus — lihat komentar di toolbar.
+    // Fullscreen halaman ini kini ditangani tombol global (app.blade.php).
 
     function changePerPage(value) {
       const url = new URL(window.location.href);
