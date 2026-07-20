@@ -116,6 +116,53 @@ class DokumenController extends Controller
         return $query;
     }
 
+    /**
+     * Endpoint JSON progressive-load untuk Tabulator (daftar dokumen Operator).
+     * Memakai ulang buildOperatorQuery() (scope/search/year/status/sort) dan
+     * OperatorDocumentRow untuk derivasi baris — tanpa logika filter baru.
+     * Balas {last_page, total, data:[row,...]}.
+     */
+    public function datatable(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $query = $this->buildOperatorQuery($request);
+
+        $size = (int) $request->input('size', 100);
+        $size = ($size > 0 && $size <= 200) ? $size : 100;
+        $page = max(1, (int) $request->input('page', 1));
+
+        $paginator = $query->paginate($size, ['*'], 'page', $page);
+
+        // Bangun daftar opsi pengurus dokumen SEKALI per-request (hindari N+1);
+        // OperatorDocumentRow menanamkan apa adanya ke tiap baris.
+        $handlerOptions = [
+            ['value' => 'operator',        'label' => 'Operator'],
+            ['value' => 'team_verifikasi', 'label' => 'Tim Verifikasi'],
+            ['value' => 'perpajakan',      'label' => 'Tim Perpajakan'],
+            ['value' => 'akutansi',        'label' => 'Tim Akuntansi'],
+            ['value' => 'pembayaran',      'label' => 'Tim Pembayaran'],
+        ];
+        $bagian = Bagian::active()->ordered()->get(['kode', 'nama']);
+        if ($bagian->isNotEmpty()) {
+            $handlerOptions[] = [
+                'optgroup' => 'Bagian',
+                'options'  => $bagian->map(fn ($b) => [
+                    'value' => 'bagian_' . strtolower($b->kode),
+                    'label' => $b->nama ?: $b->kode,
+                ])->all(),
+            ];
+        }
+
+        $data = collect($paginator->items())
+            ->map(fn ($d) => \App\Support\OperatorDocumentRow::fromDokumen($d, $handlerOptions))
+            ->all();
+
+        return response()->json([
+            'last_page' => $paginator->lastPage(),
+            'total'     => $paginator->total(),
+            'data'      => $data,
+        ]);
+    }
+
     public function index(Request $request)
     {
         $query = $this->buildOperatorQuery($request);

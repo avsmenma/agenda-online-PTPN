@@ -297,6 +297,8 @@ Route::get('/api/documents/urgency/active', [OwnerDashboardController::class, 'g
 // Professional Document Routes - Operator (Owner)
 Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('documents.')->group(function () {
     Route::get('/', [DokumenController::class, 'index'])->name('index');
+    // Endpoint JSON progressive-load untuk Tabulator — STATIS, harus sebelum route {dokumen}.
+    Route::get('/data', [DokumenController::class, 'datatable'])->name('data');
     Route::get('/create', [DokumenController::class, 'create'])->name('create');
     Route::post('/', [DokumenController::class, 'store'])->name('store');
 
