@@ -508,7 +508,13 @@
     background: #ffffff !important;
   }
 
-  body.document-table-only-fullscreen .content > :not(#documentTableContainer):not(.search-box):not(style):not(script) {
+  /* Sembunyikan anak langsung .content kecuali kontainer tabel DAN pembungkusnya.
+     :not(:has(#documentTableContainer)) mencegah elemen yang MEMUAT kontainer tabel
+     ikut ter-display:none. Halaman pembayaran membungkus tabel dalam .premium-dashboard,
+     jadi tanpa penjaga ini seluruh isi (termasuk tabelnya) lenyap → layar putih saat
+     fullscreen. Aman untuk 4 role lain: di sana #documentTableContainer adalah anak
+     langsung .content, sehingga :has() tidak mencocokkan apa pun tambahan. */
+  body.document-table-only-fullscreen .content > :not(#documentTableContainer):not(:has(#documentTableContainer)):not(.search-box):not(style):not(script) {
     display: none !important;
   }
 
