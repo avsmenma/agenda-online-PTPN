@@ -2004,8 +2004,9 @@
             <i class="fa-solid fa-check"></i>
             Terapkan
           </button>
-          <a href="{{ route('documents.pembayaran.index') }}" class="btn-filter btn-filter--secondary"
-            onclick="try{localStorage.removeItem('pembayaran_columns')}catch(e){}">
+          {{-- Reset membersihkan filter saja; susunan kolom pilihan user sengaja
+               dipertahankan (dulu ikut terhapus dari localStorage). --}}
+          <a href="{{ route('documents.pembayaran.index') }}" class="btn-filter btn-filter--secondary">
             <i class="fa-solid fa-redo"></i>
             Reset
           </a>
@@ -2306,8 +2307,7 @@
           </div>
           <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
           <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
-          <a href="{{ route('documents.pembayaran.index') }}" class="btn-empty"
-            onclick="try{localStorage.removeItem('pembayaran_columns')}catch(e){}">
+          <a href="{{ route('documents.pembayaran.index') }}" class="btn-empty">
             <i class="fa-solid fa-redo"></i>
             Reset Filter
           </a>
