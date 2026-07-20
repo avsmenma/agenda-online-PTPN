@@ -2274,7 +2274,7 @@
               <thead>
                 <tr>
                   <th class="col-no">No</th>
-                  @foreach($selectedColumns as $colKey)
+                  @foreach($renderColumns as $colKey)
                     <th class="col-{{ $colKey }}">{{ $availableColumns[$colKey] ?? Str::headline($colKey) }}</th>
                   @endforeach
                 </tr>
@@ -3359,7 +3359,9 @@
       (function () {
         'use strict';
 
-        const selectedColumns = @json($selectedColumns);
+        // Urutan render tabel (beku kiri -> bebas -> beku kanan). Berbeda dari
+        // selectedColumnsOrder di modal, yang menyimpan urutan pilihan asli user.
+        const selectedColumns = @json($renderColumns);
         const columnClassMap = {
           nomor_agenda: 'cell-primary cell-mono',
           nomor_spp: 'cell-mono',
@@ -3652,8 +3654,45 @@
     </script>
   @endif
 
-  {{-- Freeze kolom & header (NO, NOMOR AGENDA) — pola bersama yang sudah teruji --}}
-  @include('partials._documentTableStickyCells')
+  {{-- Freeze kolom & header — pola bersama yang sudah teruji. Kolom NO selalu
+       beku; sisanya mengikuti pilihan user ($frozenLeft/$frozenRight). --}}
+  <script>
+    // Harus diset SEBELUM partial dijalankan agar perhitungan offset memakai
+    // jalur dinamis, bukan jalur lama yang kolomnya di-hardcode.
+    window.DOCUMENT_STICKY_CONFIG = @json(['left' => $frozenLeft, 'right' => $frozenRight]);
+  </script>
+
+  @include('partials._documentTableStickyCells', ['dynamicFrozen' => true])
+
+  <style>
+    {{-- Sengaja TANPA deklarasi left/right: nilai tepi ditulis JS sebagai inline
+         style, yang akan kalah bila di sini ada aturan ber-!important. --}}
+    @foreach(array_merge($frozenLeft, $frozenRight) as $frozenKey)
+      #documentTableContainer .data-table .col-{{ $frozenKey }} {
+        position: sticky !important;
+        background-clip: padding-box;
+      }
+
+      #documentTableContainer .data-table thead .col-{{ $frozenKey }} {
+        background: #0d3b6e !important;
+        box-shadow: 0 2px 0 #1a5276 !important;
+        z-index: 560 !important;
+      }
+
+      #documentTableContainer .data-table tbody .col-{{ $frozenKey }} {
+        background: #ffffff !important;
+        z-index: 30 !important;
+      }
+
+      #documentTableContainer .data-table tbody tr:nth-child(even) .col-{{ $frozenKey }} {
+        background: #f8fafc !important;
+      }
+
+      #documentTableContainer .data-table tbody tr:hover .col-{{ $frozenKey }} {
+        background: #f3faf9 !important;
+      }
+    @endforeach
+  </style>
   @include('partials._inlineEditEngine')
   @include('partials._activeCellNav', ['tableSelector' => '#pembayaranDocumentTable'])
 @endsection
