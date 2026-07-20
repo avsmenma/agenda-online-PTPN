@@ -2660,6 +2660,73 @@
       border-color: #ef4444;
       color: #ef4444;
     }
+
+    .column-tabs {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .column-tab {
+      padding: 0.75rem 1.1rem;
+      border: none;
+      background: transparent;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #64748b;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+    }
+
+    .column-tab.active {
+      color: #0f4c3a;
+      border-bottom-color: #0f4c3a;
+    }
+
+    .frozen-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.6rem 0.9rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+
+    .frozen-options {
+      display: inline-flex;
+      gap: 0.25rem;
+    }
+
+    .frozen-opt {
+      padding: 0.35rem 0.75rem;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #64748b;
+      cursor: pointer;
+    }
+
+    .frozen-opt.active {
+      background: #0f4c3a;
+      border-color: #0f4c3a;
+      color: #ffffff;
+    }
+
+    .frozen-warning {
+      padding: 0.7rem 0.9rem;
+      margin-bottom: 0.75rem;
+      border-radius: 8px;
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      color: #92400e;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
   </style>
 
   <div class="customization-modal" id="columnCustomizationModal">
@@ -2674,7 +2741,17 @@
         </button>
       </div>
 
+      <div class="column-tabs">
+        <button type="button" class="column-tab active" data-tab="kolom" onclick="switchColumnTab('kolom')">
+          <i class="fa-solid fa-table-columns"></i> Kolom Tabel
+        </button>
+        <button type="button" class="column-tab" data-tab="beku" onclick="switchColumnTab('beku')">
+          <i class="fa-solid fa-thumbtack"></i> Kolom Beku
+        </button>
+      </div>
+
       <div class="modal-body-custom">
+        <div id="tabPanelKolom">
         <div class="customization-grid">
           <!-- Selection Panel -->
           <div class="selection-panel">
@@ -2772,6 +2849,16 @@
               </div>
             </div>
           </div>
+        </div>
+        </div>
+
+        <div id="tabPanelBeku" style="display:none;">
+          <div class="panel-description">
+            Tentukan kolom mana yang tetap terlihat saat tabel digulir ke samping.
+            Kolom beku otomatis dipindahkan ke tepi tabel.
+          </div>
+          <div id="frozenWarning" class="frozen-warning" style="display:none;"></div>
+          <div id="frozenList"></div>
         </div>
       </div>
 
@@ -2933,6 +3020,80 @@
     // Column customization variables
     let selectedColumnsOrder = @json($selectedColumns);
     const availableColumnsData = @json($availableColumns);
+
+    let frozenLeftOrder = @json($frozenLeft);
+    let frozenRightOrder = @json($frozenRight);
+
+    // Peta lebar kolom untuk estimasi peringatan; angka mengikuti CSS di
+    // partials/_documentTableStickyCells.blade.php. Hanya kolom yang lebarnya
+    // memang khusus yang didaftarkan; sisanya memakai lebar default.
+    const FROZEN_WIDTH_MAP = { nomor_agenda: 210 };
+    const FROZEN_WIDTH_DEFAULT = 132;
+    const FROZEN_NO_COLUMN_WIDTH = 88;
+
+    function switchColumnTab(tab) {
+      document.querySelectorAll('.column-tab').forEach(function (btn) {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+      document.getElementById('tabPanelKolom').style.display = tab === 'kolom' ? '' : 'none';
+      document.getElementById('tabPanelBeku').style.display = tab === 'beku' ? '' : 'none';
+      if (tab === 'beku') renderFrozenTab();
+    }
+
+    function getFrozenState(key) {
+      if (frozenLeftOrder.includes(key)) return 'left';
+      if (frozenRightOrder.includes(key)) return 'right';
+      return 'none';
+    }
+
+    function setFrozenState(key, state) {
+      frozenLeftOrder = frozenLeftOrder.filter(k => k !== key);
+      frozenRightOrder = frozenRightOrder.filter(k => k !== key);
+      if (state === 'left') frozenLeftOrder.push(key);
+      if (state === 'right') frozenRightOrder.push(key);
+      renderFrozenTab();
+    }
+
+    function renderFrozenTab() {
+      // Kolom yang sudah tidak ditampilkan tidak boleh tetap beku.
+      frozenLeftOrder = frozenLeftOrder.filter(k => selectedColumnsOrder.includes(k));
+      frozenRightOrder = frozenRightOrder.filter(k => selectedColumnsOrder.includes(k));
+
+      const list = document.getElementById('frozenList');
+      if (!list) return;
+
+      list.innerHTML = selectedColumnsOrder.map(function (key) {
+        const label = availableColumnsData[key] || key;
+        const state = getFrozenState(key);
+        const opt = (value, text) =>
+          '<button type="button" class="frozen-opt' + (state === value ? ' active' : '') +
+          '" onclick="setFrozenState(\'' + key + '\', \'' + value + '\')">' + text + '</button>';
+        return '<div class="frozen-row"><span>' + label + '</span>' +
+          '<span class="frozen-options">' + opt('left', 'Kiri') + opt('none', 'Bebas') + opt('right', 'Kanan') +
+          '</span></div>';
+      }).join('');
+
+      renderFrozenWarning();
+    }
+
+    function renderFrozenWarning() {
+      const box = document.getElementById('frozenWarning');
+      if (!box) return;
+
+      const total = frozenLeftOrder.concat(frozenRightOrder).reduce(function (sum, key) {
+        return sum + (FROZEN_WIDTH_MAP[key] || FROZEN_WIDTH_DEFAULT);
+      }, FROZEN_NO_COLUMN_WIDTH);
+
+      const limit = window.innerWidth * 0.5;
+
+      if (total > limit) {
+        box.style.display = '';
+        box.textContent = 'Kolom beku memakan sekitar ' + Math.round(total) +
+          'px dari lebar layar Anda. Area yang bisa digulir jadi sempit — pertimbangkan mengurangi kolom beku.';
+      } else {
+        box.style.display = 'none';
+      }
+    }
 
     function openColumnModal() {
       document.getElementById('columnCustomizationModal').classList.add('show');
@@ -3104,6 +3265,25 @@
       selectedColumnsOrder.forEach(col => {
         url.searchParams.append('columns[]', col);
       });
+
+      url.searchParams.delete('frozen_left[]');
+      url.searchParams.delete('frozen_right[]');
+
+      // Penanda WAJIB: tanpa ini, "user melepas semua kolom beku" tidak bisa
+      // dibedakan dari "tidak ada konfigurasi beku yang dikirim", karena
+      // keduanya sama-sama tidak mengirim frozen_left/frozen_right. Akibatnya
+      // controller akan membekukan ulang dari preferensi tersimpan dan user
+      // tidak pernah bisa mengosongkan kolom beku.
+      url.searchParams.set('frozen_config', '1');
+
+      // Kolom yang sudah tidak ditampilkan tidak boleh ikut dikirim sebagai beku.
+      frozenLeftOrder
+        .filter(col => selectedColumnsOrder.includes(col))
+        .forEach(col => url.searchParams.append('frozen_left[]', col));
+
+      frozenRightOrder
+        .filter(col => selectedColumnsOrder.includes(col))
+        .forEach(col => url.searchParams.append('frozen_right[]', col));
 
       window.location.href = url.toString();
     }
