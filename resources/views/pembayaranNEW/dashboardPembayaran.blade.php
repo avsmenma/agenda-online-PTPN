@@ -3664,6 +3664,11 @@
 
   @include('partials._documentTableStickyCells', ['dynamicFrozen' => true])
 
+  {{-- WAJIB tetap berada SETELAH @include partial di atas. Aturan zebra kolom
+       beku di bawah ini spesifisitasnya SERI dengan aturan
+       `body.is-fullscreen ... tbody .col-<key>` milik partial (sama-sama 1,3,2),
+       jadi yang menang ditentukan urutan sumber. Bila blok ini dipindah ke atas
+       @include, zebra kolom beku patah khusus di mode fullscreen. --}}
   <style>
     {{-- Sengaja TANPA deklarasi left/right: nilai tepi ditulis JS sebagai inline
          style, yang akan kalah bila di sini ada aturan ber-!important. --}}
@@ -3690,6 +3695,16 @@
 
       #documentTableContainer .data-table tbody tr:hover .col-{{ $frozenKey }} {
         background: #f3faf9 !important;
+      }
+
+      {{-- Sel aktif: partial menyetel `position: relative` pada td.acn-active
+           dengan spesifisitas (1,2,2), yang mengalahkan aturan sticky di atas
+           (1,2,0). Tanpa pemulihan ini, sel yang diklik lepas dari kolom beku
+           dan ikut menggulir. Partial hanya memulihkannya untuk daftar kolom
+           hardcoded, sehingga kolom beku pilihan user harus ditangani di sini. --}}
+      #documentTableContainer .data-table tbody td.acn-active.col-{{ $frozenKey }} {
+        position: sticky !important;
+        z-index: 80 !important;
       }
     @endforeach
   </style>
