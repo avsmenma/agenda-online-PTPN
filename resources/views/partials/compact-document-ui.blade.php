@@ -76,8 +76,15 @@
     overflow: visible !important;
   }
 
+  /* Toolbar tabel dirapatkan, BUKAN disembunyikan. `display: none` di sini
+     pernah menghilangkan seluruh kontrolnya (Refresh, Kustomisasi Kolom Tabel,
+     toggle Normal/Group Vendor, Fullscreen) di halaman pembayaran. Penyembunyian
+     yang disengaja hanya berlaku saat mode fullscreen — lihat aturan
+     `body.document-table-only-fullscreen` di bawah. */
   #documentTableContainer .dtable-toolbar {
-    display: none !important;
+    padding: 0.45rem 0.7rem 0.6rem !important;
+    margin-bottom: 0.55rem !important;
+    gap: 0.65rem !important;
   }
 
   #documentTableContainer .dtable-toolbar-left {
