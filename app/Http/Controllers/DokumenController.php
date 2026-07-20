@@ -134,6 +134,27 @@ class DokumenController extends Controller
 
         // Bangun daftar opsi pengurus dokumen SEKALI per-request (hindari N+1);
         // OperatorDocumentRow menanamkan apa adanya ke tiap baris.
+        $handlerOptions = $this->buildHandlerOptions();
+
+        $data = collect($paginator->items())
+            ->map(fn ($d) => \App\Support\OperatorDocumentRow::fromDokumen($d, $handlerOptions))
+            ->all();
+
+        return response()->json([
+            'last_page' => $paginator->lastPage(),
+            'total'     => $paginator->total(),
+            'data'      => $data,
+        ]);
+    }
+
+    /**
+     * Susun daftar opsi pengurus dokumen (handler_options) SEKALI per-request.
+     * 5 opsi base peran + optgroup 'Bagian' (bila ada Bagian aktif). Sumber
+     * tunggal agar datatable() & inlineCreate() memakai bentuk yang identik
+     * (OperatorDocumentRow menanamkannya apa adanya ke tiap baris).
+     */
+    private function buildHandlerOptions(): array
+    {
         $handlerOptions = [
             ['value' => 'operator',        'label' => 'Operator'],
             ['value' => 'team_verifikasi', 'label' => 'Tim Verifikasi'],
@@ -152,15 +173,7 @@ class DokumenController extends Controller
             ];
         }
 
-        $data = collect($paginator->items())
-            ->map(fn ($d) => \App\Support\OperatorDocumentRow::fromDokumen($d, $handlerOptions))
-            ->all();
-
-        return response()->json([
-            'last_page' => $paginator->lastPage(),
-            'total'     => $paginator->total(),
-            'data'      => $data,
-        ]);
+        return $handlerOptions;
     }
 
     public function index(Request $request)
@@ -356,6 +369,9 @@ class DokumenController extends Controller
             'success' => true,
             'id'      => $dokumen->id,
             'html'    => $html,
+            // Objek baris JSON untuk Tabulator (konsumen tunggal ke depan);
+            // `html` dipertahankan selama view lama masih dipakai (fase fallback).
+            'row'     => \App\Support\OperatorDocumentRow::fromDokumen($dokumen, $this->buildHandlerOptions()),
         ]);
     }
 
