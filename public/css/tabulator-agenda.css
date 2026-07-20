@@ -1,0 +1,98 @@
+/*
+ * Tema Tabulator — Daftar Dokumen Operator (Agenda LM).
+ * Versi SKELETON (Tugas 4): warna header teal #083E40 teks putih, baris kompak,
+ * border tipis, hover, dan bayangan kolom beku. Gaya badge/subline penuh
+ * menyusul di Tugas 5. Jangan menaruh aturan formatter kompleks di sini dulu.
+ */
+
+/* ------- Wadah tabel ------- */
+#operatorTabulatorTable .tabulator {
+  background-color: #ffffff;
+  border: 1px solid #e2e8e8;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1f2933;
+}
+
+/* ------- Header kolom ------- */
+#operatorTabulatorTable .tabulator .tabulator-header {
+  background-color: #083E40;
+  border-bottom: 2px solid #062f31;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+#operatorTabulatorTable .tabulator .tabulator-header .tabulator-col {
+  background-color: #083E40;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+#operatorTabulatorTable .tabulator .tabulator-header .tabulator-col .tabulator-col-title {
+  color: #ffffff;
+  font-weight: 600;
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+
+/* Panah sort agar kontras di atas latar teal */
+#operatorTabulatorTable .tabulator .tabulator-header .tabulator-col .tabulator-col-sorter .tabulator-arrow {
+  border-bottom-color: rgba(255, 255, 255, 0.85);
+  border-top-color: rgba(255, 255, 255, 0.85);
+}
+
+/* ------- Baris ------- */
+#operatorTabulatorTable .tabulator .tabulator-row {
+  min-height: 38px;
+  border-bottom: 1px solid #eef2f2;
+}
+
+#operatorTabulatorTable .tabulator .tabulator-row.tabulator-row-even {
+  background-color: #fafcfc;
+}
+
+#operatorTabulatorTable .tabulator .tabulator-row:hover {
+  background-color: #eef6f5;
+}
+
+#operatorTabulatorTable .tabulator .tabulator-row .tabulator-cell {
+  padding: 8px;
+  border-right: 1px solid #f0f4f4;
+  vertical-align: middle;
+}
+
+/* ------- Kolom beku (frozen) — bayangan pemisah ------- */
+#operatorTabulatorTable .tabulator .tabulator-row .tabulator-cell.tabulator-frozen,
+#operatorTabulatorTable .tabulator .tabulator-header .tabulator-col.tabulator-frozen {
+  box-shadow: 2px 0 4px rgba(8, 62, 64, 0.12);
+}
+
+#operatorTabulatorTable .tabulator .tabulator-frozen.tabulator-frozen-left {
+  border-right: 1px solid #d9e2e2;
+}
+
+/* ------- Placeholder kosong ------- */
+#operatorTabulatorTable .tabulator .tabulator-placeholder .tabulator-placeholder-contents {
+  color: #6b7c7c;
+  font-size: 14px;
+}
+
+/* ------- Toolbar skeleton (Tugas 7 menyambung fungsionalitas) ------- */
+.tabulator-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.tabulator-toolbar .form-control,
+.tabulator-toolbar .form-select {
+  height: 38px;
+  font-size: 13px;
+}
+
+.tabulator-toolbar .tabulator-toolbar-search {
+  flex: 1 1 260px;
+  min-width: 200px;
+}
