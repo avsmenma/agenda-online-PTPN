@@ -3908,6 +3908,58 @@
       }
     @endforeach
   </style>
+  {{-- ── Tombol keluar fullscreen (khusus halaman pembayaran) ──────────────
+       Fullscreen global (compact-document-ui) menyembunyikan .dtable-toolbar —
+       tempat tombol keluar berada — dan menampilkan .search-box sebagai bar atas.
+       Halaman pembayaran TIDAK punya .search-box, sehingga tombol keluar ikut
+       tersembunyi. Tombol mengambang ini disisipkan ke <body> (di luar .content,
+       agar tak ikut disembunyikan aturan `.content > :not(...)`) dan hanya tampil
+       saat mode fullscreen. Kliknya memicu mekanisme keluar milik tombol global. --}}
+  <style>
+    .pembayaran-fs-exit {
+      display: none;
+      position: fixed;
+      top: 14px;
+      right: 18px;
+      z-index: 2147483600; /* di atas konten fullscreen (.content = 2147483000) */
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      background: #0f4c3a;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.32);
+    }
+    .pembayaran-fs-exit:hover { background: #0d3f30; }
+    body.document-table-only-fullscreen .pembayaran-fs-exit,
+    body.is-fullscreen .pembayaran-fs-exit { display: inline-flex; }
+  </style>
+  <script>
+    (function () {
+      var exitBtn = document.createElement('button');
+      exitBtn.type = 'button';
+      exitBtn.id = 'pembayaranFsExit';
+      exitBtn.className = 'pembayaran-fs-exit';
+      exitBtn.title = 'Keluar fullscreen (Esc)';
+      exitBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Keluar Fullscreen';
+      exitBtn.addEventListener('click', function () {
+        // Picu mekanisme keluar milik tombol fullscreen global (app.blade.php).
+        var globalFsBtn = document.querySelector('.btn-fullscreen-toggle');
+        if (globalFsBtn) {
+          globalFsBtn.click();
+          return;
+        }
+        // Cadangan: kirim tombol Escape.
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      });
+      document.body.appendChild(exitBtn);
+    })();
+  </script>
+
   @include('partials._inlineEditEngine')
   @include('partials._activeCellNav', ['tableSelector' => '#pembayaranDocumentTable'])
 @endsection
