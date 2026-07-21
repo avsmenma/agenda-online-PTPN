@@ -44,9 +44,9 @@
 
         <select name="year" class="form-select" style="max-width: 140px;">
             <option value="">Semua Tahun</option>
-            <option value="2025">2025</option>
-            <option value="2024">2024</option>
-            <option value="2023">2023</option>
+            @for ($y = (int) date('Y'); $y >= (int) date('Y') - 5; $y--)
+              <option value="{{ $y }}" {{ (string) request('year') === (string) $y ? 'selected' : '' }}>{{ $y }}</option>
+            @endfor
         </select>
 
         <select name="status_filter" class="form-select" style="max-width: 260px;">
@@ -544,7 +544,7 @@
                     document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
                     document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
                     document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
-                    document.getElementById('view-nomor-miro').textContent = dok.NO_MIRO_SES || '-';
+                    document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
                     document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
                     document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
 
