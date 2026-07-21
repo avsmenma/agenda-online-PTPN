@@ -553,6 +553,67 @@
     return cols;
   }
 
+  // === Tugas 7b: Panel "Detail Cepat" (single-click) via hook data-driven ===
+  //
+  // Baris Tabulator dirender sebagai <div> (bukan <td>), sehingga jalur DOM-scrape
+  // partial global (extractGenericRow) tak berlaku. Kita bangun objek data dari
+  // row.getData() lalu panggil window.openDocumentQuickViewFromData — renderer
+  // internal yang SAMA dengan jalur DOM role lain (renderQuickView di
+  // document-workbench-ui.blade.php).
+
+  // Nilai TAMPILAN plain-text per kolom (BUKAN HTML — renderQuickView meng-escape
+  // nilai). Ambil dari key turunan yang dipakai formatter agar konsisten dgn tabel.
+  function quickViewValue(key, d) {
+    switch (key) {
+      case 'nomor_agenda': return d.nomor_agenda || '-';
+      case 'status': return (d.display_status && d.display_status.label) ? d.display_status.label : '-';
+      case 'nilai_rupiah': return d.nilai_rupiah_formatted || '-';
+      case 'dpp_pph': return d.dpp_pph_formatted || '-';
+      case 'ppn_terhutang': return d.ppn_terhutang_formatted || '-';
+      case 'dibayar_kepada': return d.dibayar_kepada || '-';
+      case 'nomor_po': return d.nomor_po || '-';
+      case 'nomor_miro': return d.nomor_miro_display || d.nomor_miro || '-';
+      case 'link': return d.link_safe || '-';
+      case 'link_dokumen_pajak': return d.link_dokumen_pajak_safe || '-';
+      default: {
+        if (DATE_COLS.has(key)) {
+          const dates = d.dates || {};
+          const dv = dates[key];
+          return (dv === null || dv === undefined || dv === '') ? '-' : String(dv);
+        }
+        const v = d[key];
+        return (v === null || v === undefined || v === '') ? '-' : String(v);
+      }
+    }
+  }
+
+  // Bangun objek data untuk openDocumentQuickViewFromData dari row.getData().
+  // Bentuk identik keluaran extractGenericRow: { title, fields[], ownerId, detailLink }.
+  // Urutan field mengikuti CFG.columns (urutan kolom terpilih user). Kosong/'-'
+  // disaring — paritas filter extractGenericRow (field.value && !== '-').
+  function buildQuickViewData(d) {
+    const fields = (CFG.columns || []).map(function (c) {
+      return { label: c.label, value: quickViewValue(c.key, d) };
+    }).filter(function (f) { return f.value && f.value !== '-'; });
+    return {
+      title: d.nomor_agenda || 'Dokumen',
+      fields: fields,
+      // id dipakai tombol "Detail lengkap" panel → openOwnerDocModal (alias di bawah
+      // ke modal detail operator). Nol perubahan pada partial global.
+      ownerId: d.id,
+    };
+  }
+
+  // Ignore-list single-click (mirror shouldIgnoreRowClick partial): klik pada
+  // kontrol interaktif tak boleh membuka panel — punya aksinya sendiri (dropdown
+  // pengurus, link, badge tolak, dsb).
+  function shouldIgnoreOperatorRowClick(target) {
+    if (!target || !target.closest) return false;
+    return !!target.closest(
+      'a, button, input, select, textarea, label, .op-handler-select, .badge-status, .modal, .dropdown-menu'
+    );
+  }
+
   const table = new Tabulator('#operatorTabulatorTable', {
     ajaxURL: CFG.dataUrl,
     // Tugas 7c: parameter filter aktif (search/year/status_filter) dibaca live dari
@@ -570,6 +631,15 @@
     columns: buildColumns(CFG),
     placeholder: 'Tidak ada dokumen.',
     cellEdited: onCellEdited, // Tugas 6: commit inline-update saat sel diedit.
+    // Tugas 7b: klik-tunggal baris → panel "Detail Cepat" (data-driven hook global).
+    // Hormati ignore-list agar klik pada kontrol (select pengurus/link/badge) tak
+    // memicu panel. Editor sel tetap terbuka pada klik yang sama (perilaku Tabulator).
+    rowClick: function (e, row) {
+      if (shouldIgnoreOperatorRowClick(e.target)) return;
+      if (typeof window.openDocumentQuickViewFromData === 'function') {
+        window.openDocumentQuickViewFromData(buildQuickViewData(row.getData()));
+      }
+    },
     // Tugas 7a: klik-ganda baris → modal Detail Dokumen (fungsi global view baru).
     rowDblClick: function (e, row) {
       if (typeof window.openViewDocumentModal === 'function') {
@@ -579,6 +649,18 @@
   });
 
   window.operatorTable = table;
+
+  // Tombol "Detail lengkap" panel Detail Cepat memanggil window.openOwnerDocModal(id)
+  // bila terdefinisi (lihat document-workbench-ui.blade.php). Di halaman operator tak
+  // ada dasbor owner, jadi kita alias-kan ke modal detail operator agar tombol panel
+  // membuka modal yang sama dengan klik-ganda. Aditif & hanya di halaman operator.
+  if (typeof window.openOwnerDocModal !== 'function') {
+    window.openOwnerDocModal = function (id) {
+      if (typeof window.openViewDocumentModal === 'function') {
+        window.openViewDocumentModal(id);
+      }
+    };
+  }
 
   // === Tugas 7c: Filter toolbar → Tabulator via AJAX (tanpa reload halaman) ===
   // Baca nilai kontrol toolbar tiap request (fungsi ajaxParams) & saat berubah
