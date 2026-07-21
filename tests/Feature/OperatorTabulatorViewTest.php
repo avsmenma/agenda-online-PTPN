@@ -51,6 +51,20 @@ class OperatorTabulatorViewTest extends TestCase
         $response->assertSee('bagian', false);
     }
 
+    /**
+     * CLAUDE.md §8: dobel-klik kini memulai inline edit, sehingga modal Detail
+     * Dokumen HARUS punya jalur lain. Tombol toolbar inilah satu-satunya jalur —
+     * bila hilang, detail dokumen tidak bisa dibuka sama sekali dari tabel.
+     */
+    public function test_toolbar_menyediakan_tombol_detail_baris_aktif(): void
+    {
+        $response = $this->actingAs($this->operator())
+            ->get(route('documents.index'));
+
+        $response->assertOk();
+        $response->assertSee('id="btnDetailBarisAktif"', false);
+    }
+
     public function test_flag_classic_menyajikan_view_lama(): void
     {
         $response = $this->actingAs($this->operator())

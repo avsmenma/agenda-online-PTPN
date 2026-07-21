@@ -7,6 +7,13 @@
  * Membaca konfigurasi dari window.OPERATOR_TABULATOR_CONFIG yang di-inject oleh
  * daftarDokumenTabulator.blade.php.
  *
+ * CLAUDE.md §8 Tahap A (baca-saja) — perilaku ala spreadsheet:
+ *   sel aktif + navigasi panah & auto-scroll, klik-tunggal memindahkan sel aktif,
+ *   dobel-klik / Enter mulai edit (Esc batal), seleksi blok (drag, Shift+Klik,
+ *   Shift+Panah), Ctrl+C salin sel & blok.
+ * Tahap B BELUM dikerjakan (menulis massal ke data produksi, butuh endpoint bulk):
+ *   Delete/Backspace mengosongkan sel, Ctrl+V tempel ala Excel, Ctrl+Z / Ctrl+Y.
+ *
  * PENTING (escaping): formatter fungsi yang mengembalikan string HTML TIDAK
  * di-escape otomatis oleh Tabulator (berbeda dari formatter teks default). Maka
  * setiap nilai asal-user yang disuntikkan ke HTML WAJIB melewati esc().
@@ -554,88 +561,33 @@
     return cols;
   }
 
-  // === Tugas 7b: Panel "Detail Cepat" (single-click) via hook data-driven ===
+  // === CLAUDE.md §8 Tahap A: helper "sel aktif" ===
   //
-  // Baris Tabulator dirender sebagai <div> (bukan <td>), sehingga jalur DOM-scrape
-  // partial global (extractGenericRow) tak berlaku. Kita bangun objek data dari
-  // row.getData() lalu panggil window.openDocumentQuickViewFromData — renderer
-  // internal yang SAMA dengan jalur DOM role lain (renderQuickView di
-  // document-workbench-ui.blade.php).
+  // Sel aktif & seleksi blok ditangani modul SelectRange bawaan Tabulator 6.3.1
+  // (opsi `selectableRange` di konstruktor), BUKAN mesin tulis-tangan — partial
+  // lama `_activeCellNav.blade.php` berbasis <td> dan tidak berlaku di sini
+  // (baris Tabulator adalah <div>). Helper di bawah hanya MEMBACA range aktif
+  // untuk dua keperluan: Enter→mulai edit, dan tombol toolbar "Detail".
 
-  // Nilai TAMPILAN plain-text per kolom (BUKAN HTML — renderQuickView meng-escape
-  // nilai). Ambil dari key turunan yang dipakai formatter agar konsisten dgn tabel.
-  function quickViewValue(key, d) {
-    switch (key) {
-      case 'nomor_agenda': return d.nomor_agenda || '-';
-      case 'status': return (d.display_status && d.display_status.label) ? d.display_status.label : '-';
-      case 'nilai_rupiah': return d.nilai_rupiah_formatted || '-';
-      case 'dpp_pph': return d.dpp_pph_formatted || '-';
-      case 'ppn_terhutang': return d.ppn_terhutang_formatted || '-';
-      case 'dibayar_kepada': return d.dibayar_kepada || '-';
-      case 'nomor_po': return d.nomor_po || '-';
-      case 'nomor_miro': return d.nomor_miro_display || d.nomor_miro || '-';
-      case 'link': return d.link_safe || '-';
-      case 'link_dokumen_pajak': return d.link_dokumen_pajak_safe || '-';
-      default: {
-        if (DATE_COLS.has(key)) {
-          const dates = d.dates || {};
-          const dv = dates[key];
-          return (dv === null || dv === undefined || dv === '') ? '-' : String(dv);
-        }
-        const v = d[key];
-        return (v === null || v === undefined || v === '') ? '-' : String(v);
-      }
-    }
+  // Sel pertama (pojok kiri-atas) dari range terakhir yang aktif.
+  // range.getCells() dapat mengembalikan array 2 dimensi [baris][kolom] atau datar
+  // tergantung bentuk seleksi — tangani keduanya agar tak bergantung pada detail versi.
+  function activeCell() {
+    let ranges = null;
+    try { ranges = table.getRanges(); } catch (e) { return null; }
+    if (!Array.isArray(ranges) || ranges.length === 0) return null;
+    let cells = null;
+    try { cells = ranges[ranges.length - 1].getCells(); } catch (e) { return null; }
+    if (!Array.isArray(cells) || cells.length === 0) return null;
+    const head = cells[0];
+    return (Array.isArray(head) ? head[0] : head) || null;
   }
 
-  // Resolusi label pengurus dokumen dari handler_options (bentuk sama dgn formatter
-  // kolom "Pengurus Dokumen" baris 368-376): array datar + satu entri optgroup
-  // {optgroup, options:[{value,label}]} untuk grup "Bagian". Cocokkan d.handler.
-  function resolveHandlerLabel(d) {
-    const opts = d.handler_options || [];
-    for (const o of opts) {
-      if (o && Array.isArray(o.options)) {           // optgroup entry
-        const m = o.options.find(x => x.value === d.handler);
-        if (m) return m.label;
-      } else if (o && o.value === d.handler) {
-        return o.label;
-      }
-    }
-    return d.handler || '-';
-  }
-
-  // Bangun objek data untuk openDocumentQuickViewFromData dari row.getData().
-  // Bentuk identik keluaran extractGenericRow: { title, fields[], ownerId, detailLink }.
-  // Urutan field mengikuti CFG.columns (urutan kolom terpilih user). Kosong/'-'
-  // disaring — paritas filter extractGenericRow (field.value && !== '-').
-  function buildQuickViewData(d) {
-    const fields = (CFG.columns || []).map(function (c) {
-      return { label: c.label, value: quickViewValue(c.key, d) };
-    }).filter(function (f) { return f.value && f.value !== '-'; });
-    // Tugas: kolom "Pengurus Dokumen" ditambah terpisah dari CFG.columns (lihat
-    // baris 368), jadi tak ikut ter-mapping di atas — tambahkan manual di akhir,
-    // pakai gerbang filter yang sama (skip bila kosong/'-').
-    const handlerLabel = resolveHandlerLabel(d);
-    if (handlerLabel && handlerLabel !== '-') {
-      fields.push({ label: 'Pengurus Dokumen', value: handlerLabel });
-    }
-    return {
-      title: d.nomor_agenda || 'Dokumen',
-      fields: fields,
-      // id dipakai tombol "Detail lengkap" panel → openOwnerDocModal (alias di bawah
-      // ke modal detail operator). Nol perubahan pada partial global.
-      ownerId: d.id,
-    };
-  }
-
-  // Ignore-list single-click (mirror shouldIgnoreRowClick partial): klik pada
-  // kontrol interaktif tak boleh membuka panel — punya aksinya sendiri (dropdown
-  // pengurus, link, badge tolak, dsb).
-  function shouldIgnoreOperatorRowClick(target) {
-    if (!target || !target.closest) return false;
-    return !!target.closest(
-      'a, button, input, select, textarea, label, .op-handler-select, .badge-status, .modal, .dropdown-menu'
-    );
+  // Baris yang memuat sel aktif (dipakai tombol "Detail").
+  function activeRow() {
+    const cell = activeCell();
+    if (!cell) return null;
+    try { return cell.getRow(); } catch (e) { return null; }
   }
 
   const table = new Tabulator('#operatorTabulatorTable', {
@@ -659,36 +611,76 @@
     columns: buildColumns(CFG),
     placeholder: 'Tidak ada dokumen.',
     cellEdited: onCellEdited, // Tugas 6: commit inline-update saat sel diedit.
-    // Tugas 7b: klik-tunggal baris → panel "Detail Cepat" (data-driven hook global).
-    // Hormati ignore-list agar klik pada kontrol (select pengurus/link/badge) tak
-    // memicu panel. Editor sel tetap terbuka pada klik yang sama (perilaku Tabulator).
-    rowClick: function (e, row) {
-      if (shouldIgnoreOperatorRowClick(e.target)) return;
-      if (typeof window.openDocumentQuickViewFromData === 'function') {
-        window.openDocumentQuickViewFromData(buildQuickViewData(row.getData()));
-      }
-    },
-    // Tugas 7a: klik-ganda baris → modal Detail Dokumen (fungsi global view baru).
-    rowDblClick: function (e, row) {
-      if (typeof window.openViewDocumentModal === 'function') {
-        window.openViewDocumentModal(row.getData().id);
-      }
-    },
+
+    // === CLAUDE.md §8 Tahap A — perilaku ala spreadsheet (BACA-SAJA) ===
+    // Semua dari modul bawaan Tabulator 6.3.1; nol mesin tulis-tangan (§3 aturan 1).
+    //
+    // selectableRange memberi sekaligus: sel aktif, pindah sel dgn tombol panah
+    // + auto-scroll mengikuti, klik-tunggal memindahkan sel aktif, dan seleksi blok
+    // via drag / Shift+Klik / Shift+Panah.
+    selectableRange: true,
+    // Klik header tetap milik SORT (server-side) — jangan dibajak jadi seleksi kolom.
+    selectableRangeColumns: false,
+    selectableRangeRows: false,
+    // Delete/Backspace mengosongkan sel = Tahap B (menulis massal ke data produksi).
+    // Biarkan false sampai endpoint bulk + aturan gagal-sebagian dirancang.
+    selectableRangeClearCells: false,
+    // Klik-tunggal TIDAK lagi membuka editor — hanya memindahkan sel aktif.
+    // Edit dimulai lewat dobel-klik, atau Enter (lihat handler keydown di bawah).
+    editTriggerEvent: 'dblclick',
+    // Ctrl+C saja. Ctrl+V (clipboardPasteAction) = Tahap B.
+    clipboard: 'copy',
+    clipboardCopyRowRange: 'range', // salin blok terseleksi, bukan seluruh baris.
+    clipboardCopyStyled: false,     // teks polos → tempel bersih ke Excel/Sheets.
+
+    // rowClick & rowDblClick sengaja TIDAK dipasang:
+    //  - klik-tunggal kini milik selectableRange (pindah sel aktif). Panel "Detail
+    //    Cepat" dimatikan di operator atas keputusan user 2026-07-21 (rasa Excel murni).
+    //  - dobel-klik kini milik editTriggerEvent (mulai edit).
+    // Modal Detail Dokumen pindah ke tombol toolbar #btnDetailBarisAktif (baris aktif).
   });
 
   window.operatorTable = table;
 
-  // Tombol "Detail lengkap" panel Detail Cepat memanggil window.openOwnerDocModal(id)
-  // bila terdefinisi (lihat document-workbench-ui.blade.php). Di halaman operator tak
-  // ada dasbor owner, jadi kita alias-kan ke modal detail operator agar tombol panel
-  // membuka modal yang sama dengan klik-ganda. Aditif & hanya di halaman operator.
-  if (typeof window.openOwnerDocModal !== 'function') {
-    window.openOwnerDocModal = function (id) {
-      if (typeof window.openViewDocumentModal === 'function') {
-        window.openViewDocumentModal(id);
+  // === §8 Tahap A: Enter pada sel aktif → mulai edit ===
+  // Tabulator hanya menyediakan pemicu edit lewat mouse (editTriggerEvent), jadi
+  // jalur keyboard dipasang di sini. Enter/Esc DI DALAM editor sudah ditangani
+  // masing-masing editor (numberEditor/dateEditor + editor bawaan) — karena itu
+  // handler ini mundur bila fokus sedang berada di elemen input.
+  // Fase CAPTURE agar niat §8 (Enter = mulai edit) menang atas binding keyboard
+  // bawaan Tabulator pada elemen yang sama.
+  (function wireEnterToEdit() {
+    const tableEl = document.getElementById('operatorTabulatorTable');
+    if (!tableEl) return;
+    tableEl.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+      const t = e.target;
+      if (t && t.closest && t.closest('input, textarea, select')) return; // editor terbuka.
+      const cell = activeCell();
+      if (!cell) return;
+      e.preventDefault();
+      // cell.edit() TANPA argumen → tetap menghormati gerbang `editable`
+      // (editableGate: can_edit baris + kolom bukan NON_EDITABLE_FIELDS).
+      try { cell.edit(); } catch (err) { /* sel tak dapat diedit — abaikan. */ }
+    }, true);
+  })();
+
+  // === §8 Tahap A: tombol toolbar "Detail" → modal Detail Dokumen baris aktif ===
+  // Menggantikan jalur dobel-klik lama (dobel-klik kini = mulai edit).
+  (function wireDetailButton() {
+    const detailBtn = document.getElementById('btnDetailBarisAktif');
+    if (!detailBtn) return;
+    detailBtn.addEventListener('click', function () {
+      const row = activeRow();
+      if (!row) {
+        opToast('error', 'Pilih dulu sel pada baris yang ingin dilihat.');
+        return;
       }
-    };
-  }
+      if (typeof window.openViewDocumentModal === 'function') {
+        window.openViewDocumentModal(row.getData().id);
+      }
+    });
+  })();
 
   // === Tugas 7c: Filter toolbar → Tabulator via AJAX (tanpa reload halaman) ===
   // Baca nilai kontrol toolbar tiap request (fungsi ajaxParams) & saat berubah

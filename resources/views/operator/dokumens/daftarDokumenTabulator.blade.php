@@ -57,6 +57,13 @@
             <option value="terkirim" {{ request('status_filter') == 'terkirim' ? 'selected' : '' }}>Terkirim</option>
         </select>
 
+        {{-- CLAUDE.md §8: dobel-klik kini memulai edit, jadi modal Detail Dokumen
+             pindah ke tombol ini — membuka detail untuk baris yang sel-nya aktif. --}}
+        <button type="button" class="btn btn-outline-secondary" id="btnDetailBarisAktif"
+                title="Buka detail dokumen pada baris yang sedang aktif">
+            <i class="fa-solid fa-eye me-1"></i> Detail
+        </button>
+
         <button type="button" class="btn btn-outline-secondary" onclick="openColumnCustomizationModal()">
             <i class="fa-solid fa-table-columns me-1"></i> Kustomisasi Kolom
         </button>
@@ -64,6 +71,13 @@
         <button type="button" class="btn btn-primary" id="btnTambahBarisTabulator" disabled>
             <i class="fa-solid fa-plus me-1"></i> Tambah Baris
         </button>
+
+        {{-- Petunjuk pintasan: fitur §8 seluruhnya berbasis keyboard, tanpa petunjuk
+             ini pengguna tidak punya cara menemukannya. --}}
+        <small class="text-muted ms-auto">
+            <i class="fa-regular fa-keyboard me-1"></i>
+            Panah: pindah sel &middot; Dobel-klik / Enter: edit &middot; Shift+Panah: blok &middot; Ctrl+C: salin
+        </small>
     </div>
 
     {{-- id="documentTableContainer" WAJIB: partial global document-workbench-ui bergantung padanya --}}
