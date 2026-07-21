@@ -96,3 +96,57 @@
   flex: 1 1 260px;
   min-width: 200px;
 }
+
+/* ============================================================
+ * Tugas 5 — Paritas formatter: badge status, subline nomor_agenda.
+ * Semua aturan DISKOPKAN dari daftarDokumen.blade.php:1366-1412 dan
+ * DIKUNCI di bawah #operatorTabulatorTable agar tak bocor ke halaman lain.
+ * `badge-belum-dikirim` & `badge-ditolak` mengandalkan base/inline style
+ * (paritas — tidak menciptakan warna baru).
+ * ============================================================ */
+
+/* Base badge — identik daftarDokumen.blade.php:1366-1385 */
+#operatorTabulatorTable .tabulator .badge-status {
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid transparent;
+  text-align: center;
+  min-width: 100px;
+  max-width: 250px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  white-space: normal;
+  word-wrap: break-word;
+  line-height: 1.3;
+}
+
+/* State: Terkirim — identik daftarDokumen.blade.php:1408-1412 */
+#operatorTabulatorTable .tabulator .badge-status.badge-terkirim {
+  background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+  color: white;
+  border-color: #083E40;
+}
+
+/* Sel status: izinkan tinggi mengikuti badge (badge bisa dua baris). */
+#operatorTabulatorTable .tabulator .tabulator-cell[tabulator-field="status"] {
+  white-space: normal;
+}
+
+/* Sel nomor_agenda dua baris: subline bulan/tahun tetap terbaca & tak terpotong. */
+#operatorTabulatorTable .tabulator .tabulator-cell[tabulator-field="nomor_agenda"] {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+#operatorTabulatorTable .tabulator .tabulator-cell[tabulator-field="nomor_agenda"] .text-muted {
+  display: block;
+  color: #6b7c7c;
+  font-size: 11px;
+}
