@@ -708,6 +708,17 @@
 
       window.openDocumentQuickViewFromRow = openQuickView;
       window.closeDocumentQuickView = closeQuickView;
+
+      // Jalur data-driven (aditif) — untuk baris berbasis <div> (mis. Tabulator
+      // operator) yang TIDAK bisa di-scrape sebagai <td>. Memakai renderer internal
+      // yang SAMA (renderQuickView) dengan jalur DOM lama, hanya sumber datanya objek
+      // alih-alih DOM. Bentuk `data`: { title, fields:[{label,value,wide?,money?}],
+      // ownerId?, detailLink? } — identik keluaran extractGenericRow/extractOwnerRow.
+      // Jalur DOM lama (openQuickView→selectRow+renderQuickView) tidak diubah.
+      window.openDocumentQuickViewFromData = function (data) {
+        if (!data || typeof data !== 'object') return;
+        renderQuickView(data);
+      };
     })();
   </script>
 @endonce
