@@ -7,12 +7,13 @@
  * Membaca konfigurasi dari window.OPERATOR_TABULATOR_CONFIG yang di-inject oleh
  * daftarDokumenTabulator.blade.php.
  *
- * CLAUDE.md §8 Tahap A (baca-saja) — perilaku ala spreadsheet:
- *   sel aktif + navigasi panah & auto-scroll, klik-tunggal memindahkan sel aktif,
- *   dobel-klik / Enter mulai edit (Esc batal), seleksi blok (drag, Shift+Klik,
- *   Shift+Panah), Ctrl+C salin sel & blok.
- * Tahap B BELUM dikerjakan (menulis massal ke data produksi, butuh endpoint bulk):
- *   Delete/Backspace mengosongkan sel, Ctrl+V tempel ala Excel, Ctrl+Z / Ctrl+Y.
+ * CLAUDE.md §8 — perilaku ala spreadsheet, lengkap:
+ *   Tahap A (baca): sel aktif + navigasi panah & auto-scroll, klik-tunggal
+ *     memindahkan sel aktif, dobel-klik / Enter mulai edit (Esc batal), seleksi
+ *     blok (drag, Shift+Klik, Shift+Panah), Ctrl+C salin sel & blok.
+ *   Tahap B (tulis): Delete/Backspace mengosongkan, Ctrl+V tempel ala Excel,
+ *     Ctrl+Z membatalkan, Ctrl+Y mengulangi — semuanya ikut tersimpan ke server
+ *     lewat satu jalur tulis (applyBulkEdits). Lihat blok Tahap B di bawah.
  *
  * PENTING (escaping): formatter fungsi yang mengembalikan string HTML TIDAK
  * di-escape otomatis oleh Tabulator (berbeda dari formatter teks default). Maka
@@ -335,10 +336,29 @@
     return patch;
   }
 
-  // cellEdited → PATCH inline-update. Pola fetch mengikuti _inlineEditEngine.blade.php:632-674.
+  // SATU-SATUNYA pengirim perubahan sel ke server. Dipakai jalur editor
+  // (onCellEdited) maupun jalur massal Tahap B (saveCell) — supaya aturan
+  // header/CSRF/penanganan balasan tidak pernah bercabang jadi dua versi.
+  // Pola fetch mengikuti _inlineEditEngine.blade.php:632-674.
+  function patchCell(id, field, value) {
+    return fetch(inlineUpdateUrl(id), {
+      method: 'PATCH',
+      headers: jsonHeaders(),
+      body: JSON.stringify({ field: field, value: value }),
+    })
+      .then(async function (r) {
+        const data = await r.json().catch(function () { return {}; });
+        return { ok: r.ok && data.success !== false, data: data };
+      })
+      .catch(function () { return { ok: false, data: {}, offline: true }; });
+  }
+
+  // cellEdited → simpan hasil edit lewat editor (dobel-klik / Enter).
+  // Beda dari jalur massal: editor SUDAH menuliskan nilai baru ke sel, jadi bila
+  // server menolak kita harus mengembalikannya (restoreOldValue), bukan sekadar
+  // tidak menampilkan apa-apa.
   function onCellEdited(cell) {
     const row = cell.getRow();
-    const rowData = row.getData();
     const field = cell.getColumn().getField();
     const fieldType = FIELD_TYPE[field] || 'text';
     const newValue = cell.getValue();
@@ -347,29 +367,18 @@
     // Lewati jika tak berubah (mis. beda format tapi setara).
     if (sameValue(field, fieldType, newValue, oldValue)) return;
 
-    fetch(inlineUpdateUrl(rowData.id), {
-      method: 'PATCH',
-      headers: jsonHeaders(),
-      body: JSON.stringify({ field: field, value: newValue }),
-    })
-      .then(async function (r) {
-        const data = await r.json().catch(function () { return {}; });
-        return { ok: r.ok, data: data };
-      })
-      .then(function (res) {
-        const data = res.data || {};
-        if (!res.ok || data.success === false) {
-          cell.restoreOldValue();
-          opToast('error', data.message || 'Gagal menyimpan.');
-          return;
-        }
-        // row.update() TIDAK memicu cellEdited (hanya edit-oleh-user yang memicu).
-        row.update(buildPostEditPatch(field, fieldType, data, rowData));
-      })
-      .catch(function () {
+    patchCell(row.getData().id, field, newValue).then(function (res) {
+      if (!res.ok) {
         cell.restoreOldValue();
-        opToast('error', 'Koneksi gagal. Coba lagi.');
-      });
+        opToast('error', res.offline ? 'Koneksi gagal. Coba lagi.' : (res.data.message || 'Gagal menyimpan.'));
+        return;
+      }
+      // row.update() TIDAK memicu cellEdited (hanya edit-oleh-user yang memicu).
+      row.update(buildPostEditPatch(field, fieldType, res.data, row.getData()));
+      // §8: "setiap perubahan dapat dibatalkan dengan Ctrl+Z" — edit satu sel lewat
+      // editor ikut masuk riwayat, bukan hanya operasi massal.
+      pushHistory([{ id: row.getData().id, field: field, before: oldValue, after: newValue }]);
+    });
   }
 
   // Formatter kolom tetap "Pengurus Dokumen" — render <select> dari handler_options
@@ -622,8 +631,9 @@
     // Klik header tetap milik SORT (server-side) — jangan dibajak jadi seleksi kolom.
     selectableRangeColumns: false,
     selectableRangeRows: false,
-    // Delete/Backspace mengosongkan sel = Tahap B (menulis massal ke data produksi).
-    // Biarkan false sampai endpoint bulk + aturan gagal-sebagian dirancang.
+    // TETAP false meski Tahap B sudah jalan: pengosongan bawaan Tabulator hanya
+    // mengubah TAMPILAN tanpa menyimpan ke server. Delete/Backspace ditangani
+    // sendiri di blok Tahap B agar melewati jalur simpan yang sama.
     selectableRangeClearCells: false,
     // Klik-tunggal TIDAK lagi membuka editor — hanya memindahkan sel aktif.
     // Edit dimulai lewat dobel-klik, atau Enter (lihat handler keydown di bawah).
@@ -682,6 +692,314 @@
     });
   })();
 
+  // ==========================================================================
+  // CLAUDE.md §8 Tahap B — tulisan massal: Delete, Ctrl+V, Ctrl+Z / Ctrl+Y
+  // ==========================================================================
+  //
+  // Keputusan user 2026-07-21: TANPA dialog konfirmasi (rasa spreadsheet murni).
+  // Karena tidak ada pengaman di depan, jaminan di belakang dibuat rapat:
+  //
+  //  1. SATU jalur tulis untuk semua operasi massal (applyBulkEdits) — kosongkan,
+  //     tempel, batalkan, dan ulangi semuanya lewat sini.
+  //  2. Tampilan TIDAK PERNAH mendahului server: sel baru berubah setelah PATCH
+  //     dijawab sukses, jadi sel yang gagal tak pernah sempat menampilkan nilai palsu.
+  //  3. Sel terkunci disaring di klien SEBELUM dikirim.
+  //  4. Ctrl+Z ikut menyimpan ke server (membatalkan = menulis nilai lama), bukan
+  //     sekadar mengembalikan tampilan.
+  //
+  // Semua tetap lewat PATCH inline-update yang sama dengan edit satu sel. Server
+  // menegakkan ulang otorisasinya sendiri: DokumenController.php:1014 (status yang
+  // boleh diedit operator) dan :1030 (whitelist field). Penyaringan klien di sini
+  // hanya demi pengalaman pemakai, BUKAN batas keamanan.
+
+  const MAX_PARALLEL_SAVES = 5;
+  const MAX_HISTORY = 50;
+
+  // Riwayat Ctrl+Z / Ctrl+Y. Tiap entri = satu operasi, berisi HANYA perubahan
+  // yang benar-benar tersimpan di server. Baris dicatat sebagai `id` (bukan objek
+  // RowComponent) agar tetap sah setelah filter/muat ulang mengganti objek baris.
+  const undoStack = [];
+  const redoStack = [];
+
+  function resetHistory() {
+    undoStack.length = 0;
+    redoStack.length = 0;
+  }
+  // Catat satu operasi ke riwayat. Menekan tombol baru membatalkan jalur "ulangi"
+  // yang lama — perilaku standar undo/redo.
+  function pushHistory(changes) {
+    if (!changes || changes.length === 0) return;
+    undoStack.push(changes);
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    redoStack.length = 0;
+  }
+  function resolveRow(id) {
+    try { return table.getRow(id) || null; } catch (e) { return null; }
+  }
+
+  // Jalankan daftar tugas dengan batas paralel — menahan ledakan 500 permintaan
+  // serentak saat blok besar ditempel.
+  function runWithLimit(tasks, limit) {
+    return new Promise(function (resolve) {
+      const results = [];
+      let next = 0, active = 0, finished = 0;
+      if (tasks.length === 0) { resolve(results); return; }
+      function launch() {
+        while (active < limit && next < tasks.length) {
+          const i = next++;
+          active++;
+          tasks[i]()
+            .then(function (r) { results[i] = r; }, function () { results[i] = { ok: false }; })
+            .then(function () {
+              active--; finished++;
+              if (finished === tasks.length) resolve(results);
+              else launch();
+            });
+        }
+      }
+      launch();
+    });
+  }
+
+  // Simpan SATU sel pada jalur massal. Tampilan hanya disentuh setelah server
+  // menjawab sukses — sel yang gagal tak pernah sempat menampilkan nilai palsu.
+  function saveCell(row, field, value) {
+    const fieldType = FIELD_TYPE[field] || 'text';
+    const before = row.getData()[field];
+    if (sameValue(field, fieldType, value, before)) {
+      return Promise.resolve({ ok: true, skipped: true });
+    }
+    return patchCell(row.getData().id, field, value).then(function (res) {
+      if (!res.ok) return { ok: false };
+      // row.getData() dibaca ULANG di sini (bukan salinan sebelum fetch): dua sel
+      // tanggal pada baris yang sama bisa tersimpan bersamaan, dan buildPostEditPatch
+      // menyusun ulang peta `dates` dari data baris — salinan basi akan menjatuhkan
+      // hasil sel yang lebih dulu selesai.
+      row.update(buildPostEditPatch(field, fieldType, res.data, row.getData()));
+      return { ok: true, before: before };
+    });
+  }
+
+  function reportBulkResult(label, saved, failed, skipped) {
+    const parts = [];
+    if (saved > 0) parts.push(saved + ' sel tersimpan');
+    if (failed > 0) parts.push(failed + ' gagal');
+    if (skipped > 0) parts.push(skipped + ' dilewati (terkunci)');
+    if (parts.length === 0) { opToast('success', label + ': tidak ada perubahan.'); return; }
+    opToast(failed > 0 ? 'error' : 'success', label + ': ' + parts.join(', ') + '.');
+  }
+
+  // Jalur tulis massal tunggal. edits: [{row, field, value}].
+  // options.record=false dipakai undo/redo agar tidak menumpuk riwayat baru.
+  function applyBulkEdits(edits, options) {
+    const opts = options || {};
+    const label = opts.label || 'Perubahan';
+    if (!edits || edits.length === 0) {
+      // Diam bila memang tak ada apa-apa yang dipilih (mis. Delete tanpa seleksi);
+      // hanya bersuara bila ada sel yang sengaja dilewati karena terkunci.
+      if (opts.skipped) reportBulkResult(label, 0, 0, opts.skipped);
+      return Promise.resolve([]);
+    }
+    const tasks = edits.map(function (e) {
+      return function () { return saveCell(e.row, e.field, e.value); };
+    });
+    return runWithLimit(tasks, MAX_PARALLEL_SAVES).then(function (results) {
+      const applied = [];
+      let saved = 0, failed = 0;
+      results.forEach(function (r, i) {
+        if (!r || !r.ok) { failed++; return; }
+        if (r.skipped) return;
+        saved++;
+        applied.push({
+          id: edits[i].row.getData().id,
+          field: edits[i].field,
+          before: r.before,
+          after: edits[i].value,
+        });
+      });
+      if (opts.record !== false) pushHistory(applied);
+      reportBulkResult(label, saved, failed, opts.skipped || 0);
+      return applied;
+    });
+  }
+
+  // Sel dari SELURUH range aktif yang benar-benar boleh ditulis.
+  // Kolom nomor baris & "Pengurus Dokumen" diabaikan diam-diam (bukan sel data);
+  // sel data yang terkunci dihitung sebagai `skipped` agar dilaporkan ke pemakai.
+  function selectedWritableCells() {
+    let ranges = [];
+    try { ranges = table.getRanges() || []; } catch (e) { return { cells: [], skipped: 0 }; }
+    const cells = [];
+    let skipped = 0;
+    ranges.forEach(function (range) {
+      let raw = null;
+      try { raw = range.getCells(); } catch (e) { return; }
+      if (!Array.isArray(raw)) return;
+      const flat = Array.isArray(raw[0]) ? raw.reduce(function (a, b) { return a.concat(b); }, []) : raw;
+      flat.forEach(function (cell) {
+        if (!cell) return;
+        let field = null;
+        try { field = cell.getColumn().getField(); } catch (e) { return; }
+        if (!field || field === 'handler') return;
+        if (NON_EDITABLE_FIELDS.indexOf(field) !== -1) { skipped++; return; }
+        if (!cell.getRow().getData().can_edit) { skipped++; return; }
+        cells.push(cell);
+      });
+    });
+    return { cells: cells, skipped: skipped };
+  }
+
+  function editsFromCells(cells, valueFor) {
+    return cells.map(function (cell) {
+      return {
+        row: cell.getRow(),
+        field: cell.getColumn().getField(),
+        value: valueFor(cell),
+      };
+    });
+  }
+
+  // Delete / Backspace → kosongkan sel terpilih tanpa masuk mode edit.
+  function clearSelection() {
+    const sel = selectedWritableCells();
+    applyBulkEdits(
+      editsFromCells(sel.cells, function () { return ''; }),
+      { skipped: sel.skipped, label: 'Kosongkan' }
+    );
+  }
+
+  // --- Tempel ala spreadsheet ---
+
+  // TAB memisah kolom, baris baru memisah baris (format clipboard Excel/Sheets).
+  function parseClipboardMatrix(text) {
+    const lines = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    while (lines.length > 1 && lines[lines.length - 1] === '') lines.pop(); // buang newline penutup.
+    return lines.map(function (line) { return line.split('\t'); });
+  }
+
+  // Kolom ber-field dalam urutan tampil. "Pengurus Dokumen" IKUT dihitung agar
+  // keselarasan kolom tetap benar saat hasil Ctrl+C dari tabel ini ditempel balik —
+  // posisinya dikonsumsi, isinya tidak ditulis.
+  function gridColumns() {
+    let cols = [];
+    try { cols = table.getColumns() || []; } catch (e) { return []; }
+    return cols.filter(function (c) {
+      try { return !!c.getField(); } catch (e) { return false; }
+    });
+  }
+
+  function pasteMatrix(matrix) {
+    const origin = activeCell();
+    if (!origin) return;
+
+    // Aturan Excel: satu nilai ditempel ke blok → isi seluruh blok dengan nilai itu.
+    if (matrix.length === 1 && matrix[0].length === 1) {
+      const sel = selectedWritableCells();
+      if (sel.cells.length > 1) {
+        const value = matrix[0][0];
+        applyBulkEdits(
+          editsFromCells(sel.cells, function () { return value; }),
+          { skipped: sel.skipped, label: 'Tempel' }
+        );
+        return;
+      }
+    }
+
+    let rows = [];
+    try { rows = table.getRows() || []; } catch (e) { return; }
+    const cols = gridColumns();
+    const originId = origin.getRow().getData().id;
+    const originField = origin.getColumn().getField();
+    const r0 = rows.findIndex(function (r) { return r.getData().id === originId; });
+    const c0 = cols.findIndex(function (c) { return c.getField() === originField; });
+    if (r0 < 0 || c0 < 0) return;
+
+    const edits = [];
+    let skipped = 0;
+    for (let i = 0; i < matrix.length; i++) {
+      const row = rows[r0 + i];
+      if (!row) break; // melewati baris terakhir yang termuat — tempel dipotong, baris tidak dibuat.
+      const rowEditable = !!row.getData().can_edit;
+      for (let j = 0; j < matrix[i].length; j++) {
+        const col = cols[c0 + j];
+        if (!col) break; // melewati kolom terakhir.
+        const field = col.getField();
+        if (field === 'handler' || NON_EDITABLE_FIELDS.indexOf(field) !== -1 || !rowEditable) {
+          skipped++; // posisi tetap dikonsumsi supaya kolom berikutnya tidak bergeser.
+          continue;
+        }
+        edits.push({ row: row, field: field, value: matrix[i][j] });
+      }
+    }
+    applyBulkEdits(edits, { skipped: skipped, label: 'Tempel' });
+  }
+
+  // --- Batalkan / Ulangi (keduanya menulis ke server, bukan sekadar tampilan) ---
+
+  function replayHistory(entry, pick, label, onDone) {
+    const edits = entry.map(function (c) {
+      const row = resolveRow(c.id);
+      return row ? { row: row, field: c.field, value: pick(c) } : null;
+    }).filter(Boolean);
+    if (edits.length === 0) {
+      opToast('error', label + ': baris terkait sudah tidak ada di tabel.');
+      return;
+    }
+    applyBulkEdits(edits, { record: false, label: label }).then(function (applied) {
+      if (applied && applied.length > 0) onDone();
+    });
+  }
+
+  function undoLast() {
+    const entry = undoStack.pop();
+    if (!entry) { opToast('error', 'Tidak ada perubahan untuk dibatalkan.'); return; }
+    replayHistory(entry, function (c) { return c.before; }, 'Batalkan', function () {
+      redoStack.push(entry);
+      if (redoStack.length > MAX_HISTORY) redoStack.shift();
+    });
+  }
+
+  function redoLast() {
+    const entry = redoStack.pop();
+    if (!entry) { opToast('error', 'Tidak ada perubahan untuk diulang.'); return; }
+    replayHistory(entry, function (c) { return c.after; }, 'Ulangi', function () {
+      undoStack.push(entry);
+      if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    });
+  }
+
+  // --- Pemasangan pintasan ---
+
+  (function wireBulkKeys() {
+    const tableEl = document.getElementById('operatorTabulatorTable');
+    if (!tableEl) return;
+    tableEl.addEventListener('keydown', function (e) {
+      const t = e.target;
+      if (t && t.closest && t.closest('input, textarea, select')) return; // editor terbuka.
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (ctrl && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); undoLast(); return; }
+      if (ctrl && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); redoLast(); return; }
+      if (!ctrl && (e.key === 'Delete' || e.key === 'Backspace')) { e.preventDefault(); clearSelection(); }
+    }, true);
+  })();
+
+  (function wirePaste() {
+    const container = document.getElementById('operatorTabulatorTable');
+    if (!container) return;
+    document.addEventListener('paste', function (e) {
+      const t = e.target;
+      if (t && t.closest && t.closest('input, textarea, select')) return; // editor / kotak cari.
+      // Hanya tangani bila fokus memang di dalam tabel DAN ada sel aktif.
+      if (!container.contains(t) && !container.contains(document.activeElement)) return;
+      if (!activeCell()) return;
+      const cb = e.clipboardData || window.clipboardData;
+      const text = cb ? cb.getData('text/plain') : '';
+      if (!text) return;
+      e.preventDefault();
+      pasteMatrix(parseClipboardMatrix(text));
+    });
+  })();
+
   // === Tugas 7c: Filter toolbar → Tabulator via AJAX (tanpa reload halaman) ===
   // Baca nilai kontrol toolbar tiap request (fungsi ajaxParams) & saat berubah
   // panggil replaceData() (muat ulang dari halaman 1 dgn param terkini).
@@ -716,7 +1034,9 @@
     const searchEl = toolbarEl('input[name="search"]');
     const yearEl = toolbarEl('select[name="year"]');
     const statusEl = toolbarEl('select[name="status_filter"]');
-    function reload() { clearLoadError(); table.replaceData(); }
+    // resetHistory: setelah filter berubah, isi tabel berganti — nilai "sebelum"
+    // di riwayat Ctrl+Z tak lagi mencerminkan keadaan server, jadi jangan disimpan.
+    function reload() { clearLoadError(); resetHistory(); table.replaceData(); }
     if (searchEl) {
       searchEl.removeAttribute('disabled');
       let deb = null;
@@ -858,6 +1178,8 @@
         }
         opToast('success', data.message || 'Pengurus dokumen berhasil diubah.');
         // Muat ulang data via ajax agar dokumen yang berpindah pengurus tercermin.
+        // Riwayat Ctrl+Z dibuang: hak edit baris bisa berubah setelah ganti pengurus.
+        resetHistory();
         table.replaceData();
       })
       .catch(function () {
