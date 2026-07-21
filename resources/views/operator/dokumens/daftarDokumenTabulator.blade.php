@@ -3,8 +3,9 @@
 @section('content')
 {{--
   View Tabulator (pilot) untuk Daftar Dokumen Operator.
-  Skeleton Tugas 4: toolbar filter masih INERT (disambung ke Tabulator di Tugas 7),
-  tabel di-mount oleh public/js/operator-tabulator.js membaca window.OPERATOR_TABULATOR_CONFIG.
+  Toolbar filter (search/year/status_filter) tersambung ke Tabulator via AJAX (Tugas 7c)
+  dan diinisialisasi dari request() agar bertahan lepas reload kustomisasi kolom.
+  Tabel di-mount oleh public/js/operator-tabulator.js membaca window.OPERATOR_TABULATOR_CONFIG.
 --}}
 @php
     // Peta kolom terpilih menjadi {key,label} untuk definisi kolom Tabulator.
@@ -40,7 +41,7 @@
     {{-- Opsi tahun & status disalin dari daftarDokumen.blade.php:2134-2180. --}}
     <div class="tabulator-toolbar">
         <input type="text" name="search" class="form-control tabulator-toolbar-search"
-               placeholder="Cari dokumen..." autocomplete="off">
+               placeholder="Cari dokumen..." autocomplete="off" value="{{ request('search') }}">
 
         <select name="year" class="form-select" style="max-width: 140px;">
             <option value="">Semua Tahun</option>
@@ -51,9 +52,9 @@
 
         <select name="status_filter" class="form-select" style="max-width: 260px;">
             <option value="">Semua Status</option>
-            <option value="belum_dikirim">Belum Dikirim</option>
-            <option value="menunggu_approval">Menunggu Approve Team Verifikasi</option>
-            <option value="terkirim">Terkirim</option>
+            <option value="belum_dikirim" {{ request('status_filter') == 'belum_dikirim' ? 'selected' : '' }}>Belum Dikirim</option>
+            <option value="menunggu_approval" {{ request('status_filter') == 'menunggu_approval' ? 'selected' : '' }}>Menunggu Approve Team Verifikasi</option>
+            <option value="terkirim" {{ request('status_filter') == 'terkirim' ? 'selected' : '' }}>Terkirim</option>
         </select>
 
         <button type="button" class="btn btn-outline-secondary" onclick="openColumnCustomizationModal()">
@@ -500,7 +501,7 @@
     function openViewDocumentModal(docId) {
         document.getElementById('view-dokumen-id').value = docId;
 
-        fetch(`/documents/${docId}/detail`, {
+        fetch(window.OPERATOR_TABULATOR_CONFIG.detailTpl.replace('{id}', docId), {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
             .then(response => {
@@ -642,7 +643,7 @@
         confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menghapus...';
         confirmBtn.disabled = true;
         const form = document.getElementById('deleteDocumentForm');
-        form.action = `/documents/${documentIdToDelete}`;
+        form.action = window.OPERATOR_TABULATOR_CONFIG.destroyTpl.replace('{id}', documentIdToDelete);
         form.submit();
     }
 
@@ -780,8 +781,28 @@
         enableInput.name = 'enable_customization';
         enableInput.value = '1';
         filterForm.appendChild(enableInput);
+        appendActiveFilterInputs(filterForm); // Fix: bawa filter toolbar aktif agar tak hilang saat reload GET.
         closeColumnCustomizationModal();
         filterForm.submit(); // GET → documents.index (tanpa ?classic) → reload view Tabulator dgn kolom baru.
+    }
+
+    // Salin nilai kontrol toolbar (search/year/status_filter) TERKINI ke #filterForm
+    // sebagai hidden input SEBELUM submit, agar reload GET documents.index membawa
+    // filter yang sedang aktif alih-alih kembali ke tabel tak terfilter.
+    function appendActiveFilterInputs(filterForm) {
+        filterForm.querySelectorAll('input[name="search"], input[name="year"], input[name="status_filter"]').forEach(input => input.remove());
+        const searchEl = document.querySelector('.tabulator-toolbar input[name="search"]');
+        const yearEl = document.querySelector('.tabulator-toolbar select[name="year"]');
+        const statusEl = document.querySelector('.tabulator-toolbar select[name="status_filter"]');
+        [['search', searchEl], ['year', yearEl], ['status_filter', statusEl]].forEach(([name, el]) => {
+            if (el && el.value) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = name;
+                hiddenInput.value = el.value;
+                filterForm.appendChild(hiddenInput);
+            }
+        });
     }
     function initializeModalState() {
         document.querySelectorAll('.column-item').forEach(item => {
