@@ -587,6 +587,22 @@
     }
   }
 
+  // Resolusi label pengurus dokumen dari handler_options (bentuk sama dgn formatter
+  // kolom "Pengurus Dokumen" baris 368-376): array datar + satu entri optgroup
+  // {optgroup, options:[{value,label}]} untuk grup "Bagian". Cocokkan d.handler.
+  function resolveHandlerLabel(d) {
+    const opts = d.handler_options || [];
+    for (const o of opts) {
+      if (o && Array.isArray(o.options)) {           // optgroup entry
+        const m = o.options.find(x => x.value === d.handler);
+        if (m) return m.label;
+      } else if (o && o.value === d.handler) {
+        return o.label;
+      }
+    }
+    return d.handler || '-';
+  }
+
   // Bangun objek data untuk openDocumentQuickViewFromData dari row.getData().
   // Bentuk identik keluaran extractGenericRow: { title, fields[], ownerId, detailLink }.
   // Urutan field mengikuti CFG.columns (urutan kolom terpilih user). Kosong/'-'
@@ -595,6 +611,13 @@
     const fields = (CFG.columns || []).map(function (c) {
       return { label: c.label, value: quickViewValue(c.key, d) };
     }).filter(function (f) { return f.value && f.value !== '-'; });
+    // Tugas: kolom "Pengurus Dokumen" ditambah terpisah dari CFG.columns (lihat
+    // baris 368), jadi tak ikut ter-mapping di atas — tambahkan manual di akhir,
+    // pakai gerbang filter yang sama (skip bila kosong/'-').
+    const handlerLabel = resolveHandlerLabel(d);
+    if (handlerLabel && handlerLabel !== '-') {
+      fields.push({ label: 'Pengurus Dokumen', value: handlerLabel });
+    }
     return {
       title: d.nomor_agenda || 'Dokumen',
       fields: fields,
