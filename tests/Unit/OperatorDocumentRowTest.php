@@ -279,4 +279,57 @@ class OperatorDocumentRowTest extends TestCase
 
         $this->assertSame($handlerOptions, $row['handler_options']);
     }
+
+    public function test_link_disanitasi_safeurl(): void
+    {
+        $dokumen = $this->buatDokumen([
+            'link'               => 'javascript:alert(1)',
+            'link_dokumen_pajak' => 'https://pajak.example.com/doc',
+        ]);
+
+        $row = $this->baris($dokumen);
+
+        // Skema berbahaya dinetralkan: SafeUrl memaksa prefix https:// sehingga
+        // hasil BUKAN skema 'javascript:' mentah lagi.
+        $this->assertStringStartsNotWith('javascript:', $row['link_safe']);
+        $this->assertStringStartsWith('https://', $row['link_safe']);
+        // URL https normal lolos apa adanya.
+        $this->assertSame('https://pajak.example.com/doc', $row['link_dokumen_pajak_safe']);
+    }
+
+    public function test_link_safe_null_saat_kosong(): void
+    {
+        $dokumen = $this->buatDokumen([
+            'link'               => '',
+            'link_dokumen_pajak' => null,
+        ]);
+
+        $row = $this->baris($dokumen);
+
+        $this->assertNull($row['link_safe']);
+        $this->assertNull($row['link_dokumen_pajak_safe']);
+    }
+
+    public function test_dates_terformat_sesuai_peta(): void
+    {
+        $dokumen = $this->buatDokumen([
+            'tanggal_spp'   => '2026-07-01',           // cast date  → d-m-Y
+            'tanggal_masuk' => '2026-07-01 09:30:00',  // cast datetime → d-m-Y H:i
+        ]);
+
+        $row = $this->baris($dokumen);
+
+        $this->assertSame('01-07-2026', $row['dates']['tanggal_spp']);
+        $this->assertSame('01-07-2026 09:30', $row['dates']['tanggal_masuk']);
+    }
+
+    public function test_dates_null_jadi_strip(): void
+    {
+        // tanggal_faktur tidak di-set → harus '-'.
+        $dokumen = $this->buatDokumen();
+
+        $row = $this->baris($dokumen);
+
+        $this->assertSame('-', $row['dates']['tanggal_faktur']);
+    }
 }

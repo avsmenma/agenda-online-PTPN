@@ -113,6 +113,74 @@ class OperatorDocumentRow
         $row['handler']            = $dokumen->current_handler;
         $row['handler_options']    = $handlerOptions;
 
+        // === URL link ter-sanitasi (identik render lama :231,238) ===
+        // SafeUrl::external mengembalikan null bila kosong/tak ada, dan SELALU
+        // memaksa skema http(s) untuk menetralkan javascript:/data:/dll. Klien
+        // cukup memasang atribut href tanpa sanitasi ulang.
+        $row['link_safe']              = SafeUrl::external($dokumen->link);
+        $row['link_dokumen_pajak_safe'] = SafeUrl::external($dokumen->link_dokumen_pajak);
+
+        // === Tanggal terformat sisi-server (peta format identik _tableRowsAjax) ===
+        // Null/kosong → '-'. Kolom yang ada di $casts model = Carbon (format
+        // langsung); kolom string mentah di-parse defensif dengan fallback '-'.
+        $row['dates'] = self::formatDates($dokumen);
+
         return $row;
+    }
+
+    /**
+     * Peta kolom tanggal → string terformat, mengikuti PERSIS format render lama
+     * di `_tableRowsAjax.blade.php`. Null/kosong → '-'.
+     *
+     * Kolom yang tercantum di `$casts` model Dokumen (date/datetime) sudah berupa
+     * Carbon sehingga cukup `->format()`. Dua kolom `tanggal_kembali_ke_bagian`
+     * dan `tanggal_hasil_koreksi_bagian` BUKAN cast (string mentah) → di-parse
+     * defensif via Carbon::parse dalam try/catch, gagal → '-'.
+     */
+    private static function formatDates(Dokumen $dokumen): array
+    {
+        $formats = [
+            // d-m-Y
+            'tanggal_spp'                      => 'd-m-Y',
+            'tanggal_berita_acara'             => 'd-m-Y',
+            'tanggal_spk'                      => 'd-m-Y',
+            'tanggal_berakhir_spk'             => 'd-m-Y',
+            // d-m-Y H:i
+            'tanggal_masuk'                    => 'd-m-Y H:i',
+            // d/m/Y H:i
+            'tanggal_paraf'                    => 'd/m/Y H:i',
+            'tanggal_selesai_diproses'         => 'd/m/Y H:i',
+            'tanggal_kembali_ke_bagian'        => 'd/m/Y H:i',
+            'tanggal_hasil_koreksi_bagian'     => 'd/m/Y H:i',
+            // d/m/Y
+            'tanggal_dibayar'                  => 'd/m/Y',
+            'tanggal_faktur'                   => 'd/m/Y',
+            'tanggal_selesai_verifikasi_pajak' => 'd/m/Y',
+        ];
+
+        $dates = [];
+        foreach ($formats as $col => $format) {
+            $value = $dokumen->{$col} ?? null;
+
+            if ($value === null || $value === '') {
+                $dates[$col] = '-';
+                continue;
+            }
+
+            // Kolom cast (Carbon/DateTime) — format langsung.
+            if ($value instanceof \DateTimeInterface) {
+                $dates[$col] = $value->format($format);
+                continue;
+            }
+
+            // Kolom string mentah (tak di-cast) — parse defensif.
+            try {
+                $dates[$col] = \Illuminate\Support\Carbon::parse($value)->format($format);
+            } catch (\Throwable $e) {
+                $dates[$col] = '-';
+            }
+        }
+
+        return $dates;
     }
 }
