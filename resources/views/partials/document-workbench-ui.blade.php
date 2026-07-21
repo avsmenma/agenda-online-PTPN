@@ -716,7 +716,7 @@
       // ownerId?, detailLink? } — identik keluaran extractGenericRow/extractOwnerRow.
       // Jalur DOM lama (openQuickView→selectRow+renderQuickView) tidak diubah.
       window.openDocumentQuickViewFromData = function (data) {
-        if (!data || typeof data !== 'object') return;
+        if (!data || typeof data !== 'object' || !Array.isArray(data.fields)) return;
         renderQuickView(data);
       };
     })();
