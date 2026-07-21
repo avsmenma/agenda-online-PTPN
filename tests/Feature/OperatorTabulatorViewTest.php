@@ -47,6 +47,8 @@ class OperatorTabulatorViewTest extends TestCase
         $response->assertOk();
         $response->assertSee('operatorTabulatorTable', false);
         $response->assertSee('vendor/tabulator/tabulator.min.js', false);
+        $response->assertSee('bulanList', false);
+        $response->assertSee('bagian', false);
     }
 
     public function test_flag_classic_menyajikan_view_lama(): void

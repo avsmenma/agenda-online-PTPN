@@ -29,7 +29,9 @@
             'sub'      => $ieSubKriteriaList ?? [],
             'item'     => $ieItemSubKriteriaList ?? [],
             'jenis'    => $ieJenisPembayaranList ?? [],
+            'bagian'   => \App\Models\Bagian::active()->ordered()->get(['kode', 'nama']),
         ],
+        'bulanList'        => ['Januari', 'Februari', 'Maret', 'April', 'May', 'Juni', 'July', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
     ];
 @endphp
 
