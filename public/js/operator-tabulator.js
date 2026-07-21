@@ -409,7 +409,8 @@
 
   // _tableRowsAjax.blade.php:134-150 — badge status dari display_status.variant.
   function fmtStatus(cell) {
-    const ds = cell.getRow().getData().display_status || {};
+    const d = cell.getRow().getData();
+    const ds = d.display_status || {};
     const variant = ds.variant;
 
     if (variant === 'draft') {
@@ -418,7 +419,12 @@
     }
     if (variant === 'ditolak_verifikasi' || variant === 'dikembalikan') {
       const label = variant === 'dikembalikan' ? 'Dikembalikan' : 'Dokumen Ditolak';
-      return '<span class="badge-status badge-ditolak" style="background:linear-gradient(135deg,#dc3545,#b02a37);color:white;">' +
+      // Tugas 7e: badge penolakan/dikembalikan dapat diklik → modal alasan global.
+      // stopPropagation agar klik tak memicu seleksi/detail baris.
+      return '<span class="badge-status badge-ditolak op-reject-badge" ' +
+        'style="background:linear-gradient(135deg,#dc3545,#b02a37);color:white;cursor:pointer;" ' +
+        'title="Klik untuk lihat alasan penolakan" ' +
+        'onclick="event.stopPropagation();window.openOperatorRejectReason(' + esc(d.id) + ')">' +
         '<i class="fa-solid fa-rotate-left me-1"></i><span>' + label + '</span></span>';
     }
     if (variant === 'menunggu_approval_verifikasi') {
@@ -549,6 +555,9 @@
 
   const table = new Tabulator('#operatorTabulatorTable', {
     ajaxURL: CFG.dataUrl,
+    // Tugas 7c: parameter filter aktif (search/year/status_filter) dibaca live dari
+    // toolbar tiap request — cocok nama dgn buildOperatorQuery. Fungsi hoisted.
+    ajaxParams: getFilterParams,
     // Progressive load (scroll): Tabulator membaca `last_page` & `data` dari respons
     // endpoint /documents/data ({last_page,total,data}) — nama field default cocok.
     progressiveLoad: 'scroll',
@@ -561,9 +570,103 @@
     columns: buildColumns(CFG),
     placeholder: 'Tidak ada dokumen.',
     cellEdited: onCellEdited, // Tugas 6: commit inline-update saat sel diedit.
+    // Tugas 7a: klik-ganda baris → modal Detail Dokumen (fungsi global view baru).
+    rowDblClick: function (e, row) {
+      if (typeof window.openViewDocumentModal === 'function') {
+        window.openViewDocumentModal(row.getData().id);
+      }
+    },
   });
 
   window.operatorTable = table;
+
+  // === Tugas 7c: Filter toolbar → Tabulator via AJAX (tanpa reload halaman) ===
+  // Baca nilai kontrol toolbar tiap request (fungsi ajaxParams) & saat berubah
+  // panggil replaceData() (muat ulang dari halaman 1 dgn param terkini).
+  function toolbarEl(selector) {
+    return document.querySelector('.tabulator-toolbar ' + selector);
+  }
+  function getFilterParams() {
+    const s = toolbarEl('input[name="search"]');
+    const y = toolbarEl('select[name="year"]');
+    const st = toolbarEl('select[name="status_filter"]');
+    return {
+      search: s ? s.value : '',
+      year: y ? y.value : '',
+      status_filter: st ? st.value : '',
+    };
+  }
+  (function wireFilters() {
+    const searchEl = toolbarEl('input[name="search"]');
+    const yearEl = toolbarEl('select[name="year"]');
+    const statusEl = toolbarEl('select[name="status_filter"]');
+    function reload() { clearLoadError(); table.replaceData(); }
+    if (searchEl) {
+      searchEl.removeAttribute('disabled');
+      let deb = null;
+      searchEl.addEventListener('input', function () {
+        clearTimeout(deb);
+        deb = setTimeout(reload, 300); // debounce 300ms.
+      });
+    }
+    if (yearEl) { yearEl.removeAttribute('disabled'); yearEl.addEventListener('change', reload); }
+    if (statusEl) { statusEl.removeAttribute('disabled'); statusEl.addEventListener('change', reload); }
+  })();
+
+  // === Tugas 7f: Penanganan gagal muat data + tombol "Coba lagi" ===
+  function clearLoadError() {
+    const ex = document.getElementById('opLoadError');
+    if (ex) ex.remove();
+  }
+  function showLoadError() {
+    clearLoadError();
+    const container = document.getElementById('documentTableContainer');
+    if (!container) return;
+    const box = document.createElement('div');
+    box.id = 'opLoadError';
+    box.style.cssText = 'padding:14px 18px;margin-bottom:12px;background:#fff3cd;' +
+      'border:1px solid #ffc107;border-radius:10px;display:flex;align-items:center;' +
+      'justify-content:space-between;gap:12px;';
+    const msg = document.createElement('span');
+    msg.style.cssText = 'color:#856404;font-weight:600;';
+    msg.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-2"></i>Gagal memuat data.';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-sm btn-warning';
+    btn.innerHTML = '<i class="fa-solid fa-rotate-right me-1"></i>Coba lagi';
+    btn.addEventListener('click', function () {
+      clearLoadError();
+      table.setData(CFG.dataUrl, getFilterParams());
+    });
+    box.appendChild(msg);
+    box.appendChild(btn);
+    container.insertBefore(box, container.firstChild);
+  }
+  table.on('dataLoadError', function () { showLoadError(); });
+  table.on('dataLoaded', function () { clearLoadError(); });
+
+  // === Tugas 7e: Modal alasan penolakan global (dipicu klik badge status). ===
+  // Baca data baris via index id; isi field modal (Bootstrap) lalu tampilkan.
+  window.openOperatorRejectReason = function (id) {
+    let rowObj = null;
+    try { rowObj = table.getRow(id); } catch (e) { rowObj = null; }
+    if (!rowObj) return;
+    const d = rowObj.getData();
+    const reason = (d.reject_reason !== null && d.reject_reason !== undefined && String(d.reject_reason).trim() !== '')
+      ? d.reject_reason : 'Tidak ada alasan yang dicatat';
+    const by = (d.rejected_by !== null && d.rejected_by !== undefined && String(d.rejected_by).trim() !== '') ? d.rejected_by : '-';
+    const at = (d.rejected_at !== null && d.rejected_at !== undefined && String(d.rejected_at).trim() !== '') ? d.rejected_at : '-';
+    const elText = document.getElementById('reject-reason-text');
+    const elBy = document.getElementById('reject-reason-by');
+    const elAt = document.getElementById('reject-reason-at');
+    if (elText) elText.textContent = reason; // textContent = auto-escape.
+    if (elBy) elBy.textContent = by;
+    if (elAt) elAt.textContent = at;
+    const modalEl = document.getElementById('rejectReasonModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+      new bootstrap.Modal(modalEl).show();
+    }
+  };
 
   // === Tambah Baris (inline create) ===
   // Aktifkan tombol toolbar yang di-skeleton ditandai `disabled`, lalu wire klik.
