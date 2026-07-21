@@ -310,7 +310,9 @@ class DokumenController extends Controller
             "ieJenisPembayaranList" => $ieJenisPembayaranList,
         );
 
-        return view('operator.dokumens.daftarDokumen', $data);
+        $useClassic = $request->boolean('classic');
+        $view = $useClassic ? 'operator.dokumens.daftarDokumen' : 'operator.dokumens.daftarDokumenTabulator';
+        return view($view, $data);
     }
 
 
