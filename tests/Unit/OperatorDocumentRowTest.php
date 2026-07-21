@@ -332,4 +332,64 @@ class OperatorDocumentRowTest extends TestCase
 
         $this->assertSame('-', $row['dates']['tanggal_faktur']);
     }
+
+    public function test_dates_format_d_m_y_h_i_dan_d_m_y(): void
+    {
+        $dokumen = $this->buatDokumen([
+            'tanggal_paraf'   => '2026-07-10 08:15:00', // cast datetime → d/m/Y H:i
+            'tanggal_dibayar' => '2026-07-15',           // cast date     → d/m/Y
+        ]);
+
+        $row = $this->baris($dokumen);
+
+        $this->assertSame('10/07/2026 08:15', $row['dates']['tanggal_paraf']);
+        $this->assertSame('15/07/2026', $row['dates']['tanggal_dibayar']);
+    }
+
+    public function test_dates_kolom_non_cast_diparse_defensif(): void
+    {
+        // tanggal_kembali_ke_bagian BUKAN kolom DB (tak ada di $fillable/$casts
+        // model Dokumen) — di-set langsung ke atribut in-memory (bukan mass
+        // assignment) untuk menguji jalur parse defensif OperatorDocumentRow.
+        $dokumen = $this->buatDokumen();
+        $dokumen->tanggal_kembali_ke_bagian = '2026-07-05 14:00:00';
+
+        $row = $this->baris($dokumen);
+
+        $this->assertSame('05/07/2026 14:00', $row['dates']['tanggal_kembali_ke_bagian']);
+    }
+
+    public function test_dates_kolom_non_cast_tak_terparse_jadi_strip(): void
+    {
+        // Nilai mentah yang tidak bisa di-parse Carbon → fallback '-'.
+        $dokumen = $this->buatDokumen();
+        $dokumen->tanggal_kembali_ke_bagian = 'bukan-tanggal-valid';
+
+        $row = $this->baris($dokumen);
+
+        $this->assertSame('-', $row['dates']['tanggal_kembali_ke_bagian']);
+    }
+
+    public function test_status_dokumen_custom_fallback_ke_csv(): void
+    {
+        // status_dokumen_csv (kolom CSV real) diutamakan atas status_dokumen_custom.
+        $dokumen = $this->buatDokumen(['status_dokumen_csv' => 'Selesai Dibayar']);
+
+        $row = $this->baris($dokumen);
+
+        $this->assertSame('Selesai Dibayar', $row['status_dokumen_custom']);
+    }
+
+    public function test_status_dokumen_custom_dipakai_saat_csv_kosong(): void
+    {
+        // status_dokumen_custom BUKAN kolom fillable/DB nyata — di-set langsung
+        // ke atribut in-memory (bukan mass assignment), sama seperti kolom
+        // tanggal non-cast di atas.
+        $dokumen = $this->buatDokumen();
+        $dokumen->status_dokumen_custom = 'Dikembalikan';
+
+        $row = $this->baris($dokumen);
+
+        $this->assertSame('Dikembalikan', $row['status_dokumen_custom']);
+    }
 }

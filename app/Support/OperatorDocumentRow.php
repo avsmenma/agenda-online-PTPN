@@ -92,6 +92,11 @@ class OperatorDocumentRow
             $row[$key] = $dokumen->{$key};
         }
 
+        // Status dokumen: utamakan nilai CSV bila ada, fallback ke custom
+        // (identik _tableRowsAjax.blade.php:203-204: status_dokumen_csv ?? status_dokumen_custom ?? '-').
+        // Kosong/null tetap null/kosong di sini — klien yang merender '-'.
+        $row['status_dokumen_custom'] = $dokumen->status_dokumen_csv ?? $dokumen->status_dokumen_custom;
+
         // === Kunci turunan tampilan (override sebagian kolom base bila perlu) ===
         $row['display_status']          = ['code' => $code, 'label' => $label, 'variant' => $code];
         $row['nilai_rupiah_formatted']  = $dokumen->formatted_nilai_rupiah;
