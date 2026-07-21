@@ -374,12 +374,17 @@
     const opts = d.handler_options;
     if (!Array.isArray(opts) || opts.length === 0) return '-';
     const current = (d.handler === null || d.handler === undefined) ? '' : String(d.handler);
+    const canChange = !!d.can_change_handler;
     function optionHtml(o) {
       const val = (o.value === null || o.value === undefined) ? '' : String(o.value);
       return '<option value="' + esc(val) + '"' + (val === current ? ' selected' : '') + '>' + esc(o.label) + '</option>';
     }
+    // Paritas document-handler-select.blade.php:53 — disabled kecuali viewer
+    // adalah pengurus dokumen saat ini (dan tak ada status pending).
     let html = '<select class="op-handler-select" data-document-id="' + esc(d.id) +
-      '" data-prev="' + esc(current) + '" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">';
+      '" data-prev="' + esc(current) + '"' + (canChange ? '' : ' disabled') +
+      ' title="' + (canChange ? 'Ubah pengurus dokumen' : 'Hanya pengurus dokumen saat ini yang dapat mengubah') + '"' +
+      ' onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">';
     opts.forEach(function (opt) {
       if (opt && opt.optgroup) {
         html += '<optgroup label="' + esc(opt.optgroup) + '">';
@@ -605,6 +610,9 @@
     const sel = (e.target && e.target.closest) ? e.target.closest('.op-handler-select') : null;
     if (!sel) return;
     e.stopPropagation();
+    // Guard tambahan: select disabled tak seharusnya memicu change, tapi jaga
+    // agar aman bila DOM dimanipulasi di luar jalur normal (paritas gate server).
+    if (sel.disabled) return;
     const id = sel.getAttribute('data-document-id');
     const prev = sel.getAttribute('data-prev') || '';
     const next = sel.value;
