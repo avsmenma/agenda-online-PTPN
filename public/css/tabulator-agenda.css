@@ -6,7 +6,7 @@
  */
 
 /* ------- Wadah tabel ------- */
-#operatorTabulatorTable .tabulator {
+#operatorTabulatorTable.tabulator {
   background-color: #ffffff;
   border: 1px solid #e2e8e8;
   border-radius: 8px;
@@ -15,20 +15,20 @@
 }
 
 /* ------- Header kolom ------- */
-#operatorTabulatorTable .tabulator .tabulator-header {
+#operatorTabulatorTable.tabulator .tabulator-header {
   background-color: #083E40;
   border-bottom: 2px solid #062f31;
   color: #ffffff;
   font-weight: 600;
 }
 
-#operatorTabulatorTable .tabulator .tabulator-header .tabulator-col {
+#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col {
   background-color: #083E40;
   border-right: 1px solid rgba(255, 255, 255, 0.12);
   color: #ffffff;
 }
 
-#operatorTabulatorTable .tabulator .tabulator-header .tabulator-col .tabulator-col-title {
+#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col .tabulator-col-title {
   color: #ffffff;
   font-weight: 600;
   padding: 6px 8px;
@@ -36,43 +36,43 @@
 }
 
 /* Panah sort agar kontras di atas latar teal */
-#operatorTabulatorTable .tabulator .tabulator-header .tabulator-col .tabulator-col-sorter .tabulator-arrow {
+#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col .tabulator-col-sorter .tabulator-arrow {
   border-bottom-color: rgba(255, 255, 255, 0.85);
   border-top-color: rgba(255, 255, 255, 0.85);
 }
 
 /* ------- Baris ------- */
-#operatorTabulatorTable .tabulator .tabulator-row {
+#operatorTabulatorTable.tabulator .tabulator-row {
   min-height: 38px;
   border-bottom: 1px solid #eef2f2;
 }
 
-#operatorTabulatorTable .tabulator .tabulator-row.tabulator-row-even {
+#operatorTabulatorTable.tabulator .tabulator-row.tabulator-row-even {
   background-color: #fafcfc;
 }
 
-#operatorTabulatorTable .tabulator .tabulator-row:hover {
+#operatorTabulatorTable.tabulator .tabulator-row:hover {
   background-color: #eef6f5;
 }
 
-#operatorTabulatorTable .tabulator .tabulator-row .tabulator-cell {
+#operatorTabulatorTable.tabulator .tabulator-row .tabulator-cell {
   padding: 8px;
   border-right: 1px solid #f0f4f4;
   vertical-align: middle;
 }
 
 /* ------- Kolom beku (frozen) — bayangan pemisah ------- */
-#operatorTabulatorTable .tabulator .tabulator-row .tabulator-cell.tabulator-frozen,
-#operatorTabulatorTable .tabulator .tabulator-header .tabulator-col.tabulator-frozen {
+#operatorTabulatorTable.tabulator .tabulator-row .tabulator-cell.tabulator-frozen,
+#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col.tabulator-frozen {
   box-shadow: 2px 0 4px rgba(8, 62, 64, 0.12);
 }
 
-#operatorTabulatorTable .tabulator .tabulator-frozen.tabulator-frozen-left {
+#operatorTabulatorTable.tabulator .tabulator-frozen.tabulator-frozen-left {
   border-right: 1px solid #d9e2e2;
 }
 
 /* ------- Placeholder kosong ------- */
-#operatorTabulatorTable .tabulator .tabulator-placeholder .tabulator-placeholder-contents {
+#operatorTabulatorTable.tabulator .tabulator-placeholder .tabulator-placeholder-contents {
   color: #6b7c7c;
   font-size: 14px;
 }
@@ -106,7 +106,7 @@
  * ============================================================ */
 
 /* Base badge — identik daftarDokumen.blade.php:1366-1385 */
-#operatorTabulatorTable .tabulator .badge-status {
+#operatorTabulatorTable.tabulator .badge-status {
   padding: 8px 16px;
   border-radius: 25px;
   font-size: 12px;
@@ -128,24 +128,24 @@
 }
 
 /* State: Terkirim — identik daftarDokumen.blade.php:1408-1412 */
-#operatorTabulatorTable .tabulator .badge-status.badge-terkirim {
+#operatorTabulatorTable.tabulator .badge-status.badge-terkirim {
   background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
   color: white;
   border-color: #083E40;
 }
 
 /* Sel status: izinkan tinggi mengikuti badge (badge bisa dua baris). */
-#operatorTabulatorTable .tabulator .tabulator-cell[tabulator-field="status"] {
+#operatorTabulatorTable.tabulator .tabulator-cell[tabulator-field="status"] {
   white-space: normal;
 }
 
 /* Sel nomor_agenda dua baris: subline bulan/tahun tetap terbaca & tak terpotong. */
-#operatorTabulatorTable .tabulator .tabulator-cell[tabulator-field="nomor_agenda"] {
+#operatorTabulatorTable.tabulator .tabulator-cell[tabulator-field="nomor_agenda"] {
   white-space: normal;
   line-height: 1.35;
 }
 
-#operatorTabulatorTable .tabulator .tabulator-cell[tabulator-field="nomor_agenda"] .text-muted {
+#operatorTabulatorTable.tabulator .tabulator-cell[tabulator-field="nomor_agenda"] .text-muted {
   display: block;
   color: #6b7c7c;
   font-size: 11px;
