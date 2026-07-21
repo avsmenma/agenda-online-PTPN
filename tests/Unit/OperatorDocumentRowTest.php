@@ -51,11 +51,11 @@ class OperatorDocumentRowTest extends TestCase
     }
 
     /** Memuat relasi yang dibutuhkan lalu memanggil transform. */
-    private function baris(Dokumen $dokumen, array $handlerOptions = []): array
+    private function baris(Dokumen $dokumen, array $handlerOptions = [], ?string $viewerRole = null): array
     {
         $dokumen->load(['roleStatuses', 'dibayarKepadas', 'dokumenPos']);
 
-        return OperatorDocumentRow::fromDokumen($dokumen, $handlerOptions);
+        return OperatorDocumentRow::fromDokumen($dokumen, $handlerOptions, $viewerRole);
     }
 
     public function test_status_dikembalikan_saat_returned_to_operator(): void
@@ -391,5 +391,36 @@ class OperatorDocumentRowTest extends TestCase
         $row = $this->baris($dokumen);
 
         $this->assertSame('Dikembalikan', $row['status_dokumen_custom']);
+    }
+
+    public function test_can_change_handler_true_saat_viewer_pengurus_saat_ini_tanpa_pending(): void
+    {
+        $dokumen = $this->buatDokumen(['status' => 'draft', 'current_handler' => 'operator']);
+
+        $row = $this->baris($dokumen, [], 'operator');
+
+        $this->assertTrue($row['can_change_handler']);
+    }
+
+    public function test_can_change_handler_false_saat_viewer_bukan_pengurus_saat_ini(): void
+    {
+        $dokumen = $this->buatDokumen([
+            'status'          => 'sent_to_verifikasi',
+            'current_handler' => 'team_verifikasi',
+        ]);
+
+        $row = $this->baris($dokumen, [], 'operator');
+
+        $this->assertFalse($row['can_change_handler']);
+    }
+
+    public function test_can_change_handler_false_saat_ada_status_pending(): void
+    {
+        $dokumen = $this->buatDokumen(['status' => 'draft', 'current_handler' => 'operator']);
+        $this->buatStatus($dokumen, 'team_verifikasi', DokumenStatus::STATUS_PENDING);
+
+        $row = $this->baris($dokumen, [], 'operator');
+
+        $this->assertFalse($row['can_change_handler']);
     }
 }

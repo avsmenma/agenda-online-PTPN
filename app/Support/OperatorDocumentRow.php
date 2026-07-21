@@ -19,7 +19,7 @@ use App\Models\DokumenStatus;
  */
 class OperatorDocumentRow
 {
-    public static function fromDokumen(Dokumen $dokumen, array $handlerOptions): array
+    public static function fromDokumen(Dokumen $dokumen, array $handlerOptions, ?string $viewerRole = null): array
     {
         $statuses = $dokumen->roleStatuses;
 
@@ -117,6 +117,22 @@ class OperatorDocumentRow
         $row['can_edit']           = $canEdit;
         $row['handler']            = $dokumen->current_handler;
         $row['handler_options']    = $handlerOptions;
+
+        // === can_change_handler: paritas gate dropdown pengurus dari
+        // document-handler-select.blade.php:18,30-35 — hanya untuk lingkup
+        // halaman operator (kasus khusus team_verifikasi+returned_to_bidang
+        // di partial di luar cakupan di sini). 'verifikasi' & 'team_verifikasi'
+        // disamakan (alias lama/baru), perbandingan case-insensitive.
+        $normalizeRole = static function (?string $role): string {
+            $role = strtolower(trim((string) $role));
+            return $role === 'verifikasi' ? 'team_verifikasi' : $role;
+        };
+        $isCurrentHandler = $viewerRole !== null
+            && $normalizeRole($viewerRole) === $normalizeRole($dokumen->current_handler ?? '');
+        $hasPending = $statuses->contains(
+            fn ($s) => strtolower((string) $s->status) === strtolower(DokumenStatus::STATUS_PENDING)
+        );
+        $row['can_change_handler'] = $isCurrentHandler && ! $hasPending;
 
         // === URL link ter-sanitasi (identik render lama :231,238) ===
         // SafeUrl::external mengembalikan null bila kosong/tak ada, dan SELALU

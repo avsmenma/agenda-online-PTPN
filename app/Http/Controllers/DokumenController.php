@@ -137,7 +137,7 @@ class DokumenController extends Controller
         $handlerOptions = $this->buildHandlerOptions();
 
         $data = collect($paginator->items())
-            ->map(fn ($d) => \App\Support\OperatorDocumentRow::fromDokumen($d, $handlerOptions))
+            ->map(fn ($d) => \App\Support\OperatorDocumentRow::fromDokumen($d, $handlerOptions, auth()->user()?->role))
             ->all();
 
         return response()->json([
@@ -373,7 +373,7 @@ class DokumenController extends Controller
             'html'    => $html,
             // Objek baris JSON untuk Tabulator (konsumen tunggal ke depan);
             // `html` dipertahankan selama view lama masih dipakai (fase fallback).
-            'row'     => \App\Support\OperatorDocumentRow::fromDokumen($dokumen, $this->buildHandlerOptions()),
+            'row'     => \App\Support\OperatorDocumentRow::fromDokumen($dokumen, $this->buildHandlerOptions(), auth()->user()?->role),
         ]);
     }
 
