@@ -19,7 +19,6 @@
         'inlineCreateUrl'  => route('documents.inline-create'),
         'inlineUpdateTpl'  => str_replace('__ID__', '{id}', route('documents.inline-update', ['dokumen' => '__ID__'])),
         'handlerTpl'       => str_replace('__ID__', '{id}', route('documents.handler.update', ['dokumen' => '__ID__'])),
-        'detailTpl'        => str_replace('__ID__', '{id}', route('documents.detail', ['dokumen' => '__ID__'])),
         'destroyTpl'       => str_replace('__ID__', '{id}', route('documents.destroy', ['dokumen' => '__ID__'])),
         'csrf'             => csrf_token(),
         'columns'          => collect($selectedColumns)->map(fn ($k) => ['key' => $k, 'label' => $availableColumns[$k] ?? $k])->values(),
@@ -57,11 +56,14 @@
             <option value="terkirim" {{ request('status_filter') == 'terkirim' ? 'selected' : '' }}>Terkirim</option>
         </select>
 
-        {{-- CLAUDE.md §8: dobel-klik kini memulai edit, jadi modal Detail Dokumen
-             pindah ke tombol ini — membuka detail untuk baris yang sel-nya aktif. --}}
-        <button type="button" class="btn btn-outline-secondary" id="btnDetailBarisAktif"
-                title="Buka detail dokumen pada baris yang sedang aktif">
-            <i class="fa-solid fa-eye me-1"></i> Detail
+        {{-- Fitur Detail Dokumen dihapus atas permintaan user (2026-07-22) — modal
+             detail beserta tombol pembukanya dicabut seluruhnya. Tombol Hapus
+             dulunya berada DI DALAM modal itu (footer-nya); sekarang dipindah ke
+             toolbar agar kemampuan menghapus dokumen tetap ada, bekerja pada baris
+             yang sel-nya sedang aktif — pola yang sama dengan tombol Detail lama. --}}
+        <button type="button" class="btn btn-outline-danger" id="btnHapusBarisAktif"
+                title="Hapus dokumen pada baris yang sedang aktif">
+            <i class="fa-solid fa-trash me-1"></i> Hapus
         </button>
 
         <button type="button" class="btn btn-outline-secondary" onclick="openColumnCustomizationModal()">
@@ -104,103 +106,6 @@
     @csrf
     @method('DELETE')
 </form>
-
-{{-- ==== Modal Detail Dokumen (disalin daftarDokumen.blade.php:4168-4397) ==== --}}
-<div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" style="max-width: 90%; width: 90%;">
-        <div class="modal-content" style="height: 90vh; display: flex; flex-direction: column;">
-            <div class="modal-header" style="position: sticky; top: 0; z-index: 1050; background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%); border-bottom: none; flex-shrink: 0;">
-                <h5 class="modal-title" id="viewDocumentModalLabel" style="color: white; font-weight: 700; font-size: 18px;">
-                    <i class="fa-solid fa-file-lines me-2"></i>
-                    Detail Dokumen Lengkap
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
-            <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px); padding: 24px; flex: 1;">
-                <input type="hidden" id="view-dokumen-id">
-
-                <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                    <div class="section-header mb-3">
-                        <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-id-card"></i>
-                            IDENTITAS DOKUMEN
-                        </h6>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-4"><div class="detail-item"><label class="detail-label">Nomor Agenda</label><div class="detail-value" id="view-nomor-agenda">-</div></div></div>
-                        <div class="col-md-4"><div class="detail-item"><label class="detail-label">Nomor SPP</label><div class="detail-value" id="view-nomor-spp">-</div></div></div>
-                        <div class="col-md-4"><div class="detail-item"><label class="detail-label">Tanggal SPP</label><div class="detail-value" id="view-tanggal-spp">-</div></div></div>
-                        <div class="col-md-4"><div class="detail-item"><label class="detail-label">Bulan</label><div class="detail-value" id="view-bulan">-</div></div></div>
-                        <div class="col-md-4"><div class="detail-item"><label class="detail-label">Tahun</label><div class="detail-value" id="view-tahun">-</div></div></div>
-                        <div class="col-md-4"><div class="detail-item"><label class="detail-label">Tanggal Masuk</label><div class="detail-value" id="view-tanggal-masuk">-</div></div></div>
-                        <div class="col-md-4"><div class="detail-item"><label class="detail-label">Kriteria CF</label><div class="detail-value" id="view-kategori">-</div></div></div>
-                        <div class="col-md-4"><div class="detail-item"><label class="detail-label">Sub Kriteria</label><div class="detail-value" id="view-jenis-dokumen">-</div></div></div>
-                        <div class="col-md-4"><div class="detail-item"><label class="detail-label">Item Sub Kriteria</label><div class="detail-value" id="view-jenis-sub-pekerjaan">-</div></div></div>
-                        <div class="col-md-4"><div class="detail-item"><label class="detail-label">Jenis Pembayaran</label><div class="detail-value" id="view-jenis-pembayaran">-</div></div></div>
-                    </div>
-                </div>
-
-                <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                    <div class="section-header mb-3">
-                        <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-money-bill-wave"></i>
-                            DETAIL KEUANGAN & VENDOR
-                        </h6>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-12"><div class="detail-item"><label class="detail-label">Uraian SPP</label><div class="detail-value" id="view-uraian-spp" style="white-space: pre-wrap;">-</div></div></div>
-                        <div class="col-md-6"><div class="detail-item"><label class="detail-label">Nilai Rupiah</label><div class="detail-value" id="view-nilai-rupiah" style="font-weight: 700; color: #083E40;">-</div></div></div>
-                        <div class="col-md-6"><div class="detail-item"><label class="detail-label">Ejaan Nilai Rupiah</label><div class="detail-value" id="view-ejaan-nilai-rupiah" style="font-style: italic; color: #666;">-</div></div></div>
-                        <div class="col-md-6"><div class="detail-item"><label class="detail-label">Dibayar Kepada (Vendor)</label><div class="detail-value" id="view-dibayar-kepada">-</div></div></div>
-                        <div class="col-md-6"><div class="detail-item"><label class="detail-label">Kebun / Unit Kerja</label><div class="detail-value" id="view-kebun">-</div></div></div>
-                        <div class="col-md-6"><div class="detail-item"><label class="detail-label">Bagian</label><div class="detail-value" id="view-bagian">-</div></div></div>
-                        <div class="col-md-6"><div class="detail-item"><label class="detail-label">Nama Pengirim</label><div class="detail-value" id="view-nama-pengirim">-</div></div></div>
-                    </div>
-                </div>
-
-                <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                    <div class="section-header mb-3">
-                        <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-file-contract"></i>
-                            REFERENSI PENDUKUNG
-                        </h6>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-3"><div class="detail-item"><label class="detail-label">No. SPK</label><div class="detail-value" id="view-no-spk">-</div></div></div>
-                        <div class="col-md-3"><div class="detail-item"><label class="detail-label">Tanggal SPK</label><div class="detail-value" id="view-tanggal-spk">-</div></div></div>
-                        <div class="col-md-3"><div class="detail-item"><label class="detail-label">Tanggal Berakhir SPK</label><div class="detail-value" id="view-tanggal-berakhir-spk">-</div></div></div>
-                        <div class="col-md-3"><div class="detail-item"><label class="detail-label">Nomor Miro/SES</label><div class="detail-value" id="view-nomor-miro">-</div></div></div>
-                        <div class="col-md-6"><div class="detail-item"><label class="detail-label">No. Berita Acara</label><div class="detail-value" id="view-no-berita-acara">-</div></div></div>
-                        <div class="col-md-3"><div class="detail-item"><label class="detail-label">Tanggal Berita Acara</label><div class="detail-value" id="view-tanggal-berita-acara">-</div></div></div>
-                    </div>
-                </div>
-
-                <div class="form-section mb-4" style="background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef;">
-                    <div class="section-header mb-3">
-                        <h6 class="section-title" style="color: #083E40; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-hashtag"></i>
-                            NOMOR PO & PR
-                        </h6>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-6"><div class="detail-item"><label class="detail-label">Nomor PO</label><div class="detail-value" id="view-nomor-po">-</div></div></div>
-                        <div class="col-md-6"><div class="detail-item"><label class="detail-label">Nomor PR</label><div class="detail-value" id="view-nomor-pr">-</div></div></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer" style="position: sticky; bottom: 0; z-index: 1050; background: white; border-top: 1px solid #dee2e6; padding: 16px 24px; flex-shrink: 0;">
-                <button type="button" class="btn btn-danger" onclick="confirmDeleteDocument()">
-                    <i class="fa-solid fa-trash me-2"></i>Hapus
-                </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fa-solid fa-times me-2"></i>Tutup
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 {{-- ==== Modal Konfirmasi Hapus (disalin daftarDokumen.blade.php:4429-4490) ==== --}}
 <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
@@ -426,11 +331,6 @@
     .tabulator-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
     .tabulator-toolbar-search { max-width: 320px; }
 
-    /* Detail Item Styles (disalin daftarDokumen.blade.php:4400-4425) */
-    .detail-item { margin-bottom: 8px; }
-    .detail-label { display: block; font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .detail-value { font-size: 14px; color: #1f2937; padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid #e5e7eb; min-height: 38px; display: flex; align-items: center; }
-
     /* Modal Customization Styles (disalin daftarDokumen.blade.php:358-910) */
     .customization-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; overflow-y: auto; padding: 20px; box-sizing: border-box; }
     .customization-modal.show { display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s ease; }
@@ -511,135 +411,19 @@
 @endpush
 
 @push('scripts')
-{{-- Modal Detail + Hapus + Kustomisasi Kolom — JS disalin dari daftarDokumen.blade.php
-     (Tugas 7a/7d). Fungsi global dipanggil oleh operator-tabulator.js (dblclick) &
-     tombol toolbar. bootstrap.* tersedia (bundle dimuat layout sebelum @stack). --}}
+{{-- Hapus + Kustomisasi Kolom — JS disalin dari daftarDokumen.blade.php (Tugas 7a/7d).
+     Modal Detail beserta fungsi JS yang dulu memuatnya dihapus atas permintaan user
+     (2026-07-22) — lihat komentar tombol Hapus toolbar di atas. Fungsi global di bawah
+     dipanggil oleh operator-tabulator.js (tombol toolbar Hapus). bootstrap.* tersedia
+     (bundle dimuat layout sebelum @stack). --}}
 <script>
-    // ==== Detail Dokumen (daftarDokumen.blade.php:3957-4048) ====
-    function openViewDocumentModal(docId) {
-        document.getElementById('view-dokumen-id').value = docId;
-
-        fetch(window.OPERATOR_TABULATOR_CONFIG.detailTpl.replace('{id}', docId), {
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-        })
-            .then(response => {
-                if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success && data.dokumen) {
-                    const dok = data.dokumen;
-
-                    document.getElementById('view-nomor-agenda').textContent = dok.nomor_agenda || '-';
-                    document.getElementById('view-nomor-spp').textContent = dok.nomor_spp || '-';
-                    document.getElementById('view-tanggal-spp').textContent = dok.tanggal_spp ? formatDate(dok.tanggal_spp) : '-';
-                    const monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                    const formatBulan = (bulan) => {
-                        if (!bulan) return '-';
-                        const num = parseInt(bulan);
-                        return (num >= 1 && num <= 12) ? monthNames[num] : bulan;
-                    };
-                    document.getElementById('view-bulan').textContent = formatBulan(dok.bulan);
-                    document.getElementById('view-tahun').textContent = dok.tahun || '-';
-                    document.getElementById('view-tanggal-masuk').textContent = dok.tanggal_masuk ? formatDateTime(dok.tanggal_masuk) : '-';
-                    document.getElementById('view-jenis-dokumen').textContent = dok.jenis_dokumen || '-';
-                    document.getElementById('view-jenis-sub-pekerjaan').textContent = dok.jenis_sub_pekerjaan || '-';
-                    document.getElementById('view-kategori').textContent = dok.kategori || '-';
-                    document.getElementById('view-jenis-pembayaran').textContent = dok.jenis_pembayaran || '-';
-
-                    document.getElementById('view-uraian-spp').textContent = dok.uraian_spp || '-';
-                    document.getElementById('view-nilai-rupiah').textContent = dok.nilai_rupiah ? 'Rp. ' + formatNumber(dok.nilai_rupiah) : '-';
-                    if (dok.nilai_rupiah && dok.nilai_rupiah > 0) {
-                        document.getElementById('view-ejaan-nilai-rupiah').textContent = terbilangRupiah(dok.nilai_rupiah);
-                    } else {
-                        document.getElementById('view-ejaan-nilai-rupiah').textContent = '-';
-                    }
-                    document.getElementById('view-dibayar-kepada').textContent = dok.dibayar_kepada || '-';
-                    document.getElementById('view-kebun').textContent = dok.kebun || '-';
-                    document.getElementById('view-bagian').textContent = dok.bagian || '-';
-                    document.getElementById('view-nama-pengirim').textContent = dok.nama_pengirim || '-';
-
-                    document.getElementById('view-no-spk').textContent = dok.no_spk || '-';
-                    document.getElementById('view-tanggal-spk').textContent = dok.tanggal_spk ? formatDate(dok.tanggal_spk) : '-';
-                    document.getElementById('view-tanggal-berakhir-spk').textContent = dok.tanggal_berakhir_spk ? formatDate(dok.tanggal_berakhir_spk) : '-';
-                    document.getElementById('view-nomor-miro').textContent = dok.nomor_miro || '-';
-                    document.getElementById('view-no-berita-acara').textContent = dok.no_berita_acara || '-';
-                    document.getElementById('view-tanggal-berita-acara').textContent = dok.tanggal_berita_acara ? formatDate(dok.tanggal_berita_acara) : '-';
-
-                    const poList = dok.NO_PO || (dok.dokumen_pos && dok.dokumen_pos.length > 0
-                        ? dok.dokumen_pos.map(po => po.nomor_po).join(', ')
-                        : '-');
-                    const prList = dok.dokumen_prs && dok.dokumen_prs.length > 0
-                        ? dok.dokumen_prs.map(pr => pr.nomor_pr).join(', ')
-                        : '-';
-                    document.getElementById('view-nomor-po').textContent = poList;
-                    document.getElementById('view-nomor-pr').textContent = prList;
-
-                    const modal = new bootstrap.Modal(document.getElementById('viewDocumentModal'));
-                    modal.show();
-                } else {
-                    alert('Gagal memuat data dokumen: ' + (data.message || 'Format respons tidak valid'));
-                }
-            })
-            .catch(error => {
-                alert('Gagal memuat data dokumen: ' + error.message);
-            });
-    }
-
-    function formatDate(dateStr) {
-        if (!dateStr) return '-';
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
-    function formatDateTime(dateStr) {
-        if (!dateStr) return '-';
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    }
-    function formatNumber(num) {
-        if (!num) return '-';
-        return new Intl.NumberFormat('id-ID').format(num);
-    }
-    function terbilangRupiah(number) {
-        number = parseFloat(number) || 0;
-        if (number == 0) { return 'nol rupiah'; }
-        const angka = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh',
-            'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas', 'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'];
-        let hasil = '';
-        if (number >= 1000000000000) { const triliun = Math.floor(number / 1000000000000); hasil += terbilangSatuan(triliun, angka) + ' triliun '; number = number % 1000000000000; }
-        if (number >= 1000000000) { const milyar = Math.floor(number / 1000000000); hasil += terbilangSatuan(milyar, angka) + ' milyar '; number = number % 1000000000; }
-        if (number >= 1000000) { const juta = Math.floor(number / 1000000); hasil += terbilangSatuan(juta, angka) + ' juta '; number = number % 1000000; }
-        if (number >= 1000) { const ribu = Math.floor(number / 1000); if (ribu == 1) { hasil += 'seribu '; } else { hasil += terbilangSatuan(ribu, angka) + ' ribu '; } number = number % 1000; }
-        if (number > 0) { hasil += terbilangSatuan(number, angka); }
-        return hasil.trim() + ' rupiah';
-    }
-    function terbilangSatuan(number, angka) {
-        let hasil = '';
-        number = parseInt(number);
-        if (number == 0) { return ''; }
-        if (number >= 100) { const ratus = Math.floor(number / 100); if (ratus == 1) { hasil += 'seratus '; } else { hasil += angka[ratus] + ' ratus '; } number = number % 100; }
-        if (number > 0) {
-            if (number < 20) { hasil += angka[number] + ' '; }
-            else {
-                const puluhan = Math.floor(number / 10);
-                const satuan = number % 10;
-                if (puluhan == 1) { hasil += angka[10 + satuan] + ' '; }
-                else { hasil += angka[puluhan] + ' puluh '; if (satuan > 0) { hasil += angka[satuan] + ' '; } }
-            }
-        }
-        return hasil.trim();
-    }
-
     // ==== Hapus Dokumen (daftarDokumen.blade.php:4512-4582) — tetap full-page submit + redirect ====
     let documentIdToDelete = null;
 
-    function confirmDeleteDocument() {
-        const dokumenId = document.getElementById('view-dokumen-id').value;
-        const nomorAgenda = document.getElementById('view-nomor-agenda').textContent;
-        const nomorSpp = document.getElementById('view-nomor-spp').textContent;
-        const nilaiRupiah = document.getElementById('view-nilai-rupiah') ? document.getElementById('view-nilai-rupiah').textContent : '-';
-
+    // Menerima nilai tampilan sebagai PARAMETER (bukan membaca dari DOM modal Detail
+    // yang sudah dihapus) — pemanggilnya adalah tombol toolbar #btnHapusBarisAktif di
+    // operator-tabulator.js, yang mengambil nilai ini dari data baris Tabulator aktif.
+    function confirmDeleteDocument(dokumenId, nomorAgenda, nomorSpp, nilaiRupiah) {
         if (!dokumenId) { alert('ID Dokumen tidak ditemukan'); return; }
 
         documentIdToDelete = dokumenId;
