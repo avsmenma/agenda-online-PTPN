@@ -129,4 +129,22 @@ class OperatorTabulatorViewTest extends TestCase
         $response->assertSessionHas('operator_sort_column', 'nomor_spp');
         $response->assertSessionHas('operator_sort_order', 'asc');
     }
+
+    /**
+     * nginx menyajikan css/js lokal dengan `Cache-Control: immutable`
+     * (agenda:21-26), jadi nama file yang stabil membuat browser tak pernah
+     * mengambil versi baru. View ini wajib memuat tabulator-agenda.css lewat
+     * Asset::versioned() sehingga URL-nya membawa `?v=<mtime>`.
+     */
+    public function test_view_memuat_css_tabulator_dengan_query_string_versi(): void
+    {
+        $response = $this->actingAs($this->operator())
+            ->get(route('documents.index'));
+
+        $response->assertOk();
+        $response->assertSee(
+            \App\Support\Asset::versioned('css/tabulator-agenda.css'),
+            false
+        );
+    }
 }
