@@ -1241,6 +1241,54 @@
   // Jalur tempel/Delete/undo tidak terpengaruh karena memakai saveCell(), bukan ini.
   table.on('cellEdited', onCellEdited);
 
+  // Koreksi gulir horizontal saat sel aktif berpindah.
+  //
+  // Modul SelectRange menggulir sel aktif "masuk viewport", tetapi tidak
+  // memperhitungkan kolom beku kiri (No + Nomor Agenda) yang MENIMPA tepi kiri
+  // viewport itu. Akibatnya sel bisa dianggap terlihat padahal tertimbun di
+  // baliknya. Diverifikasi di produksi 2026-07-22: setelah bergerak ke kanan
+  // sampai Uraian lalu kembali ke kiri, sel aktif 'bulan' berada di x261-316
+  // sementara kolom beku berakhir di x420 — kolom Bulan & Tahun hilang dari layar.
+  //
+  // Hanya berjalan saat range berubah (pindah sel), bukan saat user menggulir
+  // sendiri, sehingga tidak melawan gulir manual.
+  (function wireFrozenScrollFix() {
+    const holder = document.querySelector('#operatorTabulatorTable .tabulator-tableholder');
+    if (!holder) return;
+    const JARAK_AMAN = 8; // sisa ruang agar sel tidak menempel persis di batas kolom beku.
+
+    // Tepi kanan blok kolom beku kiri, dibaca dari DOM header (lebar bisa berubah
+    // karena tarikan lebar kolom user, jadi jangan di-cache).
+    function tepiKananKolomBeku() {
+      const beku = document.querySelectorAll(
+        '#operatorTabulatorTable .tabulator-header .tabulator-col.tabulator-frozen.tabulator-frozen-left'
+      );
+      let tepi = 0;
+      beku.forEach(function (el) { tepi = Math.max(tepi, el.getBoundingClientRect().right); });
+      return tepi;
+    }
+
+    table.on('rangeChanged', function () {
+      // rAF: jalankan SETELAH Tabulator selesai menggulir sendiri, kalau tidak
+      // koreksi kita langsung ditimpa.
+      requestAnimationFrame(function () {
+        const cell = activeCell();
+        if (!cell) return;
+        let el = null;
+        try { el = cell.getElement(); } catch (e) { return; }
+        if (!el) return;
+        // Sel yang beku tidak perlu dikoreksi — ia memang selalu terlihat.
+        if (el.classList.contains('tabulator-frozen')) return;
+
+        const tepi = tepiKananKolomBeku();
+        if (!tepi) return;
+        const kotak = el.getBoundingClientRect();
+        const tertimbun = tepi - kotak.left;
+        if (tertimbun > 0) holder.scrollLeft -= (tertimbun + JARAK_AMAN);
+      });
+    });
+  })();
+
   table.on('dataLoadError', function () { showLoadError(); });
   table.on('dataLoaded', function () { clearLoadError(); });
 
