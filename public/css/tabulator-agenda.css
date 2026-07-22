@@ -5,8 +5,10 @@
  * kontrol sort, font Source Sans Pro, garis antarbaris tegas, sel aktif tebal.
  * Acuan: docs/superpowers/specs/2026-07-22-tabulator-operator-restyle-cashbank-design.md
  *
- * Seluruh aturan dikunci di bawah #operatorTabulatorTable agar tidak bocor ke
- * tabel role lain (CLAUDE.md §1 — 6 tabel per-role masih terduplikasi).
+ * Seluruh aturan TABEL dikunci di bawah #operatorTabulatorTable agar tidak bocor
+ * ke tabel role lain (CLAUDE.md §1 — 6 tabel per-role masih terduplikasi).
+ * Pengecualian sengaja: tiga aturan .tabulator-toolbar di bawah bersifat global
+ * (utang diterima — lihat komentar di dekatnya).
  */
 
 /* ------- Wadah tabel ------- */
@@ -116,18 +118,18 @@
   color: #ffffff;
 }
 
-#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col.tabulator-range-selected {
-  background-color: #1b6fd8;
-  color: #ffffff;
-}
-
 /* ------- Kolom beku (frozen) ------- */
 #operatorTabulatorTable.tabulator .tabulator-row .tabulator-cell.tabulator-frozen,
 #operatorTabulatorTable.tabulator .tabulator-header .tabulator-col.tabulator-frozen {
   box-shadow: 2px 0 4px rgba(13, 59, 110, 0.15);
 }
 
-#operatorTabulatorTable.tabulator .tabulator-frozen.tabulator-frozen-left {
+/* Hanya sel BODI (.tabulator-row) — kolom beku di HEADER sengaja tak disentuh
+ * agar pemisah antarheader tetap putih seragam (bukan kelabu, lihat aturan
+ * .tabulator-header .tabulator-col di atas). Tanpa kualifikasi .tabulator-row
+ * ini, aturan yang sama-sama spesifisitas (1,3,0) tapi lebih akhir di berkas
+ * ini akan menang atas aturan header dan membuat satu pemisah header kelabu. */
+#operatorTabulatorTable.tabulator .tabulator-row .tabulator-frozen.tabulator-frozen-left {
   border-right: 1px solid #c3d2e0;
 }
 
@@ -193,6 +195,12 @@
   border-color: #083E40;
 }
 
+/* `.badge-belum-dikirim` (fmtStatus, operator-tabulator.js) SENGAJA tak punya
+ * aturan sendiri di sini — ia jatuh ke base .badge-status di atas (fill
+ * transparan, teks warna default). Paritas dengan daftarDokumen.blade.php lama;
+ * bukan rule yang hilang/kelupaan. `.badge-ditolak` juga tak punya rule di sini
+ * karena warnanya diberikan lewat inline style di formatter (lihat fmtStatus). */
+
 /* Sel status: izinkan tinggi mengikuti badge (badge bisa dua baris). */
 #operatorTabulatorTable.tabulator .tabulator-cell[tabulator-field="status"] {
   white-space: normal;
@@ -208,4 +216,30 @@
   display: block;
   color: #6b7c7c;
   font-size: 11px;
+}
+
+/* ============================================================
+ * Mode gelap: baris tabel tetap berlatar PUTIH (lihat "Wadah tabel" di atas)
+ * meski aplikasi dipindah ke mode gelap — tapi layouts/app.blade.php punya
+ * aturan global .dark strong/b/span/small/a yang menyetel teks jadi warna
+ * TERANG, dengan asumsi latar di sekitarnya juga gelap. Di dalam tabel ini
+ * asumsi itu salah: strong putih di atas sel putih ≈ kontras 1.05:1, membuat
+ * kolom Nomor Agenda (fmtNomorAgenda) & Nilai Rupiah (fmtNilaiRupiah) tampak
+ * kosong. Selector ID #operatorTabulatorTable mengalahkan aturan global itu
+ * tanpa !important — kecuali .text-muted, sebab aturan aslinya (app.blade.php)
+ * sendiri memakai !important sehingga hanya !important yang bisa menimpanya.
+ * Span badge tak terdampak: .badge-status.badge-terkirim (di atas) & style
+ * inline pada badge lain punya spesifisitas/prioritas lebih tinggi dan tetap
+ * menang atas aturan `span` umum di bawah ini.
+ * ============================================================ */
+.dark #operatorTabulatorTable.tabulator strong,
+.dark #operatorTabulatorTable.tabulator b,
+.dark #operatorTabulatorTable.tabulator span,
+.dark #operatorTabulatorTable.tabulator small,
+.dark #operatorTabulatorTable.tabulator a {
+  color: inherit;
+}
+
+.dark #operatorTabulatorTable.tabulator .text-muted {
+  color: #6b7c7c !important;
 }
