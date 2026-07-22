@@ -139,6 +139,20 @@
   border-right: 1px solid #c3d2e0;
 }
 
+/* Sel aktif yang kebetulan berada di kolom BEKU (No / Nomor Agenda).
+ *
+ * Bingkai sel aktif digambar oleh overlay .tabulator-range-cell-active pada
+ * z-index 10, sedangkan sel beku position:sticky ber-z-index 11 — jadi bingkai
+ * 3px-nya SEBENARNYA ada dan posisinya tepat, tetapi tertimbun sel beku
+ * (terukur di produksi 2026-07-22: overlay & sel sama-sama di x321-420).
+ * Sel beku tidak boleh diturunkan z-index-nya karena justru itu yang membuatnya
+ * mengambang di atas kolom lain saat digulir. Jadi bingkainya ditiru di sel itu
+ * sendiri memakai box-shadow inset, ditambah bayangan tepi beku yang sudah ada
+ * supaya aturan ini tidak menghapusnya. */
+#operatorTabulatorTable.tabulator .tabulator-row .tabulator-cell.tabulator-frozen.tabulator-range-only-cell-selected {
+  box-shadow: inset 0 0 0 3px #1b6fd8, 2px 0 4px rgba(13, 59, 110, 0.15);
+}
+
 /* ------- Placeholder kosong ------- */
 #operatorTabulatorTable.tabulator .tabulator-placeholder .tabulator-placeholder-contents {
   color: #6b7c7c;
