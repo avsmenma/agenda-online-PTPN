@@ -627,7 +627,7 @@
   // (opsi `selectableRange` di konstruktor), BUKAN mesin tulis-tangan — partial
   // lama `_activeCellNav.blade.php` berbasis <td> dan tidak berlaku di sini
   // (baris Tabulator adalah <div>). Helper di bawah hanya MEMBACA range aktif
-  // untuk dua keperluan: Enter→mulai edit, dan tombol toolbar "Detail".
+  // untuk dua keperluan: Enter→mulai edit, dan tombol toolbar "Hapus".
 
   // Range aktif TERAKHIR (objek RangeComponent bawaan modul SelectRange). Dipakai
   // activeCell() (sel pojok kiri-atas) DAN pasteMatrix() (dimensi blok untuk
@@ -652,7 +652,7 @@
     return (Array.isArray(head) ? head[0] : head) || null;
   }
 
-  // Baris yang memuat sel aktif (dipakai tombol "Detail").
+  // Baris yang memuat sel aktif (dipakai tombol toolbar "Hapus").
   function activeRow() {
     const cell = activeCell();
     if (!cell) return null;
@@ -737,7 +737,8 @@
     //  - klik-tunggal kini milik selectableRange (pindah sel aktif). Panel "Detail
     //    Cepat" dimatikan di operator atas keputusan user 2026-07-21 (rasa Excel murni).
     //  - dobel-klik kini milik editTriggerEvent (mulai edit).
-    // Modal Detail Dokumen pindah ke tombol toolbar #btnDetailBarisAktif (baris aktif).
+    // Modal Detail Dokumen dihapus atas permintaan user (2026-07-22); kemampuan
+    // menghapus dokumen tetap ada lewat tombol toolbar Hapus (baris aktif).
   });
 
   window.operatorTable = table;
@@ -765,19 +766,22 @@
     }, true);
   })();
 
-  // === §8 Tahap A: tombol toolbar "Detail" → modal Detail Dokumen baris aktif ===
-  // Menggantikan jalur dobel-klik lama (dobel-klik kini = mulai edit).
-  (function wireDetailButton() {
-    const detailBtn = document.getElementById('btnDetailBarisAktif');
-    if (!detailBtn) return;
-    detailBtn.addEventListener('click', function () {
+  // === §8 Tahap A: tombol toolbar "Hapus" → hapus dokumen pada baris aktif ===
+  // Menggantikan tombol Detail lama: modal Detail Dokumen dihapus atas permintaan
+  // user (2026-07-22), dan tombol Hapus yang dulu ada di footer modal itu pindah
+  // ke sini — pola sambungannya sama persis (baca activeRow(), teruskan datanya).
+  (function wireDeleteButton() {
+    const deleteBtn = document.getElementById('btnHapusBarisAktif');
+    if (!deleteBtn) return;
+    deleteBtn.addEventListener('click', function () {
       const row = activeRow();
       if (!row) {
-        opToast('error', 'Pilih dulu sel pada baris yang ingin dilihat.');
+        opToast('error', 'Pilih dulu sel pada baris yang ingin dihapus.');
         return;
       }
-      if (typeof window.openViewDocumentModal === 'function') {
-        window.openViewDocumentModal(row.getData().id);
+      if (typeof window.confirmDeleteDocument === 'function') {
+        const data = row.getData();
+        window.confirmDeleteDocument(data.id, data.nomor_agenda, data.nomor_spp, data.nilai_rupiah_formatted);
       }
     });
   })();
