@@ -627,7 +627,7 @@
     // + auto-scroll mengikuti, klik-tunggal memindahkan sel aktif, dan seleksi blok
     // via drag / Shift+Klik / Shift+Panah.
     selectableRange: true,
-    // Klik header tetap milik SORT (server-side) — jangan dibajak jadi seleksi kolom.
+    // selectableRangeColumns tetap false: sort sudah dimatikan, jadi klik header tidak memicu apa pun — tak perlu dibajak jadi seleksi kolom.
     selectableRangeColumns: false,
     selectableRangeRows: false,
     // TETAP false meski Tahap B sudah jalan: pengosongan bawaan Tabulator hanya
