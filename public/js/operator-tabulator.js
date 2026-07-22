@@ -353,6 +353,52 @@
       .catch(function () { return { ok: false, data: {}, offline: true }; });
   }
 
+  // === Masalah 3 (brief 2026-07-22): kategori/jenis_dokumen berubah → anak jadi
+  // tak valid ===
+  // filterSubOptions()/filterItemOptions() (di atas, ~190-216) SUDAH menyaring
+  // opsi anak sesuai induk saat editor DIBUKA, tapi nilai anak yang SUDAH
+  // tersimpan tidak pernah dikosongkan saat induk berubah. Peta kolom: kategori =
+  // Kriteria CF, jenis_dokumen = Sub Kriteria, jenis_sub_pekerjaan = Item Sub
+  // Kriteria.
+  // HANYA dipakai jalur editor (onCellEdited di bawah) — SENGAJA TIDAK dipasang
+  // di pasteMatrix/applyBulkEdits: saat user menempel satu baris utuh yang berisi
+  // kategori+sub+item sekaligus, semua sel ditulis bersamaan dan nilai yang
+  // ditempel adalah maksud eksplisit user — reset otomatis di sana akan
+  // menghapus sub/item yang baru saja ditempel secara sah.
+  const DEPENDENT_FIELDS = {
+    kategori: ['jenis_dokumen', 'jenis_sub_pekerjaan'],
+    jenis_dokumen: ['jenis_sub_pekerjaan'],
+  };
+
+  // Kosongkan (tampilan DAN server via PATCH — pola sama seperti patchCell di
+  // atas) anak yang jadi tak valid akibat perubahan `field`. Hanya anak yang
+  // MASIH berisi yang di-PATCH; anak yang gagal disimpan dibiarkan apa adanya
+  // (tidak dikosongkan di tampilan). Mengembalikan Promise berisi entri
+  // {id,field,before,after} untuk anak yang BENAR-BENAR tersimpan — dipakai
+  // pemanggil (onCellEdited) untuk digabung ke SATU entri riwayat bersama
+  // perubahan induk, supaya satu Ctrl+Z membatalkan induk + anak sekaligus.
+  function resetDependentFields(row, field) {
+    const children = DEPENDENT_FIELDS[field];
+    if (!children) return Promise.resolve([]);
+    const toReset = children.filter(function (f) {
+      const v = row.getData()[f];
+      return v !== null && v !== undefined && String(v) !== '';
+    });
+    if (toReset.length === 0) return Promise.resolve([]);
+    const id = row.getData().id;
+    const tasks = toReset.map(function (f) {
+      const before = row.getData()[f];
+      return patchCell(id, f, '').then(function (res) {
+        if (!res.ok) return null; // gagal → anak ini TIDAK dikosongkan.
+        row.update(buildPostEditPatch(f, FIELD_TYPE[f] || 'text', res.data, row.getData()));
+        return { id: id, field: f, before: before, after: '' };
+      });
+    });
+    return Promise.all(tasks).then(function (results) {
+      return results.filter(Boolean);
+    });
+  }
+
   // cellEdited → simpan hasil edit lewat editor (dobel-klik / Enter).
   // Beda dari jalur massal: editor SUDAH menuliskan nilai baru ke sel, jadi bila
   // server menolak kita harus mengembalikannya (restoreOldValue), bukan sekadar
@@ -375,9 +421,14 @@
       }
       // row.update() TIDAK memicu cellEdited (hanya edit-oleh-user yang memicu).
       row.update(buildPostEditPatch(field, fieldType, res.data, row.getData()));
-      // §8: "setiap perubahan dapat dibatalkan dengan Ctrl+Z" — edit satu sel lewat
-      // editor ikut masuk riwayat, bukan hanya operasi massal.
-      pushHistory([{ id: row.getData().id, field: field, before: oldValue, after: newValue }]);
+      const parentChange = { id: row.getData().id, field: field, before: oldValue, after: newValue };
+      // Masalah 3: kategori/jenis_dokumen berubah → kosongkan anak yang tak lagi
+      // valid, lalu satukan ke SATU entri riwayat bersama perubahan induk.
+      resetDependentFields(row, field).then(function (childChanges) {
+        // §8: "setiap perubahan dapat dibatalkan dengan Ctrl+Z" — edit satu sel lewat
+        // editor ikut masuk riwayat, bukan hanya operasi massal.
+        pushHistory([parentChange].concat(childChanges));
+      });
     });
   }
 
