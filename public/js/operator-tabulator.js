@@ -601,14 +601,21 @@
 
   // Lebar kolom tarikan user disimpan di localStorage. 'fitDataStretch' selalu
   // memaksa kolom terakhir memenuhi layar sehingga menimpa lebar simpanan —
-  // karena itu begitu ada simpanan, layout beralih ke 'fitData' agar lebar user
-  // dihormati apa adanya (keputusan user 2026-07-22). Tabulator menyimpan di
-  // kunci 'tabulator-<persistenceID>-columns'.
+  // karena itu begitu user pernah menarik kolom, layout beralih ke 'fitData'
+  // agar lebar user dihormati apa adanya (keputusan user 2026-07-22).
+  // PENTING: penanda ini BUKAN kunci persistence bawaan Tabulator
+  // ('tabulator-<persistenceID>-columns') — kunci itu ditulis Tabulator sendiri
+  // pada render PERTAMA (sebelum user menyentuh apa pun), jadi tidak bisa
+  // dipakai untuk mendeteksi "user sudah resize". Karena itu dipakai kunci
+  // terpisah ('operator-tabulator-user-resized') yang HANYA ditulis dari
+  // handler 'columnResized' (lihat bawah) — event itu terbukti tidak terpicu
+  // oleh resize terprogram (mis. column.setWidth()), hanya oleh drag user.
   const PERSIST_ID = 'agenda-operator-documents';
+  const USER_RESIZED_FLAG_KEY = 'operator-tabulator-user-resized';
   let adaLebarTersimpan = false;
   // try/catch wajib: localStorage bisa melempar di mode privat / kuota penuh,
   // dan tabel TIDAK boleh gagal render karenanya.
-  try { adaLebarTersimpan = !!localStorage.getItem('tabulator-' + PERSIST_ID + '-columns'); } catch (e) {}
+  try { adaLebarTersimpan = !!localStorage.getItem(USER_RESIZED_FLAG_KEY); } catch (e) {}
 
   const table = new Tabulator('#operatorTabulatorTable', {
     ajaxURL: CFG.dataUrl,
@@ -1093,6 +1100,14 @@
   }
   table.on('dataLoadError', function () { showLoadError(); });
   table.on('dataLoaded', function () { clearLoadError(); });
+
+  // Tandai bahwa user SUNGGUH menarik lebar kolom (bukan sekadar memuat
+  // halaman) — dipakai kunjungan berikutnya untuk memilih layout 'fitData'
+  // alih-alih 'fitDataStretch'. columnResized tidak terpicu oleh resize
+  // terprogram, jadi penanda ini murni aksi user.
+  table.on('columnResized', function () {
+    try { localStorage.setItem(USER_RESIZED_FLAG_KEY, '1'); } catch (e) {}
+  });
 
   // === Tugas 7e: Modal alasan penolakan global (dipicu klik badge status). ===
   // Baca data baris via index id; isi field modal (Bootstrap) lalu tampilkan.
