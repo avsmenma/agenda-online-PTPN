@@ -547,13 +547,12 @@
   // Bangun definisi kolom: nomor baris beku kiri, lalu kolom terpilih dengan
   // formatter paritas. nomor_agenda dibekukan agar identitas selalu terlihat.
   function buildColumns(cfg) {
-    const cols = [{ formatter: 'rownum', width: 60, frozen: true, headerSort: false, title: 'No' }];
+    const cols = [{ formatter: 'rownum', width: 60, frozen: true, title: 'No' }];
     (cfg.columns || []).forEach(function (c) {
       const def = { title: c.label, field: c.key, formatter: getFormatter(c.key) };
       if (c.key === 'nomor_agenda') {
         def.frozen = true;
         def.variableHeight = true; // sel dua baris (nomor + bulan/tahun) tak terpotong.
-        def.headerSort = false; // kolom identitas beku — urutan default server (session) yang berlaku.
       }
       // Tugas 6: editor + gerbang editable per kolom data. Editor sesuai FIELD_TYPE;
       // gerbang membaca can_edit baris & daftar non-editable saat sel dibuka.
@@ -566,7 +565,7 @@
     // Kolom tetap "Pengurus Dokumen" (di luar kolom kustomisasi, selalu paling
     // kanan — paritas _tableRowsAjax.blade.php:250-252). Tanpa editor Tabulator;
     // <select> menangani perubahan sendiri via listener change terdelegasi.
-    cols.push({ title: 'Pengurus Dokumen', field: 'handler', formatter: fmtHandler, headerSort: false, editable: false });
+    cols.push({ title: 'Pengurus Dokumen', field: 'handler', formatter: fmtHandler, editable: false });
     return cols;
   }
 
@@ -609,14 +608,14 @@
     progressiveLoad: 'scroll',
     progressiveLoadDelay: 200,
     paginationSize: 100,
-    // Fix review: sort server-side (buildOperatorQuery baca request('sort')/('order'))
-    // alih-alih sort lokal yang menyesatkan (hanya menyortir chunk termuat di dataset
-    // 5000+ baris progressive-load). getFilterParams() menambah params.sort/order.
-    sortMode: 'remote',
     ajaxResponse: function (url, params, response) { return response; },
     layout: 'fitDataStretch',
     height: '70vh',
     index: 'id',
+    // Sort header dibuang atas keputusan user (spec 2026-07-22 §5): header bersih
+    // tanpa segitiga, urutan tabel selalu default server/sesi. Backend masih
+    // menerima sort/order untuk pemanggil lain — hanya klien yang berhenti mengirim.
+    columnDefaults: { headerSort: false, resizable: true },
     columns: buildColumns(CFG),
     placeholder: 'Tidak ada dokumen.',
     cellEdited: onCellEdited, // Tugas 6: commit inline-update saat sel diedit.
@@ -1010,24 +1009,13 @@
     const s = toolbarEl('input[name="search"]');
     const y = toolbarEl('select[name="year"]');
     const st = toolbarEl('select[name="status_filter"]');
+    // Sort header sudah dimatikan lewat columnDefaults di konstruktor Tabulator,
+    // jadi tak ada sorter aktif yang bisa dikirim — server memakai urutan default/sesi.
     const params = {
       search: s ? s.value : '',
       year: y ? y.value : '',
       status_filter: st ? st.value : '',
     };
-    // sortMode:'remote' — kirim sorter aktif sebagai params.sort/order (dibaca
-    // buildOperatorQuery). Dijaga try/catch: pada request pertama window.operatorTable
-    // belum tentu ter-assign (assignment terjadi setelah constructor Tabulator selesai,
-    // namun ajaxParams bisa terpanggil selama konstruksi).
-    try {
-      if (window.operatorTable && typeof window.operatorTable.getSorters === 'function') {
-        const sorters = window.operatorTable.getSorters();
-        if (sorters && sorters.length > 0) {
-          params.sort = sorters[0].field;
-          params.order = sorters[0].dir;
-        }
-      }
-    } catch (e) { /* biarkan server pakai sort default/sesi. */ }
     return params;
   }
   (function wireFilters() {
