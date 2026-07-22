@@ -1253,9 +1253,16 @@
   // Hanya berjalan saat range berubah (pindah sel), bukan saat user menggulir
   // sendiri, sehingga tidak melawan gulir manual.
   (function wireFrozenScrollFix() {
-    const holder = document.querySelector('#operatorTabulatorTable .tabulator-tableholder');
-    if (!holder) return;
     const JARAK_AMAN = 8; // sisa ruang agar sel tidak menempel persis di batas kolom beku.
+
+    // Wadah gulir dicari ULANG tiap kali, JANGAN di-cache: Tabulator mengganti
+    // elemen .tabulator-tableholder setelah init/redraw, sehingga referensi yang
+    // disimpan sekali di awal menjadi basi dan menyetel scrollLeft padanya tidak
+    // berefek apa pun (terbukti: logika koreksi jalan saat dipanggil manual dgn
+    // query segar, tapi diam saja lewat referensi yang di-cache).
+    function wadahGulir() {
+      return document.querySelector('#operatorTabulatorTable .tabulator-tableholder');
+    }
 
     // Tepi kanan blok kolom beku kiri, dibaca dari DOM header (lebar bisa berubah
     // karena tarikan lebar kolom user, jadi jangan di-cache).
@@ -1272,6 +1279,8 @@
       // rAF: jalankan SETELAH Tabulator selesai menggulir sendiri, kalau tidak
       // koreksi kita langsung ditimpa.
       requestAnimationFrame(function () {
+        const holder = wadahGulir();
+        if (!holder) return;
         const cell = activeCell();
         if (!cell) return;
         let el = null;
