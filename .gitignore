@@ -64,3 +64,6 @@ desktop.ini
 .vscode/
 *.swp
 *.swo
+
+# Artefak sesi Playwright MCP (QA visual) — jangan di-commit
+.playwright-mcp/
