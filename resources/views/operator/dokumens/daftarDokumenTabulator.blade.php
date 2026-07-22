@@ -416,6 +416,9 @@
 @endsection
 
 @push('styles')
+    {{-- Font tabel ala CASH_BANK. Sengaja dimuat di sini, BUKAN di layouts/app.blade.php,
+         agar tipografi role lain tidak ikut berubah (CLAUDE.md §6). --}}
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('vendor/tabulator/tabulator.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/tabulator-agenda.css') }}">
     <style>

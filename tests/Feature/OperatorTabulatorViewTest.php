@@ -65,6 +65,21 @@ class OperatorTabulatorViewTest extends TestCase
         $response->assertSee('id="btnDetailBarisAktif"', false);
     }
 
+    /**
+     * Spec 2026-07-22: tema tabel menyetel font-family "Source Sans Pro". Webfont-nya
+     * sengaja dimuat di view ini, BUKAN di layouts/app.blade.php, agar tipografi role
+     * lain tidak ikut berubah. Tanpa link ini font diam-diam jatuh ke Arial dan
+     * restyle terlihat gagal tanpa error apa pun.
+     */
+    public function test_view_memuat_webfont_source_sans_pro(): void
+    {
+        $response = $this->actingAs($this->operator())
+            ->get(route('documents.index'));
+
+        $response->assertOk();
+        $response->assertSee('family=Source+Sans+Pro', false);
+    }
+
     public function test_flag_classic_menyajikan_view_lama(): void
     {
         $response = $this->actingAs($this->operator())
