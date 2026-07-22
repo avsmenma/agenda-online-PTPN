@@ -52,17 +52,33 @@ class OperatorTabulatorViewTest extends TestCase
     }
 
     /**
-     * CLAUDE.md §8: dobel-klik kini memulai inline edit, sehingga modal Detail
-     * Dokumen HARUS punya jalur lain. Tombol toolbar inilah satu-satunya jalur —
-     * bila hilang, detail dokumen tidak bisa dibuka sama sekali dari tabel.
+     * Fitur Detail Dokumen dihapus atas permintaan user (2026-07-22) — modal
+     * detail beserta tombol pembukanya dicabut seluruhnya dari view Tabulator.
+     * Tombol toolbar Hapus baris aktif kini satu-satunya jalur menghapus dokumen
+     * dari tabel (menggantikan tombol Hapus yang dulu ada di footer modal Detail).
      */
-    public function test_toolbar_menyediakan_tombol_detail_baris_aktif(): void
+    public function test_toolbar_menyediakan_tombol_hapus_baris_aktif(): void
     {
         $response = $this->actingAs($this->operator())
             ->get(route('documents.index'));
 
         $response->assertOk();
-        $response->assertSee('id="btnDetailBarisAktif"', false);
+        $response->assertSee('id="btnHapusBarisAktif"', false);
+    }
+
+    /**
+     * Jaring pengaman regresi untuk penghapusan fitur Detail (2026-07-22): tanpa
+     * assertion negatif ini, modal/tombol Detail bisa diam-diam kembali muncul
+     * (mis. lewat revert sebagian) tanpa ada test yang menangkapnya.
+     */
+    public function test_modal_dan_tombol_detail_tidak_lagi_muncul(): void
+    {
+        $response = $this->actingAs($this->operator())
+            ->get(route('documents.index'));
+
+        $response->assertOk();
+        $response->assertDontSee('viewDocumentModal', false);
+        $response->assertDontSee('id="btnDetailBarisAktif"', false);
     }
 
     /**
