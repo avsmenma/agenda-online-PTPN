@@ -627,7 +627,9 @@
     // + auto-scroll mengikuti, klik-tunggal memindahkan sel aktif, dan seleksi blok
     // via drag / Shift+Klik / Shift+Panah.
     selectableRange: true,
-    // selectableRangeColumns tetap false: sort sudah dimatikan, jadi klik header tidak memicu apa pun — tak perlu dibajak jadi seleksi kolom.
+    // selectableRangeColumns tetap false: data dimuat progresif (5.000+ baris), jadi
+    // "pilih seluruh kolom" hanya akan menyeleksi baris yang KEBETULAN sudah termuat
+    // saat itu, bukan seluruh kolom sungguhan — menyesatkan, bukan berguna.
     selectableRangeColumns: false,
     selectableRangeRows: false,
     // TETAP false meski Tahap B sudah jalan: pengosongan bawaan Tabulator hanya
