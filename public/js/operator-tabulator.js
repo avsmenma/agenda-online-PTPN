@@ -662,6 +662,10 @@
     clipboard: 'copy',
     clipboardCopyRowRange: 'range', // salin blok terseleksi, bukan seluruh baris.
     clipboardCopyStyled: false,     // teks polos → tempel bersih ke Excel/Sheets.
+    // Tanpa ini Tabulator ikut menyalin baris judul kolom ke clipboard, sehingga
+    // menempel balik ke tabel menulis nama kolom ke baris pertama dan menggeser
+    // seluruh data turun satu baris (diverifikasi di produksi 2026-07-22).
+    clipboardCopyConfig: { columnHeaders: false },
 
     // rowClick & rowDblClick sengaja TIDAK dipasang:
     //  - klik-tunggal kini milik selectableRange (pindah sel aktif). Panel "Detail
