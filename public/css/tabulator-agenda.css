@@ -85,6 +85,11 @@
   padding: 6px 8px;
   border-right: 1px solid #c3d2e0;
   vertical-align: middle;
+  /* Tema vendor menyetel nowrap+ellipsis: saat kolom disempitkan, teks hilang
+   * (dipotong) alih-alih turun ke baris baru. Bungkus di sini + variableHeight
+   * di JS (columnDefaults) supaya tinggi baris ikut menyesuaikan. */
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 #operatorTabulatorTable.tabulator .tabulator-row:hover .tabulator-cell {
@@ -201,14 +206,14 @@
  * bukan rule yang hilang/kelupaan. `.badge-ditolak` juga tak punya rule di sini
  * karena warnanya diberikan lewat inline style di formatter (lihat fmtStatus). */
 
-/* Sel status: izinkan tinggi mengikuti badge (badge bisa dua baris). */
-#operatorTabulatorTable.tabulator .tabulator-cell[tabulator-field="status"] {
-  white-space: normal;
-}
+/* Sel status: dulu perlu aturan `white-space: normal` sendiri agar tinggi
+ * mengikuti badge (badge bisa dua baris) — sekarang mubazir, sudah dicakup
+ * aturan sel dasar (.tabulator-cell) di atas yang membungkus SEMUA kolom. */
 
-/* Sel nomor_agenda dua baris: subline bulan/tahun tetap terbaca & tak terpotong. */
+/* Sel nomor_agenda dua baris: subline bulan/tahun tetap terbaca & tak terpotong.
+ * `white-space: normal` sudah dicakup aturan sel dasar; line-height tetap perlu
+ * di sini karena base rule tidak menyetelnya. */
 #operatorTabulatorTable.tabulator .tabulator-cell[tabulator-field="nomor_agenda"] {
-  white-space: normal;
   line-height: 1.35;
 }
 

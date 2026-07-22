@@ -551,8 +551,9 @@
     (cfg.columns || []).forEach(function (c) {
       const def = { title: c.label, field: c.key, formatter: getFormatter(c.key) };
       if (c.key === 'nomor_agenda') {
-        def.frozen = true;
-        def.variableHeight = true; // sel dua baris (nomor + bulan/tahun) tak terpotong.
+        def.frozen = true; // identitas baris selalu terlihat saat digulir horizontal.
+        // variableHeight dulu diset per-kolom di sini; sekarang datang dari
+        // columnDefaults (konstruktor Tabulator) untuk SEMUA kolom, jadi mubazir.
       }
       // Tugas 6: editor + gerbang editable per kolom data. Editor sesuai FIELD_TYPE;
       // gerbang membaca can_edit baris & daftar non-editable saat sel dibuka.
@@ -615,7 +616,10 @@
     // Sort header dibuang atas keputusan user (spec 2026-07-22 §5): header bersih
     // tanpa segitiga, urutan tabel selalu default server/sesi. Backend masih
     // menerima sort/order untuk pemanggil lain — hanya klien yang berhenti mengirim.
-    columnDefaults: { headerSort: false, resizable: true },
+    // variableHeight: kolom yang disempitkan membungkus teks (CSS white-space:
+    // normal) alih-alih memotongnya — tanpa ini tinggi baris tetap kaku dan teks
+    // yang membungkus terpotong vertikal.
+    columnDefaults: { headerSort: false, resizable: true, variableHeight: true },
     columns: buildColumns(CFG),
     placeholder: 'Tidak ada dokumen.',
     cellEdited: onCellEdited, // Tugas 6: commit inline-update saat sel diedit.
