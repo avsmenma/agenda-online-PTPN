@@ -1,83 +1,146 @@
 /*
- * Tema Tabulator — Daftar Dokumen Operator (Agenda LM).
- * Versi SKELETON (Tugas 4): warna header teal #083E40 teks putih, baris kompak,
- * border tipis, hover, dan bayangan kolom beku. Gaya badge/subline penuh
- * menyusul di Tugas 5. Jangan menaruh aturan formatter kompleks di sini dulu.
+ * Tema Tabulator — Daftar Dokumen Operator.
+ *
+ * Meniru tabel Bank Masuk/Keluar project CASH_BANK: header navy rapat tanpa
+ * kontrol sort, font Source Sans Pro, garis antarbaris tegas, sel aktif tebal.
+ * Acuan: docs/superpowers/specs/2026-07-22-tabulator-operator-restyle-cashbank-design.md
+ *
+ * Seluruh aturan dikunci di bawah #operatorTabulatorTable agar tidak bocor ke
+ * tabel role lain (CLAUDE.md §1 — 6 tabel per-role masih terduplikasi).
  */
 
 /* ------- Wadah tabel ------- */
 #operatorTabulatorTable.tabulator {
   background-color: #ffffff;
-  border: 1px solid #e2e8e8;
+  border: 1px solid #d0dce8;
   border-radius: 8px;
-  font-size: 13px;
+  font-family: "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px;
   color: #1f2933;
+}
+
+/* Tema vendor menyetel font sendiri pada header & sel — paksa ikut wadah. */
+#operatorTabulatorTable.tabulator .tabulator-cell,
+#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col,
+#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col-title {
+  font-family: inherit;
 }
 
 /* ------- Header kolom ------- */
 #operatorTabulatorTable.tabulator .tabulator-header {
-  background-color: #083E40;
-  border-bottom: 2px solid #062f31;
+  background-color: #0d3b6e;
+  border-bottom: 2px solid #082948;
   color: #ffffff;
   font-weight: 600;
 }
 
 #operatorTabulatorTable.tabulator .tabulator-header .tabulator-col {
-  background-color: #083E40;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: #0d3b6e;
+  border-right: 1px solid #ffffff;
   color: #ffffff;
 }
 
 #operatorTabulatorTable.tabulator .tabulator-header .tabulator-col .tabulator-col-title {
   color: #ffffff;
+  font-size: 11.5px;
   font-weight: 600;
   padding: 6px 8px;
-  white-space: nowrap;
+  text-align: center;
+  white-space: normal;
 }
 
-/* Panah sort agar kontras di atas latar teal */
-#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col .tabulator-col-sorter .tabulator-arrow {
-  border-bottom-color: rgba(255, 255, 255, 0.85);
-  border-top-color: rgba(255, 255, 255, 0.85);
+/* Pegangan tarik-lebar kolom: garis putih samar di batas header. */
+#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col .tabulator-col-resize-handle {
+  width: 6px;
+  cursor: col-resize;
 }
 
-/* ------- Baris ------- */
+#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col:not(.tabulator-col-group) > .tabulator-col-resize-handle {
+  background: linear-gradient(to bottom, transparent 32%, rgba(255, 255, 255, 0.45) 32%,
+    rgba(255, 255, 255, 0.45) 68%, transparent 68%) center / 2px 100% no-repeat;
+}
+
+#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col .tabulator-col-resize-handle:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Pesan tempat scrollbar sejak awal agar header & isi tetap sejajar. */
+#operatorTabulatorTable.tabulator .tabulator-tableholder {
+  scrollbar-gutter: stable;
+}
+
+/* ------- Baris & sel ------- */
 #operatorTabulatorTable.tabulator .tabulator-row {
-  min-height: 38px;
-  border-bottom: 1px solid #eef2f2;
+  border-bottom: 1px solid #c3d2e0;
 }
 
 #operatorTabulatorTable.tabulator .tabulator-row.tabulator-row-even {
-  background-color: #fafcfc;
-}
-
-#operatorTabulatorTable.tabulator .tabulator-row:hover {
-  background-color: #eef6f5;
+  background-color: #fbfdff;
 }
 
 #operatorTabulatorTable.tabulator .tabulator-row .tabulator-cell {
-  padding: 8px;
-  border-right: 1px solid #f0f4f4;
+  padding: 6px 8px;
+  border-right: 1px solid #c3d2e0;
   vertical-align: middle;
 }
 
-/* ------- Kolom beku (frozen) — bayangan pemisah ------- */
+#operatorTabulatorTable.tabulator .tabulator-row:hover .tabulator-cell {
+  background-color: #f0f5fb;
+}
+
+/* ------- Sel aktif & blok seleksi -------
+ * Kelas milik modul SelectRange bawaan Tabulator 6.3.1. Nilai bawaan tema vendor
+ * (border 2px #2975dd, blok #9abcea) ditebalkan & dilembutkan sesuai acuan CASH_BANK.
+ * Aturan blok sengaja ditaruh SETELAH aturan hover agar menang tanpa !important.
+ */
+#operatorTabulatorTable.tabulator .tabulator-tableholder .tabulator-range-overlay .tabulator-range-cell-active {
+  border: 3px solid #1b6fd8;
+}
+
+#operatorTabulatorTable.tabulator .tabulator-tableholder .tabulator-range-overlay .tabulator-range {
+  border: 1px solid #1b6fd8;
+}
+
+#operatorTabulatorTable.tabulator .tabulator-tableholder .tabulator-range-overlay .tabulator-range.tabulator-range-active:after {
+  background-color: #1b6fd8;
+}
+
+#operatorTabulatorTable.tabulator .tabulator-row .tabulator-cell.tabulator-range-selected:not(.tabulator-range-only-cell-selected):not(.tabulator-range-row-header) {
+  background-color: #dbeafe;
+}
+
+/* Header kolom yang sedang tersorot range — jangan menabrak latar navy. */
+#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col.tabulator-range-highlight {
+  background-color: #124a85;
+  color: #ffffff;
+}
+
+#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col.tabulator-range-selected {
+  background-color: #1b6fd8;
+  color: #ffffff;
+}
+
+/* ------- Kolom beku (frozen) ------- */
 #operatorTabulatorTable.tabulator .tabulator-row .tabulator-cell.tabulator-frozen,
 #operatorTabulatorTable.tabulator .tabulator-header .tabulator-col.tabulator-frozen {
-  box-shadow: 2px 0 4px rgba(8, 62, 64, 0.12);
+  box-shadow: 2px 0 4px rgba(13, 59, 110, 0.15);
 }
 
 #operatorTabulatorTable.tabulator .tabulator-frozen.tabulator-frozen-left {
-  border-right: 1px solid #d9e2e2;
+  border-right: 1px solid #c3d2e0;
 }
 
 /* ------- Placeholder kosong ------- */
 #operatorTabulatorTable.tabulator .tabulator-placeholder .tabulator-placeholder-contents {
   color: #6b7c7c;
-  font-size: 14px;
+  font-size: 13px;
 }
 
-/* ------- Toolbar skeleton (Tugas 7 menyambung fungsionalitas) ------- */
+/* ------- Toolbar filter -------
+ * Aturan dasar .tabulator-toolbar ditimpa blok <style> inline di
+ * daftarDokumenTabulator.blade.php; dua aturan di bawahnya tetap hidup.
+ */
 .tabulator-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -98,14 +161,11 @@
 }
 
 /* ============================================================
- * Tugas 5 — Paritas formatter: badge status, subline nomor_agenda.
- * Semua aturan DISKOPKAN dari daftarDokumen.blade.php:1366-1412 dan
- * DIKUNCI di bawah #operatorTabulatorTable agar tak bocor ke halaman lain.
- * `badge-belum-dikirim` & `badge-ditolak` mengandalkan base/inline style
- * (paritas — tidak menciptakan warna baru).
+ * Paritas formatter: badge status & subline nomor_agenda.
+ * DISKOPKAN dari daftarDokumen.blade.php:1366-1412 — jangan diubah di sini,
+ * ini makna status, bukan hiasan tabel.
  * ============================================================ */
 
-/* Base badge — identik daftarDokumen.blade.php:1366-1385 */
 #operatorTabulatorTable.tabulator .badge-status {
   padding: 8px 16px;
   border-radius: 25px;
@@ -127,7 +187,6 @@
   line-height: 1.3;
 }
 
-/* State: Terkirim — identik daftarDokumen.blade.php:1408-1412 */
 #operatorTabulatorTable.tabulator .badge-status.badge-terkirim {
   background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
   color: white;
