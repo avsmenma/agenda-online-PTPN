@@ -101,7 +101,7 @@
 }
 
 #operatorTabulatorTable.tabulator .tabulator-tableholder .tabulator-range-overlay .tabulator-range {
-  border: 1px solid #1b6fd8;
+  border: 3px solid #1b6fd8;
 }
 
 #operatorTabulatorTable.tabulator .tabulator-tableholder .tabulator-range-overlay .tabulator-range.tabulator-range-active:after {
