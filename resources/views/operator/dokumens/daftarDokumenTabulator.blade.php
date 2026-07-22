@@ -74,13 +74,6 @@
             <i class="fa-solid fa-plus me-1"></i> Tambah Baris
         </button>
 
-        {{-- Petunjuk pintasan: fitur §8 seluruhnya berbasis keyboard, tanpa petunjuk
-             ini pengguna tidak punya cara menemukannya. --}}
-        <small class="text-muted ms-auto"
-               title="Panah: pindah sel &#10;Dobel-klik atau Enter: mulai edit (Esc batal)&#10;Drag / Shift+Klik / Shift+Panah: pilih blok&#10;Ctrl+C: salin &#10;Ctrl+V: tempel&#10;Delete: kosongkan&#10;Ctrl+Z: batalkan &#10;Ctrl+Y: ulangi">
-            <i class="fa-regular fa-keyboard me-1"></i>
-            Panah pindah sel &middot; Enter edit &middot; Shift+Panah blok &middot; Ctrl+C/V &middot; Delete &middot; Ctrl+Z/Y
-        </small>
     </div>
 
     {{-- id="documentTableContainer" WAJIB: partial global document-workbench-ui bergantung padanya --}}
