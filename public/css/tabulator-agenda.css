@@ -8,7 +8,8 @@
  * Seluruh aturan TABEL dikunci di bawah #operatorTabulatorTable agar tidak bocor
  * ke tabel role lain (CLAUDE.md §1 — 6 tabel per-role masih terduplikasi).
  * Pengecualian sengaja: tiga aturan .tabulator-toolbar di bawah bersifat global
- * (utang diterima — lihat komentar di dekatnya).
+ * (utang diterima — lihat komentar di dekatnya), dan blok `.tabulator-edit-list`
+ * (dropdown editor) — DOM-nya memang di luar tabel, lihat komentar di dekatnya.
  */
 
 /* ------- Wadah tabel ------- */
@@ -165,6 +166,52 @@
 .tabulator-toolbar .tabulator-toolbar-search {
   flex: 1 1 260px;
   min-width: 200px;
+}
+
+/* ------- Dropdown editor 'list' (Kriteria CF/Sub Kriteria/Item Sub Kriteria/
+ * Bagian/Jenis Pembayaran/Bulan) -------
+ * PENTING — dua hal yang harus disadari sebelum menyentuh blok ini:
+ * 1. Selektor di bawah SENGAJA TIDAK di-scope #operatorTabulatorTable: Tabulator
+ *    menempelkan daftar editor 'list' ke <body>, DI LUAR wadah tabel, sehingga
+ *    scoping id tidak mungkin menjangkaunya. Ini bukan lupa — pengamannya adalah
+ *    berkas CSS ini hanya dimuat oleh view operator (daftarDokumenTabulator.blade.php).
+ * 2. Blok fokus/hover memakai `!important` (3 deklarasi) — SATU-SATUNYA
+ *    pengecualian atas aturan "tanpa !important baru" di berkas ini (lihat blok
+ *    mode gelap `.text-muted` di bawah untuk satu-satunya yang sudah ada
+ *    sebelumnya). Diperlukan untuk mengalahkan gaya vendor/inline yang ditulis
+ *    Tabulator sendiri pada item yang sedang diarahkan panah/di-hover. JANGAN
+ *    menambah !important di tempat lain.
+ * Port dari CASH_BANK/resources/views/cash_bank/table/tableMasuk.blade.php:73-98
+ * (Masalah 2, brief 2026-07-22).
+ */
+.tabulator-edit-list {
+  border: 1px solid #1b6fd8;
+  border-radius: 4px;
+  box-shadow: 0 6px 22px rgba(13, 59, 110, 0.20);
+  font-size: 12px;
+}
+
+.tabulator-edit-list .tabulator-edit-list-item {
+  padding: 7px 12px;
+  color: #1f2d3d;
+}
+
+/* Nilai yang sedang tersimpan (opsi terpilih saat ini): biru MUDA, bukan solid. */
+.tabulator-edit-list .tabulator-edit-list-item.active {
+  background: #e8f1fd;
+  color: #0d3b6e;
+  font-weight: 600;
+}
+
+/* Item yang sedang diarahkan panah / di-hover: biru SOLID. Ditaruh SETELAH
+ * .active agar saat item terpilih juga sedang diarahkan, versi solid yang
+ * menang. */
+.tabulator-edit-list .tabulator-edit-list-item.focused,
+.tabulator-edit-list .tabulator-edit-list-item.hover,
+.tabulator-edit-list .tabulator-edit-list-item:hover {
+  background: #0d6efd !important;
+  color: #ffffff !important;
+  outline: none !important;
 }
 
 /* ============================================================
