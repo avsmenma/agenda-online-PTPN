@@ -178,6 +178,14 @@ class DokumenController extends Controller
 
     public function index(Request $request)
     {
+        // Sort header dibuang dari tabel Tabulator (spec 2026-07-22 §5) sehingga klien tak
+        // pernah lagi mengirim sort/order. Tanpa pembersihan ini, urutan yang sempat ditulis
+        // ke sesi lewat ?classic=1 akan mengunci tabel baru selamanya tanpa cara membatalkan.
+        // Harus dijalankan SEBELUM buildOperatorQuery() membaca sesi tersebut.
+        if (! $request->boolean('classic')) {
+            session()->forget(['operator_sort_column', 'operator_sort_order']);
+        }
+
         $query = $this->buildOperatorQuery($request);
         $sortColumn = session('operator_sort_column', 'nomor_agenda');
         $sortOrder  = session('operator_sort_order', 'desc');

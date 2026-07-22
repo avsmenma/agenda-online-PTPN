@@ -89,4 +89,44 @@ class OperatorTabulatorViewTest extends TestCase
         $response->assertSee('id="btnTambahBarisInline"', false);
         $response->assertDontSee('operatorTabulatorTable', false);
     }
+
+    /**
+     * Fix 1 (review 2026-07-22): tabel Tabulator tak lagi mengirim sort/order, tapi
+     * tabel klasik (?classic=1) masih menulis operator_sort_column/operator_sort_order
+     * ke sesi. Tanpa dibersihkan, sesi lama mengunci urutan tabel Tabulator selamanya
+     * tanpa ada UI untuk membatalkannya. Mengunjungi view Tabulator harus membersihkan
+     * kedua kunci sesi tersebut.
+     */
+    public function test_kunjungan_tabel_tabulator_membersihkan_sesi_sort_lama(): void
+    {
+        $response = $this->actingAs($this->operator())
+            ->withSession([
+                'operator_sort_column' => 'nomor_spp',
+                'operator_sort_order'  => 'asc',
+            ])
+            ->get(route('documents.index'));
+
+        $response->assertOk();
+        $response->assertSessionMissing('operator_sort_column');
+        $response->assertSessionMissing('operator_sort_order');
+    }
+
+    /**
+     * Fix 1 (review 2026-07-22): jalur klasik masih memakai sort/order dari sesi
+     * (toggleSort() di daftarDokumen.blade.php), jadi pembersihan TIDAK boleh berjalan
+     * ketika ?classic=1 diminta — kalau tidak, sort di tabel klasik akan patah.
+     */
+    public function test_flag_classic_tidak_membersihkan_sesi_sort_lama(): void
+    {
+        $response = $this->actingAs($this->operator())
+            ->withSession([
+                'operator_sort_column' => 'nomor_spp',
+                'operator_sort_order'  => 'asc',
+            ])
+            ->get(route('documents.index', ['classic' => 1]));
+
+        $response->assertOk();
+        $response->assertSessionHas('operator_sort_column', 'nomor_spp');
+        $response->assertSessionHas('operator_sort_order', 'asc');
+    }
 }
