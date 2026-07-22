@@ -23,7 +23,7 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
 
   <!-- Mobile Responsive CSS -->
-  <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
+  <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/responsive.css') }}">
 
   <style>
     body {
@@ -3065,7 +3065,7 @@
 
 
   <!-- Smart Autocomplete CSS -->
-  <link href="{{ asset('css/smart-autocomplete.css') }}" rel="stylesheet">
+  <link href="{{ \App\Support\Asset::versioned('css/smart-autocomplete.css') }}" rel="stylesheet">
 
   <!-- Stack for additional styles from views -->
   @stack('styles')
@@ -3892,7 +3892,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Smart Autocomplete JavaScript -->
-  <script src="{{ asset('js/smart-autocomplete.js') }}"></script>
+  <script src="{{ \App\Support\Asset::versioned('js/smart-autocomplete.js') }}"></script>
 <!-- Global Inbox Notification System -->
 <style>
 /* Global Toast Notification Styles */
