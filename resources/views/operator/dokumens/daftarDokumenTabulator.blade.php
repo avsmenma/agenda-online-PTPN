@@ -420,7 +420,7 @@
          agar tipografi role lain tidak ikut berubah (CLAUDE.md §6). --}}
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('vendor/tabulator/tabulator.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/tabulator-agenda.css') }}">
+    <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/tabulator-agenda.css') }}">
     <style>
     /* Toolbar filter Tabulator */
     .tabulator-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
@@ -507,7 +507,7 @@
 @push('scripts')
     <script>window.OPERATOR_TABULATOR_CONFIG = @json($configArray);</script>
     <script src="{{ asset('vendor/tabulator/tabulator.min.js') }}"></script>
-    <script src="{{ asset('js/operator-tabulator.js') }}"></script>
+    <script src="{{ \App\Support\Asset::versioned('js/operator-tabulator.js') }}"></script>
 @endpush
 
 @push('scripts')
