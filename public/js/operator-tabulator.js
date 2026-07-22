@@ -599,6 +599,17 @@
     try { return cell.getRow(); } catch (e) { return null; }
   }
 
+  // Lebar kolom tarikan user disimpan di localStorage. 'fitDataStretch' selalu
+  // memaksa kolom terakhir memenuhi layar sehingga menimpa lebar simpanan —
+  // karena itu begitu ada simpanan, layout beralih ke 'fitData' agar lebar user
+  // dihormati apa adanya (keputusan user 2026-07-22). Tabulator menyimpan di
+  // kunci 'tabulator-<persistenceID>-columns'.
+  const PERSIST_ID = 'agenda-operator-documents';
+  let adaLebarTersimpan = false;
+  // try/catch wajib: localStorage bisa melempar di mode privat / kuota penuh,
+  // dan tabel TIDAK boleh gagal render karenanya.
+  try { adaLebarTersimpan = !!localStorage.getItem('tabulator-' + PERSIST_ID + '-columns'); } catch (e) {}
+
   const table = new Tabulator('#operatorTabulatorTable', {
     ajaxURL: CFG.dataUrl,
     // Tugas 7c: parameter filter aktif (search/year/status_filter) dibaca live dari
@@ -610,7 +621,11 @@
     progressiveLoadDelay: 200,
     paginationSize: 100,
     ajaxResponse: function (url, params, response) { return response; },
-    layout: 'fitDataStretch',
+    layout: adaLebarTersimpan ? 'fitData' : 'fitDataStretch',
+    // Simpan HANYA lebar kolom (bukan urutan/visibilitas) ke localStorage, supaya
+    // penyempitan/pelebaran kolom oleh user bertahan lintas kunjungan.
+    persistence: { columns: ['width'] },
+    persistenceID: PERSIST_ID,
     height: '70vh',
     index: 'id',
     // Sort header dibuang atas keputusan user (spec 2026-07-22 §5): header bersih
