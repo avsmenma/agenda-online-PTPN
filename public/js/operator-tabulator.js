@@ -704,7 +704,6 @@
     columnDefaults: { headerSort: false, resizable: true, variableHeight: true },
     columns: buildColumns(CFG),
     placeholder: 'Tidak ada dokumen.',
-    cellEdited: onCellEdited, // Tugas 6: commit inline-update saat sel diedit.
 
     // === CLAUDE.md §8 Tahap A — perilaku ala spreadsheet (BACA-SAJA) ===
     // Semua dari modul bawaan Tabulator 6.3.1; nol mesin tulis-tangan (§3 aturan 1).
@@ -1190,6 +1189,17 @@
     box.appendChild(btn);
     container.insertBefore(box, container.firstChild);
   }
+  // Commit inline-update saat sel selesai diedit (Tugas 6).
+  //
+  // WAJIB lewat table.on(), BUKAN opsi konstruktor `cellEdited: onCellEdited`.
+  // Tabulator 6 menghapus callback gaya-opsi dan menggantinya dengan sistem event:
+  // opsi `cellEdited` diabaikan DIAM-DIAM — tanpa error, tanpa peringatan — sehingga
+  // sejak b1ef9aa (2026-07-21) setiap edit lewat editor tampak berhasil di layar lalu
+  // hilang saat halaman dimuat ulang. Dibuktikan di browser 2026-07-22 dengan satu
+  // tabel yang memasang KEDUA cara sekaligus: opsi 0 panggilan, table.on() 1 panggilan.
+  // Jalur tempel/Delete/undo tidak terpengaruh karena memakai saveCell(), bukan ini.
+  table.on('cellEdited', onCellEdited);
+
   table.on('dataLoadError', function () { showLoadError(); });
   table.on('dataLoaded', function () { clearLoadError(); });
 
