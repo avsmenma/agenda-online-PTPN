@@ -281,10 +281,47 @@
     return input;
   }
 
+  // Editor teks panjang (uraian_spp). Editor 'textarea' BAWAAN Tabulator memakai
+  // Enter sebagai baris baru, sehingga sel tidak pernah bisa disimpan lewat Enter —
+  // bertentangan dengan CLAUDE.md §8 ("tekan Enter lagi untuk menyimpan").
+  // Di sini: Enter = SIMPAN, Shift+Enter = baris baru, Esc = batal.
+  function textareaEditor(cell, onRendered, success, cancel) {
+    const area = document.createElement('textarea');
+    area.className = 'op-inline-editor';
+    const value = cell.getValue();
+    area.value = (value === null || value === undefined) ? '' : value;
+    area.style.width = '100%';
+    area.style.boxSizing = 'border-box';
+    area.style.minHeight = '60px';
+    area.style.font = 'inherit';
+    area.style.lineHeight = '1.35';
+    area.style.resize = 'vertical';
+
+    onRendered(function () {
+      area.focus();
+      // Tinggi mengikuti isi supaya teks panjang tak perlu digulir saat diedit.
+      area.style.height = Math.max(60, area.scrollHeight) + 'px';
+      // Kursor di akhir teks, bukan menyeleksi semua — mengetik tidak menghapus isi lama.
+      try { area.setSelectionRange(area.value.length, area.value.length); } catch (e) {}
+    });
+
+    let done = false;
+    function commit() { if (done) return; done = true; success(area.value); }
+    area.addEventListener('blur', commit);
+    area.addEventListener('keydown', function (e) {
+      // stopPropagation wajib: tanpa itu Enter/Esc naik ke penangan tabel dan
+      // memindahkan sel aktif atau membuka ulang editor.
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); commit(); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done = true; cancel(); }
+      // Shift+Enter sengaja dibiarkan default → menyisipkan baris baru.
+    });
+    return area;
+  }
+
   // Petakan field → definisi editor Tabulator berdasar FIELD_TYPE.
   function editorFor(field) {
     const type = FIELD_TYPE[field] || 'text';
-    if (type === 'textarea') return { editor: 'textarea' };
+    if (type === 'textarea') return { editor: textareaEditor };
     if (type === 'number') return { editor: numberEditor };
     if (type === 'date') return { editor: dateEditor };
     if (type.indexOf('select_') === 0) {
