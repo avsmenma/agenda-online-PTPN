@@ -578,15 +578,24 @@
   // (baris Tabulator adalah <div>). Helper di bawah hanya MEMBACA range aktif
   // untuk dua keperluan: Enter→mulai edit, dan tombol toolbar "Detail".
 
+  // Range aktif TERAKHIR (objek RangeComponent bawaan modul SelectRange). Dipakai
+  // activeCell() (sel pojok kiri-atas) DAN pasteMatrix() (dimensi blok untuk
+  // aturan ubin ala Excel — Masalah 1, brief 2026-07-22).
+  function activeRange() {
+    let ranges = null;
+    try { ranges = table.getRanges(); } catch (e) { return null; }
+    if (!Array.isArray(ranges) || ranges.length === 0) return null;
+    return ranges[ranges.length - 1] || null;
+  }
+
   // Sel pertama (pojok kiri-atas) dari range terakhir yang aktif.
   // range.getCells() dapat mengembalikan array 2 dimensi [baris][kolom] atau datar
   // tergantung bentuk seleksi — tangani keduanya agar tak bergantung pada detail versi.
   function activeCell() {
-    let ranges = null;
-    try { ranges = table.getRanges(); } catch (e) { return null; }
-    if (!Array.isArray(ranges) || ranges.length === 0) return null;
+    const range = activeRange();
+    if (!range) return null;
     let cells = null;
-    try { cells = ranges[ranges.length - 1].getCells(); } catch (e) { return null; }
+    try { cells = range.getCells(); } catch (e) { return null; }
     if (!Array.isArray(cells) || cells.length === 0) return null;
     const head = cells[0];
     return (Array.isArray(head) ? head[0] : head) || null;
@@ -945,13 +954,45 @@
     const c0 = cols.findIndex(function (c) { return c.getField() === originField; });
     if (r0 < 0 || c0 < 0) return;
 
+    // Ubin ala Excel (Masalah 1, brief 2026-07-22) — port ATURANNYA dari
+    // CASH_BANK/tableMasuk.blade.php bmPaste():876-887, BUKAN kodenya: di sana
+    // batas blok datang dari objek {r1,c1,r2,c2} tulisan tangan; di sini dari
+    // range SelectRange bawaan Tabulator (activeRange().getRows()/getColumns() —
+    // sudah terurut pojok kiri-atas → kanan-bawah apa pun arah drag-nya, lihat
+    // Range.getRows()/getColumns() di tabulator.min.js: slice(top,bottom+1) /
+    // slice(left,right+1) dengan top/bottom/left/right = min/max start-end).
+    //
+    // Aturan: ulangi (tile) data hanya bila ukuran blok kelipatan BULAT ukuran
+    // data yang ditempel — dihitung TERPISAH per baris & kolom. Kalau bukan
+    // kelipatan, tempel data SEKALI dari pojok kiri-atas blok (sisa blok tidak
+    // disentuh sama sekali — bukan dikosongkan). Bila data lebih besar dari blok
+    // (atau tak ada blok sungguhan — hanya satu sel aktif, blok 1x1), rumus di
+    // bawah otomatis luber melewati batas blok dan berperilaku seperti tempel-grid
+    // biasa dari sel aktif (perilaku lama untuk kasus "tanpa blok" tetap sama).
+    const range = activeRange();
+    let blockRowCount = matrix.length;
+    let blockColCount = (matrix[0] || []).length;
+    if (range) {
+      try {
+        const rRows = range.getRows();
+        if (Array.isArray(rRows) && rRows.length > 0) blockRowCount = rRows.length;
+      } catch (e) {}
+      try {
+        const rCols = range.getColumns();
+        if (Array.isArray(rCols) && rCols.length > 0) blockColCount = rCols.length;
+      } catch (e) {}
+    }
+    const repRows = (blockRowCount % matrix.length === 0) ? blockRowCount : matrix.length;
+
     const edits = [];
     let skipped = 0;
-    for (let i = 0; i < matrix.length; i++) {
+    for (let i = 0; i < repRows; i++) {
       const row = rows[r0 + i];
       if (!row) break; // melewati baris terakhir yang termuat — tempel dipotong, baris tidak dibuat.
       const rowEditable = !!row.getData().can_edit;
-      for (let j = 0; j < matrix[i].length; j++) {
+      const srcRow = matrix[i % matrix.length]; // ulangi baris data bila di-tile.
+      const repCols = (srcRow.length && blockColCount % srcRow.length === 0) ? blockColCount : srcRow.length;
+      for (let j = 0; j < repCols; j++) {
         const col = cols[c0 + j];
         if (!col) break; // melewati kolom terakhir.
         const field = col.getField();
@@ -959,7 +1000,7 @@
           skipped++; // posisi tetap dikonsumsi supaya kolom berikutnya tidak bergeser.
           continue;
         }
-        edits.push({ row: row, field: field, value: matrix[i][j] });
+        edits.push({ row: row, field: field, value: srcRow[j % srcRow.length] });
       }
     }
     applyBulkEdits(edits, { skipped: skipped, label: 'Tempel' });
