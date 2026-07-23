@@ -20,7 +20,7 @@
  * setiap nilai asal-user yang disuntikkan ke HTML WAJIB melewati esc().
  */
 (function () {
-  const CFG = window.OPERATOR_TABULATOR_CONFIG;
+  const CFG = window.DOCUMENT_TABULATOR_CONFIG;
   if (!CFG || typeof Tabulator === 'undefined') return;
 
   // === Helper: HTML-escape untuk semua nilai user-asal di dalam formatter HTML. ===
@@ -778,7 +778,9 @@
     // menghapus dokumen tetap ada lewat tombol toolbar Hapus (baris aktif).
   });
 
-  window.operatorTable = table;
+  // Handle instance untuk kode luar (mis. modal). Nama generik karena engine kini bersama;
+  // grep membuktikan tak ada pemakai `window.operatorTable` di luar berkas ini.
+  window.documentTable = table;
 
   // === §8 Tahap A: Enter pada sel aktif → mulai edit ===
   // Tabulator hanya menyediakan pemicu edit lewat mouse (editTriggerEvent), jadi

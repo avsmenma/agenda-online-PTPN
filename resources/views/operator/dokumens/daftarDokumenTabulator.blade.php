@@ -5,7 +5,7 @@
   View Tabulator (pilot) untuk Daftar Dokumen Operator.
   Toolbar filter (search/year/status_filter) tersambung ke Tabulator via AJAX (Tugas 7c)
   dan diinisialisasi dari request() agar bertahan lepas reload kustomisasi kolom.
-  Tabel di-mount oleh public/js/operator-tabulator.js membaca window.OPERATOR_TABULATOR_CONFIG.
+  Tabel di-mount oleh public/js/document-tabulator.js membaca window.DOCUMENT_TABULATOR_CONFIG.
 --}}
 @php
     // Peta kolom terpilih menjadi {key,label} untuk definisi kolom Tabulator.
@@ -398,9 +398,9 @@
 @endpush
 
 @push('scripts')
-    <script>window.OPERATOR_TABULATOR_CONFIG = @json($configArray);</script>
+    <script>window.DOCUMENT_TABULATOR_CONFIG = @json($configArray);</script>
     <script src="{{ asset('vendor/tabulator/tabulator.min.js') }}"></script>
-    <script src="{{ \App\Support\Asset::versioned('js/operator-tabulator.js') }}"></script>
+    <script src="{{ \App\Support\Asset::versioned('js/document-tabulator.js') }}"></script>
 @endpush
 
 @push('scripts')
@@ -415,7 +415,7 @@
 
     // Menerima nilai tampilan sebagai PARAMETER (bukan membaca dari DOM modal Detail
     // yang sudah dihapus) — pemanggilnya adalah tombol toolbar #btnHapusBarisAktif di
-    // operator-tabulator.js, yang mengambil nilai ini dari data baris Tabulator aktif.
+    // document-tabulator.js, yang mengambil nilai ini dari data baris Tabulator aktif.
     function confirmDeleteDocument(dokumenId, nomorAgenda, nomorSpp, nilaiRupiah) {
         if (!dokumenId) { alert('ID Dokumen tidak ditemukan'); return; }
 
@@ -438,7 +438,7 @@
         confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Menghapus...';
         confirmBtn.disabled = true;
         const form = document.getElementById('deleteDocumentForm');
-        form.action = window.OPERATOR_TABULATOR_CONFIG.destroyTpl.replace('{id}', documentIdToDelete);
+        form.action = window.DOCUMENT_TABULATOR_CONFIG.destroyTpl.replace('{id}', documentIdToDelete);
         form.submit();
     }
 

@@ -51,6 +51,18 @@ class OperatorTabulatorViewTest extends TestCase
         $response->assertSee('bagian', false);
     }
 
+    public function test_view_memakai_config_global_dan_berkas_document_tabulator(): void
+    {
+        $response = $this->actingAs($this->operator())
+            ->get(route('documents.index'));
+
+        $response->assertOk();
+        $response->assertSee('window.DOCUMENT_TABULATOR_CONFIG', false);
+        $response->assertSee('js/document-tabulator.js', false);
+        $response->assertDontSee('OPERATOR_TABULATOR_CONFIG', false);
+        $response->assertDontSee('operator-tabulator.js', false);
+    }
+
     /**
      * Fitur Detail Dokumen dihapus atas permintaan user (2026-07-22) — modal
      * detail beserta tombol pembukanya dicabut seluruhnya dari view Tabulator.
