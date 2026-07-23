@@ -1280,6 +1280,44 @@
   // Jalur tempel/Delete/undo tidak terpengaruh karena memakai saveCell(), bukan ini.
   table.on('cellEdited', onCellEdited);
 
+  // Popup mungil "✓ Disalin" di dekat sel aktif setelah Ctrl+C — meniru CASH_BANK.
+  // Tabulator menembakkan clipboardCopied SETELAH penyalinan bawaan berhasil
+  // (clipboard: 'copy'), jadi cukup menumpang event itu; tak perlu menyusun TSV
+  // sendiri seperti CASH_BANK yang tabelnya DataTables tanpa clipboard bawaan.
+  // Elemen popup dibuat sekali lalu dipakai ulang (posisi: fixed, di luar wadah
+  // tabel agar tidak ikut terpotong overflow), gayanya di public/css/tabulator-agenda.css.
+  let copyPopEl = null;
+  let copyPopTimer = null;
+  function copyPop() {
+    if (copyPopEl) return copyPopEl;
+    copyPopEl = document.createElement('div');
+    copyPopEl.className = 'op-copy-pop';
+    copyPopEl.setAttribute('aria-hidden', 'true');
+    copyPopEl.innerHTML = '<b>✓</b> Disalin';
+    document.body.appendChild(copyPopEl);
+    return copyPopEl;
+  }
+  function showCopiedPopup() {
+    const pop = copyPop();
+    pop.style.display = 'block';
+    // Ukur SETELAH tampil agar getBoundingClientRect popup valid untuk clamp tepi.
+    const pr = pop.getBoundingClientRect();
+    let x = 20, y = 20;
+    const cell = activeCell();
+    let anchor = null;
+    try { anchor = cell && cell.getElement(); } catch (e) { anchor = null; }
+    if (anchor) {
+      const rc = anchor.getBoundingClientRect();
+      x = rc.right + 8;
+      y = rc.bottom + 8;
+    }
+    pop.style.left = Math.min(Math.max(8, x), window.innerWidth - pr.width - 8) + 'px';
+    pop.style.top = Math.min(Math.max(8, y), window.innerHeight - pr.height - 8) + 'px';
+    if (copyPopTimer) clearTimeout(copyPopTimer);
+    copyPopTimer = setTimeout(function () { pop.style.display = 'none'; }, 900);
+  }
+  table.on('clipboardCopied', showCopiedPopup);
+
   // Koreksi gulir horizontal saat sel aktif berpindah.
   //
   // Modul SelectRange menggulir sel aktif "masuk viewport", tetapi tidak

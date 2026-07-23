@@ -309,3 +309,31 @@
 .dark #operatorTabulatorTable.tabulator .text-muted {
   color: #6b7c7c !important;
 }
+
+/* ============================================================
+ * Popup "Disalin" — muncul mungil di dekat sel aktif setelah Ctrl+C,
+ * meniru project CASH_BANK. Ditempel ke <body> (bukan di dalam wadah
+ * tabel) agar tidak terpotong overflow tabel, karena itu selektornya
+ * berdiri sendiri tanpa awalan #operatorTabulatorTable. Diposisikan &
+ * ditampilkan/disembunyikan lewat JS (operator-tabulator.js).
+ * ============================================================ */
+.op-copy-pop {
+  position: fixed;
+  z-index: 1080;
+  display: none;
+  background: #0d3b6e;
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.op-copy-pop b {
+  color: #7ee081;
+  margin-right: 3px;
+}
