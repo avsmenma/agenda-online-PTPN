@@ -1,4 +1,3 @@
-@php $showActionColumn = $showActionColumn ?? false; @endphp
           @forelse($dokumens as $index => $dokumen)
             @php
               $canInlineEdit = $dokumen->current_handler === 'akutansi';
@@ -513,73 +512,6 @@
               <td class="col-handler" onclick="event.stopPropagation()">
                 @include('partials.document-handler-select', ['dokumen' => $dokumen])
               </td>
-              @if($showActionColumn)
-              <td class="col-action" onclick="event.stopPropagation()">
-                @if(!$dokumen->is_at_my_role)
-                  {{-- Cross-role visibility: document not yet at Akutansi --}}
-                  @php
-                    $handlerLabel = match ($dokumen->current_handler) {
-                      'operator' => 'Operator',
-                      'bidang' => 'Bidang',
-                      'team_verifikasi' => 'Verifikasi',
-                      'perpajakan' => 'Perpajakan',
-                      'akutansi' => 'Akutansi',
-                      'pembayaran' => 'Pembayaran',
-                      default => ucfirst(str_replace('_', ' ', $dokumen->current_handler ?? 'Unknown')),
-                    };
-                  @endphp
-                  <div class="action-buttons-hybrid" style="display: flex; align-items: center; justify-content: center;">
-                    <span class="badge-status badge-proses" style="font-size: 11px; padding: 6px 12px; white-space: nowrap;">
-                      <i class="fa-solid fa-hourglass-half me-1"></i>
-                      Di {{ $handlerLabel }}
-                    </span>
-                  </div>
-                @else
-                  <div class="action-buttons-hybrid">
-                    @php
-                      $isSentToPembayaran = in_array($dokumen->status, [
-                        'sent_to_pembayaran',
-                        'pending_approval_pembayaran',
-                        'menunggu_di_approve', // Status setelah dikirim ke pembayaran via sendToInbox
-                        'completed',
-                        'selesai',
-                      ]) || $dokumen->status_pembayaran === 'sudah_dibayar' || $isBypassedToPayment;
-                    @endphp
-                    <!-- Unlocked state - buttons enabled -->
-                    @if($dokumen->status == 'returned_to_verifikasi')
-                      {{-- Document has been handed back to Verifikasi - disable all actions --}}
-                      <button class="btn-action btn-edit locked btn-full-width" disabled
-                        title="Dokumen sudah kembali ke Verifikasi">
-                        <i class="fa-solid fa-check-circle"></i>
-                        <span>Kembali ke Verifikasi</span>
-                      </button>
-                    @elseif(!$isSentToPembayaran)
-                      <!-- Tombol Kirim Data - selalu muncul untuk dokumen yang tidak terkunci dan belum terkirim -->
-                      <button type="button" class="btn-action btn-send btn-full-width"
-                        onclick="sendToPembayaran({{ $dokumen->id }})" title="Kirim ke Team Pembayaran">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        <span>Kirim Data</span>
-                      </button>
-                      <div class="action-row">
-                        @if($dokumen->can_edit)
-                          <button type="button" class="btn-action btn-kembalikan" style="flex: 1;"
-                            onclick="openReturnModal({{ $dokumen->id }})" title="Kirim kembali ke Team Verifikasi">
-                            <i class="fa-solid fa-paper-plane"></i>
-                            <span>Balik</span>
-                          </button>
-                        @endif
-                      </div>
-                    @else
-                      <!-- Dokumen sudah terkirim - tampilkan status Terkirim konsisten -->
-                      <button type="button" class="btn-action btn-sent btn-full-width" disabled>
-                        <i class="fa-solid fa-check-circle"></i>
-                        <span>Terkirim</span>
-                      </button>
-                    @endif
-                  </div>
-                @endif
-              </td>
-              @endif
             </tr>
             <tr class="detail-row" id="detail-{{ $dokumen->id }}">
               <td colspan="{{ count($selectedColumns) + 4 }}">

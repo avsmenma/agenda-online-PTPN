@@ -50,4 +50,24 @@ class AkutansiHapusAksiMatiTest extends TestCase
         $this->assertTrue($router->has('documents.akutansi.index'));
         $this->assertTrue($router->has('documents.akutansi.detail'));
     }
+
+    public function test_halaman_akutansi_render_tanpa_ui_aksi_mati(): void
+    {
+        $response = $this->actingAs($this->akutansi())
+            ->get(route('documents.akutansi.index'));
+
+        $response->assertOk();
+
+        // Potongan HIDUP tetap ada — bukti tak kebablasan menghapus:
+        $response->assertSee('Deadline', false);            // header kolom Deadline
+        $response->assertSee('columnCustomizationModal', false); // modal kustomisasi kolom (hidup)
+
+        // UI aksi MATI sudah tiada:
+        $response->assertDontSee('setDeadlineModal', false);
+        $response->assertDontSee('sendToPembayaranModal', false);
+        $response->assertDontSee('returnModal', false);
+        $response->assertDontSee('function sendToPembayaran(', false);
+        $response->assertDontSee('function confirmReturn(', false);
+        $response->assertDontSee('function confirmSetDeadline(', false);
+    }
 }

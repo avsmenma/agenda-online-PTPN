@@ -350,7 +350,6 @@ class DashboardAkutansiController extends Controller
             return view('akutansi.dokumens._chunk', [
                 'dokumens' => $dokumens,
                 'selectedColumns' => $selectedColumns,
-                'showActionColumn' => false,
             ]);
         }
 
