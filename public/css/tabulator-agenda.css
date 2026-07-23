@@ -5,7 +5,7 @@
  * kontrol sort, font Source Sans Pro, garis antarbaris tegas, sel aktif tebal.
  * Acuan: docs/superpowers/specs/2026-07-22-tabulator-operator-restyle-cashbank-design.md
  *
- * Seluruh aturan TABEL dikunci di bawah #operatorTabulatorTable agar tidak bocor
+ * Seluruh aturan TABEL dikunci di bawah .doc-tabulator agar tidak bocor
  * ke tabel role lain (CLAUDE.md §1 — 6 tabel per-role masih terduplikasi).
  * Pengecualian sengaja: tiga aturan .tabulator-toolbar di bawah bersifat global
  * (utang diterima — lihat komentar di dekatnya), dan blok `.tabulator-edit-list`
@@ -13,7 +13,7 @@
  */
 
 /* ------- Wadah tabel ------- */
-#operatorTabulatorTable.tabulator {
+.doc-tabulator.tabulator {
   background-color: #ffffff;
   border: 1px solid #d0dce8;
   border-radius: 8px;
@@ -24,27 +24,27 @@
 }
 
 /* Tema vendor menyetel font sendiri pada header & sel — paksa ikut wadah. */
-#operatorTabulatorTable.tabulator .tabulator-cell,
-#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col,
-#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col-title {
+.doc-tabulator.tabulator .tabulator-cell,
+.doc-tabulator.tabulator .tabulator-header .tabulator-col,
+.doc-tabulator.tabulator .tabulator-header .tabulator-col-title {
   font-family: inherit;
 }
 
 /* ------- Header kolom ------- */
-#operatorTabulatorTable.tabulator .tabulator-header {
+.doc-tabulator.tabulator .tabulator-header {
   background-color: #0d3b6e;
   border-bottom: 2px solid #082948;
   color: #ffffff;
   font-weight: 600;
 }
 
-#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col {
+.doc-tabulator.tabulator .tabulator-header .tabulator-col {
   background-color: #0d3b6e;
   border-right: 1px solid #ffffff;
   color: #ffffff;
 }
 
-#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col .tabulator-col-title {
+.doc-tabulator.tabulator .tabulator-header .tabulator-col .tabulator-col-title {
   color: #ffffff;
   font-size: 11.5px;
   font-weight: 600;
@@ -54,35 +54,35 @@
 }
 
 /* Pegangan tarik-lebar kolom: garis putih samar di batas header. */
-#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col .tabulator-col-resize-handle {
+.doc-tabulator.tabulator .tabulator-header .tabulator-col .tabulator-col-resize-handle {
   width: 6px;
   cursor: col-resize;
 }
 
-#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col:not(.tabulator-col-group) > .tabulator-col-resize-handle {
+.doc-tabulator.tabulator .tabulator-header .tabulator-col:not(.tabulator-col-group) > .tabulator-col-resize-handle {
   background: linear-gradient(to bottom, transparent 32%, rgba(255, 255, 255, 0.45) 32%,
     rgba(255, 255, 255, 0.45) 68%, transparent 68%) center / 2px 100% no-repeat;
 }
 
-#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col .tabulator-col-resize-handle:hover {
+.doc-tabulator.tabulator .tabulator-header .tabulator-col .tabulator-col-resize-handle:hover {
   background: rgba(255, 255, 255, 0.35);
 }
 
 /* Pesan tempat scrollbar sejak awal agar header & isi tetap sejajar. */
-#operatorTabulatorTable.tabulator .tabulator-tableholder {
+.doc-tabulator.tabulator .tabulator-tableholder {
   scrollbar-gutter: stable;
 }
 
 /* ------- Baris & sel ------- */
-#operatorTabulatorTable.tabulator .tabulator-row {
+.doc-tabulator.tabulator .tabulator-row {
   border-bottom: 1px solid #c3d2e0;
 }
 
-#operatorTabulatorTable.tabulator .tabulator-row.tabulator-row-even {
+.doc-tabulator.tabulator .tabulator-row.tabulator-row-even {
   background-color: #fbfdff;
 }
 
-#operatorTabulatorTable.tabulator .tabulator-row .tabulator-cell {
+.doc-tabulator.tabulator .tabulator-row .tabulator-cell {
   padding: 6px 8px;
   border-right: 1px solid #c3d2e0;
   vertical-align: middle;
@@ -93,7 +93,7 @@
   overflow-wrap: break-word;
 }
 
-#operatorTabulatorTable.tabulator .tabulator-row:hover .tabulator-cell {
+.doc-tabulator.tabulator .tabulator-row:hover .tabulator-cell {
   background-color: #f0f5fb;
 }
 
@@ -102,31 +102,31 @@
  * (border 2px #2975dd, blok #9abcea) ditebalkan & dilembutkan sesuai acuan CASH_BANK.
  * Aturan blok sengaja ditaruh SETELAH aturan hover agar menang tanpa !important.
  */
-#operatorTabulatorTable.tabulator .tabulator-tableholder .tabulator-range-overlay .tabulator-range-cell-active {
+.doc-tabulator.tabulator .tabulator-tableholder .tabulator-range-overlay .tabulator-range-cell-active {
   border: 3px solid #1b6fd8;
 }
 
-#operatorTabulatorTable.tabulator .tabulator-tableholder .tabulator-range-overlay .tabulator-range {
+.doc-tabulator.tabulator .tabulator-tableholder .tabulator-range-overlay .tabulator-range {
   border: 3px solid #1b6fd8;
 }
 
-#operatorTabulatorTable.tabulator .tabulator-tableholder .tabulator-range-overlay .tabulator-range.tabulator-range-active:after {
+.doc-tabulator.tabulator .tabulator-tableholder .tabulator-range-overlay .tabulator-range.tabulator-range-active:after {
   background-color: #1b6fd8;
 }
 
-#operatorTabulatorTable.tabulator .tabulator-row .tabulator-cell.tabulator-range-selected:not(.tabulator-range-only-cell-selected):not(.tabulator-range-row-header) {
+.doc-tabulator.tabulator .tabulator-row .tabulator-cell.tabulator-range-selected:not(.tabulator-range-only-cell-selected):not(.tabulator-range-row-header) {
   background-color: #dbeafe;
 }
 
 /* Header kolom yang sedang tersorot range — jangan menabrak latar navy. */
-#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col.tabulator-range-highlight {
+.doc-tabulator.tabulator .tabulator-header .tabulator-col.tabulator-range-highlight {
   background-color: #124a85;
   color: #ffffff;
 }
 
 /* ------- Kolom beku (frozen) ------- */
-#operatorTabulatorTable.tabulator .tabulator-row .tabulator-cell.tabulator-frozen,
-#operatorTabulatorTable.tabulator .tabulator-header .tabulator-col.tabulator-frozen {
+.doc-tabulator.tabulator .tabulator-row .tabulator-cell.tabulator-frozen,
+.doc-tabulator.tabulator .tabulator-header .tabulator-col.tabulator-frozen {
   box-shadow: 2px 0 4px rgba(13, 59, 110, 0.15);
 }
 
@@ -135,7 +135,7 @@
  * .tabulator-header .tabulator-col di atas). Tanpa kualifikasi .tabulator-row
  * ini, aturan yang sama-sama spesifisitas (1,3,0) tapi lebih akhir di berkas
  * ini akan menang atas aturan header dan membuat satu pemisah header kelabu. */
-#operatorTabulatorTable.tabulator .tabulator-row .tabulator-frozen.tabulator-frozen-left {
+.doc-tabulator.tabulator .tabulator-row .tabulator-frozen.tabulator-frozen-left {
   border-right: 1px solid #c3d2e0;
 }
 
@@ -149,12 +149,12 @@
  * mengambang di atas kolom lain saat digulir. Jadi bingkainya ditiru di sel itu
  * sendiri memakai box-shadow inset, ditambah bayangan tepi beku yang sudah ada
  * supaya aturan ini tidak menghapusnya. */
-#operatorTabulatorTable.tabulator .tabulator-row .tabulator-cell.tabulator-frozen.tabulator-range-only-cell-selected {
+.doc-tabulator.tabulator .tabulator-row .tabulator-cell.tabulator-frozen.tabulator-range-only-cell-selected {
   box-shadow: inset 0 0 0 3px #1b6fd8, 2px 0 4px rgba(13, 59, 110, 0.15);
 }
 
 /* ------- Placeholder kosong ------- */
-#operatorTabulatorTable.tabulator .tabulator-placeholder .tabulator-placeholder-contents {
+.doc-tabulator.tabulator .tabulator-placeholder .tabulator-placeholder-contents {
   color: #6b7c7c;
   font-size: 13px;
 }
@@ -185,7 +185,7 @@
 /* ------- Dropdown editor 'list' (Kriteria CF/Sub Kriteria/Item Sub Kriteria/
  * Bagian/Jenis Pembayaran/Bulan) -------
  * PENTING — dua hal yang harus disadari sebelum menyentuh blok ini:
- * 1. Selektor di bawah SENGAJA TIDAK di-scope #operatorTabulatorTable: Tabulator
+ * 1. Selektor di bawah SENGAJA TIDAK di-scope .doc-tabulator: Tabulator
  *    menempelkan daftar editor 'list' ke <body>, DI LUAR wadah tabel, sehingga
  *    scoping id tidak mungkin menjangkaunya. Ini bukan lupa — pengamannya adalah
  *    berkas CSS ini hanya dimuat oleh view operator (daftarDokumenTabulator.blade.php).
@@ -234,7 +234,7 @@
  * ini makna status, bukan hiasan tabel.
  * ============================================================ */
 
-#operatorTabulatorTable.tabulator .badge-status {
+.doc-tabulator.tabulator .badge-status {
   padding: 8px 16px;
   border-radius: 25px;
   font-size: 12px;
@@ -255,7 +255,7 @@
   line-height: 1.3;
 }
 
-#operatorTabulatorTable.tabulator .badge-status.badge-terkirim {
+.doc-tabulator.tabulator .badge-status.badge-terkirim {
   background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
   color: white;
   border-color: #083E40;
@@ -274,11 +274,11 @@
 /* Sel nomor_agenda dua baris: subline bulan/tahun tetap terbaca & tak terpotong.
  * `white-space: normal` sudah dicakup aturan sel dasar; line-height tetap perlu
  * di sini karena base rule tidak menyetelnya. */
-#operatorTabulatorTable.tabulator .tabulator-cell[tabulator-field="nomor_agenda"] {
+.doc-tabulator.tabulator .tabulator-cell[tabulator-field="nomor_agenda"] {
   line-height: 1.35;
 }
 
-#operatorTabulatorTable.tabulator .tabulator-cell[tabulator-field="nomor_agenda"] .text-muted {
+.doc-tabulator.tabulator .tabulator-cell[tabulator-field="nomor_agenda"] .text-muted {
   display: block;
   color: #6b7c7c;
   font-size: 11px;
@@ -291,22 +291,22 @@
  * TERANG, dengan asumsi latar di sekitarnya juga gelap. Di dalam tabel ini
  * asumsi itu salah: strong putih di atas sel putih ≈ kontras 1.05:1, membuat
  * kolom Nomor Agenda (fmtNomorAgenda) & Nilai Rupiah (fmtNilaiRupiah) tampak
- * kosong. Selector ID #operatorTabulatorTable mengalahkan aturan global itu
+ * kosong. Selector ID .doc-tabulator mengalahkan aturan global itu
  * tanpa !important — kecuali .text-muted, sebab aturan aslinya (app.blade.php)
  * sendiri memakai !important sehingga hanya !important yang bisa menimpanya.
  * Span badge tak terdampak: .badge-status.badge-terkirim (di atas) & style
  * inline pada badge lain punya spesifisitas/prioritas lebih tinggi dan tetap
  * menang atas aturan `span` umum di bawah ini.
  * ============================================================ */
-.dark #operatorTabulatorTable.tabulator strong,
-.dark #operatorTabulatorTable.tabulator b,
-.dark #operatorTabulatorTable.tabulator span,
-.dark #operatorTabulatorTable.tabulator small,
-.dark #operatorTabulatorTable.tabulator a {
+.dark .doc-tabulator.tabulator strong,
+.dark .doc-tabulator.tabulator b,
+.dark .doc-tabulator.tabulator span,
+.dark .doc-tabulator.tabulator small,
+.dark .doc-tabulator.tabulator a {
   color: inherit;
 }
 
-.dark #operatorTabulatorTable.tabulator .text-muted {
+.dark .doc-tabulator.tabulator .text-muted {
   color: #6b7c7c !important;
 }
 
@@ -314,7 +314,7 @@
  * Popup "Disalin" — muncul mungil di dekat sel aktif setelah Ctrl+C,
  * meniru project CASH_BANK. Ditempel ke <body> (bukan di dalam wadah
  * tabel) agar tidak terpotong overflow tabel, karena itu selektornya
- * berdiri sendiri tanpa awalan #operatorTabulatorTable. Diposisikan &
+ * berdiri sendiri tanpa awalan .doc-tabulator. Diposisikan &
  * ditampilkan/disembunyikan lewat JS (operator-tabulator.js).
  * ============================================================ */
 .op-copy-pop {
