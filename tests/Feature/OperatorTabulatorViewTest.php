@@ -8,9 +8,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Menguji cabang flag pada DokumenController@index:
- * - default (tanpa flag) menyajikan view Tabulator (daftarDokumenTabulator) + memuat aset dist.
- * - ?classic=1 menyajikan view lama (daftarDokumen) sebagai fallback.
+ * Menguji cabang view pada DokumenController@index:
+ * - operator selalu disajikan view Tabulator (daftarDokumenTabulator) + memuat aset dist.
+ * - flag ?classic sudah tidak berpengaruh: tabel classic dihapus (2026-07-23).
  */
 class OperatorTabulatorViewTest extends TestCase
 {
@@ -96,14 +96,15 @@ class OperatorTabulatorViewTest extends TestCase
         $response->assertSee('family=Source+Sans+Pro', false);
     }
 
-    public function test_flag_classic_menyajikan_view_lama(): void
+    public function test_flag_classic_diabaikan_menyajikan_tabulator(): void
     {
         $response = $this->actingAs($this->operator())
             ->get(route('documents.index', ['classic' => 1]));
 
         $response->assertOk();
-        $response->assertSee('id="btnTambahBarisInline"', false);
-        $response->assertDontSee('operatorTabulatorTable', false);
+        // Flag ?classic tak lagi berpengaruh — tabel classic dihapus, selalu Tabulator.
+        $response->assertSee('operatorTabulatorTable', false);
+        $response->assertDontSee('id="btnTambahBarisInline"', false);
     }
 
     /**
@@ -128,11 +129,11 @@ class OperatorTabulatorViewTest extends TestCase
     }
 
     /**
-     * Fix 1 (review 2026-07-22): jalur klasik masih memakai sort/order dari sesi
-     * (toggleSort() di daftarDokumen.blade.php), jadi pembersihan TIDAK boleh berjalan
-     * ketika ?classic=1 diminta — kalau tidak, sort di tabel klasik akan patah.
+     * Flag ?classic tak lagi punya jalur sort sendiri (tabel classic dihapus), jadi
+     * mengunjungi index dengan ?classic=1 pun tetap membersihkan sesi sort lama —
+     * tidak ada lagi kondisi yang mempertahankannya.
      */
-    public function test_flag_classic_tidak_membersihkan_sesi_sort_lama(): void
+    public function test_flag_classic_diabaikan_tetap_membersihkan_sesi_sort(): void
     {
         $response = $this->actingAs($this->operator())
             ->withSession([
@@ -142,8 +143,8 @@ class OperatorTabulatorViewTest extends TestCase
             ->get(route('documents.index', ['classic' => 1]));
 
         $response->assertOk();
-        $response->assertSessionHas('operator_sort_column', 'nomor_spp');
-        $response->assertSessionHas('operator_sort_order', 'asc');
+        $response->assertSessionMissing('operator_sort_column');
+        $response->assertSessionMissing('operator_sort_order');
     }
 
     /**

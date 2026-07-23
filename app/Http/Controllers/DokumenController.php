@@ -182,9 +182,10 @@ class DokumenController extends Controller
         // pernah lagi mengirim sort/order. Tanpa pembersihan ini, urutan yang sempat ditulis
         // ke sesi lewat ?classic=1 akan mengunci tabel baru selamanya tanpa cara membatalkan.
         // Harus dijalankan SEBELUM buildOperatorQuery() membaca sesi tersebut.
-        if (! $request->boolean('classic')) {
-            session()->forget(['operator_sort_column', 'operator_sort_order']);
-        }
+        // Tabel Tabulator tak pernah mengirim sort/order. Sesi sort lama (peninggalan
+        // tabel classic yang sudah dihapus 2026-07-23) selalu dibersihkan agar tak
+        // mengunci urutan tabel baru. Harus jalan SEBELUM buildOperatorQuery().
+        session()->forget(['operator_sort_column', 'operator_sort_order']);
 
         $query = $this->buildOperatorQuery($request);
         $sortColumn = session('operator_sort_column', 'nomor_agenda');
@@ -318,9 +319,9 @@ class DokumenController extends Controller
             "ieJenisPembayaranList" => $ieJenisPembayaranList,
         );
 
-        $useClassic = $request->boolean('classic');
-        $view = $useClassic ? 'operator.dokumens.daftarDokumen' : 'operator.dokumens.daftarDokumenTabulator';
-        return view($view, $data);
+        // Tabel classic dihapus (2026-07-23) — operator selalu dilayani view Tabulator.
+        // Flag ?classic tidak lagi berpengaruh (query param sisa dibiarkan no-op).
+        return view('operator.dokumens.daftarDokumenTabulator', $data);
     }
 
 
