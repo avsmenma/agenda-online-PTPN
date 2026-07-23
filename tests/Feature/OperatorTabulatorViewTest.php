@@ -10,7 +10,7 @@ use Tests\TestCase;
 /**
  * Menguji cabang view pada DokumenController@index:
  * - operator selalu disajikan view Tabulator (daftarDokumenTabulator) + memuat aset dist.
- * - flag ?classic sudah tidak berpengaruh: tabel classic dihapus (2026-07-23).
+ * - flag ?classic sudah tidak berpengaruh (jalur classic dimatikan).
  */
 class OperatorTabulatorViewTest extends TestCase
 {
