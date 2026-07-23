@@ -990,11 +990,50 @@
     });
   }
 
+  // Saat Delete/Backspace mengosongkan sel KRITERIA (kategori) atau SUB-KRITERIA
+  // (jenis_dokumen), anak yang bergantung padanya harus IKUT kosong — paritas
+  // dengan jalur dropdown (onCellEdited → resetDependentFields). Tanpa ini,
+  // mengosongkan kriteria lewat Delete meninggalkan sub-kriteria & item yatim.
+  //
+  // Edit anak dihitung DI MUKA dari data baris saat ini (anak masih berisi), lalu
+  // digabung ke SATU batch tulis bersama pengosongan langsung → satu laporan toast,
+  // satu entri Ctrl+Z (satu undo mengembalikan induk + anak sekaligus).
+  function cascadeEditsFor(clearedCells) {
+    // "rowId|field" yang MEMANG sudah dikosongkan langsung oleh seleksi user —
+    // jangan diantre ulang sebagai anak (hindari PATCH & entri riwayat ganda).
+    const clearedKeys = {};
+    clearedCells.forEach(function (cell) {
+      let field = null, id = null;
+      try { field = cell.getColumn().getField(); id = cell.getRow().getData().id; } catch (e) { return; }
+      if (field != null && id != null) clearedKeys[id + '|' + field] = true;
+    });
+    const queued = {}; // dedup antar-induk pada baris yang sama (kategori & jenis_dokumen sama-sama menuju jenis_sub_pekerjaan).
+    const edits = [];
+    clearedCells.forEach(function (cell) {
+      let field = null, row = null, data = null;
+      try { field = cell.getColumn().getField(); row = cell.getRow(); data = row.getData(); } catch (e) { return; }
+      const children = DEPENDENT_FIELDS[field];
+      if (!children) return;
+      children.forEach(function (child) {
+        const key = data.id + '|' + child;
+        if (clearedKeys[key] || queued[key]) return;      // sudah dikosongkan / sudah diantre.
+        if (NON_EDITABLE_FIELDS.indexOf(child) !== -1) return;
+        const v = data[child];
+        if (v === null || v === undefined || String(v) === '') return; // sudah kosong, tak perlu ditulis.
+        queued[key] = true;
+        edits.push({ row: row, field: child, value: '' });
+      });
+    });
+    return edits;
+  }
+
   // Delete / Backspace → kosongkan sel terpilih tanpa masuk mode edit.
   function clearSelection() {
     const sel = selectedWritableCells();
+    const directEdits = editsFromCells(sel.cells, function () { return ''; });
+    const cascadeEdits = cascadeEditsFor(sel.cells);
     applyBulkEdits(
-      editsFromCells(sel.cells, function () { return ''; }),
+      directEdits.concat(cascadeEdits),
       { skipped: sel.skipped, label: 'Kosongkan' }
     );
   }
