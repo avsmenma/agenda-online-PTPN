@@ -22,7 +22,7 @@ use App\Helpers\ActivityLogHelper;
 class DokumenController extends Controller
 {
     /**
-     * Build the base operator document query (dipakai index, termasuk jalur virtual_chunk)
+     * Build the base operator document query (dipakai index)
      */
     private function buildOperatorQuery(Request $request): \Illuminate\Database\Eloquent\Builder
     {
@@ -239,15 +239,6 @@ class DokumenController extends Controller
 
             // Update session with cleaned columns
             session(['dokumens_table_columns' => $selectedColumns]);
-        }
-
-        // Virtual scroll: balas hanya potongan baris tabel (ringan) tanpa layout & partial berat
-        if ($request->boolean('virtual_chunk')) {
-            return view('operator.dokumens._chunk', [
-                'dokumens'         => $dokumens,
-                'selectedColumns'  => $selectedColumns,
-                'availableColumns' => $availableColumns,
-            ]);
         }
 
         // Load dropdown options for inline editing

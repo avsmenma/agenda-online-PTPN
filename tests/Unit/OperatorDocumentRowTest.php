@@ -13,7 +13,8 @@ use Tests\TestCase;
 /**
  * Menguji kelas transform baris OperatorDocumentRow — sumber kebenaran tunggal
  * untuk derivasi badge status, format rupiah/tanggal, join relasi, dan aturan
- * can_edit yang sebelumnya tersebar di _tableRowsAjax.blade.php.
+ * can_edit. Logika baris ini dulu diekstrak dari _tableRowsAjax.blade.php (view
+ * classic, dihapus 2026-07-23). Kini OperatorDocumentRow adalah sumber tunggalnya.
  *
  * Nama method uji dalam Bahasa Indonesia; variabel lokal dalam English.
  */
