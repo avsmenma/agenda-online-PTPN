@@ -9,8 +9,8 @@ use Tests\TestCase;
 
 /**
  * Menguji endpoint `POST /documents/inline-create` (name `documents.inline-create`).
- * Selain tetap membalas `html` (view lama, fase fallback), balasan kini WAJIB
- * menyertakan objek `row` hasil OperatorDocumentRow untuk konsumsi Tabulator.
+ * Setelah tabel classic dihapus (2026-07-23) balasan hanya menyertakan objek `row`
+ * (OperatorDocumentRow) untuk konsumsi Tabulator — key `html` sudah tidak ada.
  */
 class OperatorInlineCreateRowTest extends TestCase
 {
@@ -34,18 +34,6 @@ class OperatorInlineCreateRowTest extends TestCase
         $this->assertSame('draft', $response->json('row.display_status.code'));
         $this->assertTrue($response->json('row.can_edit'));
         $this->assertNotNull($response->json('row.handler_options'));
-    }
-
-    public function test_inline_create_tetap_balas_html(): void
-    {
-        $response = $this->actingAs($this->operator())
-            ->postJson(route('documents.inline-create'), ['nomor_agenda' => '9002_2026']);
-
-        $response->assertOk();
-
-        $html = $response->json('html');
-        $this->assertIsString($html);
-        $this->assertNotEmpty($html);
     }
 
     public function test_inline_create_duplikat_422(): void

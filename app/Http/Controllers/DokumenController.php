@@ -361,24 +361,12 @@ class DokumenController extends Controller
         // Eager-load relasi yang dipakai partial agar markup baris identik
         $dokumen->load(['roleStatuses', 'dibayarKepadas', 'dokumenPos']);
 
-        // Resolusi kolom sama seperti index()
-        $availableColumns = $this->operatorDocumentColumns();
-        $defaultColumns   = $this->defaultOperatorDocumentColumns($availableColumns);
-        $selectedColumns  = session('dokumens_table_columns', $defaultColumns);
-        $selectedColumns  = array_values(array_filter($selectedColumns, fn ($c) => isset($availableColumns[$c])));
-
-        $html = view('operator.dokumens._tableRowsAjax', [
-            'dokumens'         => collect([$dokumen]),
-            'selectedColumns'  => $selectedColumns,
-            'availableColumns' => $availableColumns,
-        ])->render();
-
         return response()->json([
             'success' => true,
             'id'      => $dokumen->id,
-            'html'    => $html,
-            // Objek baris JSON untuk Tabulator (konsumen tunggal ke depan);
-            // `html` dipertahankan selama view lama masih dipakai (fase fallback).
+            // Objek baris JSON untuk Tabulator — satu-satunya konsumen. Partial
+            // _tableRowsAjax tak lagi dirender di sini (jalur render lama dilepas;
+            // view classic-nya dihapus di task berikutnya).
             'row'     => \App\Support\OperatorDocumentRow::fromDokumen($dokumen, $this->buildHandlerOptions(), auth()->user()?->role),
         ]);
     }

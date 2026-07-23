@@ -27,7 +27,8 @@ class InlineCreateDokumenTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson(['success' => true])
-            ->assertJsonStructure(['success', 'id', 'html']);
+            ->assertJsonStructure(['success', 'id', 'row'])
+            ->assertJsonMissingPath('html');
 
         $this->assertDatabaseHas('dokumens', [
             'nomor_agenda'    => 'AG-001',
@@ -40,16 +41,6 @@ class InlineCreateDokumenTest extends TestCase
         $this->assertNotNull($dokumen->tanggal_masuk);
         $this->assertNotEmpty($dokumen->bulan);
         $this->assertSame((string) now()->year, (string) $dokumen->tahun);
-    }
-
-    public function test_html_respon_memuat_data_id(): void
-    {
-        $response = $this->actingAs($this->operator())
-            ->postJson('/documents/inline-create', ['nomor_agenda' => 'AG-HTML']);
-
-        $response->assertStatus(200);
-        $id = $response->json('id');
-        $this->assertStringContainsString('data-id="' . $id . '"', $response->json('html'));
     }
 
     public function test_nomor_agenda_duplikat_ditolak(): void
