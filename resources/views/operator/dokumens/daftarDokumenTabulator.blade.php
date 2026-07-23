@@ -15,6 +15,7 @@
     // Template URL berparameter dibangun via placeholder __ID__ lalu ditukar {id}
     // agar klien (JS) cukup mengganti {id} dengan id baris saat memanggil endpoint.
     $configArray = [
+        'mountId'          => 'operatorTabulatorTable',
         'dataUrl'          => route('documents.data'),
         'inlineCreateUrl'  => route('documents.inline-create'),
         'inlineUpdateTpl'  => str_replace('__ID__', '{id}', route('documents.inline-update', ['dokumen' => '__ID__'])),
@@ -78,7 +79,7 @@
 
     {{-- id="documentTableContainer" WAJIB: partial global document-workbench-ui bergantung padanya --}}
     <div class="table-section table-dokumen" id="documentTableContainer">
-        <div id="operatorTabulatorTable"></div>
+        <div id="operatorTabulatorTable" class="doc-tabulator"></div>
     </div>
 </div>
 

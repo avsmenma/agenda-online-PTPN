@@ -176,4 +176,16 @@ class OperatorTabulatorViewTest extends TestCase
             false
         );
     }
+
+    public function test_view_menyetel_mountid_dan_kelas_doc_tabulator(): void
+    {
+        $response = $this->actingAs($this->operator())
+            ->get(route('documents.index'));
+
+        $response->assertOk();
+        // Elemen mount membawa kelas bersama (target CSS) + tetap id instance operator.
+        $response->assertSee('id="operatorTabulatorTable" class="doc-tabulator"', false);
+        // Engine membaca id mount dari config.
+        $response->assertSee('mountId', false);
+    }
 }

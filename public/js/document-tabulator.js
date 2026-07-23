@@ -23,6 +23,10 @@
   const CFG = window.DOCUMENT_TABULATOR_CONFIG;
   if (!CFG || typeof Tabulator === 'undefined') return;
 
+  // Elemen mount tabel. Id datang dari config (CFG.mountId) agar engine tak terikat ke
+  // satu role; query internal memakai elemen ini (relatif), bukan selektor '#id ...' global.
+  function mountEl() { return document.getElementById(CFG.mountId); }
+
   // === Helper: HTML-escape untuk semua nilai user-asal di dalam formatter HTML. ===
   function esc(value) {
     if (value === null || value === undefined) return '';
@@ -714,7 +718,7 @@
   // dan tabel TIDAK boleh gagal render karenanya.
   try { adaLebarTersimpan = !!localStorage.getItem(USER_RESIZED_FLAG_KEY); } catch (e) {}
 
-  const table = new Tabulator('#operatorTabulatorTable', {
+  const table = new Tabulator(mountEl(), {
     ajaxURL: CFG.dataUrl,
     // Tugas 7c: parameter filter aktif (search/year/status_filter) dibaca live dari
     // toolbar tiap request — cocok nama dgn buildOperatorQuery. Fungsi hoisted.
@@ -790,7 +794,7 @@
   // Fase CAPTURE agar niat §8 (Enter = mulai edit) menang atas binding keyboard
   // bawaan Tabulator pada elemen yang sama.
   (function wireEnterToEdit() {
-    const tableEl = document.getElementById('operatorTabulatorTable');
+    const tableEl = mountEl();
     if (!tableEl) return;
     tableEl.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
@@ -1175,7 +1179,7 @@
   // --- Pemasangan pintasan ---
 
   (function wireBulkKeys() {
-    const tableEl = document.getElementById('operatorTabulatorTable');
+    const tableEl = mountEl();
     if (!tableEl) return;
     tableEl.addEventListener('keydown', function (e) {
       const t = e.target;
@@ -1188,7 +1192,7 @@
   })();
 
   (function wirePaste() {
-    const container = document.getElementById('operatorTabulatorTable');
+    const container = mountEl();
     if (!container) return;
     document.addEventListener('paste', function (e) {
       const t = e.target;
@@ -1340,15 +1344,17 @@
     // berefek apa pun (terbukti: logika koreksi jalan saat dipanggil manual dgn
     // query segar, tapi diam saja lewat referensi yang di-cache).
     function wadahGulir() {
-      return document.querySelector('#operatorTabulatorTable .tabulator-tableholder');
+      const host = mountEl();
+      return host ? host.querySelector('.tabulator-tableholder') : null;
     }
 
     // Tepi kanan blok kolom beku kiri, dibaca dari DOM header (lebar bisa berubah
     // karena tarikan lebar kolom user, jadi jangan di-cache).
     function tepiKananKolomBeku() {
-      const beku = document.querySelectorAll(
-        '#operatorTabulatorTable .tabulator-header .tabulator-col.tabulator-frozen.tabulator-frozen-left'
-      );
+      const host = mountEl();
+      const beku = host ? host.querySelectorAll(
+        '.tabulator-header .tabulator-col.tabulator-frozen.tabulator-frozen-left'
+      ) : [];
       let tepi = 0;
       beku.forEach(function (el) { tepi = Math.max(tepi, el.getBoundingClientRect().right); });
       return tepi;
