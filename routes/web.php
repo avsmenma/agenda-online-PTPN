@@ -478,9 +478,6 @@ Route::middleware(['auth', 'role:admin,akutansi'])->prefix('documents/akutansi')
     // create/store/destroy DIHAPUS 2026-07-11: tak pernah di-link dari UI (create
     // error 500 karena view-nya tak ada; store/destroy hanya stub kosong).
     Route::get('/{dokumen}/detail', [DashboardAkutansiController::class, 'getDocumentDetail'])->name('detail');
-    Route::post('/{dokumen}/set-deadline', [DashboardAkutansiController::class, 'setDeadline'])->name('set-deadline');
-    Route::post('/{dokumen}/send-to-pembayaran', [DashboardAkutansiController::class, 'sendToPembayaran'])->name('send-to-pembayaran');
-    Route::post('/{dokumen}/return', [DashboardAkutansiController::class, 'returnDocument'])->name('return');
 });
 
 // Professional Reports Routes - Akutansi
