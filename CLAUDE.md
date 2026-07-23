@@ -38,7 +38,7 @@ Acuan lengkap: **`docs/AUDIT_KESEHATAN_KODEBASE_2026-07-03.md`** (audit 6 domain
 | ✅ | `User::ROLES` kunci duplikat | Sudah dinormalisasi (alias ditangani `App\Support\Role::normalize()`) |
 | ✅ | Test 9 file | Naik ke 21 file |
 | ❌ | **`@vite` mati total** | Masih mati. `resources/css/app.css` & `resources/js/app.js` tetap dead asset. UI 100% dari CDN + CSS inline |
-| ❌ | God-file | `layouts/app.blade.php` 5.968 baris, `operator/daftarDokumen` 5.227 baris (mengecil, belum sembuh) |
+| ❌ | God-file | `layouts/app.blade.php` 5.968 baris. (`operator/daftarDokumen` 5.227 baris **sudah dihapus 2026-07-23** — operator kini Tabulator-only.) |
 | ❌ | Duplikasi 6 tabel role | Belum disatukan |
 | ❌ | `pint.json` | Belum ada |
 | ❌ | `maatwebsite/excel ^1.1` | Masih rilis era 2015 di atas Laravel 12 |
@@ -72,10 +72,10 @@ jalur lama) kecuali user memutuskan lain.
 
 ### God-file — jangan tambah baris, ekstrak keluar
 
-`layouts/app.blade.php` (5.968), `operator/dokumens/daftarDokumen.blade.php` (5.227),
-`pembayaranNEW/dashboardPembayaran.blade.php` (3.970), `OwnerDashboardController.php`.
-Kalau harus menambah CSS/JS di sini, pertimbangkan file terpisah di `public/css` atau
-`public/js` lalu `@push`.
+`layouts/app.blade.php` (5.968), `pembayaranNEW/dashboardPembayaran.blade.php` (3.970),
+`OwnerDashboardController.php`. (`operator/dokumens/daftarDokumen.blade.php` sudah dihapus
+2026-07-23 — operator kini Tabulator-only.) Kalau harus menambah CSS/JS di sini,
+pertimbangkan file terpisah di `public/css` atau `public/js` lalu `@push`.
 
 ---
 
@@ -150,16 +150,27 @@ dengan jujur apa yang sudah diuji dan apa yang belum.
 
 ## 7. Pekerjaan Berjalan
 
-**Migrasi tabel Operator ke Tabulator.js** — kode selesai & ter-deploy, **menunggu QA visual user.**
+**Operator `/documents` sudah Tabulator-only — SELESAI & ter-deploy, QA lolos 2026-07-23.**
+Tabel classic operator (`daftarDokumen.blade.php`, `_chunk`, `_tableRowsAjax`), cabang
+`virtual_chunk`, flag `?classic`, dan route/method yatim (`getDocumentDetail`+route,
+`sendToTeamVerifikasi`+route, method mati `operatorDocumentColumns`) sudah **dihapus permanen
+dari kode — bukan dimatikan**. `/documents?classic=1` kini no-op (menyajikan Tabulator).
+Forward operator→verifikasi lewat dropdown **Pengurus Dokumen** (`DocumentHandlerController::
+moveDirectlyToTeamVerifikasi`, langsung diterima), BUKAN tombol "Kirim" lama (jalur
+approval-gated `sendToInbox` sudah dihapus). Guard "Bagian wajib terisi" sebelum forward tetap.
 
-- Desain: `docs/superpowers/specs/2026-07-17-tabulator-operator-pilot-design.md`
-- Rencana: `docs/superpowers/plans/2026-07-21-tabulator-operator-pilot.md`
-- `/documents` → Tabulator. `/documents?classic=1` → tabel lama (fallback sementara).
-- **Pembersihan tabel lama (`daftarDokumen.blade.php`, `_chunk`, `_tableRowsAjax`) dan
-  penghapusan flag `?classic` MASIH TERKUNCI** sampai user konfirmasi QA lolos.
+- Pilot: `docs/superpowers/specs/2026-07-17-tabulator-operator-pilot-design.md`,
+  `docs/superpowers/plans/2026-07-21-tabulator-operator-pilot.md`
+- Pembersihan: `docs/superpowers/specs/2026-07-23-operator-tabulator-only-cleanup-design.md`,
+  `docs/superpowers/plans/2026-07-23-operator-tabulator-only-cleanup.md`
 
-Rollout Tabulator ke role lain memakai pola yang sama (endpoint JSON + formatter) —
-itulah jalur menuju penyatuan 6 tabel jadi satu komponen.
+**Belum dikerjakan — rollout Tabulator ke 5 role lain** (verifikasi, akutansi, perpajakan,
+pembayaran, bagian) yang masih pakai tabel lama. Ini program terpisah: engine Tabulator
+operator diekstrak jadi komponen bersama yang di-parameter (JANGAN salinan ke-7), lalu
+diterapkan per-role → QA → hapus tabel lama role itu. Itulah jalur menuju penyatuan 6 tabel
+jadi satu komponen. Kustomisasi kolom masih diduplikasi per-role (fondasi bersama:
+`config/document_columns.php` + partial `document-role-filter-toolbar`); penyatuannya —
+plus freeze ala pembayaran (modal 2-tab) — menyusul setelah rollout.
 
 ## 8. Hal Yang harus bisa dilakukan pada tabel tabulator
 
