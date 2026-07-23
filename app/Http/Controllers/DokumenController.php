@@ -363,55 +363,6 @@ class DokumenController extends Controller
     }
 
 
-    private function operatorDocumentColumns(): array
-    {
-        return [
-            'nomor_agenda' => 'Nomor Agenda',
-            'bulan' => 'Bulan',
-            'tahun' => 'Tahun',
-            'kategori' => 'Kriteria CF',
-            'jenis_dokumen' => 'Sub Kriteria',
-            'jenis_sub_pekerjaan' => 'Item Sub Kriteria',
-            'jenis_pembayaran' => 'Jenis Pembayaran',
-            'nomor_spp' => 'Nomor SPP',
-            'tanggal_spp' => 'Tanggal SPP',
-            'tanggal_masuk' => 'Tanggal Masuk',
-            'dibayar_kepada' => 'Dibayar Kepada',
-            'uraian_spp' => 'Uraian SPP',
-            'nilai_rupiah' => 'Nilai Rupiah',
-            'tanggal_paraf' => 'Tanggal Paraf',
-            'pemaraf' => 'Pemaraf',
-            'tanggal_selesai_diproses' => 'Tgl Selesai Diproses',
-            'tanggal_kembali_ke_bagian' => 'Tgl Kembali ke Bagian',
-            'tanggal_hasil_koreksi_bagian' => 'Tgl Hasil Koreksi Bagian',
-            'kepala_sub_bagian' => 'Kepala Sub Bagian',
-            'keterangan' => 'Keterangan',
-            'status_dokumen_custom' => 'Status Dokumen',
-            'tanggal_dibayar' => 'Tanggal Bayar',
-            'bagian' => 'Bagian',
-            'link' => 'Link',
-            'nama_pengirim' => 'Nama Pengirim',
-            'no_spk' => 'No SPK',
-            'tanggal_spk' => 'Tanggal SPK',
-            'tanggal_berakhir_spk' => 'Tanggal Akhir SPK',
-            'no_berita_acara' => 'No Berita Acara (BA)',
-            'tanggal_berita_acara' => 'Tanggal Berita Acara (BA)',
-            'nomor_po' => 'No PO',
-            'nomor_miro' => 'No Miro',
-            'no_faktur' => 'No Faktur',
-            'tanggal_faktur' => 'Tanggal Faktur',
-            'tanggal_selesai_verifikasi_pajak' => 'Tgl Selesai Verifikasi Pajak',
-            'jenis_pph' => 'Jenis PPh',
-            'dpp_pph' => 'DPP PPh',
-            'ppn_terhutang' => 'PPH Terhutang',
-            'status' => 'Status',
-            'kebun' => 'Kebun',
-            'npwp' => 'NPWP',
-            'link_dokumen_pajak' => 'Link Dokumen Pajak',
-        ];
-    }
-
-
     private function defaultOperatorDocumentColumns(array $availableColumns): array
     {
         return array_values(array_filter(array_keys($availableColumns), fn($col) => $col !== 'nomor_mirror'));
