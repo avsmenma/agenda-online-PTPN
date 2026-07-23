@@ -319,7 +319,6 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
 
     // Routes with {dokumen} parameter - MUST be after static routes
     // Halaman edit dihapus 2026-07-09 — semua pengeditan via inline edit (documents.inline-update).
-    Route::get('/{dokumen}/detail', [DokumenController::class, 'getDocumentDetail'])->name('detail');
     Route::get('/{dokumen}/progress', [DokumenController::class, 'getDocumentProgressForOperator'])->name('progress');
     Route::delete('/{dokumen}', [DokumenController::class, 'destroy'])->name('destroy');
     Route::post('/{dokumen}/send-to-verifikasi', [DokumenController::class, 'sendToTeamVerifikasi'])->name('send-to-verifikasi');
