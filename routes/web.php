@@ -321,7 +321,6 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
     // Halaman edit dihapus 2026-07-09 — semua pengeditan via inline edit (documents.inline-update).
     Route::get('/{dokumen}/progress', [DokumenController::class, 'getDocumentProgressForOperator'])->name('progress');
     Route::delete('/{dokumen}', [DokumenController::class, 'destroy'])->name('destroy');
-    Route::post('/{dokumen}/send-to-verifikasi', [DokumenController::class, 'sendToTeamVerifikasi'])->name('send-to-verifikasi');
     Route::post('/{dokumen}/approve', [DokumenController::class, 'approveDocument'])->name('approve');
 });
 
