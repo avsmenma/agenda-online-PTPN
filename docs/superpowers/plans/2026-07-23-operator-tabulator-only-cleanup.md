@@ -233,8 +233,9 @@ menjadi:
         return response()->json([
             'success' => true,
             'id'      => $dokumen->id,
-            // Objek baris JSON untuk Tabulator — satu-satunya konsumen setelah tabel
-            // classic dihapus (2026-07-23). Partial _tableRowsAjax tak lagi dirender.
+            // Objek baris JSON untuk Tabulator — satu-satunya konsumen. Partial
+            // _tableRowsAjax tak lagi dirender di sini (jalur render lama dilepas;
+            // view classic-nya dihapus di task berikutnya).
             'row'     => \App\Support\OperatorDocumentRow::fromDokumen($dokumen, $this->buildHandlerOptions(), auth()->user()?->role),
         ]);
 ```
