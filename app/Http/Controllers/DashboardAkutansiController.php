@@ -7,15 +7,12 @@ use Carbon\Carbon;
 use App\Models\Dokumen;
 use App\Models\DokumenStatus;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
 use App\Helpers\DokumenHelper;
 use App\Helpers\SearchHelper;
 use App\Models\DibayarKepada;
-use App\Models\DocumentTracking;
 
 class DashboardAkutansiController extends Controller
 {
