@@ -1,10 +1,10 @@
 /*
- * operator-tabulator.js — Init Tabulator untuk Daftar Dokumen Operator (pilot).
+ * document-tabulator.js — Init Tabulator untuk Daftar Dokumen Operator (pilot).
  *
  * Tugas 5: formatter paritas PENUH. Setiap kolom dirender byte-faithful terhadap
  * tabel lama `_tableRowsAjax.blade.php` (badge status, rupiah, tanggal, link,
  * pemaraf, nomor_agenda dua baris). Editor & interaksi menyusul di Tugas 6-7.
- * Membaca konfigurasi dari window.OPERATOR_TABULATOR_CONFIG yang di-inject oleh
+ * Membaca konfigurasi dari window.DOCUMENT_TABULATOR_CONFIG yang di-inject oleh
  * daftarDokumenTabulator.blade.php.
  *
  * CLAUDE.md §8 — perilaku ala spreadsheet, lengkap:

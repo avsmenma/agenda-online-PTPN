@@ -408,7 +408,7 @@
 {{-- Hapus + Kustomisasi Kolom — JS disalin dari daftarDokumen.blade.php (Tugas 7a/7d).
      Modal Detail beserta fungsi JS yang dulu memuatnya dihapus atas permintaan user
      (2026-07-22) — lihat komentar tombol Hapus toolbar di atas. Fungsi global di bawah
-     dipanggil oleh operator-tabulator.js (tombol toolbar Hapus). bootstrap.* tersedia
+     dipanggil oleh document-tabulator.js (tombol toolbar Hapus). bootstrap.* tersedia
      (bundle dimuat layout sebelum @stack). --}}
 <script>
     // ==== Hapus Dokumen (daftarDokumen.blade.php:4512-4582) — tetap full-page submit + redirect ====

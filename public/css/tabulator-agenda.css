@@ -261,7 +261,7 @@
   border-color: #083E40;
 }
 
-/* `.badge-belum-dikirim` (fmtStatus, operator-tabulator.js) SENGAJA tak punya
+/* `.badge-belum-dikirim` (fmtStatus, document-tabulator.js) SENGAJA tak punya
  * aturan sendiri di sini — ia jatuh ke base .badge-status di atas (fill
  * transparan, teks warna default). Paritas dengan daftarDokumen.blade.php lama;
  * bukan rule yang hilang/kelupaan. `.badge-ditolak` juga tak punya rule di sini
@@ -315,7 +315,7 @@
  * meniru project CASH_BANK. Ditempel ke <body> (bukan di dalam wadah
  * tabel) agar tidak terpotong overflow tabel, karena itu selektornya
  * berdiri sendiri tanpa awalan .doc-tabulator. Diposisikan &
- * ditampilkan/disembunyikan lewat JS (operator-tabulator.js).
+ * ditampilkan/disembunyikan lewat JS (document-tabulator.js).
  * ============================================================ */
 .op-copy-pop {
   position: fixed;
