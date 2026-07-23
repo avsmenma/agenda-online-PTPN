@@ -308,7 +308,7 @@ class DokumenController extends Controller
         );
 
         // Operator selalu dilayani view Tabulator; flag ?classic dimatikan (query param
-        // sisa dibiarkan no-op). Penghapusan fisik view classic dilakukan task berikutnya.
+        // sisa dibiarkan no-op). Penghapusan fisik view classic sudah dilakukan (2026-07-23).
         return view('operator.dokumens.daftarDokumenTabulator', $data);
     }
 
@@ -349,7 +349,7 @@ class DokumenController extends Controller
             \Log::warning('Gagal mencatat activity log inline-create: ' . $logException->getMessage());
         }
 
-        // Eager-load relasi yang dipakai partial agar markup baris identik
+        // Eager-load relasi yang dibaca OperatorDocumentRow::fromDokumen() agar objek baris lengkap
         $dokumen->load(['roleStatuses', 'dibayarKepadas', 'dokumenPos']);
 
         return response()->json([
@@ -357,7 +357,7 @@ class DokumenController extends Controller
             'id'      => $dokumen->id,
             // Objek baris JSON untuk Tabulator — satu-satunya konsumen. Partial
             // _tableRowsAjax tak lagi dirender di sini (jalur render lama dilepas;
-            // view classic-nya dihapus di task berikutnya).
+            // view classic-nya sudah dihapus (2026-07-23)).
             'row'     => \App\Support\OperatorDocumentRow::fromDokumen($dokumen, $this->buildHandlerOptions(), auth()->user()?->role),
         ]);
     }
@@ -1157,7 +1157,7 @@ class DokumenController extends Controller
 
     /**
      * Bulk send multiple documents to Team Verifikasi
-     * Uses same logic as sendToTeamVerifikasi but for multiple documents
+     * Bulk equivalent: forwards each document to Team Verifikasi via sendToInbox().
      * 
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
