@@ -11,7 +11,6 @@ use App\Http\Controllers\TeamVerifikasiController;
 use App\Http\Controllers\DashboardPembayaranController;
 use App\Http\Controllers\DashboardAkutansiController;
 use App\Http\Controllers\DashboardPerpajakanController;
-use App\Http\Controllers\PengembalianDokumenController;
 use App\Http\Controllers\DokumenRekapanController;
 use App\Http\Controllers\DocumentHandlerController;
 use App\Http\Controllers\AutocompleteController;
@@ -359,9 +358,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/autocomplete/po-numbers', [AutocompleteController::class, 'getPONumbers'])->name('autocomplete.po-numbers');
     Route::get('/api/autocomplete/pr-numbers', [AutocompleteController::class, 'getPRNumbers'])->name('autocomplete.pr-numbers');
 });
-// Halaman dokumen dikembalikan ke Operator — hanya operator/admin/owner
-Route::get('/pengembalian-dokumens', [PengembalianDokumenController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,owner']);
 
 // Professional Document Routes - Verifikasi (Team Verifikasi)
 Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
@@ -448,12 +444,6 @@ Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('reports/pembayaran
     Route::match(['get', 'post'], '/export', [DashboardPembayaranController::class, 'exportRekapan'])->name('export');
     Route::get('/delays', [DashboardPembayaranController::class, 'rekapanKeterlambatan'])->name('delays');
 });
-
-// Professional Returns Routes - Pembayaran
-Route::get('/returns/pembayaran', [DashboardPembayaranController::class, 'pengembalian'])
-    ->middleware(['auth', 'role:admin,pembayaran'])
-    ->name('returns.pembayaran.index');
-
 
 // Backward compatibility routes removed — old Pembayaran URLs (Phase 2 cleanup)
 

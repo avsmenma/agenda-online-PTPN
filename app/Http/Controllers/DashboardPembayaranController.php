@@ -1306,12 +1306,6 @@ class DashboardPembayaranController extends Controller
 
     
 
-    public function pengembalian()
-    {
-        // Redirect ke daftar pembayaran karena tidak ada view pengembalian khusus
-        return redirect()->route('dashboard.pembayaran')->with('info', 'Halaman pengembalian diarahkan ke dashboard pembayaran');
-    }
-
     public function rekapanKeterlambatan(Request $request)
     {
         return app(OwnerDashboardController::class)->rekapanKeterlambatanByRole($request, 'pembayaran');
