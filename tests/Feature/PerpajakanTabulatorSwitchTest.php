@@ -29,10 +29,4 @@ class PerpajakanTabulatorSwitchTest extends TestCase
         $this->actingAs($this->perpajakan())->get(route('documents.perpajakan.index'))
             ->assertOk()->assertSee('perpajakanTabulatorTable', false)->assertSee('DOCUMENT_TABULATOR_CONFIG', false);
     }
-
-    public function test_classic_menyajikan_view_legacy(): void
-    {
-        $this->actingAs($this->perpajakan())->get(route('documents.perpajakan.index', ['classic' => 1]))
-            ->assertOk()->assertDontSee('perpajakanTabulatorTable', false);
-    }
 }

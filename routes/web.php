@@ -497,10 +497,7 @@ Route::middleware(['auth', 'role:admin,perpajakan'])->prefix('documents/perpajak
     Route::get('/', [DashboardPerpajakanController::class, 'dokumens'])->name('index');
     Route::get('/data', [DashboardPerpajakanController::class, 'datatable'])->name('data');
     Route::get('/{dokumen}/detail', [DashboardPerpajakanController::class, 'getDocumentDetail'])->name('detail');
-    Route::post('/{dokumen}/set-deadline', [DashboardPerpajakanController::class, 'setDeadline'])->name('set-deadline');
-    Route::post('/{dokumen}/send-to-next', [DashboardPerpajakanController::class, 'sendToNext'])->name('send-to-next');
     Route::post('/{dokumen}/send-to-akutansi', [DashboardPerpajakanController::class, 'sendToAkutansi'])->name('send-to-akutansi');
-    Route::post('/{dokumen}/return', [DashboardPerpajakanController::class, 'returnDocument'])->name('return');
 });
 
 // Professional Reports Routes - Perpajakan
