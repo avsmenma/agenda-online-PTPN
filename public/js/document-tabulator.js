@@ -1286,9 +1286,6 @@
   // search/year/status_filter, akutansi memakai search/status/filter_dari —
   // keduanya bekerja karena nama diambil dari DOM toolbar milik role yang aktif,
   // bukan dari daftar tetap di sini (lihat CLAUDE.md §7 soal engine bersama).
-  function toolbarEl(selector) {
-    return document.querySelector('.tabulator-toolbar ' + selector);
-  }
   // Semua <input>/<select>/<textarea> berbernama di dalam toolbar — sumber
   // tunggal kebenaran untuk nama field filter (bukan daftar hardcode per-role).
   function toolbarFilterControls() {
