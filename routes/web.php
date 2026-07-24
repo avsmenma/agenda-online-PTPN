@@ -477,6 +477,7 @@ Route::middleware(['auth', 'role:admin,akutansi'])->prefix('documents/akutansi')
     Route::get('/', [DashboardAkutansiController::class, 'dokumens'])->name('index');
     // create/store/destroy DIHAPUS 2026-07-11: tak pernah di-link dari UI (create
     // error 500 karena view-nya tak ada; store/destroy hanya stub kosong).
+    Route::get('/data', [DashboardAkutansiController::class, 'datatable'])->name('data');
     Route::get('/{dokumen}/detail', [DashboardAkutansiController::class, 'getDocumentDetail'])->name('detail');
 });
 

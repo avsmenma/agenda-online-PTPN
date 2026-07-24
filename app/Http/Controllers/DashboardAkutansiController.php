@@ -32,11 +32,76 @@ class DashboardAkutansiController extends Controller
     }
 
 
-    public function dokumens(Request $request)
+    /**
+     * Endpoint JSON untuk tabel Tabulator akutansi. Membalas {last_page,total,data}
+     * (nama field cocok progressiveLoad Tabulator). Memakai ulang query & eager-load
+     * yang SAMA dengan dokumens() lewat buildAkutansiQuery(), lalu memetakan tiap
+     * baris via AkutansiDocumentRow (badge Status & Deadline dihitung server).
+     */
+    public function datatable(Request $request): \Illuminate\Http\JsonResponse
     {
-        // Akutansi sees ALL documents (cross-role visibility)
-        // Action buttons are disabled for documents not yet at this role (controlled in blade view)
-        // Exclude documents that are returned to bidang and CSV imports
+        $query = $this->buildAkutansiQuery($request);
+
+        $size = (int) $request->input('size', 100);
+        $size = ($size > 0 && $size <= 200) ? $size : 100;
+        $page = max(1, (int) $request->input('page', 1));
+
+        $paginator = $query->paginate($size, ['*'], 'page', $page);
+
+        $handlerOptions = $this->buildAkutansiHandlerOptions();
+        $viewerRole = Auth::user()?->role;
+
+        $data = collect($paginator->items())
+            ->map(fn ($d) => \App\Support\AkutansiDocumentRow::fromDokumen($d, $handlerOptions, $viewerRole))
+            ->all();
+
+        return response()->json([
+            'last_page' => $paginator->lastPage(),
+            'total'     => $paginator->total(),
+            'data'      => $data,
+        ]);
+    }
+
+    /**
+     * Opsi pengurus dokumen (handler_options) SEKALI per-request: 5 peran base +
+     * optgroup Bagian bila ada. Ditanam apa adanya oleh AkutansiDocumentRow.
+     * Bentuk identik DokumenController::buildHandlerOptions() (sumber tunggal bentuk).
+     */
+    private function buildAkutansiHandlerOptions(): array
+    {
+        $handlerOptions = [
+            ['value' => 'operator',        'label' => 'Operator'],
+            ['value' => 'team_verifikasi', 'label' => 'Tim Verifikasi'],
+            ['value' => 'perpajakan',      'label' => 'Tim Perpajakan'],
+            ['value' => 'akutansi',        'label' => 'Tim Akuntansi'],
+            ['value' => 'pembayaran',      'label' => 'Tim Pembayaran'],
+        ];
+        $bagian = \App\Models\Bagian::active()->ordered()->get(['kode', 'nama']);
+        if ($bagian->isNotEmpty()) {
+            $handlerOptions[] = [
+                'optgroup' => 'Bagian',
+                'options'  => $bagian->map(fn ($b) => [
+                    'value' => 'bagian_' . strtolower($b->kode),
+                    'label' => $b->nama ?: $b->kode,
+                ])->all(),
+            ];
+        }
+
+        return $handlerOptions;
+    }
+
+    /**
+     * Pembangun query daftar dokumen akutansi (cross-role visibility) —
+     * SUMBER TUNGGAL dipakai dokumens() (view) & datatable() (JSON). Meliputi
+     * base query, search, filter (dari/tanggal/nilai), switch status 5 bucket,
+     * eager-load (roleData akutansi-only + roleStatuses semua role terkait +
+     * dokumenPos/dokumenPrs/dibayarKepadas), dan sort natural nomor_agenda.
+     *
+     * PENTING: roleData sengaja di-load HANYA role_code='akutansi' (paritas
+     * tampilan lama; AkutansiDocumentRow bergantung padanya). Jangan diperluas.
+     */
+    private function buildAkutansiQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    {
         $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
 
         $query = Dokumen::query()
@@ -202,7 +267,7 @@ class DashboardAkutansiController extends Controller
 
         // Apply sorting based on column
         if ($sortColumn === 'nomor_agenda') {
-            $dokumens = $query->orderByRaw("CASE 
+            $query->orderByRaw("CASE
                 WHEN dokumens.nomor_agenda LIKE '%\_%' THEN CAST(SUBSTRING_INDEX(LPAD(dokumens.nomor_agenda, 10, '0'), '_', 1) AS UNSIGNED)
                 WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
                 ELSE 0
@@ -213,12 +278,29 @@ class DashboardAkutansiController extends Controller
             if (in_array($sortColumn, $allowedColumns)) {
                 $query->orderBy($sortColumn, $sortOrder);
             }
-            $dokumens = $query->orderByRaw("CASE 
+            $query->orderByRaw("CASE
                 WHEN dokumens.nomor_agenda LIKE '%\_%' THEN CAST(SUBSTRING_INDEX(LPAD(dokumens.nomor_agenda, 10, '0'), '_', 1) AS UNSIGNED)
                 WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
                 ELSE 0
             END DESC");
         }
+
+        return $query;
+    }
+
+    public function dokumens(Request $request)
+    {
+        // Akutansi sees ALL documents (cross-role visibility)
+        // Action buttons are disabled for documents not yet at this role (controlled in blade view)
+        // Exclude documents that are returned to bidang and CSV imports
+        $query = $this->buildAkutansiQuery($request);
+
+        // Sort/order sudah diterapkan & ditetapkan ke session di dalam
+        // buildAkutansiQuery() (baik dari request maupun sesi sebelumnya) — baca
+        // ulang di sini agar $data (dipakai view) tetap punya nilai yang sama
+        // persis dengan yang dipakai untuk sorting, tanpa menduplikasi logikanya.
+        $sortColumn = session('akutansi_sort_column', 'nomor_agenda');
+        $sortOrder = session('akutansi_sort_order', 'desc');
 
         $perPage = $request->get('per_page', 'all');
         $showAllRows = $perPage === 'all';
@@ -228,7 +310,7 @@ class DashboardAkutansiController extends Controller
             $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
         }
         session(['akutansi_per_page' => $showAllRows ? 'all' : $perPage]);
-        $dokumens = $dokumens->orderBy('dokumens.id', 'DESC')
+        $dokumens = $query->orderBy('dokumens.id', 'DESC')
             ->paginate($perPage)
             ->appends($request->query());
 
