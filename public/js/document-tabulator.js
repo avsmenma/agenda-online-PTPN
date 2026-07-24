@@ -544,6 +544,62 @@
       '<i class="fa-solid fa-check me-1"></i><span>' + esc(ds.label) + '</span></span>';
   }
 
+  // === Formatter akutansi (Rollout 1) — merender objek server, nol logika bisnis. ===
+
+  // Badge Status akutansi dari row.status_badge {class, icon, text, link}.
+  // Port kolom Status _rows.blade.php:459-510 (pohon keputusan sudah di server).
+  function fmtAkutansiStatus(cell) {
+    const b = cell.getRow().getData().status_badge;
+    if (!b || !b.class) return '-';
+    let html = '<span class="badge-status ' + esc(b.class) + '" onclick="event.stopPropagation()">';
+    if (b.icon) { html += '<i class="fa-solid ' + esc(b.icon) + ' me-1"></i>'; }
+    html += esc(b.text);
+    if (b.link && b.link.href) {
+      html += ' <a href="' + esc(b.link.href) + '" class="text-white text-decoration-underline fw-bold" ' +
+        'style="color:#fff !important;text-decoration:underline !important;font-weight:600 !important;" ' +
+        'onclick="event.stopPropagation()">' + esc(b.link.text) + '</a>';
+    }
+    html += '</span>';
+    return html;
+  }
+
+  // Kolom Deadline akutansi dari row.deadline. Port _rows.blade.php:291-413
+  // (kartu umur / bypass / belum-diterima) — semua nilai sudah dihitung server.
+  function fmtDeadline(cell) {
+    const d = cell.getRow().getData().deadline;
+    if (!d || d.variant === 'none') {
+      return '<div class="no-deadline"><i class="fa-solid fa-clock"></i><span>Belum diterima</span></div>';
+    }
+    if (d.variant === 'sent_fallback') {
+      return '<div class="deadline-card deadline-sent deadline-gray">' +
+        '<div class="deadline-label" style="font-size:10px;color:#6b7280;font-weight:600;">' +
+        '<i class="fa-solid fa-paper-plane"></i> Terkirim ke Pembayaran</div></div>';
+    }
+    // variant === 'card'
+    let html = '<div class="deadline-card deadline-' + esc(d.type) + ' deadline-' + esc(d.color) + '">';
+    html += '<div class="deadline-time"><i class="fa-solid fa-calendar"></i><span>' + esc(d.received_display) + '</span></div>';
+    html += '<div class="deadline-indicator deadline-' + esc(d.color) + '"><i class="fa-solid ' + esc(d.indicator_icon) + '"></i>' +
+      '<span class="status-text">' + esc(d.indicator_label) + '</span></div>';
+    html += '<div class="deadline-age" style="font-size:10px;color:#6b7280;margin-top:4px;">' +
+      '<i class="fa-solid fa-hourglass-half"></i><span>' + esc(d.age_text) + '</span></div>';
+    if (d.footer) {
+      if (d.footer.kind === 'paused') {
+        html += '<div class="deadline-paused-label"><i class="fa-solid ' + esc(d.footer.icon) + '"></i> ' + esc(d.footer.text) + '</div>';
+      } else {
+        html += '<div class="deadline-label" style="font-size:8px;color:#6b7280;margin-top:4px;font-weight:600;">' +
+          '<i class="fa-solid ' + esc(d.footer.icon) + '"></i> ' + esc(d.footer.text) + '</div>';
+      }
+    }
+    html += '</div>';
+    return html;
+  }
+
+  // Registry formatter kolom tetap terparameter (CFG.extraColumns[].formatter).
+  const EXTRA_FORMATTERS = {
+    deadline: fmtDeadline,
+    akutansiStatus: fmtAkutansiStatus,
+  };
+
   // _tableRowsAjax.blade.php:107 — nilai rupiah tebal (sudah terformat server).
   function fmtNilaiRupiah(cell) {
     return '<strong>' + esc(cell.getRow().getData().nilai_rupiah_formatted) + '</strong>';
@@ -654,6 +710,17 @@
       def.editor = ed.editor;
       if (ed.editorParams) def.editorParams = ed.editorParams;
       cols.push(def);
+    });
+    // Kolom tetap terparameter per-role (mis. akutansi: Deadline + Status). Tanpa
+    // editor Tabulator; formatter merender objek server. Operator tak mengirim
+    // extraColumns → tak ada kolom tambahan (paritas).
+    (cfg.extraColumns || []).forEach(function (ec) {
+      cols.push({
+        title: ec.title,
+        field: ec.field,
+        formatter: EXTRA_FORMATTERS[ec.formatter] || fmtPlain,
+        editable: false,
+      });
     });
     // Kolom tetap "Pengurus Dokumen" (di luar kolom kustomisasi, selalu paling
     // kanan — paritas _tableRowsAjax.blade.php:250-252). Tanpa editor Tabulator;
