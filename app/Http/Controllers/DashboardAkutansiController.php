@@ -585,7 +585,13 @@ class DashboardAkutansiController extends Controller
             'ieJenisPembayaranList' => $ieJenisPembayaranList,
             'filterDariOptions' => $filterDariOptions,
         );
-        return view('akutansi.dokumens.daftarAkutansi', $data);
+        // Transisi Rollout 1: default → Tabulator; ?classic=1 → view legacy (banding QA).
+        // Setelah QA akutansi lolos, cabang legacy + flag ini DIHAPUS (Tugas 8).
+        if ($request->boolean('classic')) {
+            return view('akutansi.dokumens.daftarAkutansi', $data);
+        }
+
+        return view('akutansi.dokumens.daftarAkutansiTabulator', $data);
     }
 
     public function pengembalian(Request $request)

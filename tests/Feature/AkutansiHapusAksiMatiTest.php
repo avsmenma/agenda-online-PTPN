@@ -53,8 +53,12 @@ class AkutansiHapusAksiMatiTest extends TestCase
 
     public function test_halaman_akutansi_render_tanpa_ui_aksi_mati(): void
     {
+        // ?classic=1: sejak Tugas 7, dokumens() tanpa flag ini menyajikan view
+        // Tabulator (Rollout 1). Test ini menguji potongan HIDUP/MATI milik view
+        // legacy secara spesifik — pertahankan lewat ?classic sampai legacy
+        // dihapus (Tugas 8).
         $response = $this->actingAs($this->akutansi())
-            ->get(route('documents.akutansi.index'));
+            ->get(route('documents.akutansi.index', ['classic' => 1]));
 
         $response->assertOk();
 
