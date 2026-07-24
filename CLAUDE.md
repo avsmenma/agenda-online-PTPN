@@ -164,11 +164,26 @@ approval-gated `sendToInbox` sudah dihapus). Guard "Bagian wajib terisi" sebelum
 - Pembersihan: `docs/superpowers/specs/2026-07-23-operator-tabulator-only-cleanup-design.md`,
   `docs/superpowers/plans/2026-07-23-operator-tabulator-only-cleanup.md`
 
-**Belum dikerjakan — rollout Tabulator ke 5 role lain** (verifikasi, akutansi, perpajakan,
+**Akutansi `/documents/akutansi` sudah Tabulator-only — SELESAI & ter-deploy, QA lolos 2026-07-24
+(Rollout 1).** Engine operator SUDAH diekstrak jadi komponen bersama: `public/js/document-tabulator.js`
+(baca `window.DOCUMENT_TABULATOR_CONFIG`, mount via `CFG.mountId`, kolom tetap terparameter via
+`CFG.extraColumns`) + basis DTO **`App\Support\DocumentRow`** yang diwarisi `OperatorDocumentRow` &
+`AkutansiDocumentRow`. Badge Status & kolom Deadline akutansi **dihitung SERVER** di
+`AkutansiDocumentRow` (objek `status_badge`/`deadline`); klien hanya merender (nol logika bisnis di JS).
+Endpoint JSON `documents.akutansi.data` (query bersama `buildAkutansiQuery()`). View legacy
+(`daftarAkutansi` 3995 baris, `_rows`, `_chunk`), cabang `?classic`/`virtual_chunk` **dihapus permanen**
+(~4539 baris). Forward lewat dropdown **Pengurus Dokumen** (sama seperti operator). Filter toolbar
+engine kini baca nama field dari DOM (generik lintas-role, bukan hardcode). `?classic=1` no-op (Tabulator).
+
+- Spec/plan: `docs/superpowers/specs/2026-07-23-rollout-tabulator-akutansi-design.md`,
+  `docs/superpowers/plans/2026-07-24-rollout-tabulator-akutansi.md`
+
+**Belum dikerjakan — rollout Tabulator ke 4 role lain** (verifikasi, perpajakan,
 pembayaran, bagian) yang masih pakai tabel lama. Ini program terpisah: engine Tabulator
-operator diekstrak jadi komponen bersama yang di-parameter (JANGAN salinan ke-7), lalu
-diterapkan per-role → QA → hapus tabel lama role itu. Itulah jalur menuju penyatuan 6 tabel
-jadi satu komponen. Kustomisasi kolom masih diduplikasi per-role (fondasi bersama:
+bersama (`document-tabulator.js` + basis `DocumentRow`) diterapkan per-role → QA → hapus tabel
+lama role itu. Itulah jalur menuju penyatuan 6 tabel jadi satu komponen. Pola akutansi (Rollout 1)
+jadi templat: DTO `<Role>DocumentRow` mewarisi `DocumentRow`, endpoint `@datatable`, `extraColumns`
+per-role, port badge/deadline ke server. Kustomisasi kolom masih diduplikasi per-role (fondasi bersama:
 `config/document_columns.php` + partial `document-role-filter-toolbar`); penyatuannya —
 plus freeze ala pembayaran (modal 2-tab) — menyusul setelah rollout.
 
