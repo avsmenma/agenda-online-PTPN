@@ -9,9 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Menguji transisi Rollout 1: dokumens() akutansi menyajikan view Tabulator
- * secara default, dengan ?classic=1 tetap menyajikan view legacy untuk
- * banding QA (dihapus di Tugas 8 setelah QA lolos).
+ * Menguji dokumens() akutansi menyajikan view Tabulator. View legacy +
+ * cabang ?classic sudah dihapus permanen pasca-QA (Tugas 8).
  */
 class AkutansiTabulatorSwitchTest extends TestCase
 {
@@ -58,12 +57,4 @@ class AkutansiTabulatorSwitchTest extends TestCase
             ->assertSee('DOCUMENT_TABULATOR_CONFIG', false);
     }
 
-    public function test_classic_menyajikan_view_legacy(): void
-    {
-        $this->buatDokumen('2');
-
-        $response = $this->actingAs($this->akutansi())->get(route('documents.akutansi.index', ['classic' => 1]));
-        $response->assertOk()
-            ->assertDontSee('akutansiTabulatorTable', false);
-    }
 }
