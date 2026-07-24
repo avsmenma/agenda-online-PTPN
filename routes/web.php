@@ -496,17 +496,16 @@ Route::get('/returns/akutansi', [DashboardAkutansiController::class, 'pengembali
 Route::middleware(['auth', 'role:admin,perpajakan'])->prefix('documents/perpajakan')->name('documents.perpajakan.')->group(function () {
     Route::get('/', [DashboardPerpajakanController::class, 'dokumens'])->name('index');
     Route::get('/data', [DashboardPerpajakanController::class, 'datatable'])->name('data');
-    Route::get('/{dokumen}/detail', [DashboardPerpajakanController::class, 'getDocumentDetail'])->name('detail');
-    Route::post('/{dokumen}/send-to-akutansi', [DashboardPerpajakanController::class, 'sendToAkutansi'])->name('send-to-akutansi');
 });
 
 // Professional Reports Routes - Perpajakan
 // Halaman laporan/rekapan & export Perpajakan dihapus.
 
 // Professional Returns Routes - Perpajakan
-Route::get('/returns/perpajakan', [DashboardPerpajakanController::class, 'pengembalian'])
-    ->middleware(['auth', 'role:admin,perpajakan'])
-    ->name('returns.perpajakan.index');
+// Halaman Pengembalian Perpajakan (returns.perpajakan.index) DIHAPUS 2026-07-24 (dead-code):
+// tak pernah di-link dari UI hidup; pergerakan dokumen kini lewat dropdown Pengurus Dokumen.
+// Method aksi mati (getDocumentDetail/sendToAkutansi/sendToNext/pengembalian) ikut dihapus
+// dari DashboardPerpajakanController.php.
 
 // Backward compatibility routes removed — old Perpajakan URLs (Phase 2 cleanup)
 

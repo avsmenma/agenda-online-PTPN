@@ -56,17 +56,6 @@ class PerpajakanDocumentRowTest extends TestCase
         $this->assertSame('none', $row['deadline']['variant']); // belum diterima
     }
 
-    public function test_badge_ditolak_menyertakan_link(): void
-    {
-        $d = $this->buatDokumen(['nomor_agenda' => '99', 'status' => 'returned_to_verifikasi']);
-        $this->buatStatus($d, 'perpajakan', 'rejected');
-        $row = $this->row($d);
-        $this->assertSame('badge-dikembalikan', $row['status_badge']['class']);
-        $this->assertSame('fa-times-circle', $row['status_badge']['icon']);
-        $this->assertSame('cek disini', $row['status_badge']['link']['text']);
-        $this->assertStringContainsString('99', $row['status_badge']['link']['href']);
-    }
-
     public function test_badge_terkirim_ke_akutansi_saat_akutansi_approve(): void
     {
         // display_status belum final → fallback: akutansi approved → "Terkirim ke Team Akutansi".

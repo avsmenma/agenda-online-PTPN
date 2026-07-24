@@ -50,19 +50,13 @@ class PerpajakanDocumentRow extends DocumentRow
 
     /**
      * Konteks status bersama (dipakai badge & deadline) — port _rows.blade.php:14-118.
-     * Mengembalikan: is_rejected, sent_to_team (?string), is_pending_downstream (bool),
+     * Mengembalikan: sent_to_team (?string), is_pending_downstream (bool),
      * pending_downstream_team (?string), is_bypassed_to_pembayaran (bool — DIDEFINISIKAN
      * TAK-BERSYARAT, memperbaiki bug laten view lama yang merujuknya tanpa selalu men-set).
      */
     protected static function statusContext(Dokumen $dokumen): array
     {
         $statuses = $dokumen->roleStatuses;
-
-        // === is_rejected (port :14-31) ===
-        $isRejectedByPerpajakan = $statuses->where('role_code', 'perpajakan')->where('status', 'rejected')->isNotEmpty();
-        $isReturnedFromAkutansi = $dokumen->status === 'returned_to_department' && $dokumen->return_source === 'akutansi';
-        $isRejectedByAkutansi   = $statuses->where('role_code', 'akutansi')->where('status', 'rejected')->isNotEmpty();
-        $isRejected = $isRejectedByPerpajakan || $isReturnedFromAkutansi || $isRejectedByAkutansi;
 
         // === display_status-first + fallback (port :33-118) ===
         $perpajakanDisplayStatus = $dokumen->getDisplayStatusForRole('perpajakan');
@@ -113,7 +107,6 @@ class PerpajakanDocumentRow extends DocumentRow
         }
 
         return [
-            'is_rejected'               => $isRejected,
             'sent_to_team'              => $sentToTeam,
             'is_pending_downstream'     => $isPendingDownstream,
             'pending_downstream_team'   => $pendingDownstreamTeam,
@@ -129,17 +122,6 @@ class PerpajakanDocumentRow extends DocumentRow
         $akutansiIsPending  = $statuses->where('role_code', 'akutansi')->where('status', 'pending')->isNotEmpty();
         $pembayaranIsPending = $statuses->where('role_code', 'pembayaran')->where('status', 'pending')->isNotEmpty();
 
-        if ($ctx['is_rejected']) {
-            return [
-                'class' => 'badge-dikembalikan',
-                'icon'  => 'fa-times-circle',
-                'text'  => 'Dokumen ditolak,',
-                'link'  => [
-                    'href' => route('returns.perpajakan.index') . '?search=' . urlencode((string) $dokumen->nomor_agenda),
-                    'text' => 'cek disini',
-                ],
-            ];
-        }
         if (! ($perpajakanRoleData?->received_at)
             && in_array($dokumen->current_handler, ['operator', 'team_verifikasi'], true)
             && ! in_array($dokumen->status, ['completed', 'selesai'], true)
