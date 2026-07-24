@@ -403,7 +403,7 @@
         filterForm.appendChild(enableInput);
         appendActiveFilterInputs(filterForm); // Fix: bawa filter toolbar aktif agar tak hilang saat reload GET.
         closeColumnCustomizationModal();
-        filterForm.submit(); // GET → documents.index (tanpa ?classic) → reload view Tabulator dgn kolom baru.
+        filterForm.submit(); // GET → documents.akutansi.index → reload view Tabulator dgn kolom baru.
     }
 
     // Bawa filter toolbar akutansi (search/status/filter_dari) agar tak hilang saat reload GET.
