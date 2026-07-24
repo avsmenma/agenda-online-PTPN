@@ -183,12 +183,20 @@ engine kini baca nama field dari DOM (generik lintas-role, bukan hardcode). `?cl
 `$isBypassedToPembayaran` diperbaiki), endpoint `documents.perpajakan.data`, view `daftarPerpajakanTabulator`.
 Forward via dropdown; gate wajib-isi NPWP/Faktur dibiarkan tanpa gate (perilaku live). View legacy
 (`daftarPerpajakan` 4557/`_rows`/`_chunk`) + rute/method aksi mati (`set-deadline`/`send-to-next`/`return`
-+ `setDeadline`/`returnDocument`) **dihapus**. **PENTING (pelajaran):** `sendToAkutansi()`+`sendToNext()`+rute
-`send-to-akutansi` **DIPERTAHANKAN** — HIDUP dipakai halaman Pengembalian (`pengembalianPerpajakan.blade.php`),
-grep gate menangkapnya sebelum salah hapus. `?classic=1` no-op (Tabulator).
++ `setDeadline`/`returnDocument`) **dihapus**. `?classic=1` no-op (Tabulator).
 
 - Spec/plan: `docs/superpowers/specs/2026-07-24-rollout-tabulator-perpajakan-design.md`,
   `docs/superpowers/plans/2026-07-24-rollout-tabulator-perpajakan.md`
+
+**Halaman "Pengembalian" per-role DIHAPUS (perpajakan + akutansi, 2026-07-24).** Keputusan user:
+tak ada lagi "pengembalian dokumen" **kecuali verifikasi→bagian** (`pengembalianKeBidang`, `returns.verifikasi.*` —
+TETAP HIDUP), karena perpindahan dokumen kini via dropdown Pengurus Dokumen. Dihapus tuntas:
+`pengembalianPerpajakan`/`pengembalianAkutansi` view + route `returns.{perpajakan,akutansi}.index` +
+`documents.{perpajakan,akutansi}.detail` + method `pengembalian()`/`getDocumentDetail()`+helper
+(`generateDocumentDetailHtml`/`formatTaxStatus`/`formatTaxDocumentLink`) + perpajakan `sendToAkutansi()`/`sendToNext()`+
+rute `send-to-akutansi`. **Badge Status "Dokumen ditolak, cek disini" DIHAPUS** dari `PerpajakanDocumentRow` &
+`AkutansiDocumentRow` (link-nya ke halaman yg dihapus; dokumen ditolak kini jatuh ke badge status biasa).
+Utang kecil: `$pengembalianUrl` di `layouts/app.blade.php` = dead var lintas-role (tak pernah dirender, aman).
 
 **Belum dikerjakan — rollout Tabulator ke role verifikasi & pembayaran** (bagian sengaja
 DILEWATI atas keputusan user). Masih pakai tabel lama. Program terpisah: engine Tabulator
