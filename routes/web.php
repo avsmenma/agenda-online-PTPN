@@ -495,6 +495,7 @@ Route::get('/returns/akutansi', [DashboardAkutansiController::class, 'pengembali
 // Professional Document Routes - Perpajakan
 Route::middleware(['auth', 'role:admin,perpajakan'])->prefix('documents/perpajakan')->name('documents.perpajakan.')->group(function () {
     Route::get('/', [DashboardPerpajakanController::class, 'dokumens'])->name('index');
+    Route::get('/data', [DashboardPerpajakanController::class, 'datatable'])->name('data');
     Route::get('/{dokumen}/detail', [DashboardPerpajakanController::class, 'getDocumentDetail'])->name('detail');
     Route::post('/{dokumen}/set-deadline', [DashboardPerpajakanController::class, 'setDeadline'])->name('set-deadline');
     Route::post('/{dokumen}/send-to-next', [DashboardPerpajakanController::class, 'sendToNext'])->name('send-to-next');

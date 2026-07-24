@@ -36,8 +36,74 @@ class DashboardPerpajakanController extends Controller
         return view('dashboard.workflow', $data);
     }
 
-    public function dokumens(Request $request)
+    /**
+     * Endpoint JSON tabel Tabulator perpajakan. {last_page,total,data} (cocok progressiveLoad).
+     * Query sama dgn dokumens() via buildPerpajakanQuery(); baris via PerpajakanDocumentRow.
+     * Eager-load roleData perpajakan-only + roleStatuses 4 role (parity byte tabel lama).
+     */
+    public function datatable(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $query = $this->buildPerpajakanQuery($request);
 
+        $size = (int) $request->input('size', 100);
+        $size = ($size > 0 && $size <= 200) ? $size : 100;
+        $page = max(1, (int) $request->input('page', 1));
+
+        $paginator = $query->paginate($size, ['*'], 'page', $page);
+
+        // Eager-load relasi PERSIS seperti dokumens() (loadMissing pasca-paginate).
+        $paginator->getCollection()->loadMissing([
+            'roleData'     => fn ($q) => $q->where('role_code', 'perpajakan'),
+            'roleStatuses' => fn ($q) => $q->whereIn('role_code', ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran']),
+            'dibayarKepadas', 'dokumenPos',
+        ]);
+
+        $handlerOptions = $this->buildPerpajakanHandlerOptions();
+        $viewerRole = Auth::user()?->role;
+
+        $data = collect($paginator->items())
+            ->map(fn ($d) => \App\Support\PerpajakanDocumentRow::fromDokumen($d, $handlerOptions, $viewerRole))
+            ->all();
+
+        return response()->json([
+            'last_page' => $paginator->lastPage(),
+            'total'     => $paginator->total(),
+            'data'      => $data,
+        ]);
+    }
+
+    /** Opsi pengurus dokumen (5 peran base + optgroup Bagian). Bentuk identik DokumenController::buildHandlerOptions(). */
+    private function buildPerpajakanHandlerOptions(): array
+    {
+        $handlerOptions = [
+            ['value' => 'operator',        'label' => 'Operator'],
+            ['value' => 'team_verifikasi', 'label' => 'Tim Verifikasi'],
+            ['value' => 'perpajakan',      'label' => 'Tim Perpajakan'],
+            ['value' => 'akutansi',        'label' => 'Tim Akuntansi'],
+            ['value' => 'pembayaran',      'label' => 'Tim Pembayaran'],
+        ];
+        $bagian = \App\Models\Bagian::active()->ordered()->get(['kode', 'nama']);
+        if ($bagian->isNotEmpty()) {
+            $handlerOptions[] = [
+                'optgroup' => 'Bagian',
+                'options'  => $bagian->map(fn ($b) => ['value' => 'bagian_' . strtolower($b->kode), 'label' => $b->nama ?: $b->kode])->all(),
+            ];
+        }
+        return $handlerOptions;
+    }
+
+    /**
+     * Pembangun query daftar dokumen perpajakan (cross-role visibility) —
+     * SUMBER TUNGGAL dipakai dokumens() (view) & datatable() (JSON). Meliputi
+     * base query, search, filter (dari/tanggal/nilai), switch status, JOIN
+     * dokumen_role_data (perpajakan_data, dipakai sort sekunder received_at),
+     * dan sort natural nomor_agenda / kolom lain.
+     *
+     * PENTING: roleData/roleStatuses TIDAK di-eager-load di sini (beda dgn
+     * Akutansi) — keduanya dimuat via loadMissing() setelah paginate, baik di
+     * dokumens() maupun datatable(), demi paritas persis dgn tabel lama.
+     */
+    private function buildPerpajakanQuery(Request $request): \Illuminate\Database\Eloquent\Builder
     {
         // Perpajakan sees ALL documents (cross-role visibility)
         // Action buttons are disabled for documents not yet at this role (controlled in blade view)
@@ -212,15 +278,7 @@ class DashboardPerpajakanController extends Controller
             $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'desc';
         }
 
-        $perPage = $request->get('per_page', 'all');
-        $showAllRows = $perPage === 'all';
-        if ($showAllRows) {
-            $perPage = 100;
-        } else {
-            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
-        }
-        session(['perpajakan_per_page' => $showAllRows ? 'all' : $perPage]);
-        $dokumens = $query
+        $query = $query
             ->leftJoin('dokumen_role_data as perpajakan_data', function ($join) {
                 $join->on('dokumens.id', '=', 'perpajakan_data.dokumen_id')
                     ->where('perpajakan_data.role_code', '=', 'perpajakan');
@@ -229,7 +287,7 @@ class DashboardPerpajakanController extends Controller
 
         // Apply sorting based on column
         if ($sortColumn === 'nomor_agenda') {
-            $dokumens->orderByRaw("CASE 
+            $query->orderByRaw("CASE
                 WHEN dokumens.nomor_agenda LIKE '%\_%' THEN CAST(SUBSTRING_INDEX(LPAD(dokumens.nomor_agenda, 10, '0'), '_', 1) AS UNSIGNED)
                 WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
                 ELSE 0
@@ -238,19 +296,43 @@ class DashboardPerpajakanController extends Controller
         } else {
             $allowedColumns = ['nomor_spp', 'tanggal_masuk', 'nilai_rupiah', 'tanggal_spp', 'uraian_spp', 'kategori', 'kebun', 'jenis_dokumen', 'jenis_sub_pekerjaan', 'jenis_pembayaran', 'nama_pengirim', 'dibayar_kepada', 'no_berita_acara', 'tanggal_berita_acara', 'no_spk', 'tanggal_spk', 'tanggal_berakhir_spk', 'status', 'nomor_miro', 'tanggal_miro'];
             if (in_array($sortColumn, $allowedColumns)) {
-                $dokumens->orderBy($sortColumn, $sortOrder);
+                $query->orderBy($sortColumn, $sortOrder);
             }
-            $dokumens->orderByRaw("CASE 
+            $query->orderByRaw("CASE
                 WHEN dokumens.nomor_agenda LIKE '%\_%' THEN CAST(SUBSTRING_INDEX(LPAD(dokumens.nomor_agenda, 10, '0'), '_', 1) AS UNSIGNED)
                 WHEN dokumens.nomor_agenda REGEXP '^[0-9]+$' THEN CAST(dokumens.nomor_agenda AS UNSIGNED)
                 ELSE 0
             END DESC");
         }
 
-        // Secondary sorting
-        $dokumens = $dokumens->orderByDesc('perpajakan_data.received_at')
-            ->orderByDesc('updated_at')
-            ->paginate($perPage)->appends($request->query());
+        // Secondary sorting (butuh JOIN perpajakan_data di atas)
+        $query->orderByDesc('perpajakan_data.received_at')
+            ->orderByDesc('updated_at');
+
+        return $query;
+    }
+
+    public function dokumens(Request $request)
+    {
+        $query = $this->buildPerpajakanQuery($request);
+
+        // Sort/order sudah diterapkan & ditetapkan ke session di dalam
+        // buildPerpajakanQuery() (baik dari request maupun sesi sebelumnya) —
+        // baca ulang di sini agar $data (dipakai view) tetap punya nilai yang
+        // sama persis dengan yang dipakai untuk sorting, tanpa menduplikasi logikanya.
+        $sortColumn = session('perpajakan_sort_column', 'nomor_agenda');
+        $sortOrder = session('perpajakan_sort_order', 'desc');
+
+        $perPage = $request->get('per_page', 'all');
+        $showAllRows = $perPage === 'all';
+        if ($showAllRows) {
+            $perPage = 100;
+        } else {
+            $perPage = in_array($perPage, [10, 25, 50, 100]) ? (int) $perPage : 10;
+        }
+        session(['perpajakan_per_page' => $showAllRows ? 'all' : $perPage]);
+
+        $dokumens = $query->paginate($perPage)->appends($request->query());
 
         // Eager load roleData and roleStatuses for perpajakan
         $dokumens->loadMissing([
