@@ -616,7 +616,13 @@ class DashboardPerpajakanController extends Controller
             'ieJenisPembayaranList' => $ieJenisPembayaranList,
             'filterDariOptions' => $filterDariOptions,
         );
-        return view('perpajakan.dokumens.daftarPerpajakan', $data);
+        // Transisi Rollout 2: default → Tabulator; ?classic=1 → view legacy (banding QA).
+        // Setelah QA perpajakan lolos, cabang legacy + flag ini DIHAPUS (Task 5).
+        if ($request->boolean('classic')) {
+            return view('perpajakan.dokumens.daftarPerpajakan', $data);
+        }
+
+        return view('perpajakan.dokumens.daftarPerpajakanTabulator', $data);
     }
 
 
