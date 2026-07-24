@@ -1278,39 +1278,51 @@
   // === Tugas 7c: Filter toolbar → Tabulator via AJAX (tanpa reload halaman) ===
   // Baca nilai kontrol toolbar tiap request (fungsi ajaxParams) & saat berubah
   // panggil replaceData() (muat ulang dari halaman 1 dgn param terkini).
+  //
+  // PENTING (perbaikan review): nama field TIDAK di-hardcode di sini — dibaca
+  // langsung dari atribut `name` tiap kontrol berbernama di dalam
+  // .tabulator-toolbar. Dengan begitu SATU engine ini melayani semua role
+  // sekalipun nama filternya beda per role: operator memakai
+  // search/year/status_filter, akutansi memakai search/status/filter_dari —
+  // keduanya bekerja karena nama diambil dari DOM toolbar milik role yang aktif,
+  // bukan dari daftar tetap di sini (lihat CLAUDE.md §7 soal engine bersama).
   function toolbarEl(selector) {
     return document.querySelector('.tabulator-toolbar ' + selector);
   }
+  // Semua <input>/<select>/<textarea> berbernama di dalam toolbar — sumber
+  // tunggal kebenaran untuk nama field filter (bukan daftar hardcode per-role).
+  function toolbarFilterControls() {
+    const nodeList = document.querySelectorAll(
+      '.tabulator-toolbar input[name], .tabulator-toolbar select[name], .tabulator-toolbar textarea[name]'
+    );
+    return Array.prototype.filter.call(nodeList, function (el) { return !!el.name; });
+  }
   function getFilterParams() {
-    const s = toolbarEl('input[name="search"]');
-    const y = toolbarEl('select[name="year"]');
-    const st = toolbarEl('select[name="status_filter"]');
     // Sort header sudah dimatikan lewat columnDefaults di konstruktor Tabulator,
     // jadi tak ada sorter aktif yang bisa dikirim — server memakai urutan default/sesi.
-    const params = {
-      search: s ? s.value : '',
-      year: y ? y.value : '',
-      status_filter: st ? st.value : '',
-    };
+    const params = {};
+    toolbarFilterControls().forEach(function (el) {
+      params[el.name] = el.value; // nilai kosong tetap dikirim — server anggap itu "tanpa filter".
+    });
     return params;
   }
   (function wireFilters() {
-    const searchEl = toolbarEl('input[name="search"]');
-    const yearEl = toolbarEl('select[name="year"]');
-    const statusEl = toolbarEl('select[name="status_filter"]');
     // resetHistory: setelah filter berubah, isi tabel berganti — nilai "sebelum"
     // di riwayat Ctrl+Z tak lagi mencerminkan keadaan server, jadi jangan disimpan.
     function reload() { clearLoadError(); resetHistory(); table.replaceData(); }
-    if (searchEl) {
-      searchEl.removeAttribute('disabled');
-      let deb = null;
-      searchEl.addEventListener('input', function () {
-        clearTimeout(deb);
-        deb = setTimeout(reload, 300); // debounce 300ms.
-      });
-    }
-    if (yearEl) { yearEl.removeAttribute('disabled'); yearEl.addEventListener('change', reload); }
-    if (statusEl) { statusEl.removeAttribute('disabled'); statusEl.addEventListener('change', reload); }
+    toolbarFilterControls().forEach(function (el) {
+      el.removeAttribute('disabled');
+      if (el.tagName === 'SELECT') {
+        el.addEventListener('change', reload);
+      } else {
+        // input teks / textarea (mis. kotak cari): debounce 300ms, sama seperti sebelumnya.
+        let deb = null;
+        el.addEventListener('input', function () {
+          clearTimeout(deb);
+          deb = setTimeout(reload, 300); // debounce 300ms.
+        });
+      }
+    });
   })();
 
   // === Tugas 7f: Penanganan gagal muat data + tombol "Coba lagi" ===
