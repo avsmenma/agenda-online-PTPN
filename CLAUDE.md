@@ -196,7 +196,12 @@ TETAP HIDUP), karena perpindahan dokumen kini via dropdown Pengurus Dokumen. Dih
 (`generateDocumentDetailHtml`/`formatTaxStatus`/`formatTaxDocumentLink`) + perpajakan `sendToAkutansi()`/`sendToNext()`+
 rute `send-to-akutansi`. **Badge Status "Dokumen ditolak, cek disini" DIHAPUS** dari `PerpajakanDocumentRow` &
 `AkutansiDocumentRow` (link-nya ke halaman yg dihapus; dokumen ditolak kini jatuh ke badge status biasa).
-Utang kecil: `$pengembalianUrl` di `layouts/app.blade.php` = dead var lintas-role (tak pernah dirender, aman).
+Var mati `$pengembalianUrl` di `layouts/app.blade.php` juga dihapus.
+Dua halaman return TERSEMBUNYI lain (nol link/menu) IKUT dihapus 2026-07-24: **operator** `/pengembalian-dokumens`
+(`PengembalianDokumenController` + view `operator.dokumens.pengembalianDokumen`, read-only) & **pembayaran**
+`/returns/pembayaran` (method `pengembalian()` = redirect saja). **HASIL: nol halaman/route return mati di seluruh
+app — hanya `returns.verifikasi.*` (verifikasi→bagian) yang hidup.** Sebelum menyentuh "return/pengembalian"
+apa pun ke depan: cek `returns.verifikasi.*`/`pengembalianKeBidang` = JANGAN dihapus (satu-satunya yang hidup).
 
 **Belum dikerjakan — rollout Tabulator ke role verifikasi & pembayaran** (bagian sengaja
 DILEWATI atas keputusan user). Masih pakai tabel lama. Program terpisah: engine Tabulator
