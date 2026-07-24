@@ -84,17 +84,6 @@ class AkutansiDocumentRow extends DocumentRow
             || ($pembayaranRoleData && $pembayaranRoleData->received_at && ! $pembayaranIsPending)
         ) && ! $isRejected;
 
-        if ($isRejected) {
-            return [
-                'class' => 'badge-dikembalikan',
-                'icon'  => 'fa-times-circle',
-                'text'  => 'Dokumen ditolak,',
-                'link'  => [
-                    'href' => route('returns.akutansi.index') . '?search=' . urlencode((string) $dokumen->nomor_agenda),
-                    'text' => 'cek disini',
-                ],
-            ];
-        }
         if (! ($akutansiRoleData?->received_at)
             && in_array($dokumen->current_handler, ['operator', 'team_verifikasi', 'perpajakan'], true)
             && ! in_array($dokumen->status, ['completed', 'selesai'], true)

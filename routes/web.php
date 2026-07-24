@@ -478,16 +478,16 @@ Route::middleware(['auth', 'role:admin,akutansi'])->prefix('documents/akutansi')
     // create/store/destroy DIHAPUS 2026-07-11: tak pernah di-link dari UI (create
     // error 500 karena view-nya tak ada; store/destroy hanya stub kosong).
     Route::get('/data', [DashboardAkutansiController::class, 'datatable'])->name('data');
-    Route::get('/{dokumen}/detail', [DashboardAkutansiController::class, 'getDocumentDetail'])->name('detail');
 });
 
 // Professional Reports Routes - Akutansi
 // Halaman laporan/rekapan Akutansi dihapus.
 
 // Professional Returns Routes - Akutansi
-Route::get('/returns/akutansi', [DashboardAkutansiController::class, 'pengembalian'])
-    ->middleware(['auth', 'role:admin,akutansi'])
-    ->name('returns.akutansi.index');
+// Halaman Pengembalian Akutansi (returns.akutansi.index) DIHAPUS 2026-07-24 (dead-code):
+// tak pernah di-link dari UI hidup; pergerakan dokumen kini lewat dropdown Pengurus Dokumen.
+// Method aksi mati (getDocumentDetail/pengembalian) ikut dihapus dari
+// DashboardAkutansiController.php — twin dari pembersihan perpajakan yang sama.
 
 
 // Backward compatibility routes removed — old Akutansi URLs (Phase 2 cleanup)

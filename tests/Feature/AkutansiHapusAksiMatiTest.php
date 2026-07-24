@@ -46,9 +46,15 @@ class AkutansiHapusAksiMatiTest extends TestCase
         $this->assertFalse($router->has('documents.akutansi.send-to-pembayaran'));
         $this->assertFalse($router->has('documents.akutansi.return'));
 
+        // documents.akutansi.detail & returns.akutansi.index DIHAPUS menyusul 2026-07-24
+        // (halaman Pengembalian akutansi sendiri ternyata mati — tak pernah di-link dari
+        // UI hidup; pergerakan dokumen kini lewat dropdown Pengurus Dokumen).
+        $this->assertFalse($router->has('documents.akutansi.detail'));
+        $this->assertFalse($router->has('returns.akutansi.index'));
+
         // Yang hidup tetap ada:
         $this->assertTrue($router->has('documents.akutansi.index'));
-        $this->assertTrue($router->has('documents.akutansi.detail'));
+        $this->assertTrue($router->has('documents.akutansi.data'));
     }
 
     public function test_halaman_akutansi_render_tanpa_ui_aksi_mati(): void

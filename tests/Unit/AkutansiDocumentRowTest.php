@@ -103,24 +103,6 @@ class AkutansiDocumentRowTest extends TestCase
         $this->assertSame('none', $row['deadline']['variant']);
     }
 
-    public function test_badge_ditolak_menyertakan_link_cek_disini(): void
-    {
-        $dokumen = $this->buatDokumen([
-            'nomor_agenda'    => '99',
-            'current_handler' => 'akutansi',
-            'status'          => 'returned_to_verifikasi',
-        ]);
-        $this->buatStatus($dokumen, 'akutansi', DokumenStatus::STATUS_REJECTED);
-
-        $row = $this->baris($dokumen);
-
-        $this->assertSame('badge-dikembalikan', $row['status_badge']['class']);
-        $this->assertSame('fa-times-circle', $row['status_badge']['icon']);
-        $this->assertIsArray($row['status_badge']['link']);
-        $this->assertSame('cek disini', $row['status_badge']['link']['text']);
-        $this->assertStringContainsString('99', $row['status_badge']['link']['href']);
-    }
-
     public function test_basis_ikut_terbawa(): void
     {
         $dokumen = $this->buatDokumen([
@@ -325,9 +307,11 @@ class AkutansiDocumentRowTest extends TestCase
 
     public function test_badge_kembali_ke_team_verifikasi_saat_returned_to_verifikasi_tanpa_ditolak(): void
     {
-        // Cabang 8: status==='returned_to_verifikasi' TANPA status 'rejected'
-        // (beda dengan test_badge_ditolak_menyertakan_link_cek_disini yang
-        // memakai status yang sama tapi DENGAN rejected → cabang 1).
+        // Cabang 8: status==='returned_to_verifikasi' TANPA status 'rejected'.
+        // (Cabang REJECTED — badge-dikembalikan berlink ke halaman Pengembalian
+        // mati — sudah dihapus 2026-07-24; dokumen rejected kini jatuh ke cabang
+        // badge berikutnya yang cocok, jadi tak ada lagi kasus "DENGAN rejected"
+        // yang diuji terpisah di sini.)
         $dokumen = $this->buatDokumen([
             'current_handler' => 'akutansi',
             'status'          => 'returned_to_verifikasi',
