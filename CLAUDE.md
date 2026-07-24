@@ -178,12 +178,26 @@ engine kini baca nama field dari DOM (generik lintas-role, bukan hardcode). `?cl
 - Spec/plan: `docs/superpowers/specs/2026-07-23-rollout-tabulator-akutansi-design.md`,
   `docs/superpowers/plans/2026-07-24-rollout-tabulator-akutansi.md`
 
-**Belum dikerjakan — rollout Tabulator ke 4 role lain** (verifikasi, perpajakan,
-pembayaran, bagian) yang masih pakai tabel lama. Ini program terpisah: engine Tabulator
+**Perpajakan `/documents/perpajakan` sudah Tabulator-only — SELESAI & ter-deploy, QA lolos 2026-07-24
+(Rollout 2).** Klon pola akutansi: `App\Support\PerpajakanDocumentRow` (badge+deadline server, bug laten
+`$isBypassedToPembayaran` diperbaiki), endpoint `documents.perpajakan.data`, view `daftarPerpajakanTabulator`.
+Forward via dropdown; gate wajib-isi NPWP/Faktur dibiarkan tanpa gate (perilaku live). View legacy
+(`daftarPerpajakan` 4557/`_rows`/`_chunk`) + rute/method aksi mati (`set-deadline`/`send-to-next`/`return`
++ `setDeadline`/`returnDocument`) **dihapus**. **PENTING (pelajaran):** `sendToAkutansi()`+`sendToNext()`+rute
+`send-to-akutansi` **DIPERTAHANKAN** — HIDUP dipakai halaman Pengembalian (`pengembalianPerpajakan.blade.php`),
+grep gate menangkapnya sebelum salah hapus. `?classic=1` no-op (Tabulator).
+
+- Spec/plan: `docs/superpowers/specs/2026-07-24-rollout-tabulator-perpajakan-design.md`,
+  `docs/superpowers/plans/2026-07-24-rollout-tabulator-perpajakan.md`
+
+**Belum dikerjakan — rollout Tabulator ke role verifikasi & pembayaran** (bagian sengaja
+DILEWATI atas keputusan user). Masih pakai tabel lama. Program terpisah: engine Tabulator
 bersama (`document-tabulator.js` + basis `DocumentRow`) diterapkan per-role → QA → hapus tabel
-lama role itu. Itulah jalur menuju penyatuan 6 tabel jadi satu komponen. Pola akutansi (Rollout 1)
-jadi templat: DTO `<Role>DocumentRow` mewarisi `DocumentRow`, endpoint `@datatable`, `extraColumns`
-per-role, port badge/deadline ke server. Kustomisasi kolom masih diduplikasi per-role (fondasi bersama:
+lama role itu. Pola akutansi/perpajakan jadi templat: DTO `<Role>DocumentRow` mewarisi `DocumentRow`,
+endpoint `@datatable`, `extraColumns` per-role, port badge/deadline ke server. Verifikasi lebih rumit
+(badge ~24 cabang + workflow **Paraf** khas). Pembayaran outlier (DataTables, kolom kustom, freeze 2-tab,
+tanpa forward). SEBELUM hapus kode aksi "mati" tiap role: WAJIB grep gate — halaman Pengembalian sering
+memakai rute yang tampak mati (lihat pelajaran perpajakan di atas). Kustomisasi kolom masih diduplikasi per-role (fondasi bersama:
 `config/document_columns.php` + partial `document-role-filter-toolbar`); penyatuannya —
 plus freeze ala pembayaran (modal 2-tab) — menyusul setelah rollout.
 
