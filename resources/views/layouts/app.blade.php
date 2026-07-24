@@ -3343,14 +3343,6 @@
         'perpajakan'      => '/documents/perpajakan',
         default           => '/documents'
       };
-      // URL halaman pengembalian/rekapan per role
-      $pengembalianUrl = match ($module) {
-        'team_verifikasi' => '/returns/verifikasi/bagian',
-        'pembayaran'      => '/returns/pembayaran',
-        'akutansi'        => '/returns/akutansi',
-        'perpajakan'      => '/returns/perpajakan',
-        default           => '/pengembalian-dokumens'
-      };
       $tambahDokumenUrl = match ($module) {
         'operator' => '/documents/create',
         default    => null
