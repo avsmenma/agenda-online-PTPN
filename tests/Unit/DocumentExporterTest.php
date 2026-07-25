@@ -56,16 +56,106 @@ class DocumentExporterTest extends TestCase
 
     public function test_total_key_menjumlahkan_baris_sebagai_number(): void
     {
-        $cols = [['key' => 'nilai_rupiah', 'label' => 'Nilai']];
+        // total_key BUKAN kolom pertama di sini secara sengaja — lihat
+        // test_total_key_kolom_pertama_dengan_kolom_lain_tetap_sejajar() untuk
+        // kasus tepi saat total_key adalah kolom ke-0.
+        $cols = [['key' => 'bagian', 'label' => 'Bagian'], ['key' => 'nilai_rupiah', 'label' => 'Nilai']];
         $rows = [
-            ['nilai_rupiah' => 1000],
-            ['nilai_rupiah' => 2500],
+            ['bagian' => 'Keuangan', 'nilai_rupiah' => 1000],
+            ['bagian' => 'Umum', 'nilai_rupiah' => 2500],
         ];
         $xml = DocumentExporter::toXlsx($cols, $rows, ['total_key' => 'nilai_rupiah']);
 
         $this->assertStringContainsString('TOTAL', $xml);
         $this->assertStringContainsString('<Data ss:Type="Number">3500</Data>', $xml);
         $this->assertNotFalse(simplexml_load_string($xml));
+    }
+
+    /**
+     * Regresi Fix round 1 — Temuan 1: dulu ketika total_key adalah kolom
+     * PERTAMA dan ada kolom lain, baris TOTAL menghasilkan 3 sel untuk 2
+     * kolom ([TOTAL, 3500, ""]) sehingga Σ mendarat di bawah header yang
+     * salah ("Bagian" alih-alih "Nilai"). Sekarang harus TEPAT SATU sel per
+     * kolom, dan sel Number ada di indeks kolom total_key (0), bukan
+     * bergeser ke indeks 1.
+     */
+    public function test_total_key_kolom_pertama_dengan_kolom_lain_tetap_sejajar(): void
+    {
+        $cols = [
+            ['key' => 'nilai_rupiah', 'label' => 'Nilai'],
+            ['key' => 'bagian', 'label' => 'Bagian'],
+        ];
+        $rows = [
+            ['nilai_rupiah' => 1000, 'bagian' => 'Keuangan'],
+            ['nilai_rupiah' => 2500, 'bagian' => 'Umum'],
+        ];
+        $xml = DocumentExporter::toXlsx($cols, $rows, ['total_key' => 'nilai_rupiah']);
+        $this->assertNotFalse(simplexml_load_string($xml));
+
+        $cells = $this->lastRowCells($xml);
+        $this->assertCount(2, $cells, 'Baris TOTAL harus tepat 1 sel per kolom (2 kolom).');
+        $this->assertSame('Number', $cells[0]['type']);
+        $this->assertSame('3500', $cells[0]['value']);
+        $this->assertSame('String', $cells[1]['type']);
+    }
+
+    /** Regresi Fix round 1 — Temuan 1, kasus total_key di kolom TENGAH (3 kolom). */
+    public function test_total_key_kolom_tengah_tetap_sejajar(): void
+    {
+        $cols = [
+            ['key' => 'nomor_agenda', 'label' => 'Nomor Agenda'],
+            ['key' => 'nilai_rupiah', 'label' => 'Nilai'],
+            ['key' => 'bagian', 'label' => 'Bagian'],
+        ];
+        $rows = [
+            ['nomor_agenda' => 'A1', 'nilai_rupiah' => 1000, 'bagian' => 'Keuangan'],
+            ['nomor_agenda' => 'A2', 'nilai_rupiah' => 2500, 'bagian' => 'Umum'],
+        ];
+        $xml = DocumentExporter::toXlsx($cols, $rows, ['total_key' => 'nilai_rupiah']);
+        $this->assertNotFalse(simplexml_load_string($xml));
+
+        $cells = $this->lastRowCells($xml);
+        $this->assertCount(3, $cells, 'Baris TOTAL harus tepat 1 sel per kolom (3 kolom).');
+        $this->assertSame('String', $cells[0]['type']);
+        $this->assertSame('TOTAL', $cells[0]['value']);
+        $this->assertSame('Number', $cells[1]['type']);
+        $this->assertSame('3500', $cells[1]['value']);
+        $this->assertSame('String', $cells[2]['type']);
+    }
+
+    /**
+     * Ambil sel-sel <Row> TERAKHIR di worksheet pertama sebagai array
+     * ['type' => ss:Type, 'value' => teks Data], berurutan sesuai posisi
+     * kolom — dipakai untuk menguji kesejajaran baris TOTAL.
+     *
+     * @return array<int, array{type: string, value: string}>
+     */
+    private function lastRowCells(string $xml): array
+    {
+        $simple = simplexml_load_string($xml);
+        $namespaces = $simple->getNamespaces(true);
+        $worksheet = $simple->children($namespaces[''])->Worksheet;
+        $table = $worksheet->children($namespaces[''])->Table;
+
+        $rows = [];
+        foreach ($table->children($namespaces['']) as $child) {
+            if ($child->getName() === 'Row') {
+                $rows[] = $child;
+            }
+        }
+
+        $lastRow = end($rows);
+        $cells = [];
+        foreach ($lastRow->children($namespaces['']) as $cellNode) {
+            if ($cellNode->getName() !== 'Cell') {
+                continue;
+            }
+            $data = $cellNode->children($namespaces[''])->Data;
+            $type = (string) $data->attributes($namespaces['ss'])['Type'];
+            $cells[] = ['type' => $type, 'value' => (string) $data];
+        }
+
+        return $cells;
     }
 
     public function test_cell_value_utamakan_kunci_formatted(): void
