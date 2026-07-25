@@ -294,6 +294,10 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
     Route::get('/', [DokumenController::class, 'index'])->name('index');
     // Endpoint JSON progressive-load untuk Tabulator — STATIS, harus sebelum route {dokumen}.
     Route::get('/data', [DokumenController::class, 'datatable'])->name('data');
+    // Task 4 fitur export bersama: tombol Export toolbar Tabulator (CFG.exportUrl) — Excel/PDF
+    // dependency-free lewat DocumentExporter/ExportsDocuments (pola Task 3 pembayaran).
+    // Statis, aman di atas route {dokumen} lain di grup ini.
+    Route::get('/export', [DokumenController::class, 'exportDocuments'])->name('export');
     Route::get('/create', [DokumenController::class, 'create'])->name('create');
     Route::post('/', [DokumenController::class, 'store'])->name('store');
 

@@ -22,6 +22,9 @@
         'handlerTpl'       => str_replace('__ID__', '{id}', route('documents.handler.update', ['dokumen' => '__ID__'])),
         'destroyTpl'       => str_replace('__ID__', '{id}', route('documents.destroy', ['dokumen' => '__ID__'])),
         'csrf'             => csrf_token(),
+        // Task 4 fitur export bersama (ADITIF): mengisi ini memunculkan tombol Export
+        // (Excel/PDF) di toolbar Tabulator (pola Task 3 pembayaran).
+        'exportUrl'        => route('documents.export'),
         'columns'          => collect($selectedColumns)->map(fn ($k) => ['key' => $k, 'label' => $availableColumns[$k] ?? $k])->values(),
         'availableColumns' => $availableColumns,
         'selected'         => array_values($selectedColumns),

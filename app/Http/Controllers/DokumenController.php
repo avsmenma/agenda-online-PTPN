@@ -21,6 +21,8 @@ use App\Helpers\ActivityLogHelper;
 
 class DokumenController extends Controller
 {
+    use \App\Http\Controllers\Concerns\ExportsDocuments;
+
     /**
      * Build the base operator document query (dipakai index)
      */
@@ -174,6 +176,54 @@ class DokumenController extends Controller
         }
 
         return $handlerOptions;
+    }
+
+    /**
+     * Export daftar dokumen operator (Excel/PDF) — Task 4 fitur export bersama,
+     * lewat trait ExportsDocuments::respondDocumentExport() (App\Support\DocumentExporter,
+     * dependency-free). Route: GET documents/export (documents.export — TANPA segmen
+     * 'operator' di URL/nama, mengikuti konvensi route sibling operator yang sudah ada
+     * seperti documents.data/documents.index, bukan literal documents.<role>.export).
+     * Dipanggil tombol Export toolbar Tabulator (CFG.exportUrl). Query & viewerRole
+     * SAMA dengan datatable() — buildOperatorQuery() + auth()->user()?->role — tanpa
+     * duplikasi filter/scope, tanpa mengubah endpoint data yang ada.
+     *
+     * Kolom: katalog config('document_columns.base') (operator = base penuh, termasuk
+     * 'status') di-intersect dgn columns[] dari request (kolom terlihat di tabel saat
+     * export ditekan) — pertahanan thd field asing/objek. Kosong → seluruh katalog
+     * (operator tak punya preferensi kolom tersimpan terpisah utk export).
+     */
+    public function exportDocuments(Request $request): \Symfony\Component\HttpFoundation\Response
+    {
+        $query = $this->buildOperatorQuery($request);
+        $handlerOptions = $this->buildHandlerOptions();
+        $viewerRole = auth()->user()?->role;
+
+        $rows = $query->get()
+            ->map(fn (Dokumen $d) => \App\Support\OperatorDocumentRow::fromDokumen($d, $handlerOptions, $viewerRole))
+            ->all();
+
+        $catalog = config('document_columns.base');
+
+        $requestedKeys = $request->get('columns', []);
+        $requestedKeys = is_array($requestedKeys) ? array_map('strval', $requestedKeys) : [];
+        $keys = array_values(array_intersect($requestedKeys, array_keys($catalog)));
+
+        if (empty($keys)) {
+            $keys = array_keys($catalog);
+        }
+
+        $columns = array_map(
+            fn (string $key) => ['key' => $key, 'label' => $catalog[$key]],
+            $keys
+        );
+
+        $options = [
+            'title'     => 'Dokumen Operator',
+            'total_key' => 'nilai_rupiah',
+        ];
+
+        return $this->respondDocumentExport($request, $rows, $columns, $options);
     }
 
     public function index(Request $request)
