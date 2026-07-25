@@ -49,26 +49,45 @@ class TeamVerifikasiController extends Controller
     }
 
     /**
-     * Endpoint JSON tabel Tabulator Team Verifikasi (Rollout 3, Task 2).
-     * Query sama dgn dokumens() via buildVerifikasiQuery(); baris via
-     * VerifikasiDocumentRow. viewerRole DIKUNCI 'team_verifikasi' (bukan
+     * Endpoint JSON tabel Tabulator Team Verifikasi (Rollout 3, Task 2, fix
+     * round 1). Query sama dgn dokumens() via buildVerifikasiQuery(); baris
+     * via VerifikasiDocumentRow. viewerRole DIKUNCI 'team_verifikasi' (bukan
      * Auth::user()?->role) — endpoint ini eksklusif utk viewer Team Verifikasi
      * (route di-guard role:admin,team_verifikasi,verifikasi).
-     * Bentuk balasan HANYA {data:[...]} (beda dgn wrapper {last_page,total,data}
-     * ala Perpajakan/Akutansi) — sesuai kontrak Task 2 brief; belum ada
-     * pagination lot progresif di sini (menyusul task lanjutan bila diperlukan).
+     * Bentuk balasan {last_page,total,data} — DISAMAKAN PERSIS dgn
+     * DashboardPerpajakanController::datatable() (bukan {data:[...]} polos
+     * seperti draf awal task ini) karena engine bersama
+     * public/js/document-tabulator.js memakai progressiveLoad:'scroll' yang
+     * membaca last_page/data dari response; kontrak flat tidak bisa
+     * menggerakkannya. Param size/page & default/cap IDENTIK perpajakan.
+     * TIDAK ada loadMissing() pasca-paginate di sini (beda dari perpajakan) —
+     * bukan lupa: buildVerifikasiQuery() SUDAH mengeager-load dibayarKepadas/
+     * roleData/roleStatuses/dokumenPos LEBIH AWAL (di dalam query builder,
+     * sebelum dieksekusi), jadi saat paginate() dieksekusi baris sudah lengkap.
+     * loadMissing() di sini hanya akan jadi no-op (relationLoaded()===true utk
+     * semuanya) — sengaja tidak ditambah supaya tidak ada kode mati.
      */
     public function datatable(Request $request): \Illuminate\Http\JsonResponse
     {
         $query = $this->buildVerifikasiQuery($request);
 
+        $size = (int) $request->input('size', 100);
+        $size = ($size > 0 && $size <= 200) ? $size : 100;
+        $page = max(1, (int) $request->input('page', 1));
+
+        $paginator = $query->paginate($size, ['*'], 'page', $page);
+
         $handlerOptions = $this->buildVerifikasiHandlerOptions();
 
-        $data = $query->get()
+        $data = collect($paginator->items())
             ->map(fn ($d) => \App\Support\VerifikasiDocumentRow::fromDokumen($d, $handlerOptions, 'team_verifikasi'))
             ->all();
 
-        return response()->json(['data' => $data]);
+        return response()->json([
+            'last_page' => $paginator->lastPage(),
+            'total'     => $paginator->total(),
+            'data'      => $data,
+        ]);
     }
 
     /** Opsi pengurus dokumen (5 peran base + optgroup Bagian). Bentuk identik DokumenController::buildHandlerOptions(). */
