@@ -20,26 +20,6 @@ namespace App\Support;
 class DocumentExporter
 {
     /**
-     * Kolom tanggal yang disimpan DocumentRow::baseRow() di bawah kunci
-     * 'dates' (App\Support\DocumentRow::formatDates()), bukan sebagai
-     * kunci top-level baris.
-     */
-    private const DATE_KEYS = [
-        'tanggal_spp',
-        'tanggal_berita_acara',
-        'tanggal_spk',
-        'tanggal_berakhir_spk',
-        'tanggal_masuk',
-        'tanggal_paraf',
-        'tanggal_selesai_diproses',
-        'tanggal_kembali_ke_bagian',
-        'tanggal_hasil_koreksi_bagian',
-        'tanggal_dibayar',
-        'tanggal_faktur',
-        'tanggal_selesai_verifikasi_pajak',
-    ];
-
-    /**
      * Bangun dokumen XML Spreadsheet 2003 lengkap sebagai string.
      *
      * @param  array<int, array{key: string, label: string}>  $columns
@@ -60,6 +40,7 @@ class DocumentExporter
         $sheets = $options['sheets'] ?? null;
 
         if (is_array($sheets) && $sheets !== []) {
+            $totalKey = $options['total_key'] ?? null;
             $grandTotal = 0.0;
             $wantGrandTotal = false;
 
@@ -80,7 +61,6 @@ class DocumentExporter
 
                 if ($subtotal) {
                     $wantGrandTotal = true;
-                    $totalKey = $options['total_key'] ?? null;
                     if ($totalKey !== null) {
                         foreach ($sheetRows as $row) {
                             $grandTotal += self::numericValue($row, $totalKey);
@@ -89,8 +69,8 @@ class DocumentExporter
                 }
             }
 
-            if ($wantGrandTotal && isset($options['total_key'])) {
-                $xml .= self::grandTotalWorksheetXml($columns, $grandTotal);
+            if ($wantGrandTotal && $totalKey !== null) {
+                $xml .= self::grandTotalWorksheetXml($columns, $grandTotal, $totalKey);
             }
         } else {
             $title = $options['title'] ?? 'Sheet1';
@@ -278,7 +258,7 @@ XML;
 
         // Baris TOTAL bila diminta (baris data ada, atau sheet ini eksplisit minta subtotal).
         if ($totalKey !== null && ($hasTotalableRow || $forceTotalRow)) {
-            $xml .= self::totalRowXml($columns, $totalKey, $totalSum, $lastIndex);
+            $xml .= self::totalRowXml($columns, $totalKey, $totalSum);
         }
 
         $xml .= '  </Table>' . "\n";
@@ -287,50 +267,57 @@ XML;
         return $xml;
     }
 
+    /** Baris TOTAL bold, sel sejajar kolom (lihat totalRowCells()). */
+    private static function totalRowXml(array $columns, string $totalKey, float $sum): string
+    {
+        return '   <Row>' . "\n" . self::totalRowCells($columns, $totalKey, $sum, 'TOTAL') . '   </Row>' . "\n";
+    }
+
     /**
-     * Baris TOTAL bold: label "TOTAL" di kolom pertama, Σ total_key (Number)
-     * di posisi kolom total_key, sel lain kosong. Bila total_key kebetulan
-     * jadi kolom pertama, label disisipkan sebagai sel tambahan di depan
-     * (tetap valid XML, hanya menambah satu sel di baris ini).
+     * Sel-sel baris TOTAL/GRAND TOTAL — TEPAT SATU sel per kolom, sejajar
+     * indeks kolom (memperbaiki bug: sebelumnya baris ini bisa punya sel
+     * ekstra/kurang sehingga angka Σ mendarat di bawah header yang salah
+     * ketika total_key adalah kolom pertama):
+     * - kolom pada indeks total_key      → Σ (ss:Type="Number", style Total).
+     * - lainnya, HANYA kolom indeks ke-0  → label teks ($label, style TotalLabel).
+     *   (dilewati bila indeks 0 itu sendiri adalah kolom total_key — sel Σ
+     *   sudah cukup menandai baris ini, tak perlu label terpisah.)
+     * - selain itu                        → sel kosong bergaya Total (rapi, berborder).
      */
-    private static function totalRowXml(array $columns, string $totalKey, float $sum, int $lastIndex): string
+    private static function totalRowCells(array $columns, ?string $totalKey, float $sum, string $label): string
     {
         $columns = array_values($columns);
 
         $totalKeyIndex = null;
-        foreach ($columns as $i => $column) {
-            if (($column['key'] ?? null) === $totalKey) {
-                $totalKeyIndex = $i;
-                break;
+        if ($totalKey !== null) {
+            foreach ($columns as $i => $column) {
+                if (($column['key'] ?? null) === $totalKey) {
+                    $totalKeyIndex = $i;
+                    break;
+                }
             }
         }
 
-        $xml = '   <Row>' . "\n";
-
-        if ($totalKeyIndex === 0) {
-            $xml .= '    <Cell ss:StyleID="TotalLabel"><Data ss:Type="String">TOTAL</Data></Cell>' . "\n";
-        }
-
+        $xml = '';
         foreach ($columns as $i => $column) {
-            if ($i === $totalKeyIndex) {
+            if ($totalKeyIndex !== null && $i === $totalKeyIndex) {
                 $xml .= '    <Cell ss:StyleID="Total"><Data ss:Type="Number">' . self::formatNumberForXml($sum) . '</Data></Cell>' . "\n";
                 continue;
             }
 
             if ($i === 0) {
-                $xml .= '    <Cell ss:StyleID="TotalLabel"><Data ss:Type="String">TOTAL</Data></Cell>' . "\n";
+                $xml .= '    <Cell ss:StyleID="TotalLabel"><Data ss:Type="String">' . self::xmlEscape($label) . '</Data></Cell>' . "\n";
                 continue;
             }
 
             $xml .= '    <Cell ss:StyleID="Total"><Data ss:Type="String"></Data></Cell>' . "\n";
         }
-        $xml .= '   </Row>' . "\n";
 
         return $xml;
     }
 
-    /** Sheet ringkasan "GRAND TOTAL" untuk mode multi-sheet dengan subtotal. */
-    private static function grandTotalWorksheetXml(array $columns, float $grandTotal): string
+    /** Sheet ringkasan "GRAND TOTAL" untuk mode multi-sheet dengan subtotal. Sel baris subtotal juga sejajar kolom (totalRowCells()). */
+    private static function grandTotalWorksheetXml(array $columns, float $grandTotal, ?string $totalKey): string
     {
         $lastIndex = max(count($columns), 1) - 1;
 
@@ -340,8 +327,7 @@ XML;
         $xml .= '    <Cell ss:StyleID="Title"' . ($lastIndex > 0 ? ' ss:MergeAcross="' . $lastIndex . '"' : '') . '><Data ss:Type="String">GRAND TOTAL</Data></Cell>' . "\n";
         $xml .= '   </Row>' . "\n";
         $xml .= '   <Row>' . "\n";
-        $xml .= '    <Cell ss:StyleID="TotalLabel"><Data ss:Type="String">TOTAL KESELURUHAN</Data></Cell>' . "\n";
-        $xml .= '    <Cell ss:StyleID="Total"><Data ss:Type="Number">' . self::formatNumberForXml($grandTotal) . '</Data></Cell>' . "\n";
+        $xml .= self::totalRowCells($columns, $totalKey, $grandTotal, 'TOTAL KESELURUHAN');
         $xml .= '   </Row>' . "\n";
         $xml .= '  </Table>' . "\n";
         $xml .= ' </Worksheet>' . "\n";
