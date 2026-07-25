@@ -2166,6 +2166,11 @@
         'inlineUpdateTpl' => str_replace('__ID__', '{id}', route('documents.inline-update', ['dokumen' => '__ID__'])),
         'handlerTpl' => str_replace('__ID__', '{id}', route('documents.handler.update', ['dokumen' => '__ID__'])),
         'csrf' => csrf_token(),
+        // Task 3 fitur export bersama (ADITIF): mengisi ini memunculkan tombol Export
+        // (Excel/PDF) di toolbar Tabulator — kirim filter aktif + columns[] terlihat +
+        // format ke exportDocuments() (DocumentExporter, ganti exportToExcel() lama yang
+        // FATAL karena PhpSpreadsheet tak terpasang).
+        'exportUrl' => route('documents.pembayaran.export'),
         // Fix QA Rollout 4 — kolom katalog 'status_pembayaran' ("Status Pembayaran")
         // dirender via formatter 'paymentPill' (baca row.status_badge, bukan field
         // status_pembayaran mentah) agar tetap beku/kustomisasi via $renderColumns,
