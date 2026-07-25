@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Log;
 class TeamVerifikasiController extends Controller
 {
     use \App\Http\Controllers\Concerns\BuildsRoleDashboard;
+    use \App\Http\Controllers\Concerns\ExportsDocuments;
 
     /**
      * Halaman dashboard Team Verifikasi.
@@ -102,6 +103,52 @@ class TeamVerifikasiController extends Controller
             ];
         }
         return $handlerOptions;
+    }
+
+    /**
+     * Export daftar dokumen Team Verifikasi (Excel/PDF) — Task 4 fitur export bersama,
+     * lewat trait ExportsDocuments::respondDocumentExport() (App\Support\DocumentExporter).
+     * Route: GET documents/verifikasi/export (documents.verifikasi.export), dipanggil
+     * tombol Export toolbar Tabulator (CFG.exportUrl). Query SAMA dgn datatable() —
+     * buildVerifikasiQuery() — tanpa duplikasi filter/scope, tanpa mengubah endpoint
+     * data yang ada. viewerRole DIKUNCI 'team_verifikasi' (bukan Auth::user()?->role),
+     * mengikuti pola datatable() — endpoint ini eksklusif utk viewer Team Verifikasi
+     * (route di-guard role:admin,team_verifikasi,verifikasi).
+     *
+     * Kolom: katalog config('document_columns.base') di-intersect dgn columns[] dari
+     * request (kolom terlihat di tabel saat export ditekan) — pertahanan thd field
+     * asing/objek (mis. status_badge). Kosong → seluruh katalog.
+     */
+    public function exportDocuments(Request $request): \Symfony\Component\HttpFoundation\Response
+    {
+        $query = $this->buildVerifikasiQuery($request);
+        $handlerOptions = $this->buildVerifikasiHandlerOptions();
+
+        $rows = $query->get()
+            ->map(fn (Dokumen $d) => \App\Support\VerifikasiDocumentRow::fromDokumen($d, $handlerOptions, 'team_verifikasi'))
+            ->all();
+
+        $catalog = config('document_columns.base');
+
+        $requestedKeys = $request->get('columns', []);
+        $requestedKeys = is_array($requestedKeys) ? array_map('strval', $requestedKeys) : [];
+        $keys = array_values(array_intersect($requestedKeys, array_keys($catalog)));
+
+        if (empty($keys)) {
+            $keys = array_keys($catalog);
+        }
+
+        $columns = array_map(
+            fn (string $key) => ['key' => $key, 'label' => $catalog[$key]],
+            $keys
+        );
+
+        $options = [
+            'title'     => 'Dokumen Team Verifikasi',
+            'total_key' => 'nilai_rupiah',
+        ];
+
+        return $this->respondDocumentExport($request, $rows, $columns, $options);
     }
 
     /**

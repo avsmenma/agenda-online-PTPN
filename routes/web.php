@@ -363,6 +363,9 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::get('/', [TeamVerifikasiController::class, 'dokumens'])->name('index');
     Route::get('/data', [TeamVerifikasiController::class, 'datatable'])->name('data');
+    // Task 4 fitur export bersama: tombol Export toolbar Tabulator (CFG.exportUrl) — Excel/PDF
+    // dependency-free lewat DocumentExporter/ExportsDocuments (pola Task 3 pembayaran).
+    Route::get('/export', [TeamVerifikasiController::class, 'exportDocuments'])->name('export');
 });
 
 // Professional Reports Routes - Verifikasi
