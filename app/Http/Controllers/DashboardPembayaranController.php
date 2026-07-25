@@ -1013,63 +1013,6 @@ class DashboardPembayaranController extends Controller
         return [$ieKategoriList, $ieSubKriteriaList, $ieItemSubKriteriaList, $ieJenisPembayaranList];
     }
 
-    private function getPembayaranDateEditableColumns(): array
-    {
-        return [
-            'tanggal_spp',
-            'tanggal_berita_acara',
-            'tanggal_spk',
-            'tanggal_berakhir_spk',
-            'tanggal_faktur',
-            'tanggal_paraf',
-            'tanggal_miro',
-            'tanggal_selesai_verifikasi_pajak',
-            'tanggal_dibayar',
-        ];
-    }
-
-    private function getPembayaranComputedStatus(Dokumen $dokumen): string
-    {
-        if (
-            $dokumen->tanggal_dibayar ||
-            $dokumen->link_bukti_pembayaran ||
-            strtoupper(trim($dokumen->status_pembayaran ?? '')) === 'SUDAH_DIBAYAR' ||
-            strtoupper(trim($dokumen->status_pembayaran ?? '')) === 'SUDAH DIBAYAR' ||
-            $dokumen->status_pembayaran === 'sudah_dibayar'
-        ) {
-            return 'sudah_dibayar';
-        }
-
-        if ($dokumen->current_handler === 'pembayaran' || $dokumen->status === 'sent_to_pembayaran') {
-            return 'siap_dibayar';
-        }
-
-        return 'belum_siap_dibayar';
-    }
-
-    private function renderPembayaranStatusPill(string $status): string
-    {
-        if ($status === 'siap_dibayar') {
-            return '<span class="status-pill status-pill--ready"><i class="fas fa-circle"></i> Siap Dibayar</span>';
-        }
-
-        if ($status === 'sudah_dibayar') {
-            return '<span class="status-pill status-pill--paid"><i class="fas fa-circle"></i> Sudah Dibayar</span>';
-        }
-
-        return '<span class="status-pill status-pill--pending"><i class="fas fa-circle"></i> Belum Siap</span>';
-    }
-
-    
-
-    
-
-    
-
-    
-
-    
-
     public function rekapanKeterlambatan(Request $request)
     {
         return app(OwnerDashboardController::class)->rekapanKeterlambatanByRole($request, 'pembayaran');
