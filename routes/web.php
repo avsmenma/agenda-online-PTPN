@@ -363,12 +363,6 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::get('/', [TeamVerifikasiController::class, 'dokumens'])->name('index');
     Route::get('/data', [TeamVerifikasiController::class, 'datatable'])->name('data');
-    Route::get('/{dokumen}/detail', [TeamVerifikasiController::class, 'getDocumentDetail'])->name('detail');
-    Route::post('/{dokumen}/return-to-department', [TeamVerifikasiController::class, 'returnToDepartment'])->name('return-to-department');
-    Route::post('/{dokumen}/send-to-next', [TeamVerifikasiController::class, 'sendToNextHandler'])->name('send-to-next');
-    Route::post('/{dokumen}/set-deadline', [TeamVerifikasiController::class, 'setDeadline'])->name('set-deadline');
-    Route::post('/{dokumen}/return-to-owner', [TeamVerifikasiController::class, 'returnToOperator'])->name('return-to-owner');
-    Route::post('/{dokumen}/paraf', [TeamVerifikasiController::class, 'parafDokumen'])->name('paraf');
 });
 
 // Professional Reports Routes - Verifikasi
@@ -381,21 +375,15 @@ Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('re
     // Halaman pengembalian yang hidup ada di '/bagian' (menu "Pengembalian Ke Bagian").
     Route::get('/bagian', [TeamVerifikasiController::class, 'pengembalianKeBidang'])->name('bagian');
     Route::post('/{dokumen}/to-bidang', [TeamVerifikasiController::class, 'returnToBidang'])->name('to-bidang');
-    Route::post('/{dokumen}/restore-from-bidang', [TeamVerifikasiController::class, 'restoreFromBidang'])->name('restore-from-bidang');
 });
 
 
 // Backward compatibility routes removed — old Team Verifikasi URLs (Phase 2 cleanup)
 
-// Professional Approval Routes - Verifikasi (Team Verifikasi)
-Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
-    Route::post('/{dokumen}/accept', [TeamVerifikasiController::class, 'acceptDocument'])
-        ->name('accept');
-    Route::post('/{dokumen}/reject', [TeamVerifikasiController::class, 'rejectDocument'])
-        ->name('reject');
-    // Halaman pending-approval DIHAPUS 2026-07-11: tak pernah di-link dari UI,
-    // error 500 saat diakses langsung; fungsinya sudah digantikan Inbox.
-});
+// Professional Approval Routes - Verifikasi (Team Verifikasi) DIHAPUS 2026-07-25 (Rollout 3,
+// Task 6): acceptDocument/rejectDocument + route .accept/.reject yatim — Inbox memakai
+// InboxController::approve/reject, bukan method ini. Grep final lintas resources/public/js/
+// app/tests/config nol caller sebelum dihapus.
 
 // Document Activity Tracking Routes
 Route::middleware(['auth', 'web'])->prefix('api/documents')->name('api.documents.')->group(function () {
