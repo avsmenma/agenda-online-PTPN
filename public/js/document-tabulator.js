@@ -749,19 +749,31 @@
     const fzLeft = (cfg.frozen && cfg.frozen.left) || [];
     const fzRight = (cfg.frozen && cfg.frozen.right) || [];
     (cfg.columns || []).forEach(function (c) {
-      const def = { title: c.label, field: c.key, formatter: getFormatter(c.key) };
+      const def = { title: c.label, field: c.key };
+      // Fix QA Rollout 4 — c.formatter opsional (mis. status_pembayaran pakai
+      // 'paymentPill') menimpa formatter kolom kustomisasi biasa dengan salah satu
+      // EXTRA_FORMATTERS (badge/pill server-computed, sama seperti extraColumns).
+      // Kolom begini murni tampilan → tanpa editor. Bila nama formatter tak dikenal
+      // di registry, jatuh ke cabang biasa (getFormatter). Tanpa c.formatter (semua
+      // role lain + kolom pembayaran lainnya) → cabang else, PERSIS perilaku lama.
+      if (c.formatter && EXTRA_FORMATTERS[c.formatter]) {
+        def.formatter = EXTRA_FORMATTERS[c.formatter];
+        def.editable = false;
+      } else {
+        def.formatter = getFormatter(c.key);
+        // Tugas 6: editor + gerbang editable per kolom data. Editor sesuai FIELD_TYPE;
+        // gerbang membaca can_edit baris & daftar non-editable saat sel dibuka.
+        def.editable = editableGate;
+        const ed = editorFor(c.key);
+        def.editor = ed.editor;
+        if (ed.editorParams) def.editorParams = ed.editorParams;
+      }
       if (c.key === 'nomor_agenda') {
         def.frozen = true; // identitas baris selalu terlihat saat digulir horizontal.
         // variableHeight dulu diset per-kolom di sini; sekarang datang dari
         // columnDefaults (konstruktor Tabulator) untuk SEMUA kolom, jadi mubazir.
       }
       if (fzLeft.indexOf(c.key) !== -1 || fzRight.indexOf(c.key) !== -1) { def.frozen = true; }
-      // Tugas 6: editor + gerbang editable per kolom data. Editor sesuai FIELD_TYPE;
-      // gerbang membaca can_edit baris & daftar non-editable saat sel dibuka.
-      def.editable = editableGate;
-      const ed = editorFor(c.key);
-      def.editor = ed.editor;
-      if (ed.editorParams) def.editorParams = ed.editorParams;
       cols.push(def);
     });
     // Kolom tetap terparameter per-role (mis. akutansi: Deadline + Status). Tanpa
