@@ -11,10 +11,11 @@ use Tests\TestCase;
 /**
  * Menguji endpoint JSON `GET documents/verifikasi/data` (name
  * `documents.verifikasi.data`) yang dipakai Tabulator Team Verifikasi
- * (Rollout 3, Task 2). Endpoint memakai ulang buildVerifikasiQuery() (sumber
- * tunggal dgn dokumens()) + VerifikasiDocumentRow dan membalas {data:[...]}
- * (TANPA wrapper last_page/total — beda dgn Perpajakan/Akutansi, sesuai
- * kontrak Task 2 brief).
+ * (Rollout 3, Task 2, fix round 1). Endpoint memakai ulang
+ * buildVerifikasiQuery() (sumber tunggal dgn dokumens()) + VerifikasiDocumentRow
+ * dan membalas {last_page,total,data:[...]} — DISAMAKAN PERSIS dgn kontrak
+ * PerpajakanDatatableTest karena engine bersama document-tabulator.js
+ * (progressiveLoad:'scroll') butuh last_page/data dari response.
  */
 class VerifikasiDatatableTest extends TestCase
 {
@@ -42,7 +43,7 @@ class VerifikasiDatatableTest extends TestCase
 
         $res = $this->actingAs($this->verifikator())->getJson(route('documents.verifikasi.data'));
 
-        $res->assertOk()->assertJsonStructure(['data' => [['id', 'status_badge', 'deadline', 'handler']]]);
+        $res->assertOk()->assertJsonStructure(['last_page', 'total', 'data' => [['id', 'status_badge', 'deadline', 'handler']]]);
     }
 
     public function test_baris_memuat_objek_status_badge_dan_deadline(): void
