@@ -90,10 +90,6 @@ class DashboardPembayaranController extends Controller
     {
         $now = Carbon::now();
 
-        // Rollout 4 (Tabulator): default → engine Tabulator; ?classic=1 → renderer
-        // bespoke lama (banding QA). Dihapus di Task 6 setelah QA lolos.
-        $classic = request()->boolean('classic');
-
         // Get filter parameters
         $statusPembayaran = request('status_pembayaran');
         $year = request('year');
@@ -646,7 +642,6 @@ class DashboardPembayaranController extends Controller
             'ieSubKriteriaList' => $ieSubKriteriaList,
             'ieItemSubKriteriaList' => $ieItemSubKriteriaList,
             'ieJenisPembayaranList' => $ieJenisPembayaranList,
-            'classic' => $classic,
         ];
 
         // Return JSON for AJAX requests (no page refresh)
