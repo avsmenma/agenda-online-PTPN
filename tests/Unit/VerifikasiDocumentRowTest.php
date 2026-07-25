@@ -266,4 +266,33 @@ class VerifikasiDocumentRowTest extends TestCase
         $this->assertArrayHasKey('can_edit', $row);
         $this->assertArrayNotHasKey('display_status', $row); // bukan operator
     }
+
+    public function test_is_at_my_role_true_saat_current_handler_team_verifikasi(): void
+    {
+        // Cabang pertama is_at_my_role (VerifikasiDocumentRow.php:49): current_handler === 'team_verifikasi'.
+        $dokumen = $this->buatDokumen([
+            'status'          => 'sent_to_team_verifikasi',
+            'current_handler' => 'team_verifikasi',
+        ]);
+
+        $row = $this->baris($dokumen);
+
+        $this->assertTrue($row['is_at_my_role']);
+    }
+
+    public function test_is_at_my_role_false_saat_bukan_di_team_verifikasi(): void
+    {
+        // Tak ada satu pun cabang is_at_my_role (VerifikasiDocumentRow.php:49-59)
+        // yang menyala: current_handler bukan team_verifikasi, status bukan status
+        // "menuju/menunggu role lain", bukan selesai+status_pembayaran, bukan
+        // returned_to_department dari perpajakan/akutansi.
+        $dokumen = $this->buatDokumen([
+            'status'          => 'draft',
+            'current_handler' => 'operator',
+        ]);
+
+        $row = $this->baris($dokumen);
+
+        $this->assertFalse($row['is_at_my_role']);
+    }
 }

@@ -21,13 +21,22 @@ use Illuminate\Support\Str;
  * 'style' (gradient inline utk badge menunggu-approval) dan 'title' (tooltip
  * badge "Kembali dari ..."). Keduanya null bila tak dipakai cabang tsb.
  *
- * Prasyarat data (WAJIB sama dengan TeamVerifikasiController::dokumens():456-464):
- * roleData eager-load HANYA role_code='team_verifikasi'; roleStatuses eager-load
- * whereIn 4 role (team_verifikasi, perpajakan, akutansi, pembayaran); dibayarKepadas
- * & dokumenPos ter-eager-load (dipakai baseRow()). Dengan roleData role-own-only,
- * getDataForRole('perpajakan'/'akutansi'/'pembayaran') SELALU null tanpa query —
- * paritas persis tabel lama (termasuk cabang fallback statusContext() yang secara
- * laten tak pernah menyala karena bergantung pada roleData lintas-role itu; port
+ * Prasyarat data — WAJIB DISEDIAKAN PEMANGGIL (endpoint Task 2), TIDAK sama
+ * persis dengan TeamVerifikasiController::dokumens():456-469:
+ *   - roleData eager-load HANYA role_code='team_verifikasi' (sama seperti dokumens()).
+ *   - roleStatuses eager-load whereIn 4 role (team_verifikasi, perpajakan,
+ *     akutansi, pembayaran) — sama seperti dokumens().
+ *   - dibayarKepadas ter-eager-load — sama seperti dokumens().
+ *   - dokumenPos: dokumens() HANYA melakukan withCount(['dokumenPos','dokumenPrs'])
+ *     — itu COUNT, BUKAN koleksi relasi. DocumentRow::baseRow() (DocumentRow.php:49)
+ *     memanggil $dokumen->dokumenPos->pluck('nomor_po'), yang butuh RELASI
+ *     ter-load, bukan count-nya. Pemanggil DTO ini (Task 2) WAJIB menambahkan
+ *     eager-load relasi dokumenPos sendiri (mis. ->with('dokumenPos')) — TIDAK
+ *     otomatis tersedia dari pola dokumens(). Lupakan ini → N+1 per baris.
+ * Dengan roleData role-own-only, getDataForRole('perpajakan'/'akutansi'/
+ * 'pembayaran') SELALU null tanpa query — paritas persis tabel lama (termasuk
+ * cabang fallback statusContext() yang secara laten tak pernah menyala karena
+ * bergantung pada roleData lintas-role itu; port
  * apa adanya, JANGAN "diperbaiki" jadi query lintas-role).
  */
 class VerifikasiDocumentRow extends DocumentRow
