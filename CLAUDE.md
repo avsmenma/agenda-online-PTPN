@@ -57,7 +57,6 @@ Dipakai banyak role sekaligus. Menghapusnya merusak halaman yang tidak sedang An
 ```
 resources/views/partials/
   _inlineEditEngine.blade.php        mesin inline-edit (PATCH /documents/{id}/inline-update)
-  _documentTableStickyCells.blade.php  frozen column
   _activeCellNav.blade.php           navigasi sel keyboard
   virtual-document-table.blade.php   infinite scroll (virtual_chunk)
   _compactDocumentTable.blade.php
@@ -72,7 +71,7 @@ jalur lama) kecuali user memutuskan lain.
 
 ### God-file — jangan tambah baris, ekstrak keluar
 
-`layouts/app.blade.php` (5.968), `pembayaranNEW/dashboardPembayaran.blade.php` (3.970),
+`layouts/app.blade.php` (5.960), `pembayaranNEW/dashboardPembayaran.blade.php` (3.671),
 `OwnerDashboardController.php`. (`operator/dokumens/daftarDokumen.blade.php` sudah dihapus
 2026-07-23 — operator kini Tabulator-only.) Kalau harus menambah CSS/JS di sini,
 pertimbangkan file terpisah di `public/css` atau `public/js` lalu `@push`.
