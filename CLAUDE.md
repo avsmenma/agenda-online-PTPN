@@ -226,17 +226,43 @@ dipertahankan apa adanya.
 - Spec/plan: `docs/superpowers/specs/2026-07-25-rollout-tabulator-verifikasi-design.md`,
   `docs/superpowers/plans/2026-07-25-rollout-tabulator-verifikasi.md`
 
-**Belum dikerjakan — rollout Tabulator ke role pembayaran** (bagian sengaja DILEWATI atas
-keputusan user; operator/akutansi/perpajakan/verifikasi sudah selesai). Masih pakai tabel
-DataTables lama. Program terpisah: engine Tabulator bersama (`document-tabulator.js` + basis
-`DocumentRow`) diterapkan → QA → hapus tabel lama. Pola akutansi/perpajakan/verifikasi jadi
-templat: DTO `<Role>DocumentRow` mewarisi `DocumentRow`, endpoint `@datatable`, `extraColumns`
-per-role, port badge/deadline ke server. Pembayaran outlier (DataTables, kolom kustom, freeze
-2-tab, tanpa forward). SEBELUM hapus kode aksi "mati": WAJIB grep gate — halaman Pengembalian
-sering memakai rute yang tampak mati (lihat pelajaran perpajakan/verifikasi di atas).
-Kustomisasi kolom masih diduplikasi per-role (fondasi bersama: `config/document_columns.php`
-+ partial `document-role-filter-toolbar`); penyatuannya — plus freeze ala pembayaran (modal
-2-tab) — menyusul setelah rollout.
+**Pembayaran `/documents/pembayaran/daftar` sudah Tabulator-only — SELESAI & ter-deploy, QA
+lolos 2026-07-25 (Rollout 4).** Outlier di antara rollout Tabulator: `App\Support\
+PembayaranDocumentRow` TANPA deadline (pembayaran tak punya kolom deadline per-baris) dan
+`can_edit` SELALU true (edit-anywhere — Team Pembayaran boleh mengedit dokumen kapan pun,
+termasuk sebelum sampai di rolenya, aturan bisnis disengaja, bukan lupa gate). Badge Status
+kini SATU kolom katalog (`status_pembayaran`, formatter `paymentPill` baca `row.status_badge`
+3-state dihitung SERVER) — dulu dobel dengan kolom Status terpisah (fix QA). Freeze 2-tab
+(modal Kolom Beku) direimplementasi ke frozen native Tabulator (`CFG.frozen` dari
+`$frozenLeft`/`$frozenRight`), menggantikan CSS `position:sticky` classic. Pembayaran juga
+SATU-SATUNYA role yang mengikutkan dokumen hasil import CSV di query Tabulator tanpa filter
+`current_handler` (paritas `index()` lama). Endpoint JSON `documents.pembayaran.data`
+(`buildPembayaranQuery()` → `buildPembayaranDashboardQuery()` dipakai bersama `index()` &
+`datatableTabulator()`). **Dihapus permanen**: renderer bespoke (`renderFallbackRows`/
+`loadFallbackRows`/`initFallbackTableScroll`, markup `#pembayaranDocumentTable`), cabang
+`?classic`, endpoint `datatable()` lama (route `dashboard.pembayaran.data`) + helper
+`formatPembayaranDashboardCell()`/`getPembayaranDashboardRawValue()`, 4 endpoint aksi mati
+(`setDeadline`/`updateStatus`/`uploadBukti`/`getPaymentData` + rute `set-deadline`/
+`update-status`/`upload-proof`/`payment-data`, nol pemakai), dan partial
+`_documentTableStickyCells` (grep gate final nol includer pasca-hapus). `?classic=1` kini
+no-op (Tabulator). **KEEP**: `buildPembayaranDashboardQuery()`/`applyPembayaranDashboardSearch()`
+(dipakai jalur Tabulator baru), `getDocumentDetail()`+helper terkait (tombol mata mode
+rekapan-vendor), import CSV (`CsvImportController`), export (`exportRekapan`/`exportToExcel`/
+`exportToExcelByVendor`/`exportToPDF`), mode `rekapan_table`, asisten-virtual
+(`OwnerVirtualAssistantController`).
+
+- Spec/plan: `docs/superpowers/specs/2026-07-25-rollout-tabulator-pembayaran-design.md`,
+  `docs/superpowers/plans/2026-07-25-rollout-tabulator-pembayaran.md`
+
+**Rollout Tabulator SELESAI untuk semua role non-`bagian`** (operator/akutansi/perpajakan/
+verifikasi/pembayaran — Rollout 1-4 tuntas 2026-07-25). `bagian` sengaja DILEWATI atas
+keputusan user — role ini view-only (halamannya `pengembalianKeBidang`, inbox dokumen
+dikembalikan verifikasi), bukan pengelola tabel dokumen seperti 5 role di atas. Tersisa
+sebagai program terpisah bila diperlukan: kustomisasi kolom masih diduplikasi per-role
+(fondasi bersama sudah ada: `config/document_columns.php` + partial
+`document-role-filter-toolbar`) — penyatuannya belum dikerjakan, meski pola freeze native
+Tabulator (dulu "freeze ala pembayaran, modal 2-tab") kini justru sudah jadi acuan di
+pembayaran sendiri.
 
 ## 8. Hal Yang harus bisa dilakukan pada tabel tabulator
 
