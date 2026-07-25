@@ -14,10 +14,11 @@ use App\Models\Dokumen;
  *     Ini aturan bisnis pembayaran yang DISENGAJA — JANGAN panggil
  *     DokumenHelper::canEditDocument() atau gate is_at_my_role di sini
  *     (beda dari akutansi/verifikasi yang menggerbang can_edit).
- *   - status_badge: pill status 3-state, port getPembayaranComputedStatus()
- *     + renderPembayaranStatusPill() (DashboardPembayaranController.php:
- *     1108-1138). Bentuk {state, class, text} — BUKAN {class, icon, text,
- *     link} seperti role lain (verifikasi/akutansi/perpajakan).
+ *   - status_badge: pill status 3-state, reimplementasi logika lama
+ *     getPembayaranComputedStatus() + renderPembayaranStatusPill() (method
+ *     controller sudah dihapus, lihat buildStatusBadge() di bawah). Bentuk
+ *     {state, class, text} — BUKAN {class, icon, text, link} seperti role
+ *     lain (verifikasi/akutansi/perpajakan).
  *
  * TANPA deadline: pembayaran tak punya kolom deadline per-baris — row ini
  * TIDAK PERNAH mengeluarkan key 'deadline' (beda dari akutansi/perpajakan/
@@ -86,11 +87,12 @@ class PembayaranDocumentRow extends DocumentRow
     }
 
     /**
-     * Port getPembayaranComputedStatus() + renderPembayaranStatusPill()
-     * (DashboardPembayaranController.php:1108-1138) → pill 3-state siap-render.
-     * Bentuk {state, class, text}. Toleransi casing CSV lama: "SUDAH DIBAYAR"
-     * (spasi) / "SUDAH_DIBAYAR" (underscore), keduanya uppercase, turut
-     * dipetakan ke paid — bukan hanya "sudah_dibayar" lowercase kanonik.
+     * Reimplementasi logika lama getPembayaranComputedStatus() +
+     * renderPembayaranStatusPill() (method controller sudah dihapus) → pill
+     * 3-state siap-render. Bentuk {state, class, text}. Toleransi casing CSV
+     * lama: "SUDAH DIBAYAR" (spasi) / "SUDAH_DIBAYAR" (underscore), keduanya
+     * uppercase, turut dipetakan ke paid — bukan hanya "sudah_dibayar"
+     * lowercase kanonik.
      */
     protected static function buildStatusBadge(Dokumen $dokumen): array
     {
