@@ -1784,9 +1784,9 @@
       width: 210px !important;
     }
 
-    /* Kolom beku NO & NOMOR AGENDA (kolom + header) ditangani oleh partial
-       bersama partials._documentTableStickyCells yang di-include di bawah —
-       identik dengan tabel role lain yang sudah frozen dengan benar. */
+    /* Kolom beku NO & NOMOR AGENDA (kolom + header) ditangani oleh fitur
+       frozen native Tabulator (CFG.frozen, lihat 'frozen' => [...] di bawah) —
+       bukan lagi partial sticky-cell lama. */
 
     #documentTableContainer .data-table tbody tr:nth-child(odd) td.col-no {
       background: #ffffff !important;
@@ -3067,9 +3067,9 @@
     // karena tabel selalu dirender ulang lewat reload saat kolom disimpan.
     const renderColumnsOrder = @json($renderColumns);
 
-    // Peta lebar kolom untuk estimasi peringatan; angka mengikuti CSS di
-    // partials/_documentTableStickyCells.blade.php. Hanya kolom yang lebarnya
-    // memang khusus yang didaftarkan; sisanya memakai lebar default.
+    // Peta lebar kolom untuk estimasi peringatan; angka mengikuti CSS
+    // .col-* di atas (lebar frozen native Tabulator). Hanya kolom yang
+    // lebarnya memang khusus yang didaftarkan; sisanya memakai lebar default.
     const FROZEN_WIDTH_MAP = { nomor_agenda: 210 };
     const FROZEN_WIDTH_DEFAULT = 132;
     const FROZEN_NO_COLUMN_WIDTH = 88;
