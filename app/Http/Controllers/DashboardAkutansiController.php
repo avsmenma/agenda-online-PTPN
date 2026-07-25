@@ -17,6 +17,7 @@ use App\Models\DibayarKepada;
 class DashboardAkutansiController extends Controller
 {
     use \App\Http\Controllers\Concerns\BuildsRoleDashboard;
+    use \App\Http\Controllers\Concerns\ExportsDocuments;
 
     /**
      * Halaman dashboard Team Akutansi.
@@ -88,6 +89,51 @@ class DashboardAkutansiController extends Controller
         }
 
         return $handlerOptions;
+    }
+
+    /**
+     * Export daftar dokumen akutansi (Excel/PDF) — Task 4 fitur export bersama,
+     * lewat trait ExportsDocuments::respondDocumentExport() (App\Support\DocumentExporter).
+     * Route: GET documents/akutansi/export (documents.akutansi.export), dipanggil
+     * tombol Export toolbar Tabulator (CFG.exportUrl). Query & viewerRole SAMA dgn
+     * datatable() — buildAkutansiQuery() + Auth::user()?->role — tanpa duplikasi
+     * filter/scope, tanpa mengubah endpoint data yang ada.
+     *
+     * Kolom: katalog config('document_columns.base') di-intersect dgn columns[] dari
+     * request (kolom terlihat di tabel saat export ditekan) — pertahanan thd field
+     * asing/objek (mis. status_badge). Kosong → seluruh katalog.
+     */
+    public function exportDocuments(Request $request): \Symfony\Component\HttpFoundation\Response
+    {
+        $query = $this->buildAkutansiQuery($request);
+        $handlerOptions = $this->buildAkutansiHandlerOptions();
+        $viewerRole = Auth::user()?->role;
+
+        $rows = $query->get()
+            ->map(fn (Dokumen $d) => \App\Support\AkutansiDocumentRow::fromDokumen($d, $handlerOptions, $viewerRole))
+            ->all();
+
+        $catalog = config('document_columns.base');
+
+        $requestedKeys = $request->get('columns', []);
+        $requestedKeys = is_array($requestedKeys) ? array_map('strval', $requestedKeys) : [];
+        $keys = array_values(array_intersect($requestedKeys, array_keys($catalog)));
+
+        if (empty($keys)) {
+            $keys = array_keys($catalog);
+        }
+
+        $columns = array_map(
+            fn (string $key) => ['key' => $key, 'label' => $catalog[$key]],
+            $keys
+        );
+
+        $options = [
+            'title'     => 'Dokumen Akutansi',
+            'total_key' => 'nilai_rupiah',
+        ];
+
+        return $this->respondDocumentExport($request, $rows, $columns, $options);
     }
 
     /**

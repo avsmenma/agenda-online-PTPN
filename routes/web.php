@@ -461,6 +461,9 @@ Route::middleware(['auth', 'role:admin,akutansi'])->prefix('documents/akutansi')
     // create/store/destroy DIHAPUS 2026-07-11: tak pernah di-link dari UI (create
     // error 500 karena view-nya tak ada; store/destroy hanya stub kosong).
     Route::get('/data', [DashboardAkutansiController::class, 'datatable'])->name('data');
+    // Task 4 fitur export bersama: tombol Export toolbar Tabulator (CFG.exportUrl) — Excel/PDF
+    // dependency-free lewat DocumentExporter/ExportsDocuments (pola Task 3 pembayaran).
+    Route::get('/export', [DashboardAkutansiController::class, 'exportDocuments'])->name('export');
 });
 
 // Professional Reports Routes - Akutansi
