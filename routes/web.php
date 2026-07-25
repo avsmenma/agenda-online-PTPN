@@ -362,6 +362,7 @@ Route::middleware('auth')->group(function () {
 // Professional Document Routes - Verifikasi (Team Verifikasi)
 Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::get('/', [TeamVerifikasiController::class, 'dokumens'])->name('index');
+    Route::get('/data', [TeamVerifikasiController::class, 'datatable'])->name('data');
     Route::get('/{dokumen}/detail', [TeamVerifikasiController::class, 'getDocumentDetail'])->name('detail');
     Route::post('/{dokumen}/return-to-department', [TeamVerifikasiController::class, 'returnToDepartment'])->name('return-to-department');
     Route::post('/{dokumen}/send-to-next', [TeamVerifikasiController::class, 'sendToNextHandler'])->name('send-to-next');
