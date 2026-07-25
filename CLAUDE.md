@@ -203,16 +203,41 @@ Dua halaman return TERSEMBUNYI lain (nol link/menu) IKUT dihapus 2026-07-24: **o
 app — hanya `returns.verifikasi.*` (verifikasi→bagian) yang hidup.** Sebelum menyentuh "return/pengembalian"
 apa pun ke depan: cek `returns.verifikasi.*`/`pengembalianKeBidang` = JANGAN dihapus (satu-satunya yang hidup).
 
-**Belum dikerjakan — rollout Tabulator ke role verifikasi & pembayaran** (bagian sengaja
-DILEWATI atas keputusan user). Masih pakai tabel lama. Program terpisah: engine Tabulator
-bersama (`document-tabulator.js` + basis `DocumentRow`) diterapkan per-role → QA → hapus tabel
-lama role itu. Pola akutansi/perpajakan jadi templat: DTO `<Role>DocumentRow` mewarisi `DocumentRow`,
-endpoint `@datatable`, `extraColumns` per-role, port badge/deadline ke server. Verifikasi lebih rumit
-(badge ~24 cabang + workflow **Paraf** khas). Pembayaran outlier (DataTables, kolom kustom, freeze 2-tab,
-tanpa forward). SEBELUM hapus kode aksi "mati" tiap role: WAJIB grep gate — halaman Pengembalian sering
-memakai rute yang tampak mati (lihat pelajaran perpajakan di atas). Kustomisasi kolom masih diduplikasi per-role (fondasi bersama:
-`config/document_columns.php` + partial `document-role-filter-toolbar`); penyatuannya —
-plus freeze ala pembayaran (modal 2-tab) — menyusul setelah rollout.
+**Verifikasi `/documents/verifikasi` sudah Tabulator-only — SELESAI & ter-deploy, QA lolos
+2026-07-25 (Rollout 3).** Klon pola akutansi/perpajakan: `App\Support\VerifikasiDocumentRow`
+(badge+deadline server), endpoint `documents.verifikasi.data` (`buildVerifikasiQuery()`
+dipakai bersama `dokumens()`+`datatable()`), view `daftarDokumenTabulator.blade.php`. **Paraf
+pensiun** — workflow tanda tangan `tanggal_paraf`/`pemaraf` sudah tak punya UI aktif; method
+`parafDokumen` dihapus bersama kodenya. Dihapus tuntas: view legacy (`daftarDokumen` + `_rows`
++ `_chunk`, ~6.8k baris), cabang `virtual_chunk`/`?classic` (`?classic=1` kini no-op — selalu
+Tabulator), method aksi mati `getDocumentDetail`+`generateDocumentDetailHtml`/`escapeHtml`/
+`getRejectedByDisplayName` (rantai private-nya), `sendToNextHandler`, `returnToDepartment`,
+`returnToOperator`, `setDeadline` (**hanya milik `TeamVerifikasiController`** — method
+senama di `DashboardPembayaranController`/`DokumenRoleData` beda kelas, tak disentuh), plus
+route-nya masing-masing. `acceptDocument`/`rejectDocument` + route `.accept`/`.reject` ikut
+dihapus setelah grep-gate final lintas `resources/`+`public/js/`+`app/`+`tests/`+config
+menemukan nol caller (Inbox pakai `InboxController::approve`/`reject`, bukan method ini).
+Route broken `returns.verifikasi.restore-from-bidang` (method `restoreFromBidang` tak pernah
+ada) turut dihapus. **`returns.verifikasi.*` (`pengembalianKeBidang`/`returnToBidang`,
+route `.bagian`/`.to-bidang`) TETAP HIDUP** — satu-satunya alur "pengembalian dokumen" yang
+masih dipakai di seluruh app (lihat paragraf Pengembalian di atas), TIDAK disentuh.
+`checkRejectedDocuments`/`getSearchSuggestions` (dipakai polling notifikasi & `dokumens()`)
+dipertahankan apa adanya.
+
+- Spec/plan: `docs/superpowers/specs/2026-07-25-rollout-tabulator-verifikasi-design.md`,
+  `docs/superpowers/plans/2026-07-25-rollout-tabulator-verifikasi.md`
+
+**Belum dikerjakan — rollout Tabulator ke role pembayaran** (bagian sengaja DILEWATI atas
+keputusan user; operator/akutansi/perpajakan/verifikasi sudah selesai). Masih pakai tabel
+DataTables lama. Program terpisah: engine Tabulator bersama (`document-tabulator.js` + basis
+`DocumentRow`) diterapkan → QA → hapus tabel lama. Pola akutansi/perpajakan/verifikasi jadi
+templat: DTO `<Role>DocumentRow` mewarisi `DocumentRow`, endpoint `@datatable`, `extraColumns`
+per-role, port badge/deadline ke server. Pembayaran outlier (DataTables, kolom kustom, freeze
+2-tab, tanpa forward). SEBELUM hapus kode aksi "mati": WAJIB grep gate — halaman Pengembalian
+sering memakai rute yang tampak mati (lihat pelajaran perpajakan/verifikasi di atas).
+Kustomisasi kolom masih diduplikasi per-role (fondasi bersama: `config/document_columns.php`
++ partial `document-role-filter-toolbar`); penyatuannya — plus freeze ala pembayaran (modal
+2-tab) — menyusul setelah rollout.
 
 ## 8. Hal Yang harus bisa dilakukan pada tabel tabulator
 
