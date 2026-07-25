@@ -295,4 +295,92 @@ class VerifikasiDocumentRowTest extends TestCase
 
         $this->assertFalse($row['is_at_my_role']);
     }
+
+    // === Final fix wave (test hardening 2026-07-25) — cabang 16 & deadline beku ===
+
+    public function test_badge_pending_approval_umum_kelas_kosong_cabang_16(): void
+    {
+        // Cabang 16 (VerifikasiDocumentRow.php:284-287): "pending approval umum" —
+        // class KOSONG ('') + text dari getDetailedApprovalText() + gradient kuning.
+        // Fixture harus TIDAK menyalakan cabang lebih awal:
+        //   - status 'menunggu_di_approve' bukan 'returned_to_verifikasi' (cabang 1).
+        //   - nol DokumenStatus 'rejected' utk team_verifikasi/perpajakan/akutansi (cabang 2).
+        //   - status bukan selesai/approved/rejected_Team Verifikasi/returned_to_bidang (cabang 3-5).
+        //   - TANPA roleData team_verifikasi (display_status null) → cabang 6 (display_status_label) mati.
+        //   - current_handler='team_verifikasi' (bukan perpajakan/akutansi/pembayaran) & status
+        //     bukan salah satu sent_to_*/pending_approval_* → wasSentToPerpajakan=false →
+        //     cabang 7/8/9 (fallback pending/sent legacy) mati.
+        //   - status bukan sent_to_*/waiting_approval_* → cabang 10-15 mati.
+        // Yang tersisa cocok cabang 16: in_array($status, ['menunggu_di_approve', ...]).
+        $dokumen = $this->buatDokumen([
+            'status'          => 'menunggu_di_approve',
+            'current_handler' => 'team_verifikasi',
+        ]);
+        // Tanpa buatStatus() (nol DokumenStatus 'pending'/'rejected') → getDetailedApprovalText()
+        // jatuh ke statusMap fallback: 'menunggu_di_approve' => 'Menunggu Approval'.
+
+        $row = $this->baris($dokumen);
+
+        $this->assertSame('', $row['status_badge']['class']);
+        $this->assertSame('Menunggu Approval', $row['status_badge']['text']);
+        $this->assertNotSame('', $row['status_badge']['text']); // kunci: class kosong TAPI text tetap ada
+        $this->assertStringContainsString('linear-gradient', $row['status_badge']['style']);
+        $this->assertStringContainsString('ffc107', $row['status_badge']['style']);
+        $this->assertSame('fa-clock', $row['status_badge']['icon']);
+    }
+
+    public function test_deadline_beku_terkirim_saat_dikirim_ke_role_berikutnya(): void
+    {
+        // buildDeadline() type 'sent' (VerifikasiDocumentRow.php:391-401,463-464,472-473):
+        // status masuk daftar sent-list ('sent_to_perpajakan') → $isSent=true, $isPaused=false
+        // (current_handler='perpajakan' bukan 'operator'/'bagian_*', status bukan
+        // returned_to_operator/returned_to_bidang) → prioritas paused>sent>completed>active
+        // jatuh ke 'sent'. processed_at diisi → endTime pakai processed_at (bukan now()).
+        $dokumen = $this->buatDokumen([
+            'status'          => 'sent_to_perpajakan',
+            'current_handler' => 'perpajakan',
+        ]);
+        $this->buatRoleData($dokumen, 'team_verifikasi', [
+            'received_at'  => now()->subHours(5),
+            'processed_at' => now()->subHours(1),
+        ]);
+
+        $row = $this->baris($dokumen);
+
+        $this->assertSame('card', $row['deadline']['variant']);
+        $this->assertSame('sent', $row['deadline']['type']);
+        $this->assertSame('gray', $row['deadline']['color']);
+        $this->assertSame('sent', $row['deadline']['footer']['kind']);
+        $this->assertSame('Terkirim', $row['deadline']['footer']['text']);
+        $this->assertSame('fa-paper-plane', $row['deadline']['footer']['icon']);
+    }
+
+    public function test_deadline_beku_berhenti_sementara_saat_kembali_ke_operator(): void
+    {
+        // KOREKSI vs asumsi awal brief: 'returned_to_verifikasi' TIDAK memicu paused —
+        // komentar kode sendiri (VerifikasiDocumentRow.php:384-386) eksplisit: "Jika role
+        // lain mengembalikannya KE Team Verifikasi, timer tetap jalan (bukan pause)".
+        // $isReturnedAwayFromVerifikasi (baris 386-388) HANYA menyala saat dokumen
+        // MENINGGALKAN team_verifikasi: status returned_to_operator/returned_to_bidang,
+        // ATAU current_handler==='operator', ATAU current_handler berawalan 'bagian_'.
+        // Dilacak & diverifikasi ke kode — pakai 'returned_to_operator' + current_handler
+        // 'operator' agar type benar-benar 'paused' (bukan cabang lain yg terlihat mirip).
+        $dokumen = $this->buatDokumen([
+            'status'          => 'returned_to_operator',
+            'current_handler' => 'operator',
+        ]);
+        $this->buatRoleData($dokumen, 'team_verifikasi', [
+            'received_at'  => now()->subHours(10),
+            'processed_at' => now()->subHours(3),
+        ]);
+
+        $row = $this->baris($dokumen);
+
+        $this->assertSame('card', $row['deadline']['variant']);
+        $this->assertSame('paused', $row['deadline']['type']);
+        $this->assertSame('gray', $row['deadline']['color']);
+        $this->assertSame('paused', $row['deadline']['footer']['kind']);
+        $this->assertSame('Berhenti Sementara', $row['deadline']['footer']['text']);
+        $this->assertSame('fa-pause-circle', $row['deadline']['footer']['icon']);
+    }
 }
