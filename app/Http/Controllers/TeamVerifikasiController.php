@@ -48,7 +48,63 @@ class TeamVerifikasiController extends Controller
         return view('dashboard.workflow', $data);
     }
 
-    public function dokumens(Request $request)
+    /**
+     * Endpoint JSON tabel Tabulator Team Verifikasi (Rollout 3, Task 2).
+     * Query sama dgn dokumens() via buildVerifikasiQuery(); baris via
+     * VerifikasiDocumentRow. viewerRole DIKUNCI 'team_verifikasi' (bukan
+     * Auth::user()?->role) — endpoint ini eksklusif utk viewer Team Verifikasi
+     * (route di-guard role:admin,team_verifikasi,verifikasi).
+     * Bentuk balasan HANYA {data:[...]} (beda dgn wrapper {last_page,total,data}
+     * ala Perpajakan/Akutansi) — sesuai kontrak Task 2 brief; belum ada
+     * pagination lot progresif di sini (menyusul task lanjutan bila diperlukan).
+     */
+    public function datatable(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $query = $this->buildVerifikasiQuery($request);
+
+        $handlerOptions = $this->buildVerifikasiHandlerOptions();
+
+        $data = $query->get()
+            ->map(fn ($d) => \App\Support\VerifikasiDocumentRow::fromDokumen($d, $handlerOptions, 'team_verifikasi'))
+            ->all();
+
+        return response()->json(['data' => $data]);
+    }
+
+    /** Opsi pengurus dokumen (5 peran base + optgroup Bagian). Bentuk identik DokumenController::buildHandlerOptions(). */
+    private function buildVerifikasiHandlerOptions(): array
+    {
+        $handlerOptions = [
+            ['value' => 'operator',        'label' => 'Operator'],
+            ['value' => 'team_verifikasi', 'label' => 'Tim Verifikasi'],
+            ['value' => 'perpajakan',      'label' => 'Tim Perpajakan'],
+            ['value' => 'akutansi',        'label' => 'Tim Akuntansi'],
+            ['value' => 'pembayaran',      'label' => 'Tim Pembayaran'],
+        ];
+        $bagian = Bagian::active()->ordered()->get(['kode', 'nama']);
+        if ($bagian->isNotEmpty()) {
+            $handlerOptions[] = [
+                'optgroup' => 'Bagian',
+                'options'  => $bagian->map(fn ($b) => ['value' => 'bagian_' . strtolower($b->kode), 'label' => $b->nama ?: $b->kode])->all(),
+            ];
+        }
+        return $handlerOptions;
+    }
+
+    /**
+     * Pembangun query daftar dokumen Team Verifikasi (cross-role visibility) —
+     * SUMBER TUNGGAL dipakai dokumens() (view legacy) & datatable() (JSON
+     * Tabulator). Diekstrak VERBATIM dari dokumens() lama (select + leftJoin
+     * team_verifikasi_data + sort preference + filter search/tanggal/nilai/
+     * status/keterlambatan + eager-load dibayarKepadas/roleData/roleStatuses +
+     * withCount dokumenPos/dokumenPrs). SATU-SATUNYA tambahan vs versi lama:
+     * eager-load relasi dokumenPos (koleksi, bukan count) — base DTO
+     * App\Support\DocumentRow::baseRow() memanggil
+     * $dokumen->dokumenPos->pluck('nomor_po'), yang butuh relasi ter-load.
+     * withCount(['dokumenPos','dokumenPrs']) TETAP dipertahankan apa adanya
+     * karena masih dipakai render legacy (dokumens()/view lama).
+     */
+    private function buildVerifikasiQuery(Request $request): \Illuminate\Database\Eloquent\Builder
     {
         // Team Verifikasi sees ALL documents (cross-role visibility)
         // Action buttons are disabled for documents not yet at this role (controlled in blade view)
@@ -453,7 +509,7 @@ class TeamVerifikasiController extends Controller
 
 
         // Use eager loading for relations to prevent N+1 queries
-        $dokumens = $query->with([
+        $query->with([
             'dibayarKepadas',
             'roleData' => function ($query) {
                 $query->where('role_code', 'team_verifikasi');
@@ -466,7 +522,18 @@ class TeamVerifikasiController extends Controller
             ->withCount([
                 'dokumenPos',
                 'dokumenPrs'
-            ]);
+            ])
+            // Tambahan Task 2 (Rollout Tabulator verifikasi) — lihat docblock method:
+            // eager-load koleksi dokumenPos (bukan sekadar count) demi DocumentRow::baseRow().
+            ->with('dokumenPos');
+
+        return $query;
+    }
+
+    public function dokumens(Request $request)
+    {
+        $query = $this->buildVerifikasiQuery($request);
+
         $perPage = $request->get('per_page', 'all');
         $showAllRows = $perPage === 'all';
         if ($showAllRows) {
