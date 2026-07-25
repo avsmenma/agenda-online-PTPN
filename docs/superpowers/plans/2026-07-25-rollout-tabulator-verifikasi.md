@@ -194,7 +194,7 @@ git commit -m "feat(verifikasi): VerifikasiDocumentRow DTO (badge ~24 cabang + d
 
 **Interfaces:**
 - Consumes: `VerifikasiDocumentRow::fromDokumen(...)` (Task 1); `App\Support\DocumentHandlerOptions` atau pola `buildPerpajakanHandlerOptions()` (mirror).
-- Produces: `TeamVerifikasiController::datatable(Request): JsonResponse` → `{data: [...rows]}`; `buildVerifikasiQuery(Request): Builder` (dipakai `dokumens()` & `datatable()`).
+- Produces: `TeamVerifikasiController::datatable(Request): JsonResponse` → **`{last_page,total,data:[...rows]}` (paginasi via `size`/`page` — MIRROR `DashboardPerpajakanController::datatable()` PERSIS; engine `document-tabulator.js` pakai `progressiveLoad:'scroll'` yang butuh `last_page`)**; `buildVerifikasiQuery(Request): Builder` (dipakai `dokumens()` & `datatable()`).
 
 - [ ] **Step 1: Tulis feature test yang gagal** — endpoint mengembalikan JSON untuk viewer verifikasi:
 ```php
@@ -203,14 +203,14 @@ public function test_endpoint_data_verifikasi_mengembalikan_json(): void
     $user = User::factory()->create(['role' => 'team_verifikasi']); // sesuaikan kolom role app
     $dok = /* buat 1 Dokumen minimal di team_verifikasi */;
     $res = $this->actingAs($user)->getJson(route('documents.verifikasi.data'));
-    $res->assertOk()->assertJsonStructure(['data' => [['id','status_badge','deadline','handler']]]);
+    $res->assertOk()->assertJsonStructure(['last_page','total','data' => [['id','status_badge','deadline','handler']]]);
 }
 ```
 - [ ] **Step 2: Jalankan — pastikan GAGAL** (route belum ada).
 Run: `php artisan test --filter=<NamaTestFeature>`
 Expected: FAIL (route not defined / 404).
 - [ ] **Step 3: Ekstrak `buildVerifikasiQuery(Request): Builder`** dari `dokumens()` — pindahkan pembangunan query (select + leftJoin team_verifikasi_data + filter + sort + eager-load `dibayarKepadas`,`roleData`(team_verifikasi),`roleStatuses`(4 role) + `withCount`) TAPI **tambah eager-load relasi `dokumenPos`** (base DTO butuh). `dokumens()` dan `datatable()` sama-sama memanggilnya. JANGAN ubah perilaku `dokumens()` (masih render legacy di Task 2; diubah di Task 4).
-- [ ] **Step 4: Tambah `datatable(Request): JsonResponse`** — mirror `DashboardPerpajakanController::datatable()`: ambil `buildVerifikasiQuery`, paginate/get, `$handlerOptions = $this->buildVerifikasiHandlerOptions(...)`, map tiap Dokumen → `VerifikasiDocumentRow::fromDokumen($d, $handlerOptions, 'team_verifikasi')`, set `is_at_my_role` transform bila perlu, return `response()->json(['data'=>$rows])`. Tambah `buildVerifikasiHandlerOptions()` (mirror perpajakan).
+- [ ] **Step 4: Tambah `datatable(Request): JsonResponse`** — mirror `DashboardPerpajakanController::datatable()` PERSIS termasuk **paginasi**: baca `size`/`page`, `->paginate(size)`, `loadMissing` bila perpajakan begitu, `$handlerOptions = $this->buildVerifikasiHandlerOptions(...)`, map tiap Dokumen → `VerifikasiDocumentRow::fromDokumen($d, $handlerOptions, 'team_verifikasi')`, return **`response()->json(['last_page'=>$p->lastPage(),'total'=>$p->total(),'data'=>$rows])`** (bentuk persis perpajakan, agar `progressiveLoad:'scroll'` engine jalan). Tambah `buildVerifikasiHandlerOptions()` (mirror perpajakan).
 - [ ] **Step 5: Daftarkan route** di `routes/web.php` grup `documents.verifikasi.` (:363-371), setelah `.index`:
 ```php
 Route::get('/data', [TeamVerifikasiController::class, 'datatable'])->name('data');
