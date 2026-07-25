@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Menguji transisi Rollout 4: index() pembayaran menyajikan view Tabulator
- * secara default, dengan ?classic=1 tetap menyajikan renderer bespoke lama
- * untuk banding QA (dihapus di Task 6 setelah QA lolos).
+ * Menguji index() Pembayaran menyajikan view Tabulator. Renderer bespoke lama
+ * + cabang ?classic sudah dihapus permanen pasca-QA (Rollout 4, Task 6).
+ * Mirror AkutansiTabulatorSwitchTest/PerpajakanTabulatorSwitchTest/VerifikasiTabulatorSwitchTest.
  */
 class PembayaranTabulatorSwitchTest extends TestCase
 {
@@ -62,14 +62,15 @@ class PembayaranTabulatorSwitchTest extends TestCase
             ->assertSee('DOCUMENT_TABULATOR_CONFIG', false);
     }
 
-    public function test_classic_menyajikan_view_legacy(): void
+    public function test_flag_classic_diabaikan_menyajikan_tabulator(): void
     {
+        // Flag ?classic tak lagi berpengaruh — view legacy dihapus, selalu Tabulator.
         $this->buatDokumen('2');
 
         $response = $this->actingAs($this->pembayaran())->get(route('documents.pembayaran.index', ['classic' => 1]));
 
         $response->assertOk()
-            ->assertDontSee('DOCUMENT_TABULATOR_CONFIG', false)
-            ->assertSee('pembayaranDocumentTable', false);
+            ->assertSee('pembayaranTabulatorTable', false)
+            ->assertSee('DOCUMENT_TABULATOR_CONFIG', false);
     }
 }
