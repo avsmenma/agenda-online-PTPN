@@ -762,6 +762,57 @@ class DashboardPembayaranController extends Controller
         ]);
     }
 
+    /**
+     * Pembangun query dasar tabel Tabulator pembayaran (Rollout 4). Memakai
+     * ulang logika filter buildPembayaranDashboardQuery() (status_pembayaran/
+     * year/month/date/vendor/kategori/dll) — TERMASUK dokumen hasil import CSV,
+     * karena pembayaran adalah SATU-SATUNYA role yang tidak mengecualikan CSV
+     * (paritas index():338, lihat juga catatan di PembayaranDocumentRow).
+     * Menambah eager-load yang dibutuhkan DocumentRow::baseRow() +
+     * PembayaranDocumentRow (dibayarKepadas, dokumenPos, roleData, roleStatuses)
+     * agar nol N+1 per baris, dan sort default created_at desc, id desc.
+     */
+    private function buildPembayaranQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = $this->buildPembayaranDashboardQuery($request);
+
+        $query->with([
+            'dibayarKepadas',
+            'dokumenPos',
+            'roleData' => fn ($q) => $q->where('role_code', 'pembayaran'),
+            'roleStatuses',
+        ]);
+
+        $query->orderBy('created_at', 'desc')->orderBy('id', 'desc');
+
+        return $query;
+    }
+
+    /**
+     * Endpoint JSON progressive-load Tabulator pembayaran. Mirror bentuk
+     * DashboardPerpajakanController::datatable() — {last_page,total,data}.
+     */
+    public function datatableTabulator(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $query = $this->buildPembayaranQuery($request);
+
+        $size = (int) $request->input('size', 100);
+        $size = ($size > 0 && $size <= 200) ? $size : 100;
+        $page = max(1, (int) $request->input('page', 1));
+
+        $paginator = $query->paginate($size, ['*'], 'page', $page);
+
+        $data = collect($paginator->items())
+            ->map(fn ($d) => \App\Support\PembayaranDocumentRow::fromDokumen($d, [], 'pembayaran'))
+            ->all();
+
+        return response()->json([
+            'last_page' => $paginator->lastPage(),
+            'total'     => $paginator->total(),
+            'data'      => $data,
+        ]);
+    }
+
     private function buildPembayaranDashboardQuery(Request $request, bool $includeSearch = true)
     {
         $statusPembayaran = $request->get('status_pembayaran');
