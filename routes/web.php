@@ -416,6 +416,10 @@ Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('documents/pembayar
     // URL diubah ke /daftar agar tidak terbentur cache redirect 301 lama (/documents/pembayaran → /dashboard/pembayaran).
     Route::get('/daftar', [DashboardPembayaranController::class, 'index'])->name('index');
     Route::get('/data', [DashboardPembayaranController::class, 'datatableTabulator'])->name('data');
+    // Task 3 fitur export bersama: tombol Export toolbar Tabulator (CFG.exportUrl) — Excel/PDF
+    // dependency-free lewat DocumentExporter/ExportsDocuments, ganti exportToExcel() PhpSpreadsheet
+    // yang FATAL. Statis, aman di atas /{dokumen}/detail (beda jumlah segmen, tak pernah bentrok).
+    Route::get('/export', [DashboardPembayaranController::class, 'exportDocuments'])->name('export');
     Route::get('/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('detail');
 });
 
