@@ -3396,7 +3396,7 @@
         @elseif($isPaymentShell)
         @php
           $isPaymentAssistantActive = request()->routeIs('pembayaran.asisten-virtual*');
-          $isPaymentDashboardActive = !$isPaymentAssistantActive && (request()->routeIs('dashboard.pembayaran') || request()->routeIs('dashboard.pembayaran.data') || request()->is('*dashboard/pembayaran*'));
+          $isPaymentDashboardActive = !$isPaymentAssistantActive && (request()->routeIs('dashboard.pembayaran') || request()->is('*dashboard/pembayaran*'));
           $isPaymentDelayActive = request()->routeIs('reports.pembayaran.delays') || request()->is('*rekapan-keterlambatan*');
           $isPaymentReportActive = request()->routeIs('reports.pembayaran.*') || request()->is('*reports/pembayaran*');
         @endphp

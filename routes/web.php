@@ -133,10 +133,6 @@ Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'dashb
     ->middleware('auth', 'role:admin,pembayaran')
     ->name('dashboard.pembayaran');
 
-Route::get('dashboard/pembayaran/data', [DashboardPembayaranController::class, 'datatable'])
-    ->middleware('auth', 'role:admin,pembayaran')
-    ->name('dashboard.pembayaran.data');
-
 Route::get('dashboard/pembayaran/asisten-virtual', [OwnerVirtualAssistantController::class, 'pembayaranIndex'])
     ->middleware('auth', 'role:admin,pembayaran')
     ->name('pembayaran.asisten-virtual');
