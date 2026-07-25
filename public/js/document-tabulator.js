@@ -607,14 +607,27 @@
     return html;
   }
 
+  // Badge status pembayaran (Rollout 4) dari row.status_badge {state,class,text} —
+  // BENTUK BEDA dari status_badge akutansi/perpajakan/verifikasi di atas
+  // ({class,icon,text,link}): PaymentDocumentRow (Task 1) mengemit kontrak lebih
+  // sederhana {state,class,text}, tanpa icon/link — karena itu formatter TERPISAH
+  // (fmtAkutansiStatus tidak disentuh) alih-alih dicampur ke satu fungsi.
+  function fmtPaymentPill(cell) {
+    const b = cell.getRow().getData().status_badge;
+    if (!b || !b.class) return '-';
+    return '<span class="status-pill ' + esc(b.class) + '"><i class="fas fa-circle"></i> ' + esc(b.text) + '</span>';
+  }
+
   // Registry formatter kolom tetap terparameter (CFG.extraColumns[].formatter).
-  // 'date' & 'parafBadge' ditambah Rollout 3 (verifikasi, kolom Paraf tetap) —
-  // ADDITIF, dua kunci baru, tak mengubah 'deadline'/'akutansiStatus' lama.
+  // 'date' & 'parafBadge' ditambah Rollout 3 (verifikasi, kolom Paraf tetap);
+  // 'paymentPill' ditambah Rollout 4 (pembayaran, badge status pill) — ADDITIF,
+  // kunci baru, tak mengubah kunci lama ('deadline'/'akutansiStatus'/dst).
   const EXTRA_FORMATTERS = {
     deadline: fmtDeadline,
     akutansiStatus: fmtAkutansiStatus,
     date: fmtDate,
     parafBadge: fmtParafBadge,
+    paymentPill: fmtPaymentPill,
   };
 
   // _tableRowsAjax.blade.php:107 — nilai rupiah tebal (sudah terformat server).
@@ -725,6 +738,16 @@
   // formatter paritas. nomor_agenda dibekukan agar identitas selalu terlihat.
   function buildColumns(cfg) {
     const cols = [{ formatter: 'rownum', width: 60, frozen: true, title: 'No' }];
+    // Rollout 4 (pembayaran) — CFG.frozen = {left:[keys], right:[keys]} membekukan
+    // kolom tambahan di kiri/kanan (modal freeze Kiri/Bebas/Kanan). Bila cfg.frozen
+    // tak diset (role lain), kedua daftar kosong → perilaku lama (hanya No +
+    // nomor_agenda beku) DIPERTAHANKAN byte-identik. Prasyarat: cfg.columns HARUS
+    // sudah terurut kiri→bebas→kanan (FrozenColumnLayout::renderOrder) — posisi
+    // frozen Tabulator ditentukan dari URUTAN kolom (kolom frozen di awal daftar
+    // membeku ke kiri, di akhir daftar membeku ke kanan), bukan properti sisi
+    // eksplisit.
+    const fzLeft = (cfg.frozen && cfg.frozen.left) || [];
+    const fzRight = (cfg.frozen && cfg.frozen.right) || [];
     (cfg.columns || []).forEach(function (c) {
       const def = { title: c.label, field: c.key, formatter: getFormatter(c.key) };
       if (c.key === 'nomor_agenda') {
@@ -732,6 +755,7 @@
         // variableHeight dulu diset per-kolom di sini; sekarang datang dari
         // columnDefaults (konstruktor Tabulator) untuk SEMUA kolom, jadi mubazir.
       }
+      if (fzLeft.indexOf(c.key) !== -1 || fzRight.indexOf(c.key) !== -1) { def.frozen = true; }
       // Tugas 6: editor + gerbang editable per kolom data. Editor sesuai FIELD_TYPE;
       // gerbang membaca can_edit baris & daftar non-editable saat sel dibuka.
       def.editable = editableGate;
@@ -754,7 +778,13 @@
     // Kolom tetap "Pengurus Dokumen" (di luar kolom kustomisasi, selalu paling
     // kanan — paritas _tableRowsAjax.blade.php:250-252). Tanpa editor Tabulator;
     // <select> menangani perubahan sendiri via listener change terdelegasi.
-    cols.push({ title: 'Pengurus Dokumen', field: 'handler', formatter: fmtHandler, editable: false });
+    // Rollout 4 (pembayaran) — CFG.showHandler=false menyembunyikan kolom ini:
+    // pembayaran adalah ujung alur (tak ada "pengurus dokumen" berikutnya untuk
+    // di-forward). Role lain tak set showHandler → `!== false` bernilai true →
+    // kolom tetap ada (paritas byte-identik).
+    if (cfg.showHandler !== false) {
+      cols.push({ title: 'Pengurus Dokumen', field: 'handler', formatter: fmtHandler, editable: false });
+    }
     return cols;
   }
 
