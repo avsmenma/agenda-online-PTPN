@@ -1409,13 +1409,21 @@
     // kolom aksi tetap 'handler' (Pengurus Dokumen, bukan data dokumen)
     // disingkirkan, sesuai brief Task 2 ("excluding row-number/action columns").
     function visibleColumnFields() {
+      // Fix round 1 (review): kolom TETAP per-role (CFG.extraColumns — mis.
+      // akutansi/perpajakan 'deadline'/'status_badge') juga disingkirkan, bukan
+      // cuma 'handler'. Nilai baris kolom-kolom itu berupa objek/array (server
+      // computed), sehingga DocumentExporter::cellValue() men-cast-nya jadi
+      // string "Array" bila lolos ke columns[] — columns[] wajib HANYA kolom
+      // data biasa yang WYSIWYG (kustomisasi kolom user). Set kosong bila
+      // CFG.extraColumns tak diisi (role tanpa extraColumns) → tak ada efek.
+      const extraFields = new Set((CFG.extraColumns || []).map(function (ec) { return ec.field; }));
       let cols = [];
       try { cols = table.getColumns(); } catch (e) { return []; }
       return cols
         .filter(function (c) {
           let field = null;
           try { field = c.getField(); } catch (e) { field = null; }
-          if (!field || field === 'handler') return false;
+          if (!field || field === 'handler' || extraFields.has(field)) return false;
           try { return c.isVisible(); } catch (e) { return true; }
         })
         .map(function (c) { return c.getField(); });
