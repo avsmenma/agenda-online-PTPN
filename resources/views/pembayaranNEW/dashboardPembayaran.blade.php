@@ -447,6 +447,17 @@
       flex-wrap: wrap;
     }
 
+    /* Tabulator (Rollout 4): #filterForm dipakai ulang sebagai .tabulator-toolbar
+       agar public/js/document-tabulator.js membaca nama filter langsung dari DOM
+       (CLAUDE.md §7 — toolbarFilterControls() generik lintas-role). Aturan global
+       .tabulator-toolbar (public/css/tabulator-agenda.css) men-set display:flex;
+       form ini punya dua anak blok (.filter-row + .advanced-filter-panel) yang
+       harus tetap bertumpuk vertikal — netralkan di sini (spesifisitas ID menang
+       tanpa !important). */
+    #filterForm.tabulator-toolbar {
+      display: block;
+    }
+
     .filter-search {
       flex: 1;
       min-width: 280px;
@@ -1975,7 +1986,7 @@
     </div>
 
     <!-- Filter Section -->
-    <form action="{{ route('documents.pembayaran.index') }}" method="GET" class="filter-section" id="filterForm">
+    <form action="{{ route('documents.pembayaran.index') }}" method="GET" class="filter-section tabulator-toolbar" id="filterForm">
       <div class="filter-row">
         <div class="filter-search">
           <input type="text" name="search" placeholder="Cari no agenda, SPP, vendor..." value="{{ $search ?? '' }}">
@@ -2144,6 +2155,42 @@
       </div>
     </form>
 
+    @php
+      // Rollout 4 — konfigurasi engine Tabulator bersama (public/js/document-tabulator.js).
+      // $renderColumns SUDAH terurut kiri→bebas→kanan (FrozenColumnLayout::renderOrder,
+      // dihitung index() :193) — WAJIB dipakai apa adanya (bukan $selectedColumns) agar
+      // frozen native Tabulator membekukan ke tepi yang benar (lihat CFG.frozen di bawah).
+      $classic = $classic ?? false;
+      $pembayaranTabulatorConfig = [
+        'mountId' => 'pembayaranTabulatorTable',
+        'dataUrl' => route('documents.pembayaran.data'),
+        'inlineUpdateTpl' => str_replace('__ID__', '{id}', route('documents.inline-update', ['dokumen' => '__ID__'])),
+        'handlerTpl' => str_replace('__ID__', '{id}', route('documents.handler.update', ['dokumen' => '__ID__'])),
+        'csrf' => csrf_token(),
+        'columns' => collect($renderColumns)->map(fn ($k) => ['key' => $k, 'label' => $availableColumns[$k] ?? $k])->values(),
+        'availableColumns' => $availableColumns,
+        'selected' => array_values($selectedColumns),
+        // Kolom tetap khas pembayaran: pill status 3-state (server-computed, DTO Task 1).
+        'extraColumns' => [
+          ['field' => 'status_badge', 'title' => 'Status', 'formatter' => 'paymentPill'],
+        ],
+        // Pembayaran = ujung alur, tanpa "Pengurus Dokumen" berikutnya untuk di-forward.
+        'showHandler' => false,
+        // Freeze 2-tab (modal Kolom Beku di bawah) → frozen native Tabulator.
+        'frozen' => ['left' => array_values($frozenLeft), 'right' => array_values($frozenRight)],
+        'ie' => [
+          'kategori' => $ieKategoriList ?? [],
+          'sub' => $ieSubKriteriaList ?? [],
+          'item' => $ieItemSubKriteriaList ?? [],
+          'jenis' => $ieJenisPembayaranList ?? [],
+          'bagian' => \App\Models\Bagian::active()->ordered()->get(['kode', 'nama']),
+        ],
+        // Daftar sama persis dgn BULAN_LIST kanonik (partials/_inlineEditEngine.blade.php:145)
+        // — 'May'/'July' BUKAN typo baru di sini, nilai ini dipakai apa adanya di DB/validasi.
+        'bulanList' => ['Januari', 'Februari', 'Maret', 'April', 'May', 'Juni', 'July', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
+      ];
+    @endphp
+
     <!-- Table Section -->
     <div class="table-section table-dokumen" id="documentTableContainer">
       <div class="dtable-toolbar">
@@ -2263,28 +2310,33 @@
             @endforeach
           </div>
         @else
-          <!-- Normal Table View -->
-          <!-- AJAX loading overlay -->
-          <div class="ajax-loading-overlay" id="ajaxLoadingOverlay"
-            style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);z-index:10;display:none;align-items:center;justify-content:center;border-radius:var(--radius-lg);">
-            <div style="text-align:center;">
-              <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--brand-primary);"></i>
-              <p style="margin-top:0.5rem;color:var(--text-secondary);font-size:0.875rem;">Memuat data...</p>
+          @if($classic)
+            <!-- Normal Table View (classic — banding QA, ?classic=1) -->
+            <!-- AJAX loading overlay -->
+            <div class="ajax-loading-overlay" id="ajaxLoadingOverlay"
+              style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);z-index:10;display:none;align-items:center;justify-content:center;border-radius:var(--radius-lg);">
+              <div style="text-align:center;">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--brand-primary);"></i>
+                <p style="margin-top:0.5rem;color:var(--text-secondary);font-size:0.875rem;">Memuat data...</p>
+              </div>
             </div>
-          </div>
-          <div class="data-table-wrapper table-responsive" id="dataTableWrapper">
-            <table class="data-table" id="pembayaranDocumentTable">
-              <thead>
-                <tr>
-                  <th class="col-no">No</th>
-                  @foreach($renderColumns as $colKey)
-                    <th class="col-{{ $colKey }}">{{ $availableColumns[$colKey] ?? Str::headline($colKey) }}</th>
-                  @endforeach
-                </tr>
-              </thead>
-              <tbody id="tableBody"></tbody>
-            </table>
-          </div>
+            <div class="data-table-wrapper table-responsive" id="dataTableWrapper">
+              <table class="data-table" id="pembayaranDocumentTable">
+                <thead>
+                  <tr>
+                    <th class="col-no">No</th>
+                    @foreach($renderColumns as $colKey)
+                      <th class="col-{{ $colKey }}">{{ $availableColumns[$colKey] ?? Str::headline($colKey) }}</th>
+                    @endforeach
+                  </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+          @else
+            <!-- Normal Table View (Tabulator, Rollout 4) -->
+            <div id="pembayaranTabulatorTable" class="doc-tabulator"></div>
+          @endif
         @endif
 
         <!-- Pagination -->
@@ -3546,7 +3598,7 @@
     }
   </script>
 
-  @if($mode != 'rekapan_table')
+  @if($mode != 'rekapan_table' && $classic)
     <script>
       (function () {
         'use strict';
@@ -3846,8 +3898,32 @@
     </script>
   @endif
 
+  @if($mode != 'rekapan_table' && !$classic)
+    {{-- Rollout 4: engine Tabulator bersama menggantikan renderer bespoke di atas.
+         window.DOCUMENT_TABULATOR_CONFIG dibangun dari $pembayaranTabulatorConfig
+         (dihitung dekat "Table Section" di atas — columns via FrozenColumnLayout::
+         renderOrder, frozen dari $frozenLeft/$frozenRight, showHandler:false, pill
+         status via extraColumns paymentPill). --}}
+    <script>window.DOCUMENT_TABULATOR_CONFIG = @json($pembayaranTabulatorConfig);</script>
+    <script src="{{ asset('vendor/tabulator/tabulator.min.js') }}"></script>
+    <script src="{{ \App\Support\Asset::versioned('js/document-tabulator.js') }}"></script>
+    <script>
+      // Tombol Refresh toolbar (dtable-toolbar) memanggil window.refreshPembayaranDataTable
+      // bila terdefinisi (lihat refreshPembayaranTable() di atas) — arahkan ke replaceData()
+      // Tabulator (AJAX, tanpa reload halaman) alih-alih window.location.reload() bawaan.
+      // window.documentTable diset SINKRON oleh document-tabulator.js saat skrip di atas
+      // dieksekusi (elemen mount sudah ada di DOM sebelum tag <script> ini).
+      window.refreshPembayaranDataTable = function () {
+        if (window.documentTable) { window.documentTable.replaceData(); }
+      };
+    </script>
+  @endif
+
+  @if($classic)
   {{-- Freeze kolom & header — pola bersama yang sudah teruji. Kolom NO selalu
-       beku; sisanya mengikuti pilihan user ($frozenLeft/$frozenRight). --}}
+       beku; sisanya mengikuti pilihan user ($frozenLeft/$frozenRight). Hanya
+       relevan utk renderer classic (CSS position:sticky) — Tabulator memakai
+       frozen native via CFG.frozen (lihat blok di atas), TIDAK memakai partial ini. --}}
   <script>
     // Harus diset SEBELUM partial dijalankan agar perhitungan offset memakai
     // jalur dinamis, bukan jalur lama yang kolomnya di-hardcode.
@@ -3908,6 +3984,8 @@
       }
     @endforeach
   </style>
+  @endif
+
   {{-- ── Tombol keluar fullscreen (khusus halaman pembayaran) ──────────────
        Fullscreen global (compact-document-ui) menyembunyikan .dtable-toolbar —
        tempat tombol keluar berada — dan menampilkan .search-box sebagai bar atas.
@@ -3965,6 +4043,21 @@
     })();
   </script>
 
-  @include('partials._inlineEditEngine')
-  @include('partials._activeCellNav', ['tableSelector' => '#pembayaranDocumentTable'])
+  @if($classic)
+    {{-- Mesin inline-edit + navigasi sel klasik (CSS position:sticky). Tabulator
+         (default) punya mesin sendiri di public/js/document-tabulator.js — kedua
+         mesin TIDAK boleh berjalan bersamaan (double PATCH/listener konflik). --}}
+    @include('partials._inlineEditEngine')
+    @include('partials._activeCellNav', ['tableSelector' => '#pembayaranDocumentTable'])
+  @endif
 @endsection
+
+@unless($classic)
+  @push('styles')
+    {{-- Rollout 4: aset Tabulator (vendor + tema bersama ala CASH_BANK). Dimuat di
+         sini (bukan layouts/app.blade.php) agar tipografi/role lain tak ikut
+         berubah (CLAUDE.md §6). --}}
+    <link rel="stylesheet" href="{{ asset('vendor/tabulator/tabulator.min.css') }}">
+    <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/tabulator-agenda.css') }}">
+  @endpush
+@endunless
