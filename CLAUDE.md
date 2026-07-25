@@ -21,9 +21,10 @@ Acuan lengkap: **`docs/AUDIT_KESEHATAN_KODEBASE_2026-07-03.md`** (audit 6 domain
 
 ### Penyakit utama — ingat ini setiap kali memperbaiki bug tabel
 
-> **6 tabel dokumen per-role adalah ~73% salinan copy-paste satu sama lain, memakai
-> 3 teknologi tabel berbeda** (Tabulator di operator, DataTables di pembayaran,
-> tabel biasa + sticky di sisanya).
+> **6 tabel dokumen per-role adalah ~73% salinan copy-paste satu sama lain.** Rollout
+> bertahap sudah menyatukan operator/akutansi/perpajakan/verifikasi/pembayaran ke satu
+> engine Tabulator bersama (`document-tabulator.js` + DTO `DocumentRow`); `bagian` masih
+> tabel biasa view-only (tanpa aksi, sengaja tak ikut rollout).
 >
 > Karena itu **memperbaiki 1 role tidak menyebar ke 5 role lain.** Kalau user melaporkan
 > "bug ini sudah pernah diperbaiki tapi muncul lagi di halaman lain" — inilah sebabnya.
