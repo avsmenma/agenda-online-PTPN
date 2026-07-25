@@ -1393,6 +1393,66 @@
     });
   })();
 
+  // === Task 2 (fitur export bersama, ADITIF): tombol Export toolbar ===
+  // Muncul HANYA bila CFG.exportUrl diisi controller (dikabelkan per-role di
+  // Task 3-4). Role yang belum diwire (SEMUA role saat ini) tak menyetel
+  // properti ini sama sekali → cabang ini tak pernah berjalan, toolbar
+  // byte-identik dengan sebelumnya (CLAUDE.md §6 gerbang kritis: engine
+  // bersama, perubahan wajib aditif).
+  (function wireExportButton() {
+    if (!CFG.exportUrl) return;
+    const toolbar = document.querySelector('.tabulator-toolbar');
+    if (!toolbar) return;
+
+    // Kolom DATA yang SEDANG terlihat di tabel (pilihan WYSIWYG user via
+    // Kustomisasi Kolom) — field kosong (kolom nomor baris 'rownum') dan
+    // kolom aksi tetap 'handler' (Pengurus Dokumen, bukan data dokumen)
+    // disingkirkan, sesuai brief Task 2 ("excluding row-number/action columns").
+    function visibleColumnFields() {
+      let cols = [];
+      try { cols = table.getColumns(); } catch (e) { return []; }
+      return cols
+        .filter(function (c) {
+          let field = null;
+          try { field = c.getField(); } catch (e) { field = null; }
+          if (!field || field === 'handler') return false;
+          try { return c.isVisible(); } catch (e) { return true; }
+        })
+        .map(function (c) { return c.getField(); });
+    }
+
+    // URL = CFG.exportUrl + filter aktif (getFilterParams(), sama persis
+    // dgn yg dipakai request data tabel) + columns[]=<field kolom terlihat> + format.
+    function buildExportUrl(format) {
+      const params = new URLSearchParams();
+      const filterParams = getFilterParams();
+      Object.keys(filterParams).forEach(function (key) { params.append(key, filterParams[key]); });
+      visibleColumnFields().forEach(function (field) { params.append('columns[]', field); });
+      params.append('format', format);
+      return CFG.exportUrl + '?' + params.toString();
+    }
+
+    // Dropdown Bootstrap 5 (data-bs-toggle) — bundle bootstrap.bundle sudah
+    // dimuat layout (dipakai bootstrap.Modal/Toast di tempat lain), dan
+    // delegasi event data-api-nya bekerja untuk elemen yang disisipkan
+    // belakangan seperti ini, jadi tak perlu mesin toggle tulisan-tangan.
+    const wrap = document.createElement('div');
+    wrap.className = 'dropdown d-inline-block';
+    wrap.innerHTML =
+      '<button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">' +
+      '<i class="fa-solid fa-file-export me-1"></i> Export</button>' +
+      '<ul class="dropdown-menu">' +
+      '<li><button type="button" class="dropdown-item" data-export-format="excel"><i class="fa-solid fa-file-excel me-2"></i>Excel</button></li>' +
+      '<li><button type="button" class="dropdown-item" data-export-format="pdf"><i class="fa-solid fa-file-pdf me-2"></i>PDF</button></li>' +
+      '</ul>';
+    wrap.addEventListener('click', function (e) {
+      const item = e.target.closest ? e.target.closest('[data-export-format]') : null;
+      if (!item) return;
+      window.location = buildExportUrl(item.getAttribute('data-export-format'));
+    });
+    toolbar.appendChild(wrap);
+  })();
+
   // === Tugas 7f: Penanganan gagal muat data + tombol "Coba lagi" ===
   function clearLoadError() {
     const ex = document.getElementById('opLoadError');
