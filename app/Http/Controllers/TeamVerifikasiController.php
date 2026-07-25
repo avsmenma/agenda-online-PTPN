@@ -857,7 +857,14 @@ class TeamVerifikasiController extends Controller
             'ieJenisPembayaranList' => $ieJenisPembayaranList,
             'filterDariOptions' => $filterDariOptions,
         );
-        return view('team_verifikasi.dokumens.daftarDokumen', $data);
+
+        // Transisi Rollout 3: default → Tabulator; ?classic=1 → view legacy (banding QA).
+        // Setelah QA verifikasi lolos, cabang legacy + flag ini DIHAPUS (Task 6).
+        if ($request->boolean('classic')) {
+            return view('team_verifikasi.dokumens.daftarDokumen', $data);
+        }
+
+        return view('team_verifikasi.dokumens.daftarDokumenTabulator', $data);
     }
 
     
