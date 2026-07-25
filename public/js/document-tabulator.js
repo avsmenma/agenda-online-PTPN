@@ -546,12 +546,25 @@
 
   // === Formatter akutansi (Rollout 1) — merender objek server, nol logika bisnis. ===
 
-  // Badge Status akutansi dari row.status_badge {class, icon, text, link}.
-  // Port kolom Status _rows.blade.php:459-510 (pohon keputusan sudah di server).
+  // Badge Status akutansi/perpajakan/verifikasi dari row.status_badge
+  // {class, icon, text, link, style?, title?}. Port kolom Status
+  // _rows.blade.php:459-510 (pohon keputusan sudah di server).
+  // Rollout 3 (verifikasi) — perluasan ADDITIF:
+  //   - guard direlaksasi dari "!b.class" ke "!b.class && !b.text": cabang #16
+  //     verifikasi (Menunggu Approve umum, VerifikasiDocumentRow::buildStatusBadge())
+  //     mengemit class KOSONG ('') tapi tetap punya text — legacy-nya memang
+  //     <span class="badge-status" ...> tanpa modifier class. Akutansi/perpajakan
+  //     TIDAK PERNAH mengemit class kosong (selalu non-empty), jadi guard lama
+  //     tak pernah menyala untuk mereka — perilaku mereka tak berubah.
+  //   - style/title dirender HANYA bila field ada (opsional, null di akutansi/
+  //     perpajakan → tak ada atribut tambahan → HTML byte-identik dgn sebelumnya).
   function fmtAkutansiStatus(cell) {
     const b = cell.getRow().getData().status_badge;
-    if (!b || !b.class) return '-';
-    let html = '<span class="badge-status ' + esc(b.class) + '" onclick="event.stopPropagation()">';
+    if (!b || (!b.class && !b.text)) return '-';
+    let html = '<span class="badge-status ' + esc(b.class) + '"';
+    if (b.style) { html += ' style="' + esc(b.style) + '"'; }
+    if (b.title) { html += ' title="' + esc(b.title) + '"'; }
+    html += ' onclick="event.stopPropagation()">';
     if (b.icon) { html += '<i class="fa-solid ' + esc(b.icon) + ' me-1"></i>'; }
     html += esc(b.text);
     if (b.link && b.link.href) {
@@ -595,9 +608,13 @@
   }
 
   // Registry formatter kolom tetap terparameter (CFG.extraColumns[].formatter).
+  // 'date' & 'parafBadge' ditambah Rollout 3 (verifikasi, kolom Paraf tetap) —
+  // ADDITIF, dua kunci baru, tak mengubah 'deadline'/'akutansiStatus' lama.
   const EXTRA_FORMATTERS = {
     deadline: fmtDeadline,
     akutansiStatus: fmtAkutansiStatus,
+    date: fmtDate,
+    parafBadge: fmtParafBadge,
   };
 
   // _tableRowsAjax.blade.php:107 — nilai rupiah tebal (sudah terformat server).
@@ -639,6 +656,18 @@
       'background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border-radius:6px;' +
       'font-size:11px;font-weight:600;"><i class="fa-solid fa-check-circle"></i> ' +
       esc(value) + '</span>';
+  }
+
+  // Rollout 3 (verifikasi) — kolom Paraf TETAP (extraColumns), BUKAN kolom
+  // kustomisasi. Port _rows.blade.php:225-233: badge kelas CSS `badge-paraf-done`
+  // (BEDA tampilan dari fmtPemaraf di atas yang inline-style — dua formatter
+  // terpisah utk field 'pemaraf' dgn mekanisme kolom berbeda: fmtPemaraf dipakai
+  // bila 'pemaraf' jadi kolom kustomisasi (FORMATTERS registry), fmtParafBadge
+  // dipakai extraColumns verifikasi. Read-only, tanpa editor.
+  function fmtParafBadge(cell) {
+    const value = cell.getValue();
+    if (!value) return '-';
+    return '<span class="badge-paraf-done"><i class="fa-solid fa-check-circle"></i> ' + esc(value) + '</span>';
   }
 
   // _tableRowsAjax.blade.php:237-243 — link ter-sanitasi server (link_safe).
