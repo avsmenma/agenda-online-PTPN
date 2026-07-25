@@ -417,10 +417,6 @@ Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('documents/pembayar
     Route::get('/daftar', [DashboardPembayaranController::class, 'index'])->name('index');
     Route::get('/data', [DashboardPembayaranController::class, 'datatableTabulator'])->name('data');
     Route::get('/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('detail');
-    Route::get('/{dokumen}/payment-data', [DashboardPembayaranController::class, 'getPaymentData'])->name('payment-data');
-    Route::post('/{dokumen}/set-deadline', [DashboardPembayaranController::class, 'setDeadline'])->name('set-deadline');
-    Route::post('/{dokumen}/update-status', [DashboardPembayaranController::class, 'updateStatus'])->name('update-status');
-    Route::post('/{dokumen}/upload-proof', [DashboardPembayaranController::class, 'uploadBukti'])->name('upload-proof');
 });
 
 // Professional Reports Routes - Pembayaran
