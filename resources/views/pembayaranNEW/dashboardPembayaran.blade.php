@@ -2167,13 +2167,21 @@
         'inlineUpdateTpl' => str_replace('__ID__', '{id}', route('documents.inline-update', ['dokumen' => '__ID__'])),
         'handlerTpl' => str_replace('__ID__', '{id}', route('documents.handler.update', ['dokumen' => '__ID__'])),
         'csrf' => csrf_token(),
-        'columns' => collect($renderColumns)->map(fn ($k) => ['key' => $k, 'label' => $availableColumns[$k] ?? $k])->values(),
+        // Fix QA Rollout 4 — kolom katalog 'status_pembayaran' ("Status Pembayaran")
+        // dirender via formatter 'paymentPill' (baca row.status_badge, bukan field
+        // status_pembayaran mentah) agar tetap beku/kustomisasi via $renderColumns,
+        // paritas legacy (di sana "Status Pembayaran" ADALAH pill-nya). Menggantikan
+        // extraColumns Status terpisah di bawah (sebelumnya dobel dgn kolom katalog ini).
+        'columns' => collect($renderColumns)->map(fn ($k) => [
+          'key' => $k,
+          'label' => $availableColumns[$k] ?? $k,
+          ...($k === 'status_pembayaran' ? ['formatter' => 'paymentPill'] : []),
+        ])->values(),
         'availableColumns' => $availableColumns,
         'selected' => array_values($selectedColumns),
-        // Kolom tetap khas pembayaran: pill status 3-state (server-computed, DTO Task 1).
-        'extraColumns' => [
-          ['field' => 'status_badge', 'title' => 'Status', 'formatter' => 'paymentPill'],
-        ],
+        // Pill status kini menyatu ke kolom katalog 'status_pembayaran' di atas —
+        // tanpa kolom tetap terpisah lagi (dulu dobel dgn "Status Pembayaran").
+        'extraColumns' => [],
         // Pembayaran = ujung alur, tanpa "Pengurus Dokumen" berikutnya untuk di-forward.
         'showHandler' => false,
         // Freeze 2-tab (modal Kolom Beku di bawah) → frozen native Tabulator.
@@ -3902,8 +3910,10 @@
     {{-- Rollout 4: engine Tabulator bersama menggantikan renderer bespoke di atas.
          window.DOCUMENT_TABULATOR_CONFIG dibangun dari $pembayaranTabulatorConfig
          (dihitung dekat "Table Section" di atas — columns via FrozenColumnLayout::
-         renderOrder, frozen dari $frozenLeft/$frozenRight, showHandler:false, pill
-         status via extraColumns paymentPill). --}}
+         renderOrder, frozen dari $frozenLeft/$frozenRight, showHandler:false. Pill
+         status kini menyatu ke kolom katalog 'status_pembayaran' via
+         columns[].formatter='paymentPill', bukan extraColumns terpisah — fix QA
+         dobel kolom Status). --}}
     <script>window.DOCUMENT_TABULATOR_CONFIG = @json($pembayaranTabulatorConfig);</script>
     <script src="{{ asset('vendor/tabulator/tabulator.min.js') }}"></script>
     <script src="{{ \App\Support\Asset::versioned('js/document-tabulator.js') }}"></script>
