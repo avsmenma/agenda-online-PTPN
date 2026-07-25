@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Schema;
 class DashboardPerpajakanController extends Controller
 {
     use \App\Http\Controllers\Concerns\BuildsRoleDashboard;
+    use \App\Http\Controllers\Concerns\ExportsDocuments;
 
     /**
      * Halaman dashboard Team Perpajakan.
@@ -90,6 +91,51 @@ class DashboardPerpajakanController extends Controller
             ];
         }
         return $handlerOptions;
+    }
+
+    /**
+     * Export daftar dokumen perpajakan (Excel/PDF) — Task 4 fitur export bersama,
+     * lewat trait ExportsDocuments::respondDocumentExport() (App\Support\DocumentExporter).
+     * Route: GET documents/perpajakan/export (documents.perpajakan.export), dipanggil
+     * tombol Export toolbar Tabulator (CFG.exportUrl). Query & viewerRole SAMA dgn
+     * datatable() — buildPerpajakanQuery() + Auth::user()?->role — tanpa duplikasi
+     * filter/scope, tanpa mengubah endpoint data yang ada.
+     *
+     * Kolom: katalog config('document_columns.base') di-intersect dgn columns[] dari
+     * request (kolom terlihat di tabel saat export ditekan) — pertahanan thd field
+     * asing/objek (mis. status_badge). Kosong → seluruh katalog.
+     */
+    public function exportDocuments(Request $request): \Symfony\Component\HttpFoundation\Response
+    {
+        $query = $this->buildPerpajakanQuery($request);
+        $handlerOptions = $this->buildPerpajakanHandlerOptions();
+        $viewerRole = Auth::user()?->role;
+
+        $rows = $query->get()
+            ->map(fn (Dokumen $d) => \App\Support\PerpajakanDocumentRow::fromDokumen($d, $handlerOptions, $viewerRole))
+            ->all();
+
+        $catalog = config('document_columns.base');
+
+        $requestedKeys = $request->get('columns', []);
+        $requestedKeys = is_array($requestedKeys) ? array_map('strval', $requestedKeys) : [];
+        $keys = array_values(array_intersect($requestedKeys, array_keys($catalog)));
+
+        if (empty($keys)) {
+            $keys = array_keys($catalog);
+        }
+
+        $columns = array_map(
+            fn (string $key) => ['key' => $key, 'label' => $catalog[$key]],
+            $keys
+        );
+
+        $options = [
+            'title'     => 'Dokumen Perpajakan',
+            'total_key' => 'nilai_rupiah',
+        ];
+
+        return $this->respondDocumentExport($request, $rows, $columns, $options);
     }
 
     /**

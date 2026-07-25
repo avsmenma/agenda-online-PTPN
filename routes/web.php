@@ -482,6 +482,9 @@ Route::middleware(['auth', 'role:admin,akutansi'])->prefix('documents/akutansi')
 Route::middleware(['auth', 'role:admin,perpajakan'])->prefix('documents/perpajakan')->name('documents.perpajakan.')->group(function () {
     Route::get('/', [DashboardPerpajakanController::class, 'dokumens'])->name('index');
     Route::get('/data', [DashboardPerpajakanController::class, 'datatable'])->name('data');
+    // Task 4 fitur export bersama: tombol Export toolbar Tabulator (CFG.exportUrl) — Excel/PDF
+    // dependency-free lewat DocumentExporter/ExportsDocuments (pola Task 3 pembayaran).
+    Route::get('/export', [DashboardPerpajakanController::class, 'exportDocuments'])->name('export');
 });
 
 // Professional Reports Routes - Perpajakan
