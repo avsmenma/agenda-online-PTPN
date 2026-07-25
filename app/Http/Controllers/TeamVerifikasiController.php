@@ -784,15 +784,6 @@ class TeamVerifikasiController extends Controller
             session(['team_verifikasi_dokumens_table_columns' => $selectedColumns]);
         }
 
-        // Virtual scroll: balas hanya potongan baris tabel (ringan) tanpa layout & partial berat
-        if ($request->boolean('virtual_chunk')) {
-            return view('team_verifikasi.dokumens._chunk', [
-                'dokumens' => $dokumens,
-                'selectedColumns' => $selectedColumns,
-                'showActionColumn' => false,
-            ]);
-        }
-
         // Load IE dropdown data
         $ieKategoriList = $ieSubKriteriaList = $ieItemSubKriteriaList = $ieJenisPembayaranList = [];
         try {
@@ -852,12 +843,8 @@ class TeamVerifikasiController extends Controller
             'filterDariOptions' => $filterDariOptions,
         );
 
-        // Transisi Rollout 3: default → Tabulator; ?classic=1 → view legacy (banding QA).
-        // Setelah QA verifikasi lolos, cabang legacy + flag ini DIHAPUS (Task 6).
-        if ($request->boolean('classic')) {
-            return view('team_verifikasi.dokumens.daftarDokumen', $data);
-        }
-
+        // Rollout 3 selesai (Task 6): view legacy + cabang ?classic dihapus permanen.
+        // dokumens() sekarang selalu menyajikan Tabulator; ?classic=1 jadi no-op.
         return view('team_verifikasi.dokumens.daftarDokumenTabulator', $data);
     }
 
