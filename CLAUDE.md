@@ -283,12 +283,17 @@ suite hijau): class mati `app/Exports/RekapanKeterlambatanExport.php` (satu-satu
 `DashboardPerpajakanController::exportToPDF()` + view `perpajakan/export/pdf.blade.php`; dua `use`
 mati di `TeamVerifikasiController` (`Bidang`, `DocumentReturned`); dua root logo duplikat
 (`logoPTPNNew.png`/`logo_ptpn.png` — asli di `public/images/`); output build Vite basi
-`public/build/*` (`@vite` tak pernah dipanggil). **Paket `maatwebsite/excel` kini NOL pemakai di
-`app/`** — penghapusan dari composer = keputusan terpisah (butuh composer di server). BELUM dihapus
-(ditawarkan, user pilih tunda): 4 partial mati sisa rollout (`virtual-document-table`,
-`_compactDocumentTable`, `document-handler-select`, `auto-refresh-documents` — daftar "HARAM dihapus"
-§2 di atas SUDAH BASI untuk ketiga yang pertama), config Vite/npm (`vite.config.js`/`package.json`/
-`resources/{css,js}`), folder untracked `Agenda Online PTPN Design System/`.
+`public/build/*` (`@vite` tak pernah dipanggil).
+
+**Audit dead-code lanjutan 2026-07-26 (Tier 2 + Tier 4 + composer, disetujui user).** Dihapus:
+4 partial mati sisa rollout (`virtual-document-table`, `_compactDocumentTable`,
+`document-handler-select`, `auto-refresh-documents` — §2 di atas sudah diperbarui); paket
+**`maatwebsite/excel` + `phpoffice/phpexcel` DIHAPUS dari composer** (nol pemakai; `composer remove`,
+suite 245 hijau — **deploy: server WAJIB `composer install --no-dev`**, bukan sekadar `git pull`);
+folder untracked `Agenda Online PTPN Design System/` (16 MB referensi); dir kosong
+`resources/views/tracking/`. `public/favicon.ico` (0-byte) diisi logo 128px. **MASIH ADA (sengaja
+disimpan):** config Vite/npm (`vite.config.js`/`package.json`/`resources/{css,js}`) agar pipeline
+bisa dihidupkan; partial `document-role-filter-toolbar` (fondasi kolom masa depan §7).
 
 **Rollout Tabulator SELESAI untuk semua role non-`bagian`** (operator/akutansi/perpajakan/
 verifikasi/pembayaran — Rollout 1-4 tuntas 2026-07-25). `bagian` sengaja DILEWATI atas
