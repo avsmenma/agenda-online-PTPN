@@ -1440,22 +1440,50 @@
       return CFG.exportUrl + '?' + params.toString();
     }
 
-    // Dropdown Bootstrap 5 (data-bs-toggle) — bundle bootstrap.bundle sudah
-    // dimuat layout (dipakai bootstrap.Modal/Toast di tempat lain), dan
-    // delegasi event data-api-nya bekerja untuk elemen yang disisipkan
-    // belakangan seperti ini, jadi tak perlu mesin toggle tulisan-tangan.
+    // Dropdown Export — DIGERAKKAN EKSPLISIT, bukan lewat data-api Bootstrap.
+    // BUG "tombol Export tak berfungsi" di semua role: layout memuat jQuery +
+    // Bootstrap 5, dan delegasi click data-api Bootstrap (data-bs-toggle=
+    // "dropdown") TIDAK men-toggle menu di sini — terverifikasi via Playwright:
+    // klik toggle → aria-expanded tetap "false", menu tak pernah tampil, meski
+    // kelas bootstrap.Dropdown sendiri berfungsi bila di-.show()/.toggle()
+    // manual. Karena engine ini dipakai 5 layout role berbeda, JANGAN andalkan
+    // data-api. Kendalikan toggle sendiri: pakai instance bootstrap.Dropdown
+    // bila ada (posisi Popper benar) + fallback kelas .show (CSS murni).
     const wrap = document.createElement('div');
     wrap.className = 'dropdown d-inline-block';
     wrap.innerHTML =
-      '<button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">' +
+      '<button type="button" class="btn btn-outline-success dropdown-toggle" aria-expanded="false">' +
       '<i class="fa-solid fa-file-export me-1"></i> Export</button>' +
       '<ul class="dropdown-menu">' +
       '<li><button type="button" class="dropdown-item" data-export-format="excel"><i class="fa-solid fa-file-excel me-2"></i>Excel</button></li>' +
       '<li><button type="button" class="dropdown-item" data-export-format="pdf"><i class="fa-solid fa-file-pdf me-2"></i>PDF</button></li>' +
       '</ul>';
+    const toggleBtn = wrap.querySelector('.dropdown-toggle');
+    const menuEl = wrap.querySelector('.dropdown-menu');
+    const bsDropdown = (window.bootstrap && bootstrap.Dropdown)
+      ? bootstrap.Dropdown.getOrCreateInstance(toggleBtn)
+      : null;
+    function openMenu() {
+      if (bsDropdown) { bsDropdown.show(); } else { menuEl.classList.add('show'); }
+      toggleBtn.setAttribute('aria-expanded', 'true');
+    }
+    function closeMenu() {
+      if (bsDropdown) { bsDropdown.hide(); } else { menuEl.classList.remove('show'); }
+      toggleBtn.setAttribute('aria-expanded', 'false');
+    }
+    toggleBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      menuEl.classList.contains('show') ? closeMenu() : openMenu();
+    });
+    // Tutup saat klik di luar (auto-close data-api Bootstrap juga mati di sini).
+    document.addEventListener('click', function (e) {
+      if (!wrap.contains(e.target)) closeMenu();
+    });
     wrap.addEventListener('click', function (e) {
       const item = e.target.closest ? e.target.closest('[data-export-format]') : null;
       if (!item) return;
+      closeMenu();
       window.location = buildExportUrl(item.getAttribute('data-export-format'));
     });
     toolbar.appendChild(wrap);
