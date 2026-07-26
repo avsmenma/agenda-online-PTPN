@@ -756,30 +756,4 @@ class DashboardPerpajakanController extends Controller
 
 
 
-    private function exportToPDF($dokumens, $columns)
-    {
-        // Create a simple view for PDF
-        $availableColumns = [
-            'nomor_agenda' => 'Nomor Agenda',
-            'nomor_spp' => 'Nomor SPP',
-            'uraian_spp' => 'Uraian SPP',
-            'dibayar_kepada' => 'Dibayar Kepada',
-            'nilai_rupiah' => 'Nilai Rupiah',
-            'tanggal_spp' => 'Tanggal SPP',
-            'status' => 'Status',
-            'deadline_at' => 'Deadline',
-            'created_at' => 'Tanggal Masuk',
-            'bulan' => 'Bulan',
-            'tahun' => 'Tahun',
-        ];
-
-        $data = [
-            'dokumens' => $dokumens,
-            'columns' => $columns,
-            'availableColumns' => $availableColumns,
-            'title' => 'Export Data Perpajakan',
-            'date' => date('d/m/Y H:i')
-        ];
-        return view('perpajakan.export.pdf', $data);
-    }
 }
