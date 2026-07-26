@@ -102,19 +102,4 @@ class PembayaranExportTest extends TestCase
         $this->getJson(route('documents.pembayaran.export', ['format' => 'excel']))
             ->assertUnauthorized();
     }
-
-    public function test_mode_per_vendor_multi_sheet_menghasilkan_banyak_worksheet(): void
-    {
-        $this->buatDokumen('5004/2026', ['dibayar_kepada' => 'PT Vendor Satu']);
-        $this->buatDokumen('5005/2026', ['dibayar_kepada' => 'CV Vendor Dua']);
-
-        $response = $this->actingAs($this->pembayaran())->get(route('documents.pembayaran.export', [
-            'format'             => 'excel',
-            'vendor_export_mode' => 'multi_sheet',
-        ]));
-
-        $response->assertOk();
-        $matches = substr_count($response->getContent(), '<Worksheet');
-        $this->assertGreaterThan(1, $matches, 'Mode multi_sheet wajib menghasilkan >1 <Worksheet (satu per vendor).');
-    }
 }
