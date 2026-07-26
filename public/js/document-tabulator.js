@@ -1440,15 +1440,16 @@
       return CFG.exportUrl + '?' + params.toString();
     }
 
-    // Dropdown Export — DIGERAKKAN EKSPLISIT, bukan lewat data-api Bootstrap.
+    // Dropdown Export — TOGGLE MURNI-CSS, tak menyentuh JS dropdown Bootstrap.
     // BUG "tombol Export tak berfungsi" di semua role: layout memuat jQuery +
-    // Bootstrap 5, dan delegasi click data-api Bootstrap (data-bs-toggle=
-    // "dropdown") TIDAK men-toggle menu di sini — terverifikasi via Playwright:
-    // klik toggle → aria-expanded tetap "false", menu tak pernah tampil, meski
-    // kelas bootstrap.Dropdown sendiri berfungsi bila di-.show()/.toggle()
-    // manual. Karena engine ini dipakai 5 layout role berbeda, JANGAN andalkan
-    // data-api. Kendalikan toggle sendiri: pakai instance bootstrap.Dropdown
-    // bila ada (posisi Popper benar) + fallback kelas .show (CSS murni).
+    // Bootstrap 5, dan (a) delegasi click data-api Bootstrap (data-bs-toggle=
+    // "dropdown") TIDAK men-toggle menu di sini, (b) memakai instance
+    // bootstrap.Dropdown pun BALAPAN — instance memasang listener auto-close
+    // sendiri yang kadang menutup menu seketika pada real mouse click (klik
+    // toggle → menu kedip lalu tertutup; terverifikasi via Playwright). Karena
+    // engine dipakai 5 layout role berbeda, kendalikan 100% sendiri: toggle
+    // kelas .show (CSS Bootstrap: .dropdown-menu.show → display:block), posisikan
+    // manual (tanpa Popper), tutup lewat handler klik-luar kita sendiri.
     const wrap = document.createElement('div');
     wrap.className = 'dropdown d-inline-block';
     wrap.innerHTML =
@@ -1460,15 +1461,18 @@
       '</ul>';
     const toggleBtn = wrap.querySelector('.dropdown-toggle');
     const menuEl = wrap.querySelector('.dropdown-menu');
-    const bsDropdown = (window.bootstrap && bootstrap.Dropdown)
-      ? bootstrap.Dropdown.getOrCreateInstance(toggleBtn)
-      : null;
     function openMenu() {
-      if (bsDropdown) { bsDropdown.show(); } else { menuEl.classList.add('show'); }
+      // Posisikan manual di bawah tombol (.dropdown = position:relative).
+      menuEl.style.position = 'absolute';
+      menuEl.style.top = '100%';
+      menuEl.style.left = '0';
+      menuEl.style.marginTop = '2px';
+      menuEl.style.zIndex = '3000';
+      menuEl.classList.add('show');
       toggleBtn.setAttribute('aria-expanded', 'true');
     }
     function closeMenu() {
-      if (bsDropdown) { bsDropdown.hide(); } else { menuEl.classList.remove('show'); }
+      menuEl.classList.remove('show');
       toggleBtn.setAttribute('aria-expanded', 'false');
     }
     toggleBtn.addEventListener('click', function (e) {
@@ -1476,7 +1480,7 @@
       e.stopPropagation();
       menuEl.classList.contains('show') ? closeMenu() : openMenu();
     });
-    // Tutup saat klik di luar (auto-close data-api Bootstrap juga mati di sini).
+    // Tutup saat klik di luar wrapper.
     document.addEventListener('click', function (e) {
       if (!wrap.contains(e.target)) closeMenu();
     });
