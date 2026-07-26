@@ -248,12 +248,34 @@ SATU-SATUNYA role yang mengikutkan dokumen hasil import CSV di query Tabulator t
 `_documentTableStickyCells` (grep gate final nol includer pasca-hapus). `?classic=1` kini
 no-op (Tabulator). **KEEP**: `buildPembayaranDashboardQuery()`/`applyPembayaranDashboardSearch()`
 (dipakai jalur Tabulator baru), `getDocumentDetail()`+helper terkait (tombol mata mode
-rekapan-vendor), import CSV (`CsvImportController`), export (`exportRekapan`/`exportToExcel`/
-`exportToExcelByVendor`/`exportToPDF`), mode `rekapan_table`, asisten-virtual
-(`OwnerVirtualAssistantController`).
+rekapan-vendor), import CSV (`CsvImportController`), export bersama (`exportDocuments` +
+trait `ExportsDocuments` + `App\Support\DocumentExporter`), mode `rekapan_table`,
+asisten-virtual (`OwnerVirtualAssistantController`).
 
 - Spec/plan: `docs/superpowers/specs/2026-07-25-rollout-tabulator-pembayaran-design.md`,
   `docs/superpowers/plans/2026-07-25-rollout-tabulator-pembayaran.md`
+
+**Fitur Export Bersama (Excel `.xls` dependency-free + PDF) SELESAI & ter-deploy 2026-07-26.**
+Satu jalur export untuk 5 role keuangan: trait `App\Http\Controllers\Concerns\ExportsDocuments`
+(`respondDocumentExport`) + service `App\Support\DocumentExporter::toXlsx()` (XML Spreadsheet
+2003, NOL library — menggantikan `exportToExcel()` PhpSpreadsheet lama yang FATAL karena
+`phpspreadsheet` tak terpasang; hanya `maatwebsite/excel ^1.1`/PHPExcel abandoned yang ada).
+Tombol **"Export" (dropdown Excel/PDF)** aditif di engine `document-tabulator.js` (aktif bila
+`CFG.exportUrl` diisi per-role). PDF = print-view bersama `resources/views/exports/document-print.blade.php`.
+Route `documents.<role>.export` per role (gating `role:`). **Bug "tombol Export tak berfungsi"
+(dropdown tak terbuka — data-api Bootstrap mati di layout jQuery+BS5) sudah DIPERBAIKI**:
+dropdown digerakkan eksplisit via instance `bootstrap.Dropdown` (commit `2a2c955`) — berdampak
+SEMUA role. **Pembayaran: tombol/form/route export LAMA + mode per-vendor DIHAPUS** atas
+keputusan user (2026-07-26) — `exportRekapan`, route `reports.pembayaran.export`,
+`buildVendorExportSheets`, `#exportForm` + modal vendor + JS `exportDocument`/`doExport`, plus
+dead code `exportToPDF`/`getColumnValue`/`getExportCellValue` + view
+`pembayaranNEW/dokumens/export-pdf.blade.php`. Export kini flat 1-sheet lewat SATU dropdown
+Export. `DocumentExporter` tetap menyimpan kapabilitas multi-sheet generik (tested, tanpa
+pemakai aktif). Sisa dead export TERPISAH (di luar scope ini, belum disentuh): perpajakan
+`exportToPDF()` yatim + `app/Exports/RekapanKeterlambatanExport.php` (maatwebsite).
+
+- Spec/plan: `docs/superpowers/specs/2026-07-26-fitur-export-bersama-design.md`,
+  `docs/superpowers/plans/2026-07-26-fitur-export-bersama.md`
 
 **Rollout Tabulator SELESAI untuk semua role non-`bagian`** (operator/akutansi/perpajakan/
 verifikasi/pembayaran — Rollout 1-4 tuntas 2026-07-25). `bagian` sengaja DILEWATI atas
