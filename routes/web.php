@@ -434,7 +434,6 @@ Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('documents/pembayar
 Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('reports/pembayaran')->name('reports.pembayaran.')->group(function () {
     // Redirect to dashboard - content is now on home page
     Route::get('/', fn() => redirect()->route('dashboard.pembayaran'))->name('index');
-    Route::match(['get', 'post'], '/export', [DashboardPembayaranController::class, 'exportRekapan'])->name('export');
     Route::get('/delays', [DashboardPembayaranController::class, 'rekapanKeterlambatan'])->name('delays');
 });
 

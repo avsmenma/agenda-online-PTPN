@@ -569,16 +569,6 @@
       transform: translateY(-1px);
     }
 
-    .btn-filter--export {
-      background: #217346;
-      color: #fff;
-    }
-
-    .btn-filter--export:hover {
-      background: #1a5c38;
-      transform: translateY(-1px);
-    }
-
     .btn-filter--secondary {
       background: transparent;
       color: var(--text-secondary);
@@ -1859,28 +1849,6 @@
     .premium-dashboard .bento-grid { display: none !important; }
   </style>
   <div class="premium-dashboard">
-    {{-- Header (judul/subjudul dihapus; tombol Export Excel dipindah ke toolbar filter) --}}
-    <!-- Hidden export form -->
-    <form id="exportForm" method="POST" action="{{ route('reports.pembayaran.export') }}" style="display: none;">
-        @csrf
-        <input type="hidden" name="format" id="exportFormat">
-        <input type="hidden" name="status_pembayaran" value="{{ $selectedStatus ?? '' }}">
-        <input type="hidden" name="year" value="{{ $selectedYear ?? '' }}">
-        <input type="hidden" name="month" value="{{ $selectedMonth ?? '' }}">
-        <input type="hidden" name="date" value="{{ $selectedDate ?? '' }}">
-        <input type="hidden" name="search" value="{{ $search ?? '' }}">
-        <input type="hidden" name="mode" value="{{ $mode ?? 'normal' }}">
-        <!-- Advanced filters for export -->
-        <input type="hidden" name="filter_vendor" value="{{ request('filter_vendor') ?? '' }}">
-        <input type="hidden" name="filter_kategori" value="{{ request('filter_kategori') ?? '' }}">
-        <input type="hidden" name="filter_jenis_dokumen" value="{{ request('filter_jenis_dokumen') ?? '' }}">
-        <input type="hidden" name="filter_jenis_sub_pekerjaan" value="{{ request('filter_jenis_sub_pekerjaan') ?? '' }}">
-        <input type="hidden" name="filter_kebun" value="{{ request('filter_kebun') ?? '' }}">
-        <input type="hidden" name="filter_jenis_pembayaran" value="{{ request('filter_jenis_pembayaran') ?? '' }}">
-        <input type="hidden" name="filter_bagian" value="{{ request('filter_bagian') ?? '' }}">
-        <input type="hidden" name="vendor_export_mode" id="vendorExportMode" value="">
-        <div id="exportColumnsContainer"></div>
-      </form>
     <!-- Bento Grid Stats -->
     <div class="bento-grid">
       <!-- Main Stats Row -->
@@ -2050,10 +2018,6 @@
             @endif
           </button>
 
-          <button type="button" class="btn-filter btn-filter--export" onclick="exportDocument('excel')" title="Export Excel">
-            <i class="fa-solid fa-file-excel"></i>
-            Export Excel
-          </button>
         </div>
       </div>
 
@@ -2927,136 +2891,6 @@
     </div>
   </div>
 
-  <!-- Export Vendor Mode Confirmation Modal -->
-  <div class="customization-modal" id="exportVendorModal">
-    <div class="modal-content-custom" style="max-width: 500px;">
-      <div class="modal-header-custom">
-        <h3>
-          <i class="fa-solid fa-file-excel" style="color: #22c55e;"></i>
-          Pilih Format Export
-        </h3>
-        <button type="button" class="modal-close-btn" onclick="closeExportVendorModal()">
-          <i class="fa-solid fa-times"></i>
-        </button>
-      </div>
-
-      <div class="modal-body-custom" style="padding: 1.5rem 2rem;">
-        <p style="color: #64748b; margin-bottom: 1.5rem;">
-          Anda akan mengexport dokumen dari <strong id="vendorCountLabel">beberapa vendor</strong>.
-          Pilih format output yang diinginkan:
-        </p>
-
-        <div class="export-option-group">
-          <label class="export-option" onclick="selectExportMode('multi_sheet')">
-            <input type="radio" name="export_mode_option" value="multi_sheet" checked>
-            <div class="export-option-content">
-              <div class="export-option-icon">
-                <i class="fa-solid fa-layer-group"></i>
-              </div>
-              <div class="export-option-text">
-                <strong>Pisahkan per Sheet</strong>
-                <small>Setiap vendor akan memiliki sheet terpisah dalam file Excel</small>
-              </div>
-            </div>
-          </label>
-
-          <label class="export-option" onclick="selectExportMode('single_sheet')">
-            <input type="radio" name="export_mode_option" value="single_sheet">
-            <div class="export-option-content">
-              <div class="export-option-icon">
-                <i class="fa-solid fa-file-alt"></i>
-              </div>
-              <div class="export-option-text">
-                <strong>Gabungkan dalam 1 Sheet</strong>
-                <small>Semua vendor dalam satu sheet dengan pemisah dan total per vendor</small>
-              </div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div class="modal-footer-custom" style="justify-content: flex-end;">
-        <div class="modal-actions">
-          <button type="button" class="btn-modal btn-cancel" onclick="closeExportVendorModal()">
-            <i class="fa-solid fa-times"></i>
-            Batal
-          </button>
-          <button type="button" class="btn-modal btn-save" onclick="confirmVendorExport()" style="background: #22c55e;">
-            <i class="fa-solid fa-download"></i>
-            Export Excel
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <style>
-    .export-option-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .export-option {
-      display: block;
-      cursor: pointer;
-    }
-
-    .export-option input[type="radio"] {
-      display: none;
-    }
-
-    .export-option-content {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem 1.25rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      transition: all 0.2s ease;
-    }
-
-    .export-option:hover .export-option-content {
-      border-color: #22c55e;
-      background: rgba(34, 197, 94, 0.04);
-    }
-
-    .export-option input[type="radio"]:checked+.export-option-content {
-      border-color: #22c55e;
-      background: rgba(34, 197, 94, 0.08);
-      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
-    }
-
-    .export-option-icon {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1.25rem;
-      flex-shrink: 0;
-    }
-
-    .export-option-text {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .export-option-text strong {
-      color: #1e293b;
-      font-size: 0.9375rem;
-    }
-
-    .export-option-text small {
-      color: #64748b;
-      font-size: 0.8125rem;
-    }
-  </style>
-
   <script>
 
     // Column customization variables
@@ -3460,129 +3294,6 @@
       document.getElementById('filterJenisPembayaran').value = '';
     }
 
-    // Export Document Function
-    let pendingExportFormat = 'excel';
-    let selectedVendorExportMode = 'multi_sheet';
-
-    // Get unique vendor count from the page data
-    const rekapanByVendorData = @json($rekapanByVendor ?? []);
-    const currentMode = '{{ $mode ?? "normal" }}';
-    const currentVendorFilter = '{{ request("filter_vendor") ?? "" }}';
-
-    function getUniqueVendorCount() {
-      if (rekapanByVendorData && typeof rekapanByVendorData === 'object') {
-        return Object.keys(rekapanByVendorData).length;
-      }
-      return 0;
-    }
-
-    function exportDocument(format) {
-      pendingExportFormat = format;
-
-      // Check if we're in rekapan_table (Group Vendor) mode and NOT filtering by single vendor
-      const vendorCount = getUniqueVendorCount();
-      const isGroupVendorMode = currentMode === 'rekapan_table';
-      const hasVendorFilter = currentVendorFilter !== '';
-
-      // If in group vendor mode with multiple vendors and no specific vendor filter, show modal
-      if (isGroupVendorMode && vendorCount > 1 && !hasVendorFilter && format === 'excel') {
-        document.getElementById('vendorCountLabel').textContent = vendorCount + ' vendor';
-        openExportVendorModal();
-        return;
-      }
-
-      // Otherwise, export directly
-      doExport(format, hasVendorFilter ? 'single_vendor' : '');
-    }
-
-    function openExportVendorModal() {
-      document.getElementById('exportVendorModal').classList.add('show');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeExportVendorModal() {
-      document.getElementById('exportVendorModal').classList.remove('show');
-      document.body.style.overflow = '';
-    }
-
-    function selectExportMode(mode) {
-      selectedVendorExportMode = mode;
-      // Update radio button visual selection
-      document.querySelectorAll('input[name="export_mode_option"]').forEach(radio => {
-        radio.checked = (radio.value === mode);
-      });
-    }
-
-    function confirmVendorExport() {
-      closeExportVendorModal();
-      doExport(pendingExportFormat, selectedVendorExportMode);
-    }
-
-    function doExport(format, vendorMode) {
-      const form = document.getElementById('exportForm');
-      const formatInput = document.getElementById('exportFormat');
-      const columnsContainer = document.getElementById('exportColumnsContainer');
-      const vendorExportModeInput = document.getElementById('vendorExportMode');
-
-      // Set format and vendor export mode
-      formatInput.value = format;
-      vendorExportModeInput.value = vendorMode || '';
-
-      // === Sync current filter values from the filter form into the export form ===
-      const filterForm = document.getElementById('filterForm');
-      if (filterForm) {
-        // Basic filters
-        const searchVal = filterForm.querySelector('input[name="search"]');
-        const statusVal = filterForm.querySelector('select[name="status_pembayaran"]');
-        const yearVal = filterForm.querySelector('select[name="year"]');
-        const monthVal = filterForm.querySelector('select[name="month"]');
-        const dateVal = filterForm.querySelector('input[name="date"]');
-
-        form.querySelector('input[name="search"]').value = searchVal ? searchVal.value : '';
-        form.querySelector('input[name="status_pembayaran"]').value = statusVal ? statusVal.value : '';
-        form.querySelector('input[name="year"]').value = yearVal ? yearVal.value : '';
-        form.querySelector('input[name="month"]').value = monthVal ? monthVal.value : '';
-        form.querySelector('input[name="date"]').value = dateVal ? dateVal.value : '';
-
-        // Advanced filters
-        const advancedFilters = ['filter_vendor', 'filter_kategori', 'filter_jenis_dokumen', 'filter_jenis_sub_pekerjaan', 'filter_kebun', 'filter_jenis_pembayaran', 'filter_bagian'];
-        advancedFilters.forEach(function (filterName) {
-          const sourceEl = filterForm.querySelector('[name="' + filterName + '"]');
-          const targetEl = form.querySelector('input[name="' + filterName + '"]');
-          if (targetEl) {
-            targetEl.value = sourceEl ? sourceEl.value : '';
-          }
-        });
-      }
-
-      // Sync the current view mode
-      form.querySelector('input[name="mode"]').value = currentMode || 'normal';
-
-      // Clear previous columns
-      columnsContainer.innerHTML = '';
-
-      // Pakai renderColumnsOrder — urutan yang benar-benar dipakai <thead> tabel
-      // (beku kiri -> bebas -> beku kanan). selectedColumnsOrder menyimpan urutan
-      // pilihan asli user dan berbeda begitu ada kolom tengah yang dibekukan,
-      // sehingga memakainya membuat urutan kolom export tidak cocok dengan layar.
-      const columnsToExport = (typeof renderColumnsOrder !== 'undefined' && renderColumnsOrder.length > 0)
-        ? renderColumnsOrder
-        : null;
-
-      if (columnsToExport) {
-        columnsToExport.forEach(function (col) {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'columns[]';
-          input.value = col;
-          columnsContainer.appendChild(input);
-        });
-      }
-      // If no columns selected, let backend use defaults
-
-      // Submit form
-      form.submit();
-    }
   </script>
 
   @if($mode != 'rekapan_table')
