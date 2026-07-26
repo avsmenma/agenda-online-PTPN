@@ -113,8 +113,7 @@ Route::get('/', function () {
 Route::get('/api/welcome-message', [WelcomeMessageController::class, 'getMessage'])->middleware('auth');
 
 // Route API check-updates (4 role) DIHAPUS 2026-07-09: pemanggil satu-satunya
-// blok notifikasi popup lama di layout yang rusak (SyntaxError) & tak pernah jalan;
-// auto-refresh tabel kini via partials/auto-refresh-documents.
+// blok notifikasi popup lama di layout yang rusak (SyntaxError) & tak pernah jalan.
 
 // Backward compatibility routes removed — old check-updates routes were redundant (Phase 2 cleanup)
 

@@ -58,13 +58,13 @@ Dipakai banyak role sekaligus. Menghapusnya merusak halaman yang tidak sedang An
 ```
 resources/views/partials/
   _inlineEditEngine.blade.php        mesin inline-edit (PATCH /documents/{id}/inline-update)
-  _activeCellNav.blade.php           navigasi sel keyboard
-  virtual-document-table.blade.php   infinite scroll (virtual_chunk)
-  _compactDocumentTable.blade.php
+  _activeCellNav.blade.php           navigasi sel keyboard (dipakai role bagian)
   compact-document-ui.blade.php      dimuat GLOBAL dari layouts/app.blade.php
-  document-handler-select.blade.php  dropdown Pengurus Dokumen
   document-workbench-ui.blade.php    panel Detail Cepat
 ```
+> Catatan: `virtual-document-table`, `_compactDocumentTable`, `document-handler-select`,
+> `auto-refresh-documents` **sudah DIHAPUS** (audit dead-code 2026-07-26) — konsumennya lenyap
+> saat rollout Tabulator; forward "Pengurus Dokumen" kini di `document-tabulator.js`.
 
 `compact-document-ui` dan `document-workbench-ui` bersifat **global** — mengubahnya
 menyentuh semua role sekaligus. Perubahan di sini wajib aditif (tambah, jangan ubah
