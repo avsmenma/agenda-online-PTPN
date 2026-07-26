@@ -271,11 +271,24 @@ keputusan user (2026-07-26) — `exportRekapan`, route `reports.pembayaran.expor
 dead code `exportToPDF`/`getColumnValue`/`getExportCellValue` + view
 `pembayaranNEW/dokumens/export-pdf.blade.php`. Export kini flat 1-sheet lewat SATU dropdown
 Export. `DocumentExporter` tetap menyimpan kapabilitas multi-sheet generik (tested, tanpa
-pemakai aktif). Sisa dead export TERPISAH (di luar scope ini, belum disentuh): perpajakan
-`exportToPDF()` yatim + `app/Exports/RekapanKeterlambatanExport.php` (maatwebsite).
+pemakai aktif).
 
 - Spec/plan: `docs/superpowers/specs/2026-07-26-fitur-export-bersama-design.md`,
   `docs/superpowers/plans/2026-07-26-fitur-export-bersama.md`
+
+**Audit dead-code 2026-07-26 (Tier 1 + Tier 3, disetujui user).** Dihapus permanen (grep-gated,
+suite hijau): class mati `app/Exports/RekapanKeterlambatanExport.php` (satu-satunya konsumen
+`maatwebsite/excel` di `app/`), `app/Helpers/TerbilangHelper.php`, `app/Events/DocumentSent.php`,
+`app/Events/DocumentReturned.php`, `app/Http/Requests/SetDeadlineRequest.php`; method mati
+`DashboardPerpajakanController::exportToPDF()` + view `perpajakan/export/pdf.blade.php`; dua `use`
+mati di `TeamVerifikasiController` (`Bidang`, `DocumentReturned`); dua root logo duplikat
+(`logoPTPNNew.png`/`logo_ptpn.png` — asli di `public/images/`); output build Vite basi
+`public/build/*` (`@vite` tak pernah dipanggil). **Paket `maatwebsite/excel` kini NOL pemakai di
+`app/`** — penghapusan dari composer = keputusan terpisah (butuh composer di server). BELUM dihapus
+(ditawarkan, user pilih tunda): 4 partial mati sisa rollout (`virtual-document-table`,
+`_compactDocumentTable`, `document-handler-select`, `auto-refresh-documents` — daftar "HARAM dihapus"
+§2 di atas SUDAH BASI untuk ketiga yang pertama), config Vite/npm (`vite.config.js`/`package.json`/
+`resources/{css,js}`), folder untracked `Agenda Online PTPN Design System/`.
 
 **Rollout Tabulator SELESAI untuk semua role non-`bagian`** (operator/akutansi/perpajakan/
 verifikasi/pembayaran — Rollout 1-4 tuntas 2026-07-25). `bagian` sengaja DILEWATI atas
