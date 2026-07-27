@@ -3395,8 +3395,7 @@
         </a>
         @elseif($isPaymentShell)
         @php
-          $isPaymentAssistantActive = request()->routeIs('pembayaran.asisten-virtual*');
-          $isPaymentDashboardActive = !$isPaymentAssistantActive && (request()->routeIs('dashboard.pembayaran') || request()->is('*dashboard/pembayaran*'));
+          $isPaymentDashboardActive = (request()->routeIs('dashboard.pembayaran') || request()->is('*dashboard/pembayaran*'));
           $isPaymentDelayActive = request()->routeIs('reports.pembayaran.delays') || request()->is('*rekapan-keterlambatan*');
           $isPaymentReportActive = request()->routeIs('reports.pembayaran.*') || request()->is('*reports/pembayaran*');
         @endphp
@@ -3413,15 +3412,6 @@
             <polyline points="14,2 14,8 20,8"/>
           </svg>
           Daftar Pembayaran
-        </a>
-        <a href="{{ route('pembayaran.asisten-virtual') }}" class="owner-nav-item {{ $isPaymentAssistantActive ? 'active' : '' }}" title="Asisten Virtual">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
-            <rect x="7" y="8" width="10" height="8" rx="3"/>
-            <path d="M12 4v4"/>
-            <path d="M8.5 12h.01M15.5 12h.01"/>
-            <path d="M9 16v2h6v-2"/>
-          </svg>
-          Asisten Virtual
         </a>
         <a href="{{ route('reports.pembayaran.delays') }}" class="owner-nav-item {{ $isPaymentDelayActive ? 'active' : '' }}" title="Rekap Keterlambatan">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
@@ -3600,21 +3590,6 @@
             <path d="M8 21h8M12 17v4"/>
           </svg>
           Laporan Cash Bank
-        </a>
-        {{-- 6. Asisten Virtual --}}
-        @php
-          $isAsistenVirtualActive = request()->routeIs('owner.asisten-virtual');
-        @endphp
-        <a href="{{ route('owner.asisten-virtual') }}" class="owner-nav-item {{ ($menuAsistenVirtual ?? '') ?: ($isAsistenVirtualActive ? 'active' : '') }}" title="Asisten Virtual">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
-            <path d="M12 8V4H8"/>
-            <rect x="4" y="8" width="16" height="12" rx="4"/>
-            <path d="M2 14h2M20 14h2"/>
-            <circle cx="9" cy="14" r="1"/>
-            <circle cx="15" cy="14" r="1"/>
-            <path d="M10 18h4"/>
-          </svg>
-          Asisten Virtual
         </a>
         {{-- 7. Audit Trail --}}
         @php
@@ -5921,36 +5896,6 @@ document.addEventListener('DOMContentLoaded', function() {
       setTimeout(function () { removeSkeleton(wrapper); }, 100);
     }
   });
-})();
-</script>
-
-<script>
-(function () {
-  function clearVirtualAssistantChatStorage() {
-    try {
-      Object.keys(localStorage)
-        .filter(function (key) { return key.indexOf('virtual_assistant_chat_') === 0; })
-        .forEach(function (key) { localStorage.removeItem(key); });
-    } catch (error) {
-      // Ignore storage failures; logout must never be blocked by UI cleanup.
-    }
-  }
-
-  document.addEventListener('submit', function (event) {
-    var form = event.target;
-    if (!form || !form.action) return;
-    if (String(form.action).indexOf('/logout') !== -1) {
-      clearVirtualAssistantChatStorage();
-    }
-  }, true);
-
-  document.addEventListener('click', function (event) {
-    var link = event.target && event.target.closest ? event.target.closest('a[href]') : null;
-    if (!link) return;
-    if (String(link.href).indexOf('/logout') !== -1) {
-      clearVirtualAssistantChatStorage();
-    }
-  }, true);
 })();
 </script>
 

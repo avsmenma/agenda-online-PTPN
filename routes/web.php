@@ -17,7 +17,6 @@ use App\Http\Controllers\AutocompleteController;
 use App\Http\Controllers\WelcomeMessageController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\OwnerDashboardController;
-use App\Http\Controllers\OwnerVirtualAssistantController;
 use App\Http\Controllers\BulkOperationController;
 
 /*
@@ -132,23 +131,6 @@ Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'dashb
     ->middleware('auth', 'role:admin,pembayaran')
     ->name('dashboard.pembayaran');
 
-Route::get('dashboard/pembayaran/asisten-virtual', [OwnerVirtualAssistantController::class, 'pembayaranIndex'])
-    ->middleware('auth', 'role:admin,pembayaran')
-    ->name('pembayaran.asisten-virtual');
-
-Route::post('dashboard/pembayaran/asisten-virtual/chat', [OwnerVirtualAssistantController::class, 'chat'])
-    ->middleware('auth', 'role:admin,pembayaran')
-    ->name('pembayaran.asisten-virtual.chat');
-
-Route::post('dashboard/pembayaran/asisten-virtual/{interaction}/feedback', [OwnerVirtualAssistantController::class, 'feedback'])
-    ->middleware('auth', 'role:admin,pembayaran')
-    ->name('pembayaran.asisten-virtual.feedback');
-
-
-
-
-
-
 // Dashboard Team Akutansi & Perpajakan
 Route::get('dashboard/akutansi', [DashboardAkutansiController::class, 'dashboard'])
     ->middleware('auth', 'role:admin,akutansi')
@@ -188,18 +170,6 @@ Route::get('owner/dokumen', [OwnerDashboardController::class, 'index'])
     ->name('owner.dokumen');
 
 // Route owner/dokumen/filter DIHAPUS 2026-07-11: nol pemanggil frontend.
-
-Route::get('owner/asisten-virtual', [OwnerVirtualAssistantController::class, 'index'])
-    ->middleware('auth', 'role:admin,owner')
-    ->name('owner.asisten-virtual');
-
-Route::post('owner/asisten-virtual/chat', [OwnerVirtualAssistantController::class, 'chat'])
-    ->middleware('auth', 'role:admin,owner')
-    ->name('owner.asisten-virtual.chat');
-
-Route::post('owner/asisten-virtual/{interaction}/feedback', [OwnerVirtualAssistantController::class, 'feedback'])
-    ->middleware('auth', 'role:admin,owner')
-    ->name('owner.asisten-virtual.feedback');
 
 // Redirect old dashboard URL to home
 Route::get('owner/dashboard', fn() => redirect()->route('owner.home'))
@@ -612,16 +582,6 @@ Route::middleware(['auth', 'role:programmer'])
         // Programmer Audit Trail - Log aktivitas sensitif programmer
         Route::get('/programmer-audit-trail', [\App\Http\Controllers\ProgrammerLogController::class, 'index'])
             ->name('programmer-audit-trail');
-
-        // Evaluasi Asisten Virtual - feedback loop dan test case AI
-        Route::get('/assistant-evaluation', [\App\Http\Controllers\ProgrammerAssistantEvaluationController::class, 'index'])
-            ->name('assistant-evaluation');
-        Route::get('/assistant-evaluation/export', [\App\Http\Controllers\ProgrammerAssistantEvaluationController::class, 'export'])
-            ->name('assistant-evaluation.export');
-        Route::post('/assistant-evaluation/{interaction}/fixed', [\App\Http\Controllers\ProgrammerAssistantEvaluationController::class, 'markFixed'])
-            ->name('assistant-evaluation.fixed');
-        Route::post('/assistant-evaluation/test-cases', [\App\Http\Controllers\ProgrammerAssistantEvaluationController::class, 'storeTestCase'])
-            ->name('assistant-evaluation.test-cases.store');
 
         Route::get('/2fa-reset-requests', [\App\Http\Controllers\TwoFactorResetController::class, 'index'])
             ->name('2fa-reset-requests.index');
