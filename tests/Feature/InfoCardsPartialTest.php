@@ -13,7 +13,12 @@ class InfoCardsPartialTest extends TestCase
 {
     private function render(array $cards): string
     {
-        return view('partials._infoCards', ['cards' => $cards])->render();
+        $html = view('partials._infoCards', ['cards' => $cards])->render();
+
+        // Buang blok <style> agar assertion penghitungan (substr_count) hanya
+        // mengukur MARKUP kartu, bukan selector CSS yang bernama sama
+        // (mis. .wd-card-value / .wd-card--active di dalam <style>).
+        return preg_replace('/<style\b[^>]*>.*?<\/style>/s', '', $html);
     }
 
     public function test_href_jadi_anchor_tanpa_href_jadi_div(): void
