@@ -249,8 +249,7 @@ SATU-SATUNYA role yang mengikutkan dokumen hasil import CSV di query Tabulator t
 no-op (Tabulator). **KEEP**: `buildPembayaranDashboardQuery()`/`applyPembayaranDashboardSearch()`
 (dipakai jalur Tabulator baru), `getDocumentDetail()`+helper terkait (tombol mata mode
 rekapan-vendor), import CSV (`CsvImportController`), export bersama (`exportDocuments` +
-trait `ExportsDocuments` + `App\Support\DocumentExporter`), mode `rekapan_table`,
-asisten-virtual (`OwnerVirtualAssistantController`).
+trait `ExportsDocuments` + `App\Support\DocumentExporter`), mode `rekapan_table`.
 
 - Spec/plan: `docs/superpowers/specs/2026-07-25-rollout-tabulator-pembayaran-design.md`,
   `docs/superpowers/plans/2026-07-25-rollout-tabulator-pembayaran.md`
@@ -287,6 +286,18 @@ menerima `columns[]` sejak fitur export bersama di atas. Berlaku otomatis di 5 r
 keuangan (engine bersama).
 
 - Spec: `docs/superpowers/specs/2026-07-27-export-pilih-kolom-design.md`
+
+**Fitur Asisten Virtual DIHAPUS TOTAL 2026-07-27** (keputusan user, bukan sekadar
+dead-code). Seluruh kode dihapus: 17 file (controller, service, model, command
+`assistant:test`, `config/asisten_virtual.php`, 2 view) + 6 migrasi, plus 6 berkas
+bersama dibersihkan (routes, kedua layout, dashboard programmer, login,
+`.env.example`). Grep-gate nol residu kode, suite 245/245 hijau. 2 tabel DB
+(`virtual_assistant_interactions`/`virtual_assistant_test_cases`) di-dump ke `.sql`
+lalu **DROP** di server (bukan migrate rollback). Referensi
+`asisten-virtual (OwnerVirtualAssistantController)` yang sebelumnya ada di daftar
+**KEEP** paragraf Pembayaran (Rollout 4) di atas sudah dihapus — tak lagi berlaku.
+
+- Plan: `docs/superpowers/plans/2026-07-27-hapus-asisten-virtual.md`
 
 **Audit dead-code 2026-07-26 (Tier 1 + Tier 3, disetujui user).** Dihapus permanen (grep-gated,
 suite hijau): class mati `app/Exports/RekapanKeterlambatanExport.php` (satu-satunya konsumen
