@@ -482,6 +482,15 @@
       transition: var(--transition-fast);
     }
 
+    /* Fix "ikon search dobel": partial global compact-document-ui memasang
+       `.filter-section input { padding: .38rem .68rem !important }` yang memangkas
+       padding-kiri, sehingga placeholder "Cari…" menindih ikon kaca pembesar
+       background (tampak seolah 2 ikon). Selektor ini (specificity 0,2,1 + !important)
+       mengembalikan ruang ikon; scoped pembayaran, tak menyentuh partial global. */
+    .filter-section .filter-search input {
+      padding-left: 2.75rem !important;
+    }
+
     .filter-search input:focus {
       outline: none;
       border-color: var(--brand-primary);
