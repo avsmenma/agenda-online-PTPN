@@ -61,6 +61,8 @@ resources/views/partials/
   _activeCellNav.blade.php           navigasi sel keyboard (dipakai role bagian)
   compact-document-ui.blade.php      dimuat GLOBAL dari layouts/app.blade.php
   document-workbench-ui.blade.php    panel Detail Cepat
+  _infoCards.blade.php               kartu informasi bersama (stat card, data-driven $cards)
+                                     dipakai dashboard.workflow (4 role keuangan) + view bagian
 ```
 > Catatan: `virtual-document-table`, `_compactDocumentTable`, `document-handler-select`,
 > `auto-refresh-documents` **sudah DIHAPUS** (audit dead-code 2026-07-26) — konsumennya lenyap
@@ -327,6 +329,22 @@ sebagai program terpisah bila diperlukan: kustomisasi kolom masih diduplikasi pe
 `document-role-filter-toolbar`) — penyatuannya belum dikerjakan, meski pola freeze native
 Tabulator (dulu "freeze ala pembayaran, modal 2-tab") kini justru sudah jadi acuan di
 pembayaran sendiri.
+
+**Kartu informasi bagian DISATUKAN ke kartu keuangan — SELESAI, ter-deploy & QA lolos
+2026-07-28.** Kartu bespoke `.bic-*` di `bagian/dokumens/daftarDokumen.blade.php` diganti
+partial bersama baru **`resources/views/partials/_infoCards.blade.php`** (data-driven `$cards`,
+membawa CSS `.wd-card*` yang dulu inline di `dashboard/workflow.blade.php`). Satu sumber kartu
+untuk 5 role: 4 role keuangan (`dashboard.workflow`, refaktor behavior-preserving) + bagian
+(3 kartu, klik-filter `?status=` + sorotan kartu aktif via `.wd-card--active` dipertahankan).
+Kontrak `$cards`: `label`/`value`(int)/`sub`/`icon`(SVG mentah `{!! !!}`)/`iconBg` wajib,
+`valueColor`(default `#1a2340`)/`href`(ada→`<a>`, tidak→`<div>`)/`active`(bool) opsional; kelas
+`.wd-cards--cols-{N}` dari `count($cards)`. **CSS `.bic-*`/`.bagian-info-cards` DIHAPUS TUNTAS**
+(grep-gate nol; sisa `bic-` hanyalah `cubic-bezier`). Kartu bagian kini **selalu putih termasuk
+tema gelap** (varian `.dark .bic-*` sengaja dihapus atas keputusan user) & tooltip `title=` lama
+hilang (kartu keuangan pun tak punya). Sebelum menyalin markup kartu ke role lain: pakai
+`_infoCards`, JANGAN duplikasi CSS kartu.
+- Spec/plan: `docs/superpowers/specs/2026-07-27-satukan-kartu-info-bagian-design.md`,
+  `docs/superpowers/plans/2026-07-27-satukan-kartu-info-bagian.md`
 
 ## 8. Hal Yang harus bisa dilakukan pada tabel tabulator
 
