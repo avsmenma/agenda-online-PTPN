@@ -50,67 +50,48 @@
     $card3IconBg  = $card3IconBg  ?? '#ecfdf5';
     $fourthColor  = $fourthColor  ?? ($fourthIsReturn ? '#ef4444' : '#f59e0b');
     $fourthIconBg = $fourthIconBg ?? ($fourthIsReturn ? '#fef2f2' : '#fffbeb');
+
+    // Bangun array kartu untuk partial bersama _infoCards (output identik markup lama).
+    $cards = [
+      [
+        'label'  => 'Total Dokumen Agenda',
+        'value'  => $totalDokumenAgenda,
+        'sub'    => 'seluruh dokumen sistem',
+        'icon'   => '<svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>',
+        'iconBg' => '#f0f4ff',
+        'href'   => route($cfg['docRouteName']),
+      ],
+      [
+        'label'  => 'Total Dokumen ' . $card2Label,
+        'value'  => $card2Value,
+        'sub'    => $card2Sub,
+        'icon'   => '<svg viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>',
+        'iconBg' => '#ecfeff',
+        'href'   => route($cfg['docRouteName']),
+      ],
+      [
+        'label'      => 'Total Dokumen ' . $card3Label,
+        'value'      => $card3Value,
+        'sub'        => $card3Sub,
+        'icon'       => '<svg viewBox="0 0 24 24" fill="none" stroke="' . $card3Color . '" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
+        'iconBg'     => $card3IconBg,
+        'valueColor' => $card3Color,
+        'href'       => route($cfg['docRouteName'], ['status' => 'terkirim']),
+      ],
+      [
+        'label'      => 'Total Dokumen ' . $fourthLabel,
+        'value'      => $fourthCount,
+        'sub'        => $fourthSub,
+        'icon'       => $fourthIsReturn
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="' . $fourthColor . '" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 00-4-4H4"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="' . $fourthColor . '" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+        'iconBg'     => $fourthIconBg,
+        'valueColor' => $fourthColor,
+        // tanpa href → kartu ke-4 tetap <div> (sama seperti sekarang)
+      ],
+    ];
   @endphp
-  <div class="wd-cards">
-    {{-- Total Dokumen Agenda --}}
-    <a href="{{ route($cfg['docRouteName']) }}" class="wd-card">
-      <div class="wd-card-label">Total Dokumen Agenda</div>
-      <div class="wd-card-icon" style="background:#f0f4ff">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
-          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-          <polyline points="14,2 14,8 20,8"/>
-        </svg>
-      </div>
-      <div class="wd-card-value">{{ number_format($totalDokumenAgenda, 0, ',', '.') }}</div>
-      <div class="wd-card-sub">seluruh dokumen sistem</div>
-    </a>
-
-    {{-- Kartu 2 (default: Total Dokumen Role; pembayaran: Belum Siap Bayar) --}}
-    <a href="{{ route($cfg['docRouteName']) }}" class="wd-card">
-      <div class="wd-card-label">Total Dokumen {{ $card2Label }}</div>
-      <div class="wd-card-icon" style="background:#ecfeff">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2">
-          <path d="M9 11l3 3L22 4"/>
-          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-        </svg>
-      </div>
-      <div class="wd-card-value">{{ number_format($card2Value, 0, ',', '.') }}</div>
-      <div class="wd-card-sub">{{ $card2Sub }}</div>
-    </a>
-
-    {{-- Kartu 3 (default: Total Dokumen Selesai; pembayaran: Siap Bayar) --}}
-    <a href="{{ route($cfg['docRouteName'], ['status' => 'terkirim']) }}" class="wd-card">
-      <div class="wd-card-label">Total Dokumen {{ $card3Label }}</div>
-      <div class="wd-card-icon" style="background:{{ $card3IconBg }}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="{{ $card3Color }}" stroke-width="2">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-      </div>
-      <div class="wd-card-value" style="color:{{ $card3Color }}">{{ number_format($card3Value, 0, ',', '.') }}</div>
-      <div class="wd-card-sub">{{ $card3Sub }}</div>
-    </a>
-
-    {{-- Kartu ke-4: Dikembalikan / Hari Ini --}}
-    <div class="wd-card">
-      <div class="wd-card-label">Total Dokumen {{ $fourthLabel }}</div>
-      <div class="wd-card-icon" style="background:{{ $fourthIconBg }}">
-        @if($fourthIsReturn)
-          <svg viewBox="0 0 24 24" fill="none" stroke="{{ $fourthColor }}" stroke-width="2">
-            <polyline points="9 14 4 9 9 4"/>
-            <path d="M20 20v-7a4 4 0 00-4-4H4"/>
-          </svg>
-        @else
-          <svg viewBox="0 0 24 24" fill="none" stroke="{{ $fourthColor }}" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-        @endif
-      </div>
-      <div class="wd-card-value" style="color:{{ $fourthColor }}">{{ number_format($fourthCount, 0, ',', '.') }}</div>
-      <div class="wd-card-sub">{{ $fourthSub }}</div>
-    </div>
-  </div>
+  @include('partials._infoCards', ['cards' => $cards])
 
   {{-- ====================== CHART AREA ====================== --}}
   <div class="wd-charts">
@@ -214,34 +195,6 @@
 <style>
   .wd-wrap { font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 0.25rem 0.1rem 2rem; }
 
-  /* Cards — gaya "kartu informasi" mengikuti /owner/home (stat-card) */
-  .wd-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
-  .wd-card {
-    position: relative; overflow: hidden;
-    background: #fff; border: 1px solid #e8ecf4; border-radius: 14px;
-    padding: 18px 18px 14px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
-    text-decoration: none; color: #1a2340;
-    transition: transform .2s, box-shadow .2s;
-    animation: wdFadeUp .4s ease both;
-  }
-  .wd-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,.09); color: #1a2340; }
-  .wd-card:nth-child(1) { animation-delay: .05s; }
-  .wd-card:nth-child(2) { animation-delay: .1s; }
-  .wd-card:nth-child(3) { animation-delay: .15s; }
-  .wd-card:nth-child(4) { animation-delay: .2s; }
-
-  .wd-card-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
-    color: #a0aec0; margin-bottom: 10px; padding-right: 44px; line-height: 1.3; }
-  .wd-card-value { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 700;
-    color: #1a2340; line-height: 1; margin-bottom: 6px; }
-  .wd-card-sub { font-size: 11px; font-weight: 500; color: #a0aec0; }
-  .wd-card-icon { position: absolute; right: 16px; top: 16px; width: 36px; height: 36px; border-radius: 9px;
-    display: flex; align-items: center; justify-content: center; }
-  .wd-card-icon svg { width: 18px; height: 18px; }
-
-  @keyframes wdFadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-
   /* Charts */
   .wd-charts { display: grid; grid-template-columns: 1.9fr 1fr; gap: 0.85rem; margin-bottom: 1rem; }
   .wd-panel { background: #fff; border: 1px solid #e8eef4; border-radius: 16px; padding: 1.1rem 1.2rem;
@@ -297,8 +250,7 @@
     color: #083E40; text-decoration: none; white-space: nowrap; }
   .wd-procbtn:hover { color: #0d5b59; }
 
-  @media (max-width: 1100px) { .wd-charts { grid-template-columns: 1fr; } .wd-cards { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 560px) { .wd-cards { grid-template-columns: 1fr; } }
+  @media (max-width: 1100px) { .wd-charts { grid-template-columns: 1fr; } }
 </style>
 
 @push('scripts')
