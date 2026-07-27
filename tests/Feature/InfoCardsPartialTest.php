@@ -54,4 +54,19 @@ class InfoCardsPartialTest extends TestCase
         $this->assertStringContainsString('color:#1a2340', $html);
         $this->assertStringContainsString('color:#10b981', $html);
     }
+
+    public function test_partial_membawa_blok_style_kartu(): void
+    {
+        // Guard regresi: CSS .wd-card* WAJIB ikut di partial (Task 2 memindahkannya
+        // keluar dari workflow.blade.php). Tanpa guard ini, penghapusan blok <style>
+        // lolos diam-diam — pernah terjadi sekali di riwayat task ini.
+        $raw = view('partials._infoCards', ['cards' => [
+            ['label' => 'A', 'value' => 1, 'sub' => 's', 'icon' => '<svg></svg>', 'iconBg' => '#fff'],
+        ]])->render();
+
+        $this->assertStringContainsString('<style', $raw);
+        $this->assertStringContainsString('.wd-card {', $raw);
+        $this->assertStringContainsString('.wd-card--active', $raw);
+        $this->assertStringContainsString('@keyframes wdFadeUp', $raw);
+    }
 }
