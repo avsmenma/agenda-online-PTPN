@@ -1394,103 +1394,226 @@
   })();
 
   // === Task 2 (fitur export bersama, ADITIF): tombol Export toolbar ===
-  // Muncul HANYA bila CFG.exportUrl diisi controller (dikabelkan per-role di
-  // Task 3-4). Role yang belum diwire (SEMUA role saat ini) tak menyetel
-  // properti ini sama sekali → cabang ini tak pernah berjalan, toolbar
-  // byte-identik dengan sebelumnya (CLAUDE.md §6 gerbang kritis: engine
-  // bersama, perubahan wajib aditif).
+  // Muncul HANYA bila CFG.exportUrl diisi (dikabelkan per-role). Klik "Export"
+  // membuka modal terpadu: pilih format (Excel/PDF) + pilih kolom (checkbox).
+  // Menggantikan dropdown Excel/PDF pure-CSS lama (rapuh di layout jQuery+BS5).
+  // Modal self-contained: CSS scoped .dxm-* disuntik sekali, toggle kelas .show,
+  // TANPA JS dropdown/modal Bootstrap. Berlaku 5 role (engine bersama, aditif).
   (function wireExportButton() {
     if (!CFG.exportUrl) return;
     const toolbar = document.querySelector('.tabulator-toolbar');
     if (!toolbar) return;
 
-    // Kolom DATA yang SEDANG terlihat di tabel (pilihan WYSIWYG user via
-    // Kustomisasi Kolom) — field kosong (kolom nomor baris 'rownum') dan
-    // kolom aksi tetap 'handler' (Pengurus Dokumen, bukan data dokumen)
-    // disingkirkan, sesuai brief Task 2 ("excluding row-number/action columns").
-    function visibleColumnFields() {
-      // Fix round 1 (review): kolom TETAP per-role (CFG.extraColumns — mis.
-      // akutansi/perpajakan 'deadline'/'status_badge') juga disingkirkan, bukan
-      // cuma 'handler'. Nilai baris kolom-kolom itu berupa objek/array (server
-      // computed), sehingga DocumentExporter::cellValue() men-cast-nya jadi
-      // string "Array" bila lolos ke columns[] — columns[] wajib HANYA kolom
-      // data biasa yang WYSIWYG (kustomisasi kolom user). Set kosong bila
-      // CFG.extraColumns tak diisi (role tanpa extraColumns) → tak ada efek.
+    const PDF_SOFT_LIMIT = 9; // ambang catatan A4 (lunak, tak memblokir).
+
+    // Kandidat kolom export = kolom data biasa (WYSIWYG kustomisasi kolom user).
+    // Sama seperti visibleColumnFields() lama TAPI tanpa saringan isVisible() —
+    // kolom tersembunyi tetap jadi opsi (tak tercentang default). Disingkirkan:
+    // kolom nomor baris (field kosong), kolom aksi 'handler', dan kolom tetap
+    // per-role (CFG.extraColumns — status_badge/deadline, nilainya objek server
+    // computed) yang tak boleh masuk columns[] (di-cast jadi "Array" oleh
+    // DocumentExporter::cellValue()). Mengembalikan {field, title, visible}.
+    function exportColumnCandidates() {
       const extraFields = new Set((CFG.extraColumns || []).map(function (ec) { return ec.field; }));
       let cols = [];
       try { cols = table.getColumns(); } catch (e) { return []; }
-      return cols
-        .filter(function (c) {
-          let field = null;
-          try { field = c.getField(); } catch (e) { field = null; }
-          if (!field || field === 'handler' || extraFields.has(field)) return false;
-          try { return c.isVisible(); } catch (e) { return true; }
-        })
-        .map(function (c) { return c.getField(); });
+      const out = [];
+      cols.forEach(function (c) {
+        let field = null;
+        try { field = c.getField(); } catch (e) { field = null; }
+        if (!field || field === 'handler' || extraFields.has(field)) return;
+        let title = field;
+        try { const def = c.getDefinition(); if (def && def.title) title = def.title; } catch (e) { /* fallback field */ }
+        let visible = true;
+        try { visible = c.isVisible(); } catch (e) { visible = true; }
+        out.push({ field: field, title: title, visible: visible });
+      });
+      return out;
     }
 
-    // URL = CFG.exportUrl + filter aktif (getFilterParams(), sama persis
-    // dgn yg dipakai request data tabel) + columns[]=<field kolom terlihat> + format.
-    function buildExportUrl(format) {
+    // URL = CFG.exportUrl + filter aktif (getFilterParams()) + columns[]=<field
+    // terpilih dari modal> + format. Beda dgn versi lama: field datang dari
+    // centang user, bukan otomatis dari kolom terlihat.
+    function buildExportUrl(format, fields) {
       const params = new URLSearchParams();
       const filterParams = getFilterParams();
       Object.keys(filterParams).forEach(function (key) { params.append(key, filterParams[key]); });
-      visibleColumnFields().forEach(function (field) { params.append('columns[]', field); });
+      (fields || []).forEach(function (field) { params.append('columns[]', field); });
       params.append('format', format);
       return CFG.exportUrl + '?' + params.toString();
     }
 
-    // Dropdown Export — TOGGLE MURNI-CSS, tak menyentuh JS dropdown Bootstrap.
-    // BUG "tombol Export tak berfungsi" di semua role: layout memuat jQuery +
-    // Bootstrap 5, dan (a) delegasi click data-api Bootstrap (data-bs-toggle=
-    // "dropdown") TIDAK men-toggle menu di sini, (b) memakai instance
-    // bootstrap.Dropdown pun BALAPAN — instance memasang listener auto-close
-    // sendiri yang kadang menutup menu seketika pada real mouse click (klik
-    // toggle → menu kedip lalu tertutup; terverifikasi via Playwright). Karena
-    // engine dipakai 5 layout role berbeda, kendalikan 100% sendiri: toggle
-    // kelas .show (CSS Bootstrap: .dropdown-menu.show → display:block), posisikan
-    // manual (tanpa Popper), tutup lewat handler klik-luar kita sendiri.
-    const wrap = document.createElement('div');
-    wrap.className = 'dropdown d-inline-block';
-    wrap.innerHTML =
-      '<button type="button" class="btn btn-outline-success dropdown-toggle" aria-expanded="false">' +
-      '<i class="fa-solid fa-file-export me-1"></i> Export</button>' +
-      '<ul class="dropdown-menu">' +
-      '<li><button type="button" class="dropdown-item" data-export-format="excel"><i class="fa-solid fa-file-excel me-2"></i>Excel</button></li>' +
-      '<li><button type="button" class="dropdown-item" data-export-format="pdf"><i class="fa-solid fa-file-pdf me-2"></i>PDF</button></li>' +
-      '</ul>';
-    const toggleBtn = wrap.querySelector('.dropdown-toggle');
-    const menuEl = wrap.querySelector('.dropdown-menu');
-    function openMenu() {
-      // Posisikan manual di bawah tombol (.dropdown = position:relative).
-      menuEl.style.position = 'absolute';
-      menuEl.style.top = '100%';
-      menuEl.style.left = '0';
-      menuEl.style.marginTop = '2px';
-      menuEl.style.zIndex = '3000';
-      menuEl.classList.add('show');
-      toggleBtn.setAttribute('aria-expanded', 'true');
+    // CSS scoped, disuntik sekali. Prefiks .dxm-* agar identik di 5 role tanpa
+    // bergantung pada .customization-modal (didefinisikan per-role di Blade).
+    if (!document.getElementById('docExportModalStyle')) {
+      const st = document.createElement('style');
+      st.id = 'docExportModalStyle';
+      st.textContent = [
+        '.dxm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;padding:2rem;overflow-y:auto;}',
+        '.dxm-overlay.show{display:flex;align-items:flex-start;justify-content:center;}',
+        '.dxm-card{background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,.25);margin:1rem;}',
+        '.dxm-head{padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;}',
+        '.dxm-head h3{margin:0;font-size:1.15rem;font-weight:600;color:#1f2937;display:flex;align-items:center;gap:.6rem;}',
+        '.dxm-head h3 i{color:#083E40;}',
+        '.dxm-close{background:none;border:none;font-size:1.35rem;color:#6b7280;cursor:pointer;line-height:1;padding:.25rem;}',
+        '.dxm-close:hover{color:#1f2937;}',
+        '.dxm-body{padding:1.25rem 1.5rem;overflow-y:auto;flex:1;}',
+        '.dxm-formats{display:flex;gap:1.25rem;margin-bottom:1rem;}',
+        '.dxm-formats label{display:flex;align-items:center;gap:.4rem;font-weight:600;color:#374151;cursor:pointer;}',
+        '.dxm-bar{display:flex;gap:.5rem;margin-bottom:.6rem;align-items:center;}',
+        '.dxm-count{margin-left:auto;font-size:.8rem;color:#6b7280;}',
+        '.dxm-mini{border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:8px;padding:.3rem .6rem;font-size:.8rem;cursor:pointer;}',
+        '.dxm-mini:hover{background:#f4f7fb;}',
+        '.dxm-list{border:1px solid #e5e7eb;border-radius:10px;max-height:40vh;overflow-y:auto;}',
+        '.dxm-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .75rem;border-bottom:1px solid #f1f5f9;}',
+        '.dxm-item:last-child{border-bottom:none;}',
+        '.dxm-item:hover{background:#f8fafc;}',
+        '.dxm-item label{margin:0;cursor:pointer;flex:1;color:#374151;}',
+        '.dxm-note{margin-top:.75rem;font-size:.82rem;color:#6b7280;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:.5rem .75rem;display:none;}',
+        '.dxm-note.show{display:block;}',
+        '.dxm-note.warn{color:#92400e;background:#fffbeb;border-color:#fde68a;}',
+        '.dxm-foot{padding:1rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:.6rem;}',
+        '.dxm-btn{border-radius:8px;padding:.5rem 1rem;font-weight:600;cursor:pointer;border:1px solid transparent;}',
+        '.dxm-btn-cancel{background:#fff;border-color:#d1d5db;color:#5a6a7b;}',
+        '.dxm-btn-cancel:hover{background:#f4f7fb;}',
+        '.dxm-btn-go{background:#083E40;color:#fff;}',
+        '.dxm-btn-go:hover{filter:brightness(1.1);}',
+        '.dxm-btn-go:disabled{opacity:.5;cursor:not-allowed;}'
+      ].join('');
+      document.head.appendChild(st);
     }
-    function closeMenu() {
-      menuEl.classList.remove('show');
-      toggleBtn.setAttribute('aria-expanded', 'false');
+
+    // Modal dibuat sekali, disuntik ke body; daftar kolom di-refresh tiap buka.
+    const overlay = document.createElement('div');
+    overlay.className = 'dxm-overlay';
+    overlay.innerHTML =
+      '<div class="dxm-card" role="dialog" aria-modal="true" aria-label="Export dokumen">' +
+        '<div class="dxm-head">' +
+          '<h3><i class="fa-solid fa-file-export"></i> Export Dokumen</h3>' +
+          '<button type="button" class="dxm-close" aria-label="Tutup"><i class="fa-solid fa-times"></i></button>' +
+        '</div>' +
+        '<div class="dxm-body">' +
+          '<div class="dxm-formats">' +
+            '<label><input type="radio" name="dxmFormat" value="excel" checked> <i class="fa-solid fa-file-excel"></i> Excel</label>' +
+            '<label><input type="radio" name="dxmFormat" value="pdf"> <i class="fa-solid fa-file-pdf"></i> PDF</label>' +
+          '</div>' +
+          '<div class="dxm-bar">' +
+            '<button type="button" class="dxm-mini" data-dxm-all><i class="fa-solid fa-check-double me-1"></i>Pilih Semua</button>' +
+            '<button type="button" class="dxm-mini" data-dxm-none><i class="fa-solid fa-times me-1"></i>Kosongkan</button>' +
+            '<span class="dxm-count" data-dxm-count></span>' +
+          '</div>' +
+          '<div class="dxm-list" data-dxm-list></div>' +
+          '<div class="dxm-note" data-dxm-note></div>' +
+        '</div>' +
+        '<div class="dxm-foot">' +
+          '<button type="button" class="dxm-btn dxm-btn-cancel" data-dxm-cancel>Batal</button>' +
+          '<button type="button" class="dxm-btn dxm-btn-go" data-dxm-go><i class="fa-solid fa-download me-1"></i>Export</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    const listEl = overlay.querySelector('[data-dxm-list]');
+    const noteEl = overlay.querySelector('[data-dxm-note]');
+    const countEl = overlay.querySelector('[data-dxm-count]');
+    const goBtn = overlay.querySelector('[data-dxm-go]');
+
+    function selectedFormat() {
+      const r = overlay.querySelector('input[name="dxmFormat"]:checked');
+      return r ? r.value : 'excel';
     }
-    toggleBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      menuEl.classList.contains('show') ? closeMenu() : openMenu();
+    function checkedFields() {
+      return Array.prototype.slice.call(listEl.querySelectorAll('input[type="checkbox"]:checked'))
+        .map(function (cb) { return cb.value; });
+    }
+    // Perbarui: tombol Export nonaktif bila 0 kolom; catatan A4 hanya untuk PDF.
+    function refreshState() {
+      const n = checkedFields().length;
+      goBtn.disabled = n === 0;
+      countEl.textContent = n + ' kolom dipilih';
+      if (selectedFormat() === 'pdf') {
+        noteEl.classList.add('show');
+        if (n > PDF_SOFT_LIMIT) {
+          noteEl.classList.add('warn');
+          noteEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i>' + n + ' kolom dipilih. Kertas A4 landscape mungkin tidak muat — disarankan &plusmn; &le; ' + PDF_SOFT_LIMIT + ' kolom agar terbaca.';
+        } else {
+          noteEl.classList.remove('warn');
+          noteEl.innerHTML = '<i class="fa-solid fa-circle-info me-1"></i>Kertas A4 landscape — pilih secukupnya (&plusmn; &le; ' + PDF_SOFT_LIMIT + ' kolom) agar muat &amp; terbaca.';
+        }
+      } else {
+        noteEl.classList.remove('show');
+        noteEl.classList.remove('warn');
+      }
+    }
+    // Bangun daftar checkbox via DOM props (bukan innerHTML) — aman dari
+    // karakter khusus pada field/label.
+    function renderList() {
+      const cands = exportColumnCandidates();
+      listEl.innerHTML = '';
+      if (!cands.length) {
+        const empty = document.createElement('div');
+        empty.className = 'dxm-item';
+        empty.style.cssText = 'color:#6b7280;';
+        empty.textContent = 'Tidak ada kolom untuk diexport.';
+        listEl.appendChild(empty);
+        return;
+      }
+      cands.forEach(function (c, i) {
+        const id = 'dxmCol' + i;
+        const row = document.createElement('div');
+        row.className = 'dxm-item';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.id = id;
+        cb.value = c.field;
+        cb.checked = c.visible;
+        const lab = document.createElement('label');
+        lab.setAttribute('for', id);
+        lab.textContent = c.title;
+        row.appendChild(cb);
+        row.appendChild(lab);
+        listEl.appendChild(row);
+      });
+    }
+    function openModal() {
+      renderList();
+      const ex = overlay.querySelector('input[name="dxmFormat"][value="excel"]');
+      if (ex) ex.checked = true; // default excel tiap buka.
+      refreshState();
+      overlay.classList.add('show');
+    }
+    function closeModal() { overlay.classList.remove('show'); }
+
+    overlay.addEventListener('change', function (e) {
+      if (e.target && (e.target.name === 'dxmFormat' || e.target.type === 'checkbox')) refreshState();
     });
-    // Tutup saat klik di luar wrapper.
-    document.addEventListener('click', function (e) {
-      if (!wrap.contains(e.target)) closeMenu();
+    overlay.querySelector('[data-dxm-all]').addEventListener('click', function () {
+      listEl.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { cb.checked = true; });
+      refreshState();
     });
-    wrap.addEventListener('click', function (e) {
-      const item = e.target.closest ? e.target.closest('[data-export-format]') : null;
-      if (!item) return;
-      closeMenu();
-      window.location = buildExportUrl(item.getAttribute('data-export-format'));
+    overlay.querySelector('[data-dxm-none]').addEventListener('click', function () {
+      listEl.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { cb.checked = false; });
+      refreshState();
     });
-    toolbar.appendChild(wrap);
+    overlay.querySelector('[data-dxm-cancel]').addEventListener('click', closeModal);
+    overlay.querySelector('.dxm-close').addEventListener('click', closeModal);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && overlay.classList.contains('show')) closeModal();
+    });
+    goBtn.addEventListener('click', function () {
+      const fields = checkedFields();
+      if (!fields.length) return; // tombol seharusnya sudah disabled.
+      closeModal();
+      window.location = buildExportUrl(selectedFormat(), fields);
+    });
+
+    // Tombol Export di toolbar (satu titik masuk, buka modal).
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-outline-success';
+    btn.innerHTML = '<i class="fa-solid fa-file-export me-1"></i> Export';
+    btn.addEventListener('click', openModal);
+    toolbar.appendChild(btn);
   })();
 
   // === Tugas 7f: Penanganan gagal muat data + tombol "Coba lagi" ===
