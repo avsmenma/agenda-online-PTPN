@@ -958,93 +958,45 @@
       background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
     }
 
-    /* ── Kartu informasi Bagian (terinspirasi kartu owner, dibuat sendiri) ── */
-    .bagian-info-cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-      margin-bottom: 24px;
-    }
-    .bic-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      text-decoration: none;
-      color: inherit;
-      cursor: pointer;
-      background: #ffffff;
-      border: 1px solid #e8eef0;
-      border-radius: 16px;
-      padding: 20px 22px;
-      box-shadow: 0 2px 10px rgba(8, 62, 64, 0.05);
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .bic-card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 5px;
-    }
-    .bic-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 22px rgba(8, 62, 64, 0.10);
-    }
-    .bic-card.bic-active {
-      box-shadow: 0 0 0 2px #0f4c3a, 0 8px 22px rgba(8, 62, 64, 0.14);
-    }
-    .bic-icon {
-      flex: 0 0 auto;
-      width: 52px; height: 52px;
-      border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px; color: #fff;
-    }
-    .bic-value { font-size: 28px; font-weight: 800; line-height: 1.1; color: #0f2f2b; }
-    .bic-label { font-size: 13px; font-weight: 600; color: #6b7f7c; margin-top: 2px; }
-    .bic-total::before { background: #083E40; }
-    .bic-total .bic-icon { background: linear-gradient(135deg, #083E40, #0a5a5e); }
-    .bic-belum::before { background: #d97706; }
-    .bic-belum .bic-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
-    .bic-sudah::before { background: #16a34a; }
-    .bic-sudah .bic-icon { background: linear-gradient(135deg, #22c55e, #16a34a); }
-    .dark .bic-card { background: #14201f; border-color: #24403c; }
-    .dark .bic-value { color: #e6f2ef; }
-    .dark .bic-label { color: #93a9a4; }
-    @media (max-width: 900px) {
-      .bagian-info-cards { grid-template-columns: 1fr; }
-    }
   </style>
 
   <div class="container-fluid py-4">
-    <!-- Kartu Informasi -->
-    <div class="bagian-info-cards">
-      <a class="bic-card bic-total {{ !request('status') ? 'bic-active' : '' }}"
-        href="{{ route('bagian.documents.index') }}" title="Tampilkan semua dokumen">
-        <div class="bic-icon"><i class="fa-solid fa-folder-open"></i></div>
-        <div class="bic-body">
-          <div class="bic-value">{{ number_format($totalDokumen, 0, ',', '.') }}</div>
-          <div class="bic-label">Total Dokumen {{ $bagianCode }}</div>
-        </div>
-      </a>
-      <a class="bic-card bic-belum {{ request('status') == 'belum_dibayar' ? 'bic-active' : '' }}"
-        href="{{ route('bagian.documents.index', ['status' => 'belum_dibayar']) }}" title="Filter: belum dibayar">
-        <div class="bic-icon"><i class="fa-solid fa-hourglass-half"></i></div>
-        <div class="bic-body">
-          <div class="bic-value">{{ number_format($totalBelumDibayar, 0, ',', '.') }}</div>
-          <div class="bic-label">Dokumen Belum Dibayar</div>
-        </div>
-      </a>
-      <a class="bic-card bic-sudah {{ request('status') == 'sudah_dibayar' ? 'bic-active' : '' }}"
-        href="{{ route('bagian.documents.index', ['status' => 'sudah_dibayar']) }}" title="Filter: sudah dibayar">
-        <div class="bic-icon"><i class="fa-solid fa-circle-check"></i></div>
-        <div class="bic-body">
-          <div class="bic-value">{{ number_format($totalSudahDibayar, 0, ',', '.') }}</div>
-          <div class="bic-label">Dokumen Sudah Dibayar</div>
-        </div>
-      </a>
-    </div>
+    {{-- Kartu Informasi (partial bersama _infoCards — gaya kartu keuangan) --}}
+    @php
+      $status = request('status');
+      $cards = [
+        [
+          'label'  => 'Total Dokumen ' . $bagianCode,
+          'value'  => $totalDokumen,
+          'sub'    => 'seluruh dokumen bagian',
+          'icon'   => '<svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>',
+          'iconBg' => '#f0f4ff',
+          'href'   => route('bagian.documents.index'),
+          'active' => empty($status),
+        ],
+        [
+          'label'      => 'Belum Dibayar',
+          'value'      => $totalBelumDibayar,
+          'sub'        => 'menunggu pembayaran',
+          'icon'       => '<svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+          'iconBg'     => '#fffbeb',
+          'valueColor' => '#f59e0b',
+          'href'       => route('bagian.documents.index', ['status' => 'belum_dibayar']),
+          'active'     => $status === 'belum_dibayar',
+        ],
+        [
+          'label'      => 'Sudah Dibayar',
+          'value'      => $totalSudahDibayar,
+          'sub'        => 'telah dibayar',
+          'icon'       => '<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
+          'iconBg'     => '#ecfdf5',
+          'valueColor' => '#10b981',
+          'href'       => route('bagian.documents.index', ['status' => 'sudah_dibayar']),
+          'active'     => $status === 'sudah_dibayar',
+        ],
+      ];
+    @endphp
+    @include('partials._infoCards', ['cards' => $cards])
 
     <!-- Search & Filter -->
     <div class="search-box">
