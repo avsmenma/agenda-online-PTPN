@@ -276,6 +276,18 @@ pemakai aktif).
 - Spec/plan: `docs/superpowers/specs/2026-07-26-fitur-export-bersama-design.md`,
   `docs/superpowers/plans/2026-07-26-fitur-export-bersama.md`
 
+**Export: modal pilih kolom SELESAI & ter-deploy 2026-07-27.** Tombol Export kini
+membuka **modal terpadu** (pilih format Excel/PDF via radio, default Excel + pilih
+kolom via checkbox, default centang = kolom yang sedang terlihat), menggantikan
+**dropdown Excel/PDF pure-CSS lama**. PDF punya catatan A4 lunak (non-blocking) di
+atas ambang 9 kolom (`PDF_SOFT_LIMIT`); 0 kolom tercentang → tombol Export nonaktif.
+Satu-satunya berkas berubah: `public/js/document-tabulator.js` (IIFE
+`wireExportButton()`) — **nol perubahan server/Blade**, controller per-role sudah
+menerima `columns[]` sejak fitur export bersama di atas. Berlaku otomatis di 5 role
+keuangan (engine bersama).
+
+- Spec: `docs/superpowers/specs/2026-07-27-export-pilih-kolom-design.md`
+
 **Audit dead-code 2026-07-26 (Tier 1 + Tier 3, disetujui user).** Dihapus permanen (grep-gated,
 suite hijau): class mati `app/Exports/RekapanKeterlambatanExport.php` (satu-satunya konsumen
 `maatwebsite/excel` di `app/`), `app/Helpers/TerbilangHelper.php`, `app/Events/DocumentSent.php`,
