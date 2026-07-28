@@ -521,6 +521,59 @@ class ColumnCustomizationSharedTest extends TestCase
     }
 
     /**
+     * Review akhir branch (item 2, 2026-07-28): tepiKananKolomBeku() hanya
+     * mengenal .tabulator-frozen-left — kompensator gulir tak pernah tahu ada
+     * kolom beku-KANAN. Dibuktikan di produksi (pembayaran, frozen.right =
+     * ['status_pembayaran']): setelah 40x panah kanan, sel aktif (880-971)
+     * berada di belakang tepi kiri blok beku-kanan (847) — tertimbun. Tak ada
+     * test runner JS di project ini, jadi test ini memeriksa bentuk sumber:
+     * (a) sisi kiri byte-identik (5 baris asli tak tersentuh), (b) fungsi sisi
+     * kanan ada & memakai selector .tabulator-frozen-right, (c) terdaftar
+     * lewat listener 'rangeChanged' KEDUA yang terpisah (bukan disisipkan ke
+     * blok sisi kiri), (d) koreksinya += (menggulir kanan) — kebalikan -=
+     * sisi kiri.
+     */
+    public function test_kompensasi_gulir_beku_kanan_ada_dan_terpisah_dari_sisi_kiri(): void
+    {
+        $js = file_get_contents(public_path('js/document-tabulator.js'));
+
+        $awalFix = strpos($js, 'function wireFrozenScrollFix');
+        $this->assertNotFalse($awalFix, 'wireFrozenScrollFix tidak ditemukan');
+        $akhirFix = strpos($js, "table.on('dataLoadError'", $awalFix);
+        $this->assertNotFalse($akhirFix, 'penutup wireFrozenScrollFix tidak ditemukan');
+        $badan = substr($js, $awalFix, $akhirFix - $awalFix);
+
+        // Sisi kiri byte-identik: 5 baris asli (fungsi + listener pertama)
+        // masih persis apa adanya, tak tersentuh oleh penambahan sisi kanan.
+        $this->assertStringContainsString(
+            "        const tepi = tepiKananKolomBeku();\n"
+            . "        if (!tepi) return;\n"
+            . "        const kotak = el.getBoundingClientRect();\n"
+            . "        const tertimbun = tepi - kotak.left;\n"
+            . "        if (tertimbun > 0) holder.scrollLeft -= (tertimbun + JARAK_AMAN);",
+            $badan
+        );
+
+        // Fungsi sisi kanan ada & memakai selector kelas kolom beku-kanan.
+        $posFungsiKanan = strpos($badan, 'function tepiKiriKolomBekuKanan(');
+        $this->assertNotFalse($posFungsiKanan, 'fungsi tepiKiriKolomBekuKanan tidak ditemukan');
+        $this->assertStringContainsString('tabulator-frozen-right', $badan);
+
+        // Terdaftar lewat listener rangeChanged KEDUA (bukan disisipkan ke
+        // listener sisi kiri) -- wajib ada 2 pendaftaran di badan ini.
+        $this->assertSame(2, substr_count($badan, "table.on('rangeChanged'"));
+
+        // Koreksi sisi kanan memakai += (menggulir kanan), bukan -= seperti
+        // sisi kiri.
+        $this->assertStringContainsString('holder.scrollLeft += (tertimbun + JARAK_AMAN)', $badan);
+
+        // Fungsi sisi kanan wajib dipakai SETELAH listener kedua terdaftar
+        // (sanity urutan sumber, bukan sekadar hadir di mana pun).
+        $posListenerKedua = strrpos($badan, "table.on('rangeChanged'");
+        $this->assertGreaterThan($posFungsiKanan, $posListenerKedua);
+    }
+
+    /**
      * Bug 2026-07-28 (dibuktikan di produksi, bukan dugaan): persistenceID
      * Tabulator dulu konstanta harfiah ('agenda-operator-documents') dipakai
      * SEMUA role sekaligus, dan opsi `persistence: { columns: ['width'] }`

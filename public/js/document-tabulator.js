@@ -1890,6 +1890,50 @@
         if (tertimbun > 0) holder.scrollLeft -= (tertimbun + JARAK_AMAN);
       });
     });
+
+    // Tepi KIRI blok kolom beku KANAN, dibaca dari DOM header (kebalikan dari
+    // tepiKananKolomBeku di atas: kolom beku-kanan ditempel Tabulator ke tepi
+    // KANAN viewport, jadi tepi KIRI blok itulah yang bisa menimbun sel aktif
+    // saat digulir ke kanan). Kosong (frozen.right = [], mayoritas role) -> 0,
+    // dianggap nonaktif.
+    function tepiKiriKolomBekuKanan() {
+      const host = mountEl();
+      const beku = host ? host.querySelectorAll(
+        '.tabulator-header .tabulator-col.tabulator-frozen.tabulator-frozen-right'
+      ) : [];
+      let tepi = 0;
+      beku.forEach(function (el) {
+        const kiri = el.getBoundingClientRect().left;
+        tepi = tepi === 0 ? kiri : Math.min(tepi, kiri);
+      });
+      return tepi;
+    }
+
+    // Diverifikasi di produksi 2026-07-28 (pembayaran, frozen.right =
+    // ['status_pembayaran']): setelah 40x panah kanan, sel aktif berada di
+    // x880-971 sementara tepi kiri blok beku-kanan di x847 — sel aktif
+    // tertimbun. Listener TERPISAH (bukan menyisipkan ke blok kiri di atas)
+    // supaya perilaku sisi kiri byte-identik & tak tersentuh; kedua listener
+    // 'rangeChanged' berjalan independen (Tabulator eventBus mendukung banyak
+    // subscriber per event).
+    table.on('rangeChanged', function () {
+      requestAnimationFrame(function () {
+        const holder = wadahGulir();
+        if (!holder) return;
+        const cell = activeCell();
+        if (!cell) return;
+        let el = null;
+        try { el = cell.getElement(); } catch (e) { return; }
+        if (!el) return;
+        if (el.classList.contains('tabulator-frozen')) return;
+
+        const tepiKanan = tepiKiriKolomBekuKanan();
+        if (!tepiKanan) return;
+        const kotak = el.getBoundingClientRect();
+        const tertimbun = kotak.right - tepiKanan;
+        if (tertimbun > 0) holder.scrollLeft += (tertimbun + JARAK_AMAN);
+      });
+    });
   })();
 
   table.on('dataLoadError', function () { showLoadError(); });
