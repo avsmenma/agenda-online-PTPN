@@ -28,7 +28,7 @@
         // Task 4 fitur export bersama (ADITIF): mengisi ini memunculkan tombol Export
         // (Excel/PDF) di toolbar Tabulator (pola Task 3 pembayaran).
         'exportUrl'        => route('documents.export'),
-        'columns'          => collect($renderColumns ?? $selectedColumns)->map(fn ($k) => ['key' => $k, 'label' => $availableColumns[$k] ?? $k])->values(),
+        'columns'          => collect($renderColumns)->map(fn ($k) => ['key' => $k, 'label' => $availableColumns[$k] ?? $k])->values(),
         'frozen'           => $frozenColumns ?? ['left' => [], 'right' => []],
         'availableColumns' => $availableColumns,
         'selected'         => array_values($selectedColumns),
