@@ -268,13 +268,31 @@ class ColumnCustomizationSharedTest extends TestCase
             $this->assertStringContainsString($fungsi, $js);
         }
 
-        // Penanda wajib pada simpan (lihat spec §5.5).
-        $this->assertStringContainsString("'frozen_config'", $js);
-        $this->assertStringContainsString("'frozen_left[]'", $js);
-        $this->assertStringContainsString("'frozen_right[]'", $js);
+        // Penanda wajib pada simpan (lihat spec §5.5) — dikunci ke badan
+        // saveColumnCustomization() saja (bukan seluruh berkas), supaya assertion
+        // menggigit kalau baris pengiriman parameter dihapus. Memeriksa seluruh
+        // berkas vakum: ketiga literal ini sudah dipenuhi oleh RESERVED_PARAM_NAMES
+        // (Task 3) walau baris pengiriman di bawah ini dihapus total.
+        $awalSimpan = strpos($js, 'function saveColumnCustomization(');
+        $this->assertNotFalse($awalSimpan, 'fungsi saveColumnCustomization tidak ditemukan');
+        $akhirSimpan = strpos($js, 'function applyToolbarParams(', $awalSimpan);
+        $this->assertNotFalse($akhirSimpan, 'penutup badan saveColumnCustomization tidak ditemukan');
+        $badanSimpan = substr($js, $awalSimpan, $akhirSimpan - $awalSimpan);
 
-        // Kolom pinned dirender non-aktif, bukan bisa dilepas.
-        $this->assertStringContainsString('disabled', $js);
+        $this->assertStringContainsString("searchParams.set('frozen_config'", $badanSimpan);
+        $this->assertStringContainsString("searchParams.append('frozen_left[]'", $badanSimpan);
+        $this->assertStringContainsString("searchParams.append('frozen_right[]'", $badanSimpan);
+
+        // Kolom pinned dirender non-aktif, bukan bisa dilepas — dikunci ke badan
+        // renderFrozenTab() saja. Memeriksa seluruh berkas vakum: 'disabled' sudah
+        // dipenuhi oleh saveButton.disabled di updateSelectedCount() (fungsi lain,
+        // tak ada hubungannya dengan kolom pinned).
+        $awalRender = strpos($js, 'function renderFrozenTab(');
+        $this->assertNotFalse($awalRender, 'fungsi renderFrozenTab tidak ditemukan');
+        $akhirRender = strpos($js, 'function renderFrozenWarning(', $awalRender);
+        $badanRender = substr($js, $awalRender, $akhirRender - $awalRender);
+
+        $this->assertStringContainsString('disabled', $badanRender);
     }
 
     /**
