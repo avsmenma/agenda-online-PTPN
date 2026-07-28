@@ -95,7 +95,9 @@ pertimbangkan file terpisah di `public/css` atau `public/js` lalu `@push`.
    Banyak partial/endpoint dipakai role yang tidak terlihat dari file yang sedang dibuka.
 3. **Test sebelum refaktor.** Cakupan masih rendah; refaktor tanpa jaring pengaman
    pernah melahirkan regresi yang bocor ke produksi (auto-forward, import CSV).
-   Jalankan `php artisan test` — suite harus hijau sebelum commit.
+   **Suite penuh (`php artisan test`) wajib hijau sebelum `git push`/deploy** — bukan
+   sebelum tiap commit. Saat iterasi cukup `--filter` (lihat aturan 7): commit boleh
+   sering, yang tak boleh adalah sesuatu sampai ke server tanpa suite penuh hijau.
 4. **Jangan tambah CSS inline baru.** Sudah ada 1.623 `!important`. Perang spesifisitas
    melawan Bootstrap CDN adalah utang, bukan solusi.
 5. **Nol tebakan pada aturan bisnis.** Alur dokumen, deadline, dan hak per-role sudah
@@ -105,8 +107,9 @@ pertimbangkan file terpisah di `public/css` atau `public/js` lalu `@push`.
    Jangan tambah guard `Schema::hasColumn()` baru di kode bisnis — itu membuat fitur
    mati diam-diam, bukan error keras.
 7. **Jangan buang waktu di test.** Saat iterasi jalankan terfilter
-   (`php artisan test --filter=NamaTest`); suite penuh **sekali** sebelum commit —
-   bukan tiap langkah. Pernah ~2,5 jam habis hanya menunggu suite.
+   (`php artisan test --filter=NamaTest`); suite penuh **sekali sebelum push/deploy**
+   (aturan 3) — bukan tiap langkah, bukan tiap commit. Pernah ~2,5 jam habis hanya
+   menunggu suite.
    `--parallel` **belum bisa dipakai**: paratest tidak terpasang (cek dengan
    `ls vendor/bin/paratest` — JANGAN pakai grep ke `composer.lock`, di situ ada entri
    *suggest* milik paket lain yang bikin salah kira). Memasangnya = perubahan
@@ -170,9 +173,18 @@ Untuk rencana yang sudah disetujui, tugas boleh berjalan berurutan tanpa menungg
 - Pekerjaan menyentuh **skema database**, **RBAC/route middleware**, atau **auto-forward**.
 - Akan **menghapus** view/route/partial — perlu bukti grep + persetujuan.
 
-**QA visual adalah tanggung jawab user.** Agent tidak punya browser atau sesi login;
-paritas tampilan tidak pernah bisa diklaim selesai dari test backend saja. Nyatakan
-dengan jujur apa yang sudah diuji dan apa yang belum.
+**QA visual: agent WAJIB mencoba dulu, keputusan lolos tetap milik user.**
+Bila Playwright MCP tersedia, agent **bisa** dan **harus** QA sendiri di produksi
+(URL, akun per-role, dan mekanik login ada di memori `browser-qa-access`) sebelum
+menyatakan sesuatu selesai. Kalau MCP tidak tersedia, katakan terus terang dan
+sebutkan apa yang jadi tak teruji — jangan diam-diam melewatinya.
+
+Ini bukan formalitas: 2026-07-28 sebuah cacat `localStorage` yang membatalkan seluruh
+fitur baru lolos dari 284 test hijau dan **hanya** tertangkap karena diuji di browser
+sungguhan. Test backend tidak pernah cukup untuk paritas tampilan.
+
+Tetap berlaku: **nyatakan dengan jujur apa yang sudah diuji dan apa yang belum**, dan
+jangan pernah mengklaim lolos QA atas nama user.
 
 ---
 
