@@ -748,7 +748,11 @@
     // eksplisit.
     const fzLeft = (cfg.frozen && cfg.frozen.left) || [];
     const fzRight = (cfg.frozen && cfg.frozen.right) || [];
-    (cfg.columns || []).forEach(function (c) {
+
+    // Satu entri cfg.columns → satu definisi kolom Tabulator. Diekstrak jadi
+    // fungsi karena dipakai DUA kali sekarang: kelompok kiri/bebas (langsung),
+    // dan kelompok beku-kanan (ditunda ke akhir — lihat bawah).
+    function buildColumnDef(c) {
       const def = { title: c.label, field: c.key };
       // Fix QA Rollout 4 — c.formatter opsional (mis. status_pembayaran pakai
       // 'paymentPill') menimpa formatter kolom kustomisasi biasa dengan salah satu
@@ -774,7 +778,27 @@
         // columnDefaults (konstruktor Tabulator) untuk SEMUA kolom, jadi mubazir.
       }
       if (fzLeft.indexOf(c.key) !== -1 || fzRight.indexOf(c.key) !== -1) { def.frozen = true; }
-      cols.push(def);
+      return def;
+    }
+
+    // Kelompok beku-kanan DITUNDA, bukan langsung di-push: modul FrozenColumns
+    // Tabulator menempelkan ke tepi kanan viewport kolom beku mana pun yang
+    // posisinya SETELAH kolom non-beku dalam definisi tabel — bukan berdasar
+    // properti sisi eksplisit. Sebelum perbaikan ini (review 2026-07-28), kolom
+    // beku-kanan ikut terdorong ke posisi ini (masih di tengah cfg.columns),
+    // padahal extraColumns/kolom "Pengurus Dokumen" menyusul SETELAHNYA — hasilnya
+    // kolom beku-kanan mengambang menutupi Deadline/Status/Paraf/Pengurus Dokumen
+    // saat tabel digulir horizontal di 4 dari 5 role (operator/akutansi/
+    // perpajakan/verifikasi). Pembayaran kebetulan aman karena satu-satunya yang
+    // menyetel extraColumns:[] DAN showHandler:false, jadi cfg.columns memang
+    // sudah jadi kelompok terakhir di sana.
+    const kelompokBekuKanan = [];
+    (cfg.columns || []).forEach(function (c) {
+      if (fzRight.indexOf(c.key) !== -1) {
+        kelompokBekuKanan.push(c);
+        return;
+      }
+      cols.push(buildColumnDef(c));
     });
     // Kolom tetap terparameter per-role (mis. akutansi: Deadline + Status). Tanpa
     // editor Tabulator; formatter merender objek server. Operator tak mengirim
@@ -788,15 +812,22 @@
       });
     });
     // Kolom tetap "Pengurus Dokumen" (di luar kolom kustomisasi, selalu paling
-    // kanan — paritas _tableRowsAjax.blade.php:250-252). Tanpa editor Tabulator;
-    // <select> menangani perubahan sendiri via listener change terdelegasi.
-    // Rollout 4 (pembayaran) — CFG.showHandler=false menyembunyikan kolom ini:
-    // pembayaran adalah ujung alur (tak ada "pengurus dokumen" berikutnya untuk
-    // di-forward). Role lain tak set showHandler → `!== false` bernilai true →
-    // kolom tetap ada (paritas byte-identik).
+    // kanan dari kolom TETAP — paritas _tableRowsAjax.blade.php:250-252). Tanpa
+    // editor Tabulator; <select> menangani perubahan sendiri via listener change
+    // terdelegasi. Rollout 4 (pembayaran) — CFG.showHandler=false menyembunyikan
+    // kolom ini: pembayaran adalah ujung alur (tak ada "pengurus dokumen"
+    // berikutnya untuk di-forward). Role lain tak set showHandler → `!== false`
+    // bernilai true → kolom tetap ada (paritas byte-identik).
     if (cfg.showHandler !== false) {
       cols.push({ title: 'Pengurus Dokumen', field: 'handler', formatter: fmtHandler, editable: false });
     }
+    // Kelompok beku-kanan ditambahkan PALING TERAKHIR (lihat catatan di atas) —
+    // setelah extraColumns maupun "Pengurus Dokumen", supaya benar-benar jadi
+    // kelompok terakhir dalam definisi tabel dan menempel tepi kanan viewport
+    // dengan tepat, bukan menutupi kolom tetap tersebut.
+    kelompokBekuKanan.forEach(function (c) {
+      cols.push(buildColumnDef(c));
+    });
     return cols;
   }
 

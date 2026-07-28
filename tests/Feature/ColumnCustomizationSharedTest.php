@@ -336,6 +336,11 @@ class ColumnCustomizationSharedTest extends TestCase
         $res->assertSee('"selected":["nomor_agenda","nomor_spp","nilai_rupiah"]', false);
         // Tabel: nomor_spp pindah ke akhir karena dibekukan di kanan.
         $res->assertSee('"frozen":{"left":["nomor_agenda"],"right":["nomor_spp"]}', false);
+        // Review: "frozen" saja tidak cukup — ia diisi dari $frozenColumns, bukan
+        // dari urutan "columns". Tanpa cek ini, regresi 'columns' => collect($selectedColumns)
+        // (mengembalikan urutan pilihan, bukan urutan render) tetap lolos hijau.
+        // nomor_spp (beku kanan) WAJIB pindah ke akhir daftar kolom tabel.
+        $res->assertSee('"columns":[{"key":"nomor_agenda","label":"Nomor Agenda"},{"key":"nilai_rupiah","label":"Nilai Rupiah"},{"key":"nomor_spp","label":"Nomor SPP"}]', false);
     }
 
     public function test_kolom_beku_tersimpan_dan_bisa_dikosongkan(): void
@@ -362,5 +367,89 @@ class ColumnCustomizationSharedTest extends TestCase
         $this->assertSame([], $user->table_columns_preferences['akutansi_frozen']['right']);
         // Kolom pinned tetap beku kiri.
         $this->assertSame(['nomor_agenda'], $user->table_columns_preferences['akutansi_frozen']['left']);
+    }
+
+    /**
+     * Regresi produksi (ditemukan lewat query data sungguhan 2026-07-28): minimal
+     * 1 akun team_verifikasi menyimpan 'tanggal_paraf'/'pemaraf' di
+     * table_columns_preferences dari era sebelum Paraf jadi kolom tetap
+     * (extraColumns). TeamVerifikasiController menyaring keduanya SEBELUM
+     * memanggil ColumnCustomization::resolveFrozen() — tanpa penyaringan itu,
+     * kolom ini lolos ke $renderColumns dan dobel dengan entri extraColumns
+     * 'tanggal_paraf' yang sudah fixed di view.
+     */
+    public function test_kolom_paraf_lama_tidak_dobel_dengan_extra_columns_verifikasi(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'team_verifikasi',
+            'table_columns_preferences' => [
+                'team_verifikasi' => ['nomor_agenda', 'tanggal_paraf'],
+            ],
+        ]);
+
+        // Tanpa query 'columns': controller memuat dari table_columns_preferences.
+        $res = $this->actingAs($user)->get(route('documents.verifikasi.index'));
+        $res->assertOk();
+
+        // Kolom kustomisasi TIDAK boleh memuat tanggal_paraf sebagai entri "key"
+        // (itu akan dobel dengan extraColumns di bawah).
+        $res->assertDontSee('{"key":"tanggal_paraf"', false);
+        $res->assertDontSee('{"key":"pemaraf"', false);
+        // Kolom Paraf tetap tampil, tapi lewat extraColumns (field, bukan key).
+        $res->assertSee('"field":"tanggal_paraf"', false);
+        $res->assertSee('"field":"pemaraf"', false);
+    }
+
+    /**
+     * Bug CRITICAL (review Task 5, 2026-07-28): buildColumns() di
+     * document-tabulator.js membangun urutan kolom sebagai
+     * cfg.columns + cfg.extraColumns + [Pengurus Dokumen]. cfg.columns SENDIRI
+     * memuat kelompok beku-kanan (di ujung, sesuai renderOrder PHP) — tapi karena
+     * extraColumns/kolom handler menyusul SETELAHNYA di keempat role selain
+     * pembayaran, kelompok beku-kanan tidak lagi jadi kelompok TERAKHIR dalam
+     * definisi tabel. Modul FrozenColumns Tabulator menempelkan ke tepi kanan
+     * viewport berdasarkan posisi (bukan properti sisi eksplisit), sehingga kolom
+     * beku-kanan mengambang menutupi Deadline/Status/Paraf/Pengurus Dokumen saat
+     * digulir. Perbaikan: kelompok beku-kanan ditunda (kelompokBekuKanan) dan
+     * ditambahkan PALING TERAKHIR — setelah extraColumns maupun kolom handler.
+     * Tak ada test runner JS di project ini (lihat catatan test lain di berkas
+     * ini), jadi test ini memeriksa bentuk sumber: penambahan kelompokBekuKanan
+     * WAJIB terjadi setelah penambahan extraColumns dan kolom "Pengurus Dokumen".
+     */
+    public function test_build_columns_menunda_kelompok_beku_kanan_ke_akhir(): void
+    {
+        $js = file_get_contents(public_path('js/document-tabulator.js'));
+
+        $awal = strpos($js, 'function buildColumns(');
+        $this->assertNotFalse($awal, 'fungsi buildColumns tidak ditemukan');
+        $akhir = strpos($js, 'function activeRange(', $awal);
+        $this->assertNotFalse($akhir, 'penutup badan buildColumns tidak ditemukan');
+        $badan = substr($js, $awal, $akhir - $awal);
+
+        $posDeklarasiKelompok = strpos($badan, 'kelompokBekuKanan');
+        $this->assertNotFalse($posDeklarasiKelompok, 'kelompokBekuKanan tidak ditemukan di buildColumns');
+
+        $posExtraColumns = strpos($badan, "(cfg.extraColumns || []).forEach(");
+        $this->assertNotFalse($posExtraColumns, 'loop extraColumns tidak ditemukan di buildColumns');
+
+        $posHandler = strpos($badan, 'cfg.showHandler !== false');
+        $this->assertNotFalse($posHandler, 'blok kolom handler (Pengurus Dokumen) tidak ditemukan di buildColumns');
+
+        // Penambahan (push) kelompok beku-kanan wajib jadi baris TERAKHIR di badan
+        // fungsi — dicari dari posisi TERAKHIR literal '.push(buildColumnDef(c))'
+        // di dalam badan, yang wajib berada di dalam forEach kelompokBekuKanan.
+        $posPushTerakhir = strrpos($badan, '.push(buildColumnDef(c))');
+        $this->assertNotFalse($posPushTerakhir, 'push(buildColumnDef(c)) tidak ditemukan di buildColumns');
+
+        $this->assertGreaterThan($posExtraColumns, $posPushTerakhir, 'push terakhir kolom terjadi SEBELUM extraColumns ditambahkan — kelompok beku-kanan belum jadi kelompok terakhir');
+        $this->assertGreaterThan($posHandler, $posPushTerakhir, 'push terakhir kolom terjadi SEBELUM kolom Pengurus Dokumen ditambahkan — kelompok beku-kanan belum jadi kelompok terakhir');
+
+        // forEach kelompokBekuKanan wajib berada SETELAH extraColumns & handler
+        // (bukan cuma push-nya) — deklarasi variabel boleh di awal, tapi
+        // forEach-nya sendiri (pemakaian) wajib menyusul di akhir.
+        $posForEachKelompok = strrpos($badan, 'kelompokBekuKanan.forEach(');
+        $this->assertNotFalse($posForEachKelompok, 'kelompokBekuKanan.forEach( tidak ditemukan di buildColumns');
+        $this->assertGreaterThan($posExtraColumns, $posForEachKelompok);
+        $this->assertGreaterThan($posHandler, $posForEachKelompok);
     }
 }
