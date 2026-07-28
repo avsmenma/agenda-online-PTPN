@@ -326,28 +326,52 @@ class ColumnCustomizationSharedTest extends TestCase
      * Dua urutan kolom TIDAK boleh tertukar: DOCUMENT_TABULATOR_CONFIG.columns
      * memakai urutan render (beku kiri -> bebas -> beku kanan), sedangkan modal
      * menampilkan urutan pilihan asli user.
+     *
+     * Review akhir branch (2026-07-28): dulu hanya diuji di akutansi — jaring
+     * "benar-benar tersambung" (kunci 'columns' benar-benar memakai $renderColumns,
+     * bukan $selectedColumns via fallback `?? `) tidak menutupi 3 role lain.
+     * Dibuktikan lewat mutasi: hapus frozenColumns/pinnedColumns/renderColumns dari
+     * data controller operator membuat fitur beku hilang total + bug beku-kanan
+     * mengambang hidup lagi, tapi suite tetap hijau. Sekarang loop 4 role
+     * (operator/akutansi/perpajakan/verifikasi) — pembayaran sudah punya jaring
+     * setara sendiri (test_kolom_beku_pembayaran_tersimpan_dan_bisa_dikosongkan +
+     * paritas kolom di tempat lain). Ketiga kolom (nomor_agenda/nomor_spp/
+     * nilai_rupiah) & labelnya diverifikasi identik di config/document_columns.php
+     * utk keempat role (operator: base apa adanya; akutansi/perpajakan/verifikasi:
+     * base tanpa 'status', verifikasi juga tanpa paraf — tak satu pun ketiga kolom
+     * ini kena exclude).
      */
     public function test_urutan_render_berbeda_dari_urutan_modal_saat_ada_beku_kanan(): void
     {
-        $user = User::factory()->create(['role' => 'akutansi']);
+        $cases = [
+            ['role' => 'operator',        'route' => 'documents.index'],
+            ['role' => 'akutansi',        'route' => 'documents.akutansi.index'],
+            ['role' => 'perpajakan',      'route' => 'documents.perpajakan.index'],
+            ['role' => 'team_verifikasi', 'route' => 'documents.verifikasi.index'],
+        ];
 
-        $res = $this->actingAs($user)->get(route('documents.akutansi.index', [
-            'columns'       => ['nomor_agenda', 'nomor_spp', 'nilai_rupiah'],
-            'frozen_config' => '1',
-            'frozen_left'   => ['nomor_agenda'],
-            'frozen_right'  => ['nomor_spp'],
-        ]));
-        $res->assertOk();
+        foreach ($cases as $c) {
+            $user = User::factory()->create(['role' => $c['role']]);
 
-        // Modal: urutan pilihan asli.
-        $res->assertSee('"selected":["nomor_agenda","nomor_spp","nilai_rupiah"]', false);
-        // Tabel: nomor_spp pindah ke akhir karena dibekukan di kanan.
-        $res->assertSee('"frozen":{"left":["nomor_agenda"],"right":["nomor_spp"]}', false);
-        // Review: "frozen" saja tidak cukup — ia diisi dari $frozenColumns, bukan
-        // dari urutan "columns". Tanpa cek ini, regresi 'columns' => collect($selectedColumns)
-        // (mengembalikan urutan pilihan, bukan urutan render) tetap lolos hijau.
-        // nomor_spp (beku kanan) WAJIB pindah ke akhir daftar kolom tabel.
-        $res->assertSee('"columns":[{"key":"nomor_agenda","label":"Nomor Agenda"},{"key":"nilai_rupiah","label":"Nilai Rupiah"},{"key":"nomor_spp","label":"Nomor SPP"}]', false);
+            $res = $this->actingAs($user)->get(route($c['route'], [
+                'columns'       => ['nomor_agenda', 'nomor_spp', 'nilai_rupiah'],
+                'frozen_config' => '1',
+                'frozen_left'   => ['nomor_agenda'],
+                'frozen_right'  => ['nomor_spp'],
+            ]));
+            $res->assertOk();
+
+            // Modal: urutan pilihan asli.
+            $res->assertSee('"selected":["nomor_agenda","nomor_spp","nilai_rupiah"]', false);
+            // Tabel: nomor_spp pindah ke akhir karena dibekukan di kanan.
+            $res->assertSee('"frozen":{"left":["nomor_agenda"],"right":["nomor_spp"]}', false);
+            // Review: "frozen" saja tidak cukup — ia diisi dari $frozenColumns, bukan
+            // dari urutan "columns". Tanpa cek ini, regresi 'columns' => collect($selectedColumns)
+            // (mengembalikan urutan pilihan, bukan urutan render) tetap lolos hijau.
+            // nomor_spp (beku kanan) WAJIB pindah ke akhir daftar kolom tabel, di
+            // role {$c['role']}.
+            $res->assertSee('"columns":[{"key":"nomor_agenda","label":"Nomor Agenda"},{"key":"nilai_rupiah","label":"Nilai Rupiah"},{"key":"nomor_spp","label":"Nomor SPP"}]', false);
+        }
     }
 
     public function test_kolom_beku_tersimpan_dan_bisa_dikosongkan(): void
