@@ -4,6 +4,10 @@
   logika di public/js/column-customization.js. Dark-mode CSS ada global di layouts/app.
   Lihat spec docs/superpowers/specs/2026-07-28-ekstrak-modal-kustomisasi-kolom-design.md.
 --}}
+@php
+    $availableColumns = $availableColumns ?? [];
+    $selectedColumns = $selectedColumns ?? [];
+@endphp
 <div class="customization-modal" id="columnCustomizationModal">
     <div class="modal-content-custom">
         <div class="modal-header-custom">
@@ -114,6 +118,7 @@
     </div>
 </div>
 
+@push('styles')
 <style>
     /* Modal Customization Styles — dipindah dari view role (self-contained, dark-mode global di layouts/app). */
     .customization-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; overflow-y: auto; padding: 20px; box-sizing: border-box; }
@@ -186,6 +191,7 @@
         .btn-modal { flex: 1; justify-content: center; }
     }
 </style>
+@endpush
 
 <script>
     // Jembatan data Blade→JS (pola window.DOCUMENT_TABULATOR_CONFIG). Dibaca column-customization.js.

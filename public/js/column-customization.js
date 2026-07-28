@@ -1,8 +1,9 @@
-// ==== Kustomisasi Kolom (daftarDokumen.blade.php:3236-3619) ====
-// Dipindah dari view akutansi (daftarAkutansiTabulator.blade.php) menjadi file bersama
-// dipakai 4 view Tabulator role (operator/akutansi/perpajakan/verifikasi). Data lewat
-// window.COLUMN_CUSTOMIZATION_CONFIG (diisi partials._columnCustomizationModal), BUKAN
-// output template Blade langsung — file ini statis, nol token Blade.
+// ==== Kustomisasi Kolom (diekstrak dari 4 view role ke file bersama) ====
+// Diekstrak dari view role (operator/akutansi/perpajakan/verifikasi, masing-masing
+// daftar*Tabulator.blade.php) menjadi file bersama dipakai 4 view Tabulator role
+// sekaligus. Data lewat window.COLUMN_CUSTOMIZATION_CONFIG (diisi
+// partials._columnCustomizationModal), BUKAN output template Blade langsung — file
+// ini statis, nol token Blade.
 var __CCCFG = window.COLUMN_CUSTOMIZATION_CONFIG || { availableColumns: {}, selected: [] };
 let availableColumnsData = __CCCFG.availableColumns || {};
 let selectedColumnsOrder = Array.isArray(__CCCFG.selected) ? __CCCFG.selected.slice() : [];
@@ -122,7 +123,7 @@ function saveColumnCustomization() {
     filterForm.appendChild(enableInput);
     appendActiveFilterInputs(filterForm); // Fix: bawa filter toolbar aktif agar tak hilang saat reload GET.
     closeColumnCustomizationModal();
-    filterForm.submit(); // GET → documents.akutansi.index → reload view Tabulator dgn kolom baru.
+    filterForm.submit(); // GET → action #filterForm role saat ini (documents.{index,akutansi,perpajakan,verifikasi}.index) → reload view Tabulator dgn kolom baru.
 }
 
 // Bawa SEMUA filter toolbar aktif (generik lintas-role) agar tak hilang saat reload GET.
@@ -132,14 +133,18 @@ function saveColumnCustomization() {
 function appendActiveFilterInputs(filterForm) {
     const toolbar = document.querySelector('.tabulator-toolbar');
     if (!toolbar) return;
-    const controls = toolbar.querySelectorAll('input[name], select[name]');
+    const controls = toolbar.querySelectorAll('input[name], select[name], textarea[name]');
+    // Nama reserved punya jalur simpan sendiri (lihat saveColumnCustomization) — jangan
+    // sampai toolbar suatu role kelak memakai nama yang sama lalu menghapus/menimpanya.
+    const isReserved = name => name === 'columns[]' || name === 'enable_customization';
     const names = new Set();
-    controls.forEach(el => { if (el.name) names.add(el.name); });
+    controls.forEach(el => { if (el.name && !isReserved(el.name)) names.add(el.name); });
     // Buang input lama bernama sama agar tak dobel saat reload GET.
     names.forEach(name => {
         filterForm.querySelectorAll('input[name="' + name.replace(/"/g, '\\"') + '"]').forEach(i => i.remove());
     });
     controls.forEach(el => {
+        if (isReserved(el.name)) return;
         if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) return;
         if (el.value === '' || el.value == null) return;
         const hidden = document.createElement('input');

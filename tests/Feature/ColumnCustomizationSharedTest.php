@@ -50,11 +50,19 @@ class ColumnCustomizationSharedTest extends TestCase
             $res->assertSee('window.COLUMN_CUSTOMIZATION_CONFIG', false);
             // JS modal inline lama sudah tidak ada (bukti ekstraksi).
             $res->assertDontSee('let availableColumnsData =', false);
+            // Bukti CSS modal lewat @push('styles') sampai ke <head> layout (bukan
+            // nyangkut di body setelah markup modal — regresi flash-of-unstyled-modal).
+            $res->assertSee('.customization-modal { display: none;', false);
         }
     }
 
     public function test_partial_merender_modal_dan_jembatan_config(): void
     {
+        // Catatan: partial ini render standalone (tanpa layout), jadi CSS di
+        // @push('styles') TIDAK ikut ke $html — @push cuma dikumpulkan ke stack,
+        // baru dikeluarkan saat layout memanggil @stack('styles'). Bukti CSS
+        // benar-benar sampai ke halaman ada di test_view_keuangan_memakai_modal_bersama
+        // (request penuh lewat layouts/app.blade.php).
         $html = view('partials._columnCustomizationModal', [
             'availableColumns' => ['nomor_agenda' => 'Nomor Agenda', 'no_spp' => 'No SPP'],
             'selectedColumns'  => ['nomor_agenda'],
