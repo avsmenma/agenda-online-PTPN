@@ -141,17 +141,35 @@ function applyToolbarParams(url) {
     const toolbar = document.querySelector('.tabulator-toolbar');
     if (!toolbar) return;
     const controls = toolbar.querySelectorAll('input[name], select[name], textarea[name]');
+
+    // Kelompokkan dulu per name SEBELUM menulis ke URL. Radio/checkbox lazim berbagi
+    // name (satu grup, banyak elemen) — menulis set()/delete() langsung di dalam loop
+    // per-elemen SALAH: elemen checked menulis set(name, value), lalu elemen unchecked
+    // berikutnya dalam grup yang sama memanggil delete(name) dan menghapus nilai yang
+    // baru saja ditulis. Kontrol lain (text/date/select) selalu jadi grup berisi satu
+    // elemen, jadi perilakunya tidak berubah dari sebelumnya.
+    const groups = new Map();
     controls.forEach(function (el) {
         if (!el.name || RESERVED_PARAM_NAMES.indexOf(el.name) !== -1) return;
-        if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) {
-            url.searchParams.delete(el.name);
+        if (!groups.has(el.name)) { groups.set(el.name, []); }
+        groups.get(el.name).push(el);
+    });
+
+    groups.forEach(function (els, name) {
+        const isCheckable = els.some(function (el) { return el.type === 'checkbox' || el.type === 'radio'; });
+        if (isCheckable) {
+            // Ada yang tercentang → pakai nilainya. Tak ada yang tercentang → hapus param.
+            const checked = els.find(function (el) { return (el.type === 'checkbox' || el.type === 'radio') && el.checked; });
+            if (checked) { url.searchParams.set(name, checked.value); }
+            else { url.searchParams.delete(name); }
             return;
         }
+        const el = els[0];
         if (el.value === '' || el.value == null) {
-            url.searchParams.delete(el.name);
+            url.searchParams.delete(name);
             return;
         }
-        url.searchParams.set(el.name, el.value);
+        url.searchParams.set(name, el.value);
     });
 }
 function initializeModalState() {

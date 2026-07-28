@@ -217,4 +217,40 @@ class ColumnCustomizationSharedTest extends TestCase
 
         $this->assertStringContainsString('initializeDragAndDrop()', $badan);
     }
+
+    /**
+     * Review Task 3 (Important): applyToolbarParams() memproses kontrol toolbar satu
+     * per satu — untuk grup radio/checkbox yang berbagi name, elemen checked menulis
+     * url.searchParams.set(name, value), lalu elemen unchecked BERIKUTNYA dalam grup
+     * yang sama memanggil url.searchParams.delete(name) dan menghapus nilai yang baru
+     * saja ditulis. Perbaikannya: kelompokkan dulu per name (loop pertama), baru tulis
+     * SATU nilai efektif per name (loop kedua) — bukan menulis langsung di dalam loop
+     * pengelompokan. Tak ada JS test runner di project ini, jadi test ini memeriksa
+     * bentuk sumber: penanda loop kedua (`groups.forEach(`) wajib ada, dan penulisan
+     * ke URL (`.set(`/`.delete(`) wajib terjadi SETELAH loop itu dimulai — bukan di
+     * dalam loop pertama yang cuma mengumpulkan elemen per name.
+     */
+    public function test_apply_toolbar_params_kelompokkan_per_name_sebelum_menulis(): void
+    {
+        $js = file_get_contents(public_path('js/column-customization.js'));
+
+        $awal = strpos($js, 'function applyToolbarParams(');
+        $this->assertNotFalse($awal, 'fungsi applyToolbarParams tidak ditemukan');
+        $akhir = strpos($js, 'function initializeModalState(', $awal);
+        $this->assertNotFalse($akhir, 'penutup badan applyToolbarParams tidak ditemukan');
+        $badan = substr($js, $awal, $akhir - $awal);
+
+        $posLoopTulis = strpos($badan, 'groups.forEach(');
+        $this->assertNotFalse($posLoopTulis, 'loop kedua (menulis per grup name) tidak ditemukan — pengelompokan per-name hilang, risiko regresi radio/checkbox');
+
+        $posSet = strpos($badan, 'url.searchParams.set(');
+        $posDelete = strpos($badan, 'url.searchParams.delete(');
+        $this->assertNotFalse($posSet, 'url.searchParams.set( tidak ditemukan di applyToolbarParams');
+        $this->assertNotFalse($posDelete, 'url.searchParams.delete( tidak ditemukan di applyToolbarParams');
+
+        // Penulisan ke URL wajib terjadi di DALAM/SETELAH loop kedua, bukan di dalam
+        // loop pertama yang mengelompokkan controls per name.
+        $this->assertGreaterThan($posLoopTulis, $posSet, 'set() ke URL terjadi sebelum pengelompokan per-name selesai — risiko nilai checked tertimpa oleh elemen unchecked bernama sama');
+        $this->assertGreaterThan($posLoopTulis, $posDelete, 'delete() ke URL terjadi sebelum pengelompokan per-name selesai — risiko nilai checked tertimpa oleh elemen unchecked bernama sama');
+    }
 }
