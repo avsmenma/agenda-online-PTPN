@@ -2331,10 +2331,7 @@
     </div>
   </div>
 
-  <!-- Column Customization Modal -->
-  <style>
-  </style>
-
+  {{-- Modal Kustomisasi Kolom — markup + CSS kini partial bersama, lihat berkasnya. --}}
   @include('partials._columnCustomizationModal')
 
   {{-- JS modal bersama dimuat TANPA syarat mode (bukan di dalam @if($mode != 'rekapan_table')

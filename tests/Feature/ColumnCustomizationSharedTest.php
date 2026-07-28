@@ -124,9 +124,11 @@ class ColumnCustomizationSharedTest extends TestCase
     }
 
     /**
-     * Tab kedua (Kolom Beku) hadir di keempat role, dan CSS-nya tetap lewat
+     * Tab kedua (Kolom Beku) hadir di kelima role, dan CSS-nya tetap lewat
      * @push('styles') — urutan CSS sebelum markup adalah jaring
-     * flash-of-unstyled-modal yang sudah dipasang 2026-07-28.
+     * flash-of-unstyled-modal yang sudah dipasang 2026-07-28. Spec §10 menuntut
+     * jaring ini mencakup 5 halaman (termasuk pembayaran, Task 6 — sebelumnya
+     * hanya operator/akutansi/perpajakan/verifikasi yang tercakup).
      */
     public function test_tab_kolom_beku_hadir_di_semua_view(): void
     {
@@ -135,6 +137,7 @@ class ColumnCustomizationSharedTest extends TestCase
             ['role' => 'akutansi',        'route' => 'documents.akutansi.index'],
             ['role' => 'perpajakan',      'route' => 'documents.perpajakan.index'],
             ['role' => 'team_verifikasi', 'route' => 'documents.verifikasi.index'],
+            ['role' => 'pembayaran',      'route' => 'documents.pembayaran.index'],
         ];
 
         foreach ($cases as $c) {
@@ -371,6 +374,42 @@ class ColumnCustomizationSharedTest extends TestCase
         $this->assertSame([], $user->table_columns_preferences['akutansi_frozen']['right']);
         // Kolom pinned tetap beku kiri.
         $this->assertSame(['nomor_agenda'], $user->table_columns_preferences['akutansi_frozen']['left']);
+    }
+
+    /**
+     * Review Task 6 (IMPORTANT): mirip test_kolom_beku_tersimpan_dan_bisa_dikosongkan di
+     * atas, tapi menyasar PEMBAYARAN — satu-satunya role yang prefKey-nya
+     * ('pembayaran_dashboard_frozen') sudah berisi data user produksi sungguhan
+     * (contoh nyata: {"left":["nomor_agenda"],"right":["status_pembayaran"]}). Tanpa
+     * jaring ini, mengganti nama/menghapus 'prefKey' => 'pembayaran_dashboard_frozen'
+     * di DashboardPembayaranController::index() membuat resolveFrozen() diam-diam
+     * jatuh ke sesi/default — suite tetap hijau, tapi user Team Pembayaran kehilangan
+     * kolom beku-kanannya tanpa jejak setelah deploy.
+     */
+    public function test_kolom_beku_pembayaran_tersimpan_dan_bisa_dikosongkan(): void
+    {
+        $user = User::factory()->create(['role' => 'pembayaran']);
+
+        $this->actingAs($user)->get(route('documents.pembayaran.index', [
+            'columns'       => ['nomor_agenda', 'status_pembayaran'],
+            'frozen_config' => '1',
+            'frozen_left'   => ['nomor_agenda'],
+            'frozen_right'  => ['status_pembayaran'],
+        ]))->assertOk();
+
+        $user->refresh();
+        $this->assertSame(['status_pembayaran'], $user->table_columns_preferences['pembayaran_dashboard_frozen']['right']);
+
+        // Lepas semua: hanya penanda yang dikirim, tanpa frozen_left/right.
+        $this->actingAs($user)->get(route('documents.pembayaran.index', [
+            'columns'       => ['nomor_agenda', 'status_pembayaran'],
+            'frozen_config' => '1',
+        ]))->assertOk();
+
+        $user->refresh();
+        $this->assertSame([], $user->table_columns_preferences['pembayaran_dashboard_frozen']['right']);
+        // Kolom pinned (nomor_agenda) tetap beku kiri.
+        $this->assertSame(['nomor_agenda'], $user->table_columns_preferences['pembayaran_dashboard_frozen']['left']);
     }
 
     /**
