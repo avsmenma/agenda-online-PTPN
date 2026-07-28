@@ -916,8 +916,22 @@
   // (Freeze KIRI tidak kena masalah yang sama: urutan definisi tabel untuk
   // kelompok kiri tidak ditunda seperti kelompok kanan, jadi tidak wajib masuk
   // hash — tapi tetap diikutkan di sini demi kejujuran & kesederhanaan: satu
-  // aturan "apa pun yang memengaruhi susunan kolom ikut di hash", bukan
-  // pengecualian per sisi yang gampang jadi bug baru kalau perilaku PHP berubah.)
+  // aturan untuk kedua sisi, bukan pengecualian per sisi yang gampang jadi bug
+  // baru kalau perilaku PHP berubah.)
+  //
+  // CAKUPAN HASH — JUJUR, bukan "apa pun yang memengaruhi susunan kolom":
+  // hanya CFG.columns[].key + CFG.frozen (kiri/kanan) yang masuk. cfg.extraColumns,
+  // cfg.showHandler, dan kolom "No" (rownum, selalu paling kiri) IKUT menentukan
+  // urutan definisi tabel di buildColumns() tapi SENGAJA di luar hash — ketiganya
+  // literal statis per VIEW Blade (mis. extraColumns akutansi vs verifikasi beda
+  // isi, tapi tidak pernah berubah tanpa deploy ulang), bukan sesuatu yang bisa
+  // berbeda antar-page-load untuk role yang sama seperti CFG.columns/CFG.frozen
+  // (dua-duanya berasal dari preferensi user yang bisa berubah kapan saja lewat
+  // modal Kustomisasi Kolom). Konsekuensinya: deploy yang mengubah salah satu
+  // dari ketiganya (mis. menambah extraColumns baru) BISA mengulang kelas bug
+  // yang sama seperti freeze-kanan di atas — localStorage lama tak otomatis
+  // kadaluarsa. Ini bukan bug aktif hari ini, murni batas yang perlu diingat
+  // kalau ketiganya disentuh di masa depan.
   function hashSusunanKolom(str) {
     let h = 5381;
     for (let i = 0; i < str.length; i++) {

@@ -558,6 +558,18 @@ class ColumnCustomizationSharedTest extends TestCase
 
         $this->assertStringContainsString('bekuKiriUntukHash.join(', $badanPanggilanHash, 'daftar beku kiri tidak ikut dipakai sebagai input hash');
         $this->assertStringContainsString('bekuKananUntukHash.join(', $badanPanggilanHash, 'daftar beku kanan tidak ikut dipakai sebagai input hash');
+        // Review lanjutan: assertion di atas HANYA memeriksa bagian beku —
+        // tidak menjamin daftar KUNCI KOLOM (CFG.columns[].key) masih ikut
+        // dipakai sebagai input hash. Tanpa baris ini, menjadikan
+        // 'daftarKunciKolom' variabel mati (hash hanya dari bagian beku) tetap
+        // lolos HIJAU — sidik jari berhenti melacak pilihan/urutan kolom sama
+        // sekali, dan bug ASLI (localStorage basi menimpa urutan kolom server)
+        // hidup lagi di kelima role, senyap.
+        $this->assertStringContainsString(
+            "(CFG.columns || []).map(function (c) { return c.key; }).join(',')",
+            $badanPanggilanHash,
+            'daftar kunci kolom tidak ikut dipakai sebagai input hash'
+        );
     }
 
     /**
