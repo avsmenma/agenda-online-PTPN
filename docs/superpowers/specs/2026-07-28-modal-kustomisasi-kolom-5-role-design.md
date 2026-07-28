@@ -33,6 +33,8 @@ perbedaan besar antar-view sehingga penyatuan view nanti jadi lebih ringan.
 1. **Template Agenda DIHAPUS** — termasuk dari pembayaran. Modal benar-benar identik di 5 role.
 2. **Rollout bertahap**: Deploy 1 = 4 role; Deploy 2 = pembayaran.
 3. **Nomor Agenda terkunci beku** — kontrolnya ditampilkan non-aktif di tab Kolom Beku.
+4. **Bug drag diperbaiki sekalian** (§6.3) — bukan sekadar dibawa ikut.
+5. **`enable_customization` berhenti dikirim** (§8) — terbukti parameter mati.
 
 ---
 
@@ -178,7 +180,7 @@ fatal — tapi itu merusak DOM dan bergantung pada kebetulan.
 ```
 url = new URL(location.href)          // param tak dikenal selamat: mode, per_page, page, sort
   ← timpa setiap kontrol .tabulator-toolbar
-  ← timpa columns[], enable_customization, frozen_config=1, frozen_left[], frozen_right[]
+  ← timpa columns[], frozen_config=1, frozen_left[], frozen_right[]
 location.href = url
 ```
 
@@ -194,9 +196,9 @@ Aturan rinci:
   semantik "bersihkan filter". Tanpa aturan ini, filter yang dikosongkan user akan
   hidup lagi dari URL sebelumnya.
 - **Checkbox/radio tak tercentang** dilewati, seperti perilaku sekarang.
-- **Nama ter-reservasi** bertambah dari 2 menjadi **5**: `columns[]`,
-  `enable_customization`, `frozen_config`, `frozen_left[]`, `frozen_right[]`.
-  Kontrol toolbar bernama sama tidak boleh menimpanya.
+- **Nama ter-reservasi** menjadi **4**: `columns[]`, `frozen_config`,
+  `frozen_left[]`, `frozen_right[]`. Kontrol toolbar bernama sama tidak boleh
+  menimpanya. (`enable_customization` keluar dari daftar — dihapus, lihat §8.)
 
 ### 5.3 `#filterForm` TIDAK disentuh
 
@@ -224,7 +226,10 @@ pembayaran; penanda dibawa apa adanya.
 
 ---
 
-## 6. Invarian yang dibawa utuh dari pembayaran
+## 6. Invarian & perbaikan pada logika modal
+
+Dua invarian **dibawa utuh dari pembayaran** (§6.1–6.2); satu bug **diperbaiki**
+sekalian (§6.3).
 
 1. **`renderFrozenTab()` tidak boleh menugaskan ulang state.** Dulu fungsi ini
    memangkas `frozenLeftOrder`/`frozenRightOrder`, padahal hanya jalan saat tab Beku
@@ -234,6 +239,27 @@ pembayaran; penanda dibawa apa adanya.
 2. **Server memvalidasi ulang tiap request.** `FrozenColumnLayout::normalize()`
    membuang kolom beku yang sudah disembunyikan user — klien tidak dipercaya sebagai
    satu-satunya penjaga.
+
+---
+
+### 6.3 Bug drag yang diperbaiki sekalian (bukan dibawa ikut)
+
+Ditemukan saat QA browser 2026-07-28. `toggleColumn()` memanggil
+`updateDraggableState()` — memasang atribut `draggable="true"` pada kolom yang baru
+dicentang — tetapi **tidak** memanggil `initializeDragAndDrop()`, yang barulah
+memasang listener `dragstart`/`dragover`/`drop`. Listener hanya terpasang saat modal
+dibuka.
+
+Akibatnya kolom yang baru dicentang **tampak** bisa ditarik (ikon grip aktif, atribut
+`draggable` menyala) tapi tak bereaksi sampai modal ditutup lalu dibuka lagi. Karena
+atributnya sengaja di-set, ini jelas bug, bukan desain.
+
+Sekarang cacat ini mengenai 4 role. Tanpa perbaikan, setelah spec ini **kelima role
+mewarisinya**. Perbaikan: `toggleColumn()` ikut memanggil `initializeDragAndDrop()`.
+
+Catatan urutan: `initializeDragAndDrop()` mengganti node `#columnSelectionList` dengan
+klonanya untuk membuang listener lama. Jadi pemanggilan wajib **setelah** DOM item
+selesai diperbarui, dan tak boleh ada state yang dipegang lewat referensi node lama.
 
 ---
 
@@ -255,6 +281,7 @@ pembayaran; penanda dibawa apa adanya.
 | Tombol **Template Agenda** + `applyTemplateAgenda()` | Keputusan user. Grep: hanya dipakai `dashboardPembayaran.blade.php`. |
 | `localStorage.setItem('pembayaran_columns', …)` | Grep: **hanya ditulis, tak pernah dibaca** di seluruh `resources/`, `public/`, `app/`. Kode mati. |
 | Modal inline pembayaran (CSS 2336–2744, markup 2747–2901, JS 2903–3206) | Digantikan partial + JS bersama. Grep-gate dijalankan ulang sebelum eksekusi. |
+| Parameter `enable_customization` | Grep: **nol pembaca** di `app/`, `routes/`, `config/`, `tests/`. Hanya dikirim klien lalu diabaikan server. Melestarikannya berarti menyebar sampah URL ke 5 role. |
 | `appendActiveFilterInputs()` versi tempel-hidden-input | **Diganti**, bukan sekadar dihapus: perannya (membawa filter toolbar) pindah ke penimpaan `URLSearchParams` di §5.2. Tak ada pemakai lain — grep menunjukkan fungsi ini hanya dipanggil `saveColumnCustomization()`. |
 
 ---
@@ -282,6 +309,34 @@ tab-nya tampil tapi simpanan beku diabaikan diam-diam — kegagalan senyap.
 5. Pembayaran pindah ke partial + JS bersama; hapus modal inline, Template Agenda,
    `localStorage`.
 
+### 9.1 Bahaya migrasi Deploy 2 — sudah diverifikasi, bukan dugaan
+
+Tiga jebakan konkret. Semuanya dihitung dari kode, bukan perkiraan:
+
+**a. Empat nama fungsi bentrok.** `selectAllColumns`, `removeAllColumns`,
+`updateSelectedCount`, `saveColumnCustomization` ada di **kedua** implementasi dengan
+isi berbeda. Kalau blok inline tidak terhapus tuntas sementara JS bersama sudah
+dimuat, keduanya mendefinisikan global yang sama dan **yang terakhir menang, tanpa
+error apa pun**. Kegagalan senyap — persis jenis yang paling mahal. Karena itu §10
+mewajibkan test yang membuktikan nol definisi ganda setelah migrasi.
+
+**b. Tombol pembuka wajib diganti namanya.** Pembayaran memakai
+`onclick="openColumnModal()"` (baris 2198); nama bersamanya
+`openColumnCustomizationModal()`. Kalau terlewat, tombolnya mati tanpa suara.
+
+**c. Batas potong blok JS harus tepat.** Empat fungsi **non-modal** hidup di blok yang
+sama dan wajib selamat: `setViewMode`, `refreshPembayaranTable`, `changePerPage`,
+`toggleVendorGroup` (baris 3210–3236). Memotong terlalu lebar mematikan tombol mode
+tampilan, refresh, per-page, dan grup vendor sekaligus.
+
+### 9.2 Perubahan perilaku yang disengaja untuk pembayaran
+
+Setelah migrasi, pembayaran **mendapat drag-reorder kolom** yang selama ini tak
+dimilikinya. Sudah diverifikasi: nol `dragstart`/`draggable`/`dataTransfer` di seluruh
+god-file, padahal markup-nya merender ikon `drag-handle` — jadi ikon grip di modal
+pembayaran hari ini **hiasan mati**. Ini penambahan kemampuan, bukan regresi, tapi
+ditulis di sini supaya tidak muncul sebagai kejutan saat QA.
+
 ---
 
 ## 10. Testing
@@ -295,7 +350,10 @@ tab-nya tampil tapi simpanan beku diabaikan diam-diam — kegagalan senyap.
 | `mode=rekapan_table` selamat setelah simpan kolom (pembayaran) | Regresi yang ditemukan saat desain (§5) — harus test, bukan harapan |
 | `nomor_agenda` selalu berakhir di `frozen.left` meski request memaksa `right`/kosong | Menegakkan §4.2 |
 | Urutan CSS sebelum markup di 5 halaman (`assertSeeInOrder`) | Perluasan jaring yang sudah ada ke CSS tab baru |
-| Pasca-migrasi: `applyTemplateAgenda` & `pembayaran_columns` lenyap | Bukti hapus tuntas |
+| Kolom yang BARU dicentang langsung bisa di-drag | Menjaga perbaikan §6.3 agar tak kembali. Diuji lewat handler (`DragEvent` + `DataTransfer` bersama) — drag native HTML5 tak bisa disimulasikan lewat mouse CDP. |
+| Pasca-migrasi: nol definisi ganda untuk 4 nama bentrok | §9.1a — kegagalan senyap. Assert halaman pembayaran hanya memuat JS bersama, dan blok inline benar-benar hilang. |
+| Pasca-migrasi: `setViewMode`/`refreshPembayaranTable`/`changePerPage`/`toggleVendorGroup` masih ada | §9.1c — batas potong terlalu lebar mematikan 4 tombol sekaligus |
+| Pasca-migrasi: `applyTemplateAgenda`, `pembayaran_columns`, `enable_customization` lenyap | Bukti hapus tuntas |
 
 QA visual lewat Playwright MCP (buka tab → bekukan → simpan) dilakukan agent dan
 dilaporkan apa adanya; **keputusan lolos tetap di user** (CLAUDE.md §6).
