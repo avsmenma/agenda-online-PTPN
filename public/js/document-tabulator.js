@@ -1943,7 +1943,22 @@
         if (!tepiKanan) return;
         const kotak = el.getBoundingClientRect();
         const tertimbun = kotak.right - tepiKanan;
-        if (tertimbun > 0) holder.scrollLeft += (tertimbun + JARAK_AMAN);
+        if (tertimbun <= 0) return;
+
+        // Sel raksasa (lebih lebar dari celah bebas antara blok beku-kiri &
+        // blok beku-kanan): koreksi penuh di atas bisa mendorong tepi KIRI sel
+        // sampai masuk ke bawah blok beku-kiri (kebalikan dari bug yang
+        // diperbaiki listener ini). Untuk teks kiri-ke-kanan tepi kiri jauh
+        // lebih berguna — itu awal isi sel — jadi koreksi di-clamp supaya
+        // tepi kiri sel tidak pernah melewati tepi kanan blok beku-kiri
+        // (+ JARAK_AMAN yang sama). Diverifikasi 2026-07-28 (pembayaran,
+        // frozen.right = ['status_pembayaran']): kolom 'Uraian SPP' 1240px
+        // vs celah bebas ~395px — tanpa clamp ini tepi kiri kolom tertimbun.
+        const tepiKiri = tepiKananKolomBeku();
+        let koreksi = tertimbun + JARAK_AMAN;
+        if (tepiKiri) koreksi = Math.min(koreksi, kotak.left - (tepiKiri + JARAK_AMAN));
+        if (koreksi <= 0) return;
+        holder.scrollLeft += koreksi;
       });
     });
   })();
