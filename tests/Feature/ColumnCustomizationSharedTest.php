@@ -904,4 +904,50 @@ class ColumnCustomizationSharedTest extends TestCase
             }
         }
     }
+
+    /**
+     * Item 6a (review akhir branch, 2026-07-28): pemisahan persistenceID
+     * antar-role (lihat hashSusunanKolom + PERSIST_ID_PREFIX di
+     * document-tabulator.js) bersandar SEPENUHNYA pada CFG.mountId yang
+     * berbeda per role. Program BERIKUTNYA yang sudah tercatat di roadmap
+     * CLAUDE.md §7 ("satukan 4 view Tabulator jadi 1 view + config") adalah
+     * yang PALING mungkin menyeragamkan mountId tanpa sadar — begitu itu
+     * terjadi tanpa jaring ini, kelima role kembali berbagi satu kunci
+     * localStorage dan bug pencemaran antar-role (ditutup Task 5) hidup lagi
+     * tanpa suara.
+     */
+    public function test_mountid_berbeda_di_kelima_halaman_role(): void
+    {
+        $cases = [
+            ['role' => 'operator',        'route' => 'documents.index'],
+            ['role' => 'akutansi',        'route' => 'documents.akutansi.index'],
+            ['role' => 'perpajakan',      'route' => 'documents.perpajakan.index'],
+            ['role' => 'team_verifikasi', 'route' => 'documents.verifikasi.index'],
+            ['role' => 'pembayaran',      'route' => 'documents.pembayaran.index'],
+        ];
+
+        $awalan = 'window.DOCUMENT_TABULATOR_CONFIG = ';
+        $mountIds = [];
+        foreach ($cases as $c) {
+            $user = User::factory()->create(['role' => $c['role']]);
+            $html = $this->actingAs($user)->get(route($c['route']))->getContent();
+
+            $pos = strpos($html, $awalan);
+            $this->assertNotFalse($pos, "window.DOCUMENT_TABULATOR_CONFIG tidak ditemukan di role {$c['role']}");
+            $akhir = strpos($html, '</script>', $pos);
+            $this->assertNotFalse($akhir, "penutup </script> tidak ditemukan di role {$c['role']}");
+            $jsonMentah = rtrim(trim(substr($html, $pos + strlen($awalan), $akhir - $pos - strlen($awalan))), ';');
+
+            $config = json_decode($jsonMentah, true);
+            $this->assertIsArray($config, "DOCUMENT_TABULATOR_CONFIG role {$c['role']} gagal di-decode dari HTML");
+            $this->assertArrayHasKey('mountId', $config, "kunci 'mountId' tidak ada di config role {$c['role']}");
+            $mountIds[$c['role']] = $config['mountId'];
+        }
+
+        $this->assertSame(
+            count($mountIds),
+            count(array_unique($mountIds)),
+            'mountId TIDAK unik antar role — pencemaran localStorage antar-role akan hidup lagi: ' . json_encode($mountIds)
+        );
+    }
 }
