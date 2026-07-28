@@ -38,32 +38,45 @@ perbedaan besar antar-view sehingga penyatuan view nanti jadi lebih ringan.
 
 ## 3. Arsitektur
 
-Empat lapis. Tiga sudah ada; hanya lapis modal yang dikerjakan, plus satu trait baru.
+Empat lapis. Tiga sudah ada; hanya lapis modal yang dikerjakan, plus satu kelas baru.
 
 | Lapis | Berkas | Perubahan |
 |---|---|---|
 | Mesin tabel | `public/js/document-tabulator.js` | **Nol.** `buildColumns()` sudah membaca `cfg.frozen = {left,right}`; role tanpa itu dapat daftar kosong → perilaku lama utuh. |
 | Tata letak beku | `App\Support\FrozenColumnLayout` | **Nol.** `normalize()` + `renderOrder()` sudah bersama & ada unit test. Tinggal dipakai 4 role lain. |
 | Modal | `partials/_columnCustomizationModal.blade.php` + `public/js/column-customization.js` | **Di sini pekerjaannya** — tambah tab Kolom Beku. |
-| Preferensi server | **BARU** `App\Http\Controllers\Concerns\CustomizesDocumentColumns` | Trait bersama. |
+| Preferensi server | **BARU** `App\Support\ColumnCustomization` | Kelas bersama. |
 
-### 3.1 Trait `CustomizesDocumentColumns`
+### 3.1 Kelas `App\Support\ColumnCustomization`
 
 Logika baca-simpan preferensi kolom + beku ~60 baris. Menyalinnya ke 4 controller =
-salinan ke-5 = memperparah penyakit utama (CLAUDE.md §3). Satu method bersama:
+salinan ke-5 = memperparah penyakit utama (CLAUDE.md §3).
+
+**Kelas biasa di `App\Support`, BUKAN trait `Concerns\`.** Alasannya testabilitas:
+§10 menuntut unit test, dan menguji trait memerlukan kelas inang bohongan. Logika ini
+murni — request masuk, preferensi keluar — tanpa konteks controller selain user yang
+bisa dioper. `App\Support` juga memang tempat logika murni bersama di project ini
+(`FrozenColumnLayout`, `DocumentRow`, `DocumentExporter`, `Role`, `Asset`), dan
+`FrozenColumnLayout` sudah membuktikan pola itu enak diuji. Trait `Concerns\` di
+project ini dipakai untuk hal yang menghasilkan respons HTTP (`ExportsDocuments`) —
+bukan kasus ini.
 
 ```php
-$cc = $this->resolveColumnCustomization($request, [
+$cc = ColumnCustomization::resolve($request, $user, [
     'available'     => $availableColumns,
     'default'       => $defaultColumns,
     'prefKey'       => 'akutansi',                        // kunci table_columns_preferences
     'sessionKey'    => 'akutansi_dokumens_table_columns',
     'frozenDefault' => ['left' => ['nomor_agenda'], 'right' => []],
+    'pinnedLeft'    => ['nomor_agenda'],                  // §4.2 — selalu beku kiri
 ]);
 // → ['selected' => [...], 'frozen' => ['left' => [...], 'right' => [...]], 'render' => [...]]
 ```
 
-Trait **membungkus pola yang sudah ada, tidak mengubah aturannya**:
+`$user` dioper eksplisit (bukan `Auth::user()` di dalam kelas) supaya unit test bisa
+memberi user palsu tanpa menyalakan sesi.
+
+Kelas ini **membungkus pola yang sudah ada, tidak mengubah aturannya**:
 
 - Penyimpanan tetap **DB** (`users.table_columns_preferences`) untuk akutansi,
   perpajakan, verifikasi, pembayaran.
@@ -123,7 +136,7 @@ membekukan kolom.
 ### 4.2 Nomor Agenda terkunci
 
 Mesin tabel membekukan `nomor_agenda` tanpa syarat. Agar urutan render sejalan
-dengan hardcode itu, **trait wajib memaksa `nomor_agenda` selalu ada di
+dengan hardcode itu, **`ColumnCustomization` wajib memaksa `nomor_agenda` selalu ada di
 `frozen.left`** (sisipkan bila hilang) sebelum `normalize()`. Di tab Kolom Beku,
 barisnya dirender **non-aktif** dengan keterangan "identitas baris selalu terlihat".
 
@@ -133,31 +146,75 @@ tidak pernah berefek.
 
 ---
 
-## 5. Perilaku Simpan — gabungan dua jalur, bukan salah satunya
+## 5. Perilaku Simpan — bangun URL, jangan submit form
 
 Dua jalur yang ada sekarang sama-sama bocor:
 
-- **4 role**: submit `#filterForm` (GET). Filter toolbar selamat, tapi **parameter URL
-  yang bukan field form hilang**.
+- **4 role**: submit `#filterForm` (GET). Filter toolbar terbawa lewat
+  `appendActiveFilterInputs()`, tapi **parameter URL yang bukan field form hilang**.
 - **Pembayaran**: bangun ulang dari `window.location.href`. `mode=rekapan_table` &
   `per_page` selamat, tapi **perubahan toolbar yang belum disubmit hilang**.
 
 Memindahkan pembayaran mentah-mentah ke jalur pertama = **mode rekapan vendor lompat
-balik ke normal setiap kali user menyimpan kolom.** Jalur bersama = superset:
+balik ke normal setiap kali user menyimpan kolom.**
+
+### 5.1 Kenapa form-submit ditinggalkan sama sekali
+
+Bentuk DOM kedua kubu berbeda, dan itu membuat jalur form cacat untuk pembayaran:
+
+| | `#filterForm` | toolbar |
+|---|---|---|
+| 4 role | form **kosong tersembunyi** (`class="d-none"`) | `<div class="tabulator-toolbar">` **di luar** form |
+| pembayaran | **sama dengan** toolbar (`<form class="filter-section tabulator-toolbar">`) | field ada **di dalam** form |
+
+`appendActiveFilterInputs()` melakukan `remove()` pada input bernama sama sebelum
+menempelkan salinan tersembunyi. Untuk pembayaran, input yang dihapus itu adalah
+**elemen toolbar yang asli** (karena berada di dalam form), sementara `<select>` tidak
+ikut dihapus sehingga parameternya terkirim dobel. Nilainya kebetulan sama jadi tidak
+fatal — tapi itu merusak DOM dan bergantung pada kebetulan.
+
+### 5.2 Jalur bersama
 
 ```
-1. mulai dari #filterForm (submit GET)              → filter toolbar terbawa   [4 role]
-2. salin param URL berjalan yang TIDAK diwakili
-   field form apa pun → hidden input                → mode/per_page selamat    [pembayaran]
-3. timpa: columns[], enable_customization,
-   frozen_config=1, frozen_left[], frozen_right[]
+url = new URL(location.href)          // param tak dikenal selamat: mode, per_page, page, sort
+  ← timpa setiap kontrol .tabulator-toolbar
+  ← timpa columns[], enable_customization, frozen_config=1, frozen_left[], frozen_right[]
+location.href = url
 ```
 
-Nama ter-reservasi bertambah dari 2 menjadi **5**: `columns[]`,
-`enable_customization`, `frozen_config`, `frozen_left[]`, `frozen_right[]` — supaya
-langkah 2 tak pernah menimpa langkah 3.
+Lebih sederhana, seragam untuk kedua bentuk DOM, **nol mutasi DOM**, nol parameter
+dobel — dan mempertahankan sifat terbaik kedua jalur lama sekaligus.
 
-### 5.1 `frozen_config=1` wajib ikut
+Aturan rinci:
+
+- **Nama larik dipakai apa adanya**, berkurung: `columns[]`, `frozen_left[]`,
+  `frozen_right[]`. `URLSearchParams` dan `el.name` sama-sama memakai bentuk
+  berkurung, jadi perbandingan nama konsisten tanpa normalisasi.
+- **Nilai kosong menghapus param** (`url.searchParams.delete(name)`) — itulah
+  semantik "bersihkan filter". Tanpa aturan ini, filter yang dikosongkan user akan
+  hidup lagi dari URL sebelumnya.
+- **Checkbox/radio tak tercentang** dilewati, seperti perilaku sekarang.
+- **Nama ter-reservasi** bertambah dari 2 menjadi **5**: `columns[]`,
+  `enable_customization`, `frozen_config`, `frozen_left[]`, `frozen_right[]`.
+  Kontrol toolbar bernama sama tidak boleh menimpanya.
+
+### 5.3 `#filterForm` TIDAK disentuh
+
+Sempat terpikir menghapusnya dari 4 view karena tampak hanya dipakai modal. Grep
+penuh (`resources` + `public` + `app` + `tests` + `config` + `routes`) membantah itu:
+partial **global** `partials/document-workbench-ui.blade.php` memakainya di baris 424
+dan 680 untuk menghitung badge "filter aktif". Menghapusnya = menyentuh partial global
+(gerbang kritis CLAUDE.md §6) demi manfaat nol bagi tujuan spec ini. **Dibiarkan apa
+adanya**; modal cukup berhenti memakainya.
+
+### 5.4 Kenapa muat-ulang penuh, bukan `setColumns()` client-side
+
+Definisi kolom, formatter, dan urutan render dihitung di server (DTO `DocumentRow`
+per role + `FrozenColumnLayout::renderOrder()`). Menyusun ulang kolom di klien berarti
+mereplikasi logika itu di JS — melahirkan duplikasi baru, persis penyakit yang sedang
+diberantas. Muat-ulang penuh dipilih sadar, bukan karena inersia.
+
+### 5.5 `frozen_config=1` wajib ikut
 
 Tanpa penanda ini, "user melepas SEMUA kolom beku" tidak bisa dibedakan dari
 "request tak membawa konfigurasi beku" — keduanya sama-sama tidak mengirim
@@ -198,6 +255,7 @@ pembayaran; penanda dibawa apa adanya.
 | Tombol **Template Agenda** + `applyTemplateAgenda()` | Keputusan user. Grep: hanya dipakai `dashboardPembayaran.blade.php`. |
 | `localStorage.setItem('pembayaran_columns', …)` | Grep: **hanya ditulis, tak pernah dibaca** di seluruh `resources/`, `public/`, `app/`. Kode mati. |
 | Modal inline pembayaran (CSS 2336–2744, markup 2747–2901, JS 2903–3206) | Digantikan partial + JS bersama. Grep-gate dijalankan ulang sebelum eksekusi. |
+| `appendActiveFilterInputs()` versi tempel-hidden-input | **Diganti**, bukan sekadar dihapus: perannya (membawa filter toolbar) pindah ke penimpaan `URLSearchParams` di §5.2. Tak ada pemakai lain — grep menunjukkan fungsi ini hanya dipanggil `saveColumnCustomization()`. |
 
 ---
 
@@ -205,12 +263,15 @@ pembayaran; penanda dibawa apa adanya.
 
 **Deploy 1 — 4 role; pembayaran belum disentuh**
 
-1. Trait `CustomizesDocumentColumns` + unit test
+1. Kelas `App\Support\ColumnCustomization` + unit test
 2. Partial bersama: tab bar + panel Kolom Beku. **CSS wajib lewat `@push('styles')`**
    — bukan `<style>` inline di body; itu pernah jadi regresi flash-of-unstyled-modal
    saat ekstraksi 2026-07-28.
 3. JS bersama: state beku, `switchColumnTab`, `getFrozenState`/`setFrozenState`,
-   `renderFrozenTab`, `renderFrozenWarning`, Simpan versi superset (§5)
+   `renderFrozenTab`, `renderFrozenWarning`, **dan Simpan dialihkan dari
+   `filterForm.submit()` ke pembangunan URL** (§5.2). Langkah ini mengubah jalur
+   simpan keempat role yang sekarang sudah jalan — jadi test round-trip filter
+   toolbar yang ada wajib tetap hijau sebagai jaring paritas.
 4. Sambungkan 4 controller + 4 view (pemisahan `renderOrder` vs `selected`)
 
 Tugas 2–4 **wajib satu deploy**. Kalau tab Beku tayang sebelum controller siap,
@@ -227,7 +288,9 @@ tab-nya tampil tapi simpanan beku diabaikan diam-diam — kegagalan senyap.
 
 | Test | Kenapa |
 |---|---|
-| Round-trip **"lepas semua kolom beku"** | Justru alasan `frozen_config` ada (§5.1). Tanpa test, bug ini kembali diam-diam. |
+| Round-trip **"lepas semua kolom beku"** | Justru alasan `frozen_config` ada (§5.5). Tanpa test, bug ini kembali diam-diam. |
+| **Hasil simpan tidak bergantung pada tab Beku pernah dibuka atau tidak** | Menjaga invarian §6.1 — bug yang SUDAH pernah terjadi di pembayaran. Skenario: bekukan kolom X → sembunyikan X → tampilkan X lagi → simpan. Hasil wajib sama, baik `renderFrozenTab()` sempat jalan maupun tidak. Sebelumnya invarian ini hanya ditulis, tanpa jaring. |
+| Param URL tak dikenal (`mode`, `per_page`) selamat; filter dikosongkan benar-benar hilang | Menegakkan aturan §5.2 (bangun URL + semantik nilai kosong) |
 | `renderOrder` ≠ urutan modal saat ada beku kanan | Menjaga dua urutan (§4.1) tidak tertukar |
 | `mode=rekapan_table` selamat setelah simpan kolom (pembayaran) | Regresi yang ditemukan saat desain (§5) — harus test, bukan harapan |
 | `nomor_agenda` selalu berakhir di `frozen.left` meski request memaksa `right`/kosong | Menegakkan §4.2 |
@@ -256,6 +319,12 @@ dilaporkan apa adanya; **keputusan lolos tetap di user** (CLAUDE.md §6).
 
 - Menyatukan 4 view Tabulator jadi 1 view + config — program terpisah, jadi lebih
   ringan setelah spec ini selesai.
+- **Menyeragamkan toolbar filter.** Ditemukan saat desain: 4 role memfilter
+  **client-side** (Tabulator `setFilter`, URL tak berubah), pembayaran **submit form
+  ke server**. Perbedaan nyata dan relevan bagi tujuan "semua role sama", tapi di luar
+  cakupan spec ini. Kandidat penyatuan berikutnya.
+- **Menghapus `#filterForm`** dari 4 view. Lihat §5.3 — dipakai partial global
+  `document-workbench-ui`; menyentuhnya gerbang kritis dengan manfaat nol di sini.
 - Menyeragamkan penyimpanan preferensi operator (sesi) ke DB.
 - Kolom beku untuk role `bagian` — role view-only, tidak memakai modal ini.
 - Template kolom per-role (dihapus atas keputusan user, §2).
