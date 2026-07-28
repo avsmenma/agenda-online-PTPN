@@ -1,7 +1,8 @@
-// ==== Kustomisasi Kolom (diekstrak dari 4 view role ke file bersama) ====
-// Diekstrak dari view role (operator/akutansi/perpajakan/verifikasi, masing-masing
-// daftar*Tabulator.blade.php) menjadi file bersama dipakai 4 view Tabulator role
-// sekaligus. Data lewat window.COLUMN_CUSTOMIZATION_CONFIG (diisi
+// ==== Kustomisasi Kolom (diekstrak dari 5 view role ke file bersama) ====
+// Diekstrak dari view role (operator/akutansi/perpajakan/verifikasi/pembayaran,
+// masing-masing daftar*Tabulator.blade.php / dashboardPembayaran.blade.php) menjadi
+// file bersama dipakai 5 view Tabulator role sekaligus (pembayaran ikut 2026-07-28).
+// Data lewat window.COLUMN_CUSTOMIZATION_CONFIG (diisi
 // partials._columnCustomizationModal), BUKAN output template Blade langsung — file
 // ini statis, nol token Blade.
 var __CCCFG = window.COLUMN_CUSTOMIZATION_CONFIG || { availableColumns: {}, selected: [] };

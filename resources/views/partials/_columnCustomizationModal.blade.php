@@ -1,8 +1,10 @@
 {{--
-  Modal Kustomisasi Kolom bersama — dipakai 4 view Tabulator role
-  (operator/akutansi/perpajakan/verifikasi). Data lewat window.COLUMN_CUSTOMIZATION_CONFIG;
-  logika di public/js/column-customization.js. Dark-mode CSS ada global di layouts/app.
-  Lihat spec docs/superpowers/specs/2026-07-28-ekstrak-modal-kustomisasi-kolom-design.md.
+  Modal Kustomisasi Kolom bersama — dipakai 5 view Tabulator role
+  (operator/akutansi/perpajakan/verifikasi/pembayaran; pembayaran ikut 2026-07-28).
+  Data lewat window.COLUMN_CUSTOMIZATION_CONFIG; logika di public/js/column-customization.js.
+  Dark-mode CSS ada global di layouts/app. Lihat spec
+  docs/superpowers/specs/2026-07-28-ekstrak-modal-kustomisasi-kolom-design.md dan
+  docs/superpowers/specs/2026-07-28-modal-kustomisasi-kolom-5-role-design.md (pembayaran).
 --}}
 @php
     $availableColumns = $availableColumns ?? [];
