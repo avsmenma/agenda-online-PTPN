@@ -877,15 +877,76 @@
   // ('tabulator-<persistenceID>-columns') — kunci itu ditulis Tabulator sendiri
   // pada render PERTAMA (sebelum user menyentuh apa pun), jadi tidak bisa
   // dipakai untuk mendeteksi "user sudah resize". Karena itu dipakai kunci
-  // terpisah ('operator-tabulator-user-resized') yang HANYA ditulis dari
+  // terpisah (lihat USER_RESIZED_FLAG_KEY di bawah) yang HANYA ditulis dari
   // handler 'columnResized' (lihat bawah) — event itu terbukti tidak terpicu
   // oleh resize terprogram (mis. column.setWidth()), hanya oleh drag user.
-  const PERSIST_ID = 'agenda-operator-documents';
-  const USER_RESIZED_FLAG_KEY = 'operator-tabulator-user-resized';
+  //
+  // BUG 2026-07-28 (dibuktikan di produksi, bukan dugaan): opsi
+  // `persistence: { columns: ['width'] }` di bawah TIDAK berarti "simpan HANYA
+  // lebar" — modul persistence Tabulator membangun ulang definisi kolom lewat
+  // mergeDefinition(current, persisted), yang MENGITERASI ARRAY TERSIMPAN lalu
+  // mendorong kolom yang cocok satu per satu. Hasilnya: URUTAN kolom hasil =
+  // urutan yang tersimpan di localStorage, apa pun properti yang disebut di opsi
+  // `columns` — persistence Tabulator ikut mengunci urutan (dan efektif,
+  // susunan) kolom, bukan cuma lebar. Dibuktikan di produksi: menukar dua kolom
+  // HANYA di localStorage lalu reload membuat header tertukar sekalipun
+  // konfigurasi dari server tidak berubah — localStorage lama (dari sebelum
+  // fitur Kolom Beku ada) selalu menang atas susunan baru dari server.
+  //
+  // Perbaikan: persistenceID diikat ke SIDIK JARI daftar kunci kolom yang
+  // sedang dikirim server. Begitu susunan kolom berubah (pilihan, urutan, atau
+  // freeze Kiri/Bebas/Kanan), sidik jari berubah → kunci localStorage yang
+  // dipakai pun otomatis berbeda, sehingga simpanan basi (susunan lama) tidak
+  // pernah dipakai untuk menimpa susunan baru dari server. Hash djb2 sederhana
+  // (bukan kriptografis, cukup stabil & pendek), dijadikan string base36.
+  function hashSusunanKolom(str) {
+    let h = 5381;
+    for (let i = 0; i < str.length; i++) {
+      h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+    }
+    return h.toString(36);
+  }
+  const sidikJariKolom = hashSusunanKolom((CFG.columns || []).map(function (c) { return c.key; }).join(','));
+  // Penanda role dari CFG.mountId — nilainya beda per role (operatorTabulatorTable,
+  // akutansiTabulatorTable, verifikasiTabulatorTable, dst.), jadi cukup dipakai
+  // apa adanya sebagai bagian kunci. Cadangan 'documents' bila mountId kosong
+  // (seharusnya tak pernah terjadi — CFG divalidasi di baris 24 — tapi
+  // persistenceID tidak boleh jatuh ke string kosong kalau itu terjadi).
+  const roleTag = CFG.mountId || 'documents';
+  // Awalan tetap dipisah supaya bisa dipakai ulang untuk membersihkan kunci basi
+  // di bawah (lihat blok pembersihan) tanpa mengulang literal string.
+  const PERSIST_ID_PREFIX = 'agenda-documents-' + roleTag + '-';
+  const PERSIST_ID = PERSIST_ID_PREFIX + sidikJariKolom;
+  // TANPA sidik jari, sengaja: penanda ini menentukan fitData vs fitDataStretch
+  // (lihat komentar di atas opsi `layout` di bawah). Kalau ikut disidikjari, ia
+  // akan ter-reset setiap kali user mengubah susunan kolom (pilih/freeze kolom
+  // lain), dan layout melompat balik ke 'fitDataStretch' — merusak keputusan
+  // user 2026-07-22 bahwa lebar tarikan user dihormati apa adanya. Karena itu ia
+  // HANYA per-role (via roleTag), murni riwayat "user pernah resize di role
+  // ini", terlepas dari susunan kolom yang sedang aktif.
+  const USER_RESIZED_FLAG_KEY = 'agenda-documents-' + roleTag + '-user-resized';
   let adaLebarTersimpan = false;
   // try/catch wajib: localStorage bisa melempar di mode privat / kuota penuh,
   // dan tabel TIDAK boleh gagal render karenanya.
   try { adaLebarTersimpan = !!localStorage.getItem(USER_RESIZED_FLAG_KEY); } catch (e) {}
+
+  // Bersihkan kunci persistence BASI milik role ini (sidik jari lama, susunan
+  // kolom yang sudah tak dipakai lagi) — tanpa ini localStorage tumbuh tanpa
+  // batas karena tiap susunan kolom baru melahirkan kunci baru (kunci lama tak
+  // pernah otomatis hilang). Hanya menyentuh kunci berpola PERSIS milik kita
+  // sendiri untuk role ini ('tabulator-' + PERSIST_ID_PREFIX + ...) dan BUKAN
+  // kunci yang baru saja kita pasang di atas — kunci lain (kunci role lain,
+  // USER_RESIZED_FLAG_KEY, atau apa pun di luar pola ini) tidak pernah disentuh.
+  try {
+    const kunciBaruTabulator = 'tabulator-' + PERSIST_ID + '-columns';
+    const awalanKunciKita = 'tabulator-' + PERSIST_ID_PREFIX;
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf(awalanKunciKita) === 0 && k !== kunciBaruTabulator) {
+        localStorage.removeItem(k);
+      }
+    }
+  } catch (e) {}
 
   const table = new Tabulator(mountEl(), {
     ajaxURL: CFG.dataUrl,
@@ -899,8 +960,12 @@
     paginationSize: 100,
     ajaxResponse: function (url, params, response) { return response; },
     layout: adaLebarTersimpan ? 'fitData' : 'fitDataStretch',
-    // Simpan HANYA lebar kolom (bukan urutan/visibilitas) ke localStorage, supaya
-    // penyempitan/pelebaran kolom oleh user bertahan lintas kunjungan.
+    // Opsi `columns: ['width']` di sini HANYA menentukan properti yang dibawa
+    // Tabulator saat MEMBACA definisi tersimpan — bukan jaminan urutan tak ikut
+    // terkunci (lihat penjelasan panjang di atas PERSIST_ID). Karena itu
+    // persistenceID sendiri yang mengunci kesegaran: begitu susunan kolom
+    // berubah, sidik jari berubah dan kunci localStorage ikut berganti — lebar
+    // hasil tarikan user tetap bertahan SELAMA susunan kolom tidak berubah.
     persistence: { columns: ['width'] },
     persistenceID: PERSIST_ID,
     height: '70vh',

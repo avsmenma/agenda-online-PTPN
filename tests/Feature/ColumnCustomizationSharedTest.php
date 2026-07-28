@@ -452,4 +452,127 @@ class ColumnCustomizationSharedTest extends TestCase
         $this->assertGreaterThan($posExtraColumns, $posForEachKelompok);
         $this->assertGreaterThan($posHandler, $posForEachKelompok);
     }
+
+    /**
+     * Bug 2026-07-28 (dibuktikan di produksi, bukan dugaan): persistenceID
+     * Tabulator dulu konstanta harfiah ('agenda-operator-documents') dipakai
+     * SEMUA role sekaligus, dan opsi `persistence: { columns: ['width'] }`
+     * TERNYATA tetap mengunci URUTAN kolom — mergeDefinition() internal
+     * Tabulator membangun hasil dengan mengiterasi ARRAY TERSIMPAN, sehingga
+     * urutan hasil = urutan localStorage apa pun properti yang diminta. Akibatnya
+     * localStorage basi (dari sebelum fitur Kolom Beku ada) menimpa urutan baru
+     * dari server, dan kelima role saling mencemari lebar/urutan lewat kunci yang
+     * sama. Perbaikan: persistenceID dibangun dari CFG.mountId (penanda role) +
+     * sidik jari daftar kunci kolom yang sedang dikirim server — bukan lagi
+     * string tetap.
+     */
+    public function test_persist_id_dibangun_dari_mount_id_dan_sidik_jari(): void
+    {
+        $js = file_get_contents(public_path('js/document-tabulator.js'));
+
+        // Konstanta harfiah lama (sama untuk semua role) sudah tidak ada.
+        $this->assertStringNotContainsString("PERSIST_ID = 'agenda-operator-documents'", $js);
+
+        $awal = strpos($js, 'function hashSusunanKolom(');
+        $this->assertNotFalse($awal, 'fungsi hashSusunanKolom tidak ditemukan');
+        $akhir = strpos($js, 'const table = new Tabulator(mountEl()', $awal);
+        $this->assertNotFalse($akhir, 'penutup blok persistenceID (sebelum konstruktor Tabulator) tidak ditemukan');
+        $badan = substr($js, $awal, $akhir - $awal);
+
+        // Penanda role dari CFG.mountId, dengan nilai cadangan bila kosong.
+        $this->assertStringContainsString("const roleTag = CFG.mountId || 'documents';", $badan);
+        // PERSIST_ID = awalan tetap + roleTag + sidik jari — dibangun, bukan literal.
+        $this->assertStringContainsString("const PERSIST_ID_PREFIX = 'agenda-documents-' + roleTag + '-';", $badan);
+        $this->assertStringContainsString('const PERSIST_ID = PERSIST_ID_PREFIX + sidikJariKolom;', $badan);
+    }
+
+    /**
+     * Sidik jari WAJIB dihitung dari daftar KUNCI KOLOM yang sedang dikirim
+     * server (CFG.columns[].key) — bukan dari localStorage, bukan dari DOM —
+     * supaya begitu susunan kolom berubah (pilihan/urutan/freeze), kunci
+     * persistence ikut berganti dan simpanan basi tak bisa menimpa susunan baru.
+     */
+    public function test_sidik_jari_dihitung_dari_daftar_kunci_kolom(): void
+    {
+        $js = file_get_contents(public_path('js/document-tabulator.js'));
+
+        $awal = strpos($js, 'function hashSusunanKolom(');
+        $this->assertNotFalse($awal, 'fungsi hashSusunanKolom tidak ditemukan');
+        $akhir = strpos($js, 'const table = new Tabulator(mountEl()', $awal);
+        $badan = substr($js, $awal, $akhir - $awal);
+
+        // Hash djb2 sederhana (bukan kriptografis) atas string gabungan kunci kolom.
+        $this->assertStringContainsString('charCodeAt(', $badan);
+        $this->assertStringContainsString('.toString(36)', $badan);
+        // Input hash: CFG.columns[].key digabung koma — daftar kolom yang SEDANG
+        // dikirim server, urut sesuai urutan server (bukan urutan localStorage).
+        $this->assertStringContainsString(
+            "hashSusunanKolom((CFG.columns || []).map(function (c) { return c.key; }).join(','))",
+            $badan
+        );
+    }
+
+    /**
+     * USER_RESIZED_FLAG_KEY menentukan pilihan layout fitData vs fitDataStretch
+     * (keputusan user 2026-07-22: lebar tarikan user dihormati apa adanya begitu
+     * pernah di-resize). Kalau penanda ini ikut disidikjari seperti PERSIST_ID,
+     * ia akan ter-reset setiap kali user mengubah susunan kolom (pilih/freeze
+     * kolom lain) dan layout melompat balik ke fitDataStretch — regresi terhadap
+     * keputusan itu. Karena itu penanda ini WAJIB hanya per-role (roleTag),
+     * TANPA sidik jari susunan kolom.
+     */
+    public function test_user_resized_flag_key_tanpa_sidik_jari(): void
+    {
+        $js = file_get_contents(public_path('js/document-tabulator.js'));
+
+        $pos = strpos($js, 'const USER_RESIZED_FLAG_KEY = ');
+        $this->assertNotFalse($pos, 'deklarasi USER_RESIZED_FLAG_KEY tidak ditemukan');
+        $akhirBaris = strpos($js, "\n", $pos);
+        $this->assertNotFalse($akhirBaris);
+        $baris = substr($js, $pos, $akhirBaris - $pos);
+
+        $this->assertStringContainsString('roleTag', $baris);
+        $this->assertStringNotContainsString('sidikJariKolom', $baris);
+        $this->assertStringNotContainsString('PERSIST_ID', $baris);
+    }
+
+    /**
+     * localStorage bisa melempar di mode privat / kuota penuh, dan tabel TIDAK
+     * boleh gagal render karenanya (aturan lama berkas ini). Blok pembersihan
+     * kunci persistence basi (sidik jari lama) adalah akses localStorage BARU
+     * yang ditambahkan — wajib ikut dibungkus try/catch, sama seperti pembacaan
+     * USER_RESIZED_FLAG_KEY di atasnya.
+     */
+    public function test_pembersihan_kunci_basi_dibungkus_try_catch(): void
+    {
+        $js = file_get_contents(public_path('js/document-tabulator.js'));
+
+        // Anchor persis pada komentar blok pembersihan (BUKAN dari deklarasi
+        // USER_RESIZED_FLAG_KEY) — badan sebelumnya juga mencakup try/catch
+        // pembacaan flag di atasnya (blok tak terkait), sehingga assertion
+        // "try sebelum removeItem" lolos vakum walau try/catch cuma dihapus
+        // dari cleanup-nya sendiri (dibuktikan lewat uji mutasi). Anchor ini
+        // mempersempit badan HANYA ke blok pembersihan itu sendiri.
+        $posAwal = strpos($js, "// Bersihkan kunci persistence BASI milik role ini");
+        $this->assertNotFalse($posAwal, 'komentar blok pembersihan kunci basi tidak ditemukan');
+        $posTable = strpos($js, 'const table = new Tabulator(mountEl()', $posAwal);
+        $this->assertNotFalse($posTable);
+        $badan = substr($js, $posAwal, $posTable - $posAwal);
+
+        // Blok pembersihan memakai localStorage.key()/removeItem().
+        $this->assertStringContainsString('localStorage.key(', $badan);
+        $this->assertStringContainsString('localStorage.removeItem(', $badan);
+
+        // try/catch WAJIB membungkus tepat blok ini: satu-satunya 'try {' dalam
+        // badan yang sudah dipersempit ini adalah milik pembersihan sendiri, dan
+        // posisinya wajib mendahului baik pemanggilan removeItem() maupun catch
+        // penutupnya wajib menyusul SETELAH removeItem() (bukan menutup lebih awal).
+        $posTry = strpos($badan, 'try {');
+        $posRemove = strpos($badan, 'localStorage.removeItem(');
+        $posCatch = strpos($badan, '} catch (e) {}', $posRemove === false ? 0 : $posRemove);
+        $this->assertNotFalse($posTry, 'blok try untuk pembersihan kunci basi tidak ditemukan');
+        $this->assertNotFalse($posCatch, 'blok catch SETELAH removeItem tidak ditemukan — try mungkin sudah tertutup sebelum removeItem dipanggil');
+        $this->assertLessThan($posRemove, $posTry, 'localStorage.removeItem dipanggil di luar blok try');
+        $this->assertGreaterThan($posRemove, $posCatch, 'catch menutup sebelum removeItem dipanggil — removeItem berada di luar blok try/catch');
+    }
 }
