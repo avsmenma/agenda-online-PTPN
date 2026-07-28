@@ -63,6 +63,9 @@ resources/views/partials/
   document-workbench-ui.blade.php    panel Detail Cepat
   _infoCards.blade.php               kartu informasi bersama (stat card, data-driven $cards)
                                      dipakai dashboard.workflow (4 role keuangan) + view bagian
+  _columnCustomizationModal.blade.php  modal Kustomisasi Kolom bersama (markup + CSS via
+                                     @push('styles')) — dipakai 4 view Tabulator role;
+                                     logikanya di public/js/column-customization.js
 ```
 > Catatan: `virtual-document-table`, `_compactDocumentTable`, `document-handler-select`,
 > `auto-refresh-documents` **sudah DIHAPUS** (audit dead-code 2026-07-26) — konsumennya lenyap
@@ -345,6 +348,24 @@ hilang (kartu keuangan pun tak punya). Sebelum menyalin markup kartu ke role lai
 `_infoCards`, JANGAN duplikasi CSS kartu.
 - Spec/plan: `docs/superpowers/specs/2026-07-27-satukan-kartu-info-bagian-design.md`,
   `docs/superpowers/plans/2026-07-27-satukan-kartu-info-bagian.md`
+
+**Modal Kustomisasi Kolom DISATUKAN (4 role) — SELESAI, ter-deploy & QA lolos 2026-07-28.**
+Modal yang dulu disalin verbatim di 4 view Tabulator kini SATU sumber: partial
+**`resources/views/partials/_columnCustomizationModal.blade.php`** (markup + CSS lewat
+`@push('styles')`) + **`public/js/column-customization.js`** (logika, file statis nol-Blade,
+dimuat `Asset::versioned()`). Data Blade→JS lewat jembatan **`window.COLUMN_CUSTOMIZATION_CONFIG`**
+(pola `DOCUMENT_TABULATOR_CONFIG`). Dampak: operator 726→293, akutansi 548→106, perpajakan
+549→106, verifikasi 578→134 baris (~1.760 baris duplikat lenyap).
+`appendActiveFilterInputs()` kini **generik** — membawa semua `input/select/textarea[name]` di
+`.tabulator-toolbar` (menggantikan daftar field hardcode per-role), dengan `columns[]` &
+`enable_customization` dilindungi sebagai nama ter-reservasi.
+**PENTING — CSS modal WAJIB lewat `@push('styles')`** (bukan `<style>` inline di body):
+pernah jadi regresi flash-of-unstyled-modal saat ekstraksi karena CSS `display:none` ter-parse
+SETELAH markup. Dijaga test `assertSeeInOrder` (CSS sebelum markup) di keempat halaman.
+**Pembayaran SENGAJA di luar cakupan** — modalnya superset (2 tab + Kolom Beku) di god-file
+`pembayaranNEW/dashboardPembayaran.blade.php`, masih inline, program terpisah.
+- Spec/plan: `docs/superpowers/specs/2026-07-28-ekstrak-modal-kustomisasi-kolom-design.md`,
+  `docs/superpowers/plans/2026-07-28-ekstrak-modal-kustomisasi-kolom.md`
 
 ## 8. Hal Yang harus bisa dilakukan pada tabel tabulator
 
