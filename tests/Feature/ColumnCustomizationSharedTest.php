@@ -52,7 +52,13 @@ class ColumnCustomizationSharedTest extends TestCase
             $res->assertDontSee('let availableColumnsData =', false);
             // Bukti CSS modal lewat @push('styles') sampai ke <head> layout (bukan
             // nyangkut di body setelah markup modal — regresi flash-of-unstyled-modal).
-            $res->assertSee('.customization-modal { display: none;', false);
+            // assertSeeInOrder menegakkan URUTAN: aturan display:none WAJIB lebih dulu
+            // daripada markup modal. Tanpa cek urutan, assertion tetap lolos meski CSS
+            // kembali nyangkut di body (persis bug yang diperbaiki 2026-07-28).
+            $res->assertSeeInOrder([
+                '.customization-modal { display: none;',
+                'id="columnCustomizationModal"',
+            ], false);
         }
     }
 
@@ -102,6 +108,11 @@ class ColumnCustomizationSharedTest extends TestCase
         $res->assertSee('id="columnCustomizationModal"', false);
         $res->assertSee('js/column-customization.js', false);
         $res->assertDontSee('let availableColumnsData =', false);
+        // Operator ikut dijaga: CSS modal wajib sampai <head> SEBELUM markup modal.
+        $res->assertSeeInOrder([
+            '.customization-modal { display: none;',
+            'id="columnCustomizationModal"',
+        ], false);
         // Fitur operator-only WAJIB tetap.
         $res->assertSee('id="btnHapusBarisAktif"', false);
     }
