@@ -327,16 +327,16 @@ function renderFrozenTab() {
     list.innerHTML = selectedColumnsOrder.map(function (key) {
         const label = availableColumnsData[key] || key;
         const state = getFrozenState(key);
-        const terkunci = PINNED_LEFT_COLUMNS.indexOf(key) !== -1;
+        const isPinned = PINNED_LEFT_COLUMNS.indexOf(key) !== -1;
         const opt = function (value, text) {
             return '<button type="button" class="frozen-opt' + (state === value ? ' active' : '') + '"' +
-                (terkunci ? ' disabled' : ' onclick="setFrozenState(\'' + key + '\', \'' + value + '\')"') +
+                (isPinned ? ' disabled' : ' onclick="setFrozenState(\'' + key + '\', \'' + value + '\')"') +
                 '>' + text + '</button>';
         };
-        const catatan = terkunci
+        const noteHtml = isPinned
             ? '<span class="frozen-row-note">identitas baris selalu terlihat</span>'
             : '';
-        return '<div class="frozen-row"><span>' + label + ' ' + catatan + '</span>' +
+        return '<div class="frozen-row"><span>' + label + ' ' + noteHtml + '</span>' +
             '<span class="frozen-options">' + opt('left', 'Kiri') + opt('none', 'Bebas') + opt('right', 'Kanan') +
             '</span></div>';
     }).join('');
