@@ -63,9 +63,12 @@ resources/views/partials/
   document-workbench-ui.blade.php    panel Detail Cepat
   _infoCards.blade.php               kartu informasi bersama (stat card, data-driven $cards)
                                      dipakai dashboard.workflow (4 role keuangan) + view bagian
-  _columnCustomizationModal.blade.php  modal Kustomisasi Kolom bersama (markup + CSS via
-                                     @push('styles')) — dipakai 4 view Tabulator role;
-                                     logikanya di public/js/column-customization.js
+  _columnCustomizationModal.blade.php  modal Kustomisasi Kolom bersama, 2 TAB (Kolom
+                                     Tabel + Kolom Beku) — dipakai 5 view Tabulator role
+                                     keuangan TERMASUK pembayaran; markup + CSS via
+                                     @push('styles'); logikanya di
+                                     public/js/column-customization.js; resolusi kolom
+                                     beku (server) di App\Support\ColumnCustomization
 ```
 > Catatan: `virtual-document-table`, `_compactDocumentTable`, `document-handler-select`,
 > `auto-refresh-documents` **sudah DIHAPUS** (audit dead-code 2026-07-26) — konsumennya lenyap
@@ -332,6 +335,11 @@ sebagai program terpisah bila diperlukan: kustomisasi kolom masih diduplikasi pe
 `document-role-filter-toolbar`) — penyatuannya belum dikerjakan, meski pola freeze native
 Tabulator (dulu "freeze ala pembayaran, modal 2-tab") kini justru sudah jadi acuan di
 pembayaran sendiri.
+> **[Update 2026-07-28]** Kalimat "kustomisasi kolom masih diduplikasi per-role" di atas
+> kini hanya berlaku untuk **pemilihan kolom** (logikanya memang beda per role, tetap di
+> controller masing-masing — lihat paragraf "Modal Kustomisasi Kolom kini SATU untuk 5
+> role, 2 tab" di bawah). **Modal**-nya (markup+CSS+JS) dan **resolusi kolom beku** sudah
+> disatukan lintas 5 role — bukan lagi diduplikasi.
 
 **Kartu informasi bagian DISATUKAN ke kartu keuangan — SELESAI, ter-deploy & QA lolos
 2026-07-28.** Kartu bespoke `.bic-*` di `bagian/dokumens/daftarDokumen.blade.php` diganti
@@ -349,7 +357,12 @@ hilang (kartu keuangan pun tak punya). Sebelum menyalin markup kartu ke role lai
 - Spec/plan: `docs/superpowers/specs/2026-07-27-satukan-kartu-info-bagian-design.md`,
   `docs/superpowers/plans/2026-07-27-satukan-kartu-info-bagian.md`
 
-**Modal Kustomisasi Kolom DISATUKAN (4 role) — SELESAI, ter-deploy & QA lolos 2026-07-28.**
+**[USANG — DIGANTIKAN paragraf "Modal Kustomisasi Kolom kini SATU untuk 5 role, 2 tab" di
+bawah, deploy hari yang sama 2026-07-28] Modal Kustomisasi Kolom DISATUKAN (4 role) —
+SELESAI, ter-deploy & QA lolos 2026-07-28.** Paragraf ini mendokumentasikan Deploy 1
+(operator/akutansi/perpajakan/verifikasi, 1 tab). Pembayaran menyusul di Deploy 2
+hari yang sama — lihat paragraf baru di bawah untuk kondisi final; JANGAN simpulkan dari
+paragraf ini bahwa pembayaran masih di luar cakupan.
 Modal yang dulu disalin verbatim di 4 view Tabulator kini SATU sumber: partial
 **`resources/views/partials/_columnCustomizationModal.blade.php`** (markup + CSS lewat
 `@push('styles')`) + **`public/js/column-customization.js`** (logika, file statis nol-Blade,
@@ -362,10 +375,95 @@ dimuat `Asset::versioned()`). Data Blade→JS lewat jembatan **`window.COLUMN_CU
 **PENTING — CSS modal WAJIB lewat `@push('styles')`** (bukan `<style>` inline di body):
 pernah jadi regresi flash-of-unstyled-modal saat ekstraksi karena CSS `display:none` ter-parse
 SETELAH markup. Dijaga test `assertSeeInOrder` (CSS sebelum markup) di keempat halaman.
-**Pembayaran SENGAJA di luar cakupan** — modalnya superset (2 tab + Kolom Beku) di god-file
-`pembayaranNEW/dashboardPembayaran.blade.php`, masih inline, program terpisah.
+**Pembayaran SENGAJA di luar cakupan** (BENAR saat paragraf ini ditulis; **TIDAK BENAR
+LAGI** sejak paragraf baru di bawah — pembayaran sudah ikut disatukan) — modalnya superset
+(2 tab + Kolom Beku) di god-file `pembayaranNEW/dashboardPembayaran.blade.php`, masih
+inline, program terpisah.
 - Spec/plan: `docs/superpowers/specs/2026-07-28-ekstrak-modal-kustomisasi-kolom-design.md`,
   `docs/superpowers/plans/2026-07-28-ekstrak-modal-kustomisasi-kolom.md`
+
+**Modal Kustomisasi Kolom kini SATU untuk 5 role, 2 tab — SELESAI, ter-deploy & QA lolos
+2026-07-28.** Lanjutan langsung paragraf di atas: modal pembayaran (superset 2 tab + Kolom
+Beku) dijadikan **acuan** dan digabung balik ke partial bersama `_columnCustomizationModal.blade.php`
++ `public/js/column-customization.js` — 4 role naik dari 1 tab ke 2 tab (Kolom Tabel + Kolom
+Beku), pembayaran turun dari salinan inline ~868 baris jadi pemakai partial bersama (god-file
+`pembayaranNEW/dashboardPembayaran.blade.php` berkurang ~933 baris). Sekarang **kelima** role
+keuangan (operator/akutansi/perpajakan/verifikasi/pembayaran) memakai satu modal, satu file JS.
+
+Resolusi kolom beku dipusatkan di **`App\Support\ColumnCustomization::resolveFrozen()`** —
+kelas biasa di `App\Support`, BUKAN trait `Concerns\`, supaya bisa di-unit-test tanpa kelas
+inang (`$user` dioper eksplisit, bukan `$this->user()`/`Auth::user()` implisit). Cakupannya
+**kolom beku saja** — pemilihan kolom biasa (yang mana ditampilkan) tetap di controller
+masing-masing karena aturannya memang beda per role (legacy default operator, penyaringan
+status/nomor_mirror akutansi/perpajakan, `tanggal_dibayar` wajib tampil di pembayaran).
+`App\Support\FrozenColumnLayout` **tidak diubah** (sudah generik + sudah ada unit test dari
+rollout sebelumnya).
+
+**`public/js/document-tabulator.js` BERUBAH** — ini menyimpang dari rencana awal yang
+menyatakan "nol perubahan mesin", atas keputusan eksplisit user setelah review menemukan dua
+cacat nyata (bukan hipotetis):
+(a) `buildColumns()` kini menempatkan kelompok **beku-kanan SETELAH kolom tetap**
+(`extraColumns` + kolom "Pengurus Dokumen"). Sebelumnya kelompok beku-kanan duduk di
+tengah daftar kolom, sehingga Tabulator menempelkannya ke tepi kanan layar dan **menutupi**
+kolom Deadline/Status/Pengurus Dokumen di 4 role. Pembayaran tak pernah kena karena satu-
+satunya role yang menyetel `extraColumns: []` + `showHandler: false` (kolom katalognya memang
+sudah jadi kelompok terakhir).
+(b) `persistenceID` kini **per-role + memuat sidik jari** (hash djb2 base36) dari
+`CFG.columns[].key` **dan** `CFG.frozen`. Sebelumnya satu ID (`agenda-operator-documents`)
+dipakai bersama oleh 5 role — dan yang lebih penting: **persistence Tabulator ikut mengunci
+URUTAN kolom, bukan cuma lebar kolom**, karena `mergeDefinition()` mengiterasi array
+tersimpan (localStorage) sehingga urutan localStorage MENANG atas urutan yang dikirim server.
+Ini dibuktikan empiris di produksi (lihat `progress.md` Task 5), bukan dugaan. Tanpa sidik
+jari, perubahan kolom/beku dari server tak akan pernah terlihat oleh user lama — localStorage
+basi selalu menang. Penanda "user pernah resize" per-role sengaja **tidak** ikut sidik jari
+(kalau ikut, `layout` melompat balik ke `fitDataStretch` tiap kali kolom/beku berubah).
+
+**Dua urutan kolom yang WAJIB dibedakan** (tertukar = urutan di modal teracak tiap kali user
+membekukan kolom):
+- `DOCUMENT_TABULATOR_CONFIG.columns` = urutan **render** tabel
+  (`FrozenColumnLayout::renderOrder()`: beku-kiri → bebas → beku-kanan), karena Tabulator
+  menentukan sisi beku suatu kolom dari **posisinya**, bukan dari properti eksplisit.
+- `COLUMN_CUSTOMIZATION_CONFIG.selected` = urutan **pilihan user** (yang ditampilkan di modal),
+  independen dari sisi beku.
+
+**`nomor_agenda` terkunci beku-kiri** di kelima role — kontrol Kiri/Bebas/Kanan-nya dirender
+non-aktif (disabled) di tab Kolom Beku. Ini memperbaiki kejanggalan lama di pembayaran (dulu
+bisa disetel ke "Bebas" lewat UI tapi efeknya tak pernah termanifestasi).
+
+Tombol Simpan kini **membangun URL secara eksplisit**, bukan `filterForm.submit()` — supaya
+parameter yang tak diwakili elemen toolbar tetap selamat (mis. `mode=rekapan_table` &
+`per_page` milik pembayaran). Nilai toolbar yang kosong MENGHAPUS parameter terkait dari URL
+(= efeknya membersihkan filter itu).
+
+**`#filterForm` TIDAK dihapus** meski modal berhenti memakainya untuk submit — form ini masih
+dipakai partial global `partials/document-workbench-ui.blade.php` (baris 424 & 680) untuk
+menghitung badge "filter aktif". Jangan hapus tanpa grep ulang.
+
+**Verifikasi menyaring `tanggal_paraf`/`pemaraf`** sebelum resolusi beku, di
+`TeamVerifikasiController` — karena kolom Paraf di verifikasi adalah kolom TETAP lewat
+`extraColumns` (bukan kolom pilihan biasa); tanpa saringan ini, preferensi lama yang masih
+menyertakan kedua field itu menghasilkan kolom dobel di header. Query produksi mengonfirmasi
+1 akun (`sekar_verifikasi`) memang menyimpan preferensi berisi keduanya — bug ini nyata
+mengenai user, bukan pencegahan preventif.
+
+**DIHAPUS:** tombol "Template Agenda" + fungsi `applyTemplateAgenda()` (bespoke pembayaran);
+`localStorage('pembayaran_columns')` (hanya pernah DITULIS, tak pernah DIBACA balik — dead
+write); parameter `enable_customization` (nol pembaca di server manapun); fungsi
+`appendActiveFilterInputs()` (diganti `applyToolbarParams()` yang sudah generik sejak Task 3
+program ini).
+
+**KEEP:** `prefKey` pembayaran tetap nama lama `pembayaran_dashboard_frozen` (berisi data user
+produksi asli, TIDAK di-rename — direname akan membuat preferensi lama hilang senyap);
+`extraColumns: []` + `showHandler: false` khusus pembayaran; keempat fungsi non-modal di
+god-file pembayaran (`setViewMode`, `refreshPembayaranTable`, `changePerPage`,
+`toggleVendorGroup`) tak disentuh.
+
+Kunci penyimpanan preferensi beku: kolom DB `table_columns_preferences['<prefKey>']` untuk
+akutansi/perpajakan/verifikasi/pembayaran; **sesi** untuk operator (`dokumens_frozen_columns`)
+— mengikuti pola penyimpanan preferensi kolom biasa masing-masing role, tidak diseragamkan.
+
+- Spec/plan: `docs/superpowers/specs/2026-07-28-modal-kustomisasi-kolom-5-role-design.md`,
+  `docs/superpowers/plans/2026-07-28-modal-kustomisasi-kolom-5-role.md`
 
 ## 8. Hal Yang harus bisa dilakukan pada tabel tabulator
 
