@@ -90,7 +90,9 @@ class ColumnCustomizationSharedTest extends TestCase
         $js = file_get_contents($path);
 
         $this->assertStringContainsString('function openColumnCustomizationModal', $js);
-        $this->assertStringContainsString('function appendActiveFilterInputs', $js);
+        // Task 3: appendActiveFilterInputs (submit #filterForm) diganti applyToolbarParams
+        // (pembangunan URL) — lihat test_js_bersama_simpan_lewat_url_bukan_submit_form.
+        $this->assertStringContainsString('function applyToolbarParams', $js);
         // Baca data dari jembatan window, BUKAN @json Blade (file statis).
         $this->assertStringContainsString('COLUMN_CUSTOMIZATION_CONFIG', $js);
         $this->assertStringNotContainsString('@json', $js);
@@ -176,5 +178,43 @@ class ColumnCustomizationSharedTest extends TestCase
             '#tabPanelKolom {',
             'id="columnCustomizationModal"',
         ], false);
+    }
+
+    /**
+     * Jalur simpan pindah dari filterForm.submit() ke pembangunan URL.
+     * Parameter mati enable_customization tidak boleh dikirim lagi.
+     */
+    public function test_js_bersama_simpan_lewat_url_bukan_submit_form(): void
+    {
+        $js = file_get_contents(public_path('js/column-customization.js'));
+
+        // Jalur baru: bangun URL lalu arahkan browser.
+        $this->assertStringContainsString('new URL(', $js);
+        $this->assertStringContainsString('function applyToolbarParams', $js);
+
+        // Jalur lama benar-benar hilang.
+        $this->assertStringNotContainsString('filterForm.submit()', $js);
+        $this->assertStringNotContainsString('function appendActiveFilterInputs', $js);
+
+        // Parameter mati tidak dikirim lagi (nol pembaca di sisi server).
+        $this->assertStringNotContainsString('enable_customization', $js);
+    }
+
+    /**
+     * Bug 2026-07-28: toggleColumn memasang atribut draggable tapi tidak
+     * memasang listener drag, sehingga kolom yang baru dicentang tak bisa
+     * ditarik sampai modal ditutup-buka.
+     */
+    public function test_toggle_kolom_memasang_ulang_listener_drag(): void
+    {
+        $js = file_get_contents(public_path('js/column-customization.js'));
+
+        $awal = strpos($js, 'function toggleColumn(');
+        $this->assertNotFalse($awal, 'fungsi toggleColumn tidak ditemukan');
+
+        $akhir = strpos($js, 'function selectAllColumns(', $awal);
+        $badan = substr($js, $awal, $akhir - $awal);
+
+        $this->assertStringContainsString('initializeDragAndDrop()', $badan);
     }
 }

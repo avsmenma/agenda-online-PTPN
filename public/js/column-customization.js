@@ -38,6 +38,13 @@ function toggleColumn(columnElement) {
     updatePreviewTable();
     updateSelectedCount();
     updateDraggableState();
+    // Kolom yang BARU dicentang perlu listener drag-nya dipasang sekarang juga.
+    // Sebelumnya listener hanya dipasang saat modal dibuka, sehingga kolom baru
+    // tampak bisa ditarik (atribut draggable menyala) tapi tak bereaksi sampai
+    // modal ditutup lalu dibuka lagi.
+    // Wajib dipanggil PALING AKHIR: initializeDragAndDrop() mengganti node
+    // #columnSelectionList dengan klonanya, jadi referensi node lama basi.
+    initializeDragAndDrop();
 }
 function selectAllColumns() {
     const allKeys = Object.keys(availableColumnsData);
@@ -106,52 +113,45 @@ function saveColumnCustomization() {
         alert('Silakan pilih minimal satu kolom untuk ditampilkan.');
         return;
     }
-    const filterForm = document.getElementById('filterForm');
-    // Bersihkan input kolom lama.
-    filterForm.querySelectorAll('input[name="columns[]"], input[name="enable_customization"]').forEach(input => input.remove());
-    selectedColumnsOrder.forEach(columnKey => {
-        const hiddenInput = document.createElement('input');
-        hiddenInput.type = 'hidden';
-        hiddenInput.name = 'columns[]';
-        hiddenInput.value = columnKey;
-        filterForm.appendChild(hiddenInput);
+    // Mulai dari URL berjalan supaya parameter yang tidak diwakili toolbar tetap
+    // hidup (mis. mode=rekapan_table & per_page milik pembayaran, page, sort).
+    const url = new URL(window.location.href);
+
+    applyToolbarParams(url);
+
+    url.searchParams.delete('columns[]');
+    url.searchParams.delete('columns');
+    selectedColumnsOrder.forEach(function (columnKey) {
+        url.searchParams.append('columns[]', columnKey);
     });
-    const enableInput = document.createElement('input');
-    enableInput.type = 'hidden';
-    enableInput.name = 'enable_customization';
-    enableInput.value = '1';
-    filterForm.appendChild(enableInput);
-    appendActiveFilterInputs(filterForm); // Fix: bawa filter toolbar aktif agar tak hilang saat reload GET.
+
     closeColumnCustomizationModal();
-    filterForm.submit(); // GET → action #filterForm role saat ini (documents.{index,akutansi,perpajakan,verifikasi}.index) → reload view Tabulator dgn kolom baru.
+    window.location.href = url.toString();
 }
 
-// Bawa SEMUA filter toolbar aktif (generik lintas-role) agar tak hilang saat reload GET.
-// Menggantikan versi lama yang hardcode nama field per-role (operator: year/status_filter,
-// keuangan: status/filter_dari). Tiap toolbar hanya memuat field-nya sendiri, jadi
-// perilaku per-role tetap identik (behavior-preserving).
-function appendActiveFilterInputs(filterForm) {
+// Nama yang punya jalur simpan sendiri — kontrol toolbar bernama sama tidak
+// boleh menimpanya (lihat saveColumnCustomization & applyFrozenParams).
+var RESERVED_PARAM_NAMES = ['columns[]', 'columns', 'frozen_config', 'frozen_left[]', 'frozen_right[]'];
+
+// Timpa URL dengan nilai kontrol toolbar yang sedang aktif (generik lintas-role:
+// tiap toolbar hanya memuat field-nya sendiri). Nilai kosong MENGHAPUS param —
+// itulah semantik "bersihkan filter"; tanpa ini filter yang dikosongkan user
+// akan hidup lagi dari URL sebelumnya.
+function applyToolbarParams(url) {
     const toolbar = document.querySelector('.tabulator-toolbar');
     if (!toolbar) return;
     const controls = toolbar.querySelectorAll('input[name], select[name], textarea[name]');
-    // Nama reserved punya jalur simpan sendiri (lihat saveColumnCustomization) — jangan
-    // sampai toolbar suatu role kelak memakai nama yang sama lalu menghapus/menimpanya.
-    const isReserved = name => name === 'columns[]' || name === 'enable_customization';
-    const names = new Set();
-    controls.forEach(el => { if (el.name && !isReserved(el.name)) names.add(el.name); });
-    // Buang input lama bernama sama agar tak dobel saat reload GET.
-    names.forEach(name => {
-        filterForm.querySelectorAll('input[name="' + name.replace(/"/g, '\\"') + '"]').forEach(i => i.remove());
-    });
-    controls.forEach(el => {
-        if (isReserved(el.name)) return;
-        if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) return;
-        if (el.value === '' || el.value == null) return;
-        const hidden = document.createElement('input');
-        hidden.type = 'hidden';
-        hidden.name = el.name;
-        hidden.value = el.value;
-        filterForm.appendChild(hidden);
+    controls.forEach(function (el) {
+        if (!el.name || RESERVED_PARAM_NAMES.indexOf(el.name) !== -1) return;
+        if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) {
+            url.searchParams.delete(el.name);
+            return;
+        }
+        if (el.value === '' || el.value == null) {
+            url.searchParams.delete(el.name);
+            return;
+        }
+        url.searchParams.set(el.name, el.value);
     });
 }
 function initializeModalState() {
