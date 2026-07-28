@@ -104,6 +104,26 @@ pertimbangkan file terpisah di `public/css` atau `public/js` lalu `@push`.
    index). Contoh yang benar: `2026_01_26_000000_add_performance_indexes` (`indexExists()`).
    Jangan tambah guard `Schema::hasColumn()` baru di kode bisnis — itu membuat fitur
    mati diam-diam, bukan error keras.
+7. **Jangan buang waktu di test.** Saat iterasi jalankan terfilter
+   (`php artisan test --filter=NamaTest`); suite penuh **sekali** sebelum commit —
+   bukan tiap langkah. Pernah ~2,5 jam habis hanya menunggu suite.
+   `--parallel` **belum bisa dipakai**: paratest tidak terpasang (cek dengan
+   `ls vendor/bin/paratest` — JANGAN pakai grep ke `composer.lock`, di situ ada entri
+   *suggest* milik paket lain yang bikin salah kira). Memasangnya = perubahan
+   `composer.json` + `composer install --no-dev` di server → keputusan user.
+8. **Tiap assertion baru wajib dibuktikan menggigit.** Rusakkan kode yang dijaga →
+   test GAGAL → pulihkan → LULUS → `git diff <berkas>` **kosong** sebelum lanjut.
+   Assertion yang mencari string di seluruh berkas biasanya hampa (string-nya sudah
+   ada di tempat lain) — persempit ke badan fungsi. Sudah dua kali test hampa lolos
+   ke rencana, dan sekali mutasi tertinggal nyaris ter-commit.
+9. **Suite hijau ≠ fitur jalan.** Untuk apa pun yang dirender pustaka pihak ketiga
+   (Tabulator), verifikasi di browser bahwa yang dikirim server benar-benar yang
+   tampil. `persistence`/`localStorage` pustaka bisa **menimpa** output server tanpa
+   satu test pun merah — itu pernah terjadi dan hampir membatalkan satu rilis penuh.
+
+> Rincian + insiden yang melahirkan aturan 7-9: **`docs/PANDUAN_EKSEKUSI_AGENT.md`**.
+> Kalau isinya bertabrakan dengan kode yang Anda lihat, kode yang benar — perbaiki
+> berkas itu, jangan ikuti buta.
 
 ---
 
