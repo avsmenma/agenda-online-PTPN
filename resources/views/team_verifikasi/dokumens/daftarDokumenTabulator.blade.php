@@ -13,25 +13,17 @@
 
   Kolom Paraf (tanggal_paraf, pemaraf) khas verifikasi: FIXED via extraColumns
   (formatter 'date'/'parafBadge', baru di document-tabulator.js), BUKAN kolom
-  kustomisasi — 'pemaraf'/'tanggal_paraf' karena itu SENGAJA dikeluarkan dari
-  $availableColumns/$selectedColumns di bawah (lihat blok PHP tepat setelah
-  komentar ini), supaya tak dobel dgn kolom Paraf tetap (yg sudah base config document_columns.php
-  menyertakan keduanya sbg opsi kustomisasi biasa — cocok utk akutansi/
-  perpajakan yg tak pernah menyalakannya secara default, tapi utk verifikasi
-  Paraf adalah fitur alur kerja inti, jadi selalu tampil).
+  kustomisasi — 'pemaraf'/'tanggal_paraf' SENGAJA dikeluarkan dari
+  $availableColumns/$selectedColumns sebelum sampai ke view ini (satu-satunya
+  sumber: TeamVerifikasiController::FIXED_PARAF_COLUMNS), supaya tak dobel dgn
+  kolom Paraf tetap (yg sudah base config document_columns.php menyertakan
+  keduanya sbg opsi kustomisasi biasa — cocok utk akutansi/perpajakan yg tak
+  pernah menyalakannya secara default, tapi utk verifikasi Paraf adalah fitur
+  alur kerja inti, jadi selalu tampil).
 --}}
 @php
     $selectedColumns = $selectedColumns ?? [];
     $availableColumns = $availableColumns ?? [];
-
-    // Paraf (tanggal_paraf, pemaraf) FIXED via extraColumns di bawah — keluarkan
-    // dari daftar kustomisasi supaya tak ada kolom dobel bila user pernah
-    // menyimpan preferensi lama yang menyertakan salah satunya.
-    $availableColumns = \Illuminate\Support\Arr::except($availableColumns, ['tanggal_paraf', 'pemaraf']);
-    $selectedColumns = array_values(array_filter(
-        $selectedColumns,
-        fn ($col) => ! in_array($col, ['tanggal_paraf', 'pemaraf'], true)
-    ));
 
     $configArray = [
         'mountId'          => 'verifikasiTabulatorTable',
@@ -42,7 +34,7 @@
         // Task 4 fitur export bersama (ADITIF): mengisi ini memunculkan tombol Export
         // (Excel/PDF) di toolbar Tabulator (pola Task 3 pembayaran).
         'exportUrl'        => route('documents.verifikasi.export'),
-        'columns'          => collect($renderColumns ?? $selectedColumns)->map(fn ($k) => ['key' => $k, 'label' => $availableColumns[$k] ?? $k])->values(),
+        'columns'          => collect($renderColumns)->map(fn ($k) => ['key' => $k, 'label' => $availableColumns[$k] ?? $k])->values(),
         'frozen'           => $frozenColumns ?? ['left' => [], 'right' => []],
         'availableColumns' => $availableColumns,
         'selected'         => array_values($selectedColumns),

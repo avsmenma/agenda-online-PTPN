@@ -29,6 +29,14 @@ class TeamVerifikasiController extends Controller
     use \App\Http\Controllers\Concerns\ExportsDocuments;
 
     /**
+     * Paraf (tanggal_paraf, pemaraf) khas verifikasi: FIXED via extraColumns di view
+     * (formatter 'date'/'parafBadge'), BUKAN opsi kustomisasi. Satu sumber — dulu
+     * daftar ini tertulis dobel (controller + view daftarDokumenTabulator.blade.php);
+     * disatukan di sini agar kolom ketiga (bila ada kelak) cukup diubah 1 tempat.
+     */
+    private const FIXED_PARAF_COLUMNS = ['tanggal_paraf', 'pemaraf'];
+
+    /**
      * Halaman dashboard Team Verifikasi.
      */
     public function dashboard()
@@ -772,14 +780,18 @@ class TeamVerifikasiController extends Controller
         // Available columns for customization (exclude 'status' as it's always shown as a special column)
         // Kolom tersedia = base terpusat tanpa 'status' (Verifikasi punya kolom
         // Status tetap, bukan opsi kustomisasi). Sumber: config/document_columns.php.
+        // Paraf (tanggal_paraf, pemaraf) FIXED via extraColumns di view (satu-satunya
+        // tempat lagi yang tahu daftarnya: self::FIXED_PARAF_COLUMNS) — dikeluarkan di
+        // sini, bukan opsi kustomisasi, supaya modal tak pernah menawarkannya.
         $availableColumns = \Illuminate\Support\Arr::except(config('document_columns.base'), ['status']);
+        $availableColumns = \Illuminate\Support\Arr::except($availableColumns, self::FIXED_PARAF_COLUMNS);
 
         // Get selected columns from request or session
         $selectedColumns = $request->get('columns', []);
 
-        // Filter out 'status' and 'keterangan' from selectedColumns if present
+        // Filter out 'status', 'keterangan', dan kolom paraf tetap dari selectedColumns
         $selectedColumns = array_filter($selectedColumns, function ($col) {
-            return $col !== 'status';
+            return $col !== 'status' && !in_array($col, self::FIXED_PARAF_COLUMNS, true);
         });
         $selectedColumns = array_values($selectedColumns); // Re-index array
 
@@ -814,9 +826,9 @@ class TeamVerifikasiController extends Controller
                 $selectedColumns = session('team_verifikasi_dokumens_table_columns', $defaultColumns);
             }
 
-            // Filter out 'status' and 'keterangan' if they exist
+            // Filter out 'status', 'keterangan', dan kolom paraf tetap jika ada
             $selectedColumns = array_filter($selectedColumns, function ($col) {
-                return $col !== 'status';
+                return $col !== 'status' && !in_array($col, self::FIXED_PARAF_COLUMNS, true);
             });
             $selectedColumns = array_values($selectedColumns);
 
@@ -832,20 +844,13 @@ class TeamVerifikasiController extends Controller
         // === Konfigurasi kolom beku (frozen) ===
         // Dinormalkan ulang tiap request: kolom yang dibekukan bisa saja sudah
         // disembunyikan user lewat tab pertama modal.
-        // Paraf (tanggal_paraf, pemaraf) dikeluarkan dari resolusi beku: kolom ini
-        // FIXED via extraColumns di view (bukan opsi kustomisasi utk verifikasi),
-        // persis filter defensif yang sudah ada di view untuk $selectedColumns —
-        // tanpa ini, preferensi lama yang menyertakan salah satunya bisa lolos ke
-        // $renderColumns dan menghasilkan kolom dobel dgn extraColumns.
+        // $availableColumns/$selectedColumns SUDAH tersaring dari paraf tetap di atas
+        // (self::FIXED_PARAF_COLUMNS) — resolveFrozen() memakainya apa adanya, tanpa
+        // salinan filter lokal lagi (dulu 2 tempat, sekarang 1 sumber).
         $pinnedColumns = ['nomor_agenda'];
-        $frozenAvailableColumns = \Illuminate\Support\Arr::except($availableColumns, ['tanggal_paraf', 'pemaraf']);
-        $frozenSelectedColumns = array_values(array_filter(
-            $selectedColumns,
-            fn ($col) => !in_array($col, ['tanggal_paraf', 'pemaraf'], true)
-        ));
         $frozenResolved = \App\Support\ColumnCustomization::resolveFrozen($request, Auth::user(), [
-            'available'  => $frozenAvailableColumns,
-            'selected'   => $frozenSelectedColumns,
+            'available'  => $availableColumns,
+            'selected'   => $selectedColumns,
             'default'    => ['left' => $pinnedColumns, 'right' => []],
             'pinnedLeft' => $pinnedColumns,
             'prefKey'    => 'team_verifikasi_frozen',
