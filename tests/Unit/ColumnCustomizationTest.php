@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Models\User;
 use App\Support\ColumnCustomization;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Tests\TestCase;
 
@@ -11,6 +13,7 @@ use Tests\TestCase;
  */
 class ColumnCustomizationTest extends TestCase
 {
+    use RefreshDatabase;
     /** Peta kolom tersedia yang dipakai semua kasus uji. */
     private function available(): array
     {
@@ -124,5 +127,59 @@ class ColumnCustomizationTest extends TestCase
         $hasil = ColumnCustomization::resolveFrozen(Request::create('/'), null, $this->baseOptions());
 
         $this->assertSame(['nilai_rupiah'], $hasil['right']);
+    }
+
+    /**
+     * Jalur penyimpanan DB: saat request membawa frozen_config, preferensi
+     * disimpan ke table_columns_preferences user jika user authenticated
+     * dan prefKey diisi.
+     */
+    public function test_preferensi_disimpan_ke_db_saat_request_membawa_konfigurasi(): void
+    {
+        $user = User::factory()->create(['role' => 'akutansi']);
+
+        $request = Request::create('/', 'GET', [
+            'frozen_config' => '1',
+            'frozen_left'   => ['nomor_agenda'],
+            'frozen_right'  => ['nilai_rupiah'],
+        ]);
+
+        ColumnCustomization::resolveFrozen($request, $user, $this->baseOptions([
+            'prefKey' => 'akutansi_frozen',
+        ]));
+
+        // Refresh user dari DB dan periksa preferensi tersimpan.
+        $user->refresh();
+        $this->assertSame(
+            ['left' => ['nomor_agenda'], 'right' => ['nilai_rupiah']],
+            $user->table_columns_preferences['akutansi_frozen']
+        );
+    }
+
+    /**
+     * Urutan baca: DB menang atas sesi. Jika user authenticated dengan prefKey
+     * diisi dan preference di DB ada, gunakan itu (bukan fallback sesi).
+     */
+    public function test_preferensi_db_menang_atas_sesi_saat_request_kosong(): void
+    {
+        $user = User::factory()->create(['role' => 'perpajakan']);
+        // Set preferensi DB ke nilai A.
+        $user->table_columns_preferences = [
+            'perpajakan_frozen' => ['left' => ['nomor_agenda'], 'right' => ['nomor_spp']],
+        ];
+        $user->save();
+
+        // Set sesi ke nilai B (berbeda).
+        session(['uji_frozen' => ['left' => ['nomor_agenda'], 'right' => ['nilai_rupiah']]]);
+
+        // Request kosong (tanpa frozen_config).
+        $hasil = ColumnCustomization::resolveFrozen(Request::create('/'), $user, $this->baseOptions([
+            'prefKey' => 'perpajakan_frozen',
+        ]));
+
+        // Haruslah memakai nilai A dari DB, bukan B dari sesi.
+        $this->assertSame(['nomor_spp'], $hasil['right']);
+        // Confirm bukan dari sesi yang berisi nilai_rupiah.
+        $this->assertNotContains('nilai_rupiah', $hasil['right']);
     }
 }
