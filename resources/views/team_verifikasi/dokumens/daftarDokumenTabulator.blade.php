@@ -7,8 +7,9 @@
   Deadline + Status (via extraColumns, formatter `akutansiStatus` — sama persis
   dgn akutansi/perpajakan, kini mendukung style/title opsional utk badge
   verifikasi), TANPA Tambah/Hapus. Tabel di-mount public/js/document-tabulator.js
-  membaca window.DOCUMENT_TABULATOR_CONFIG. Modal Kustomisasi Kolom diduplikasi
-  dari view perpajakan (utang de-dup §7).
+  membaca window.DOCUMENT_TABULATOR_CONFIG. Modal Kustomisasi Kolom kini lewat partial
+  bersama partials._columnCustomizationModal + public/js/column-customization.js
+  (utang de-dup §7 LUNAS 2026-07-28).
 
   Kolom Paraf (tanggal_paraf, pemaraf) khas verifikasi: FIXED via extraColumns
   (formatter 'date'/'parafBadge', baru di document-tabulator.js), BUKAN kolom

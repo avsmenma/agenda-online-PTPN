@@ -6,7 +6,8 @@
   tetapi: endpoint documents.akutansi.data, kolom tetap Deadline + Status (via
   extraColumns), TANPA Tambah/Hapus (akutansi tak punya create/destroy). Tabel
   di-mount public/js/document-tabulator.js membaca window.DOCUMENT_TABULATOR_CONFIG.
-  Modal Kustomisasi Kolom diduplikasi dari view operator (utang de-dup §7).
+  Modal Kustomisasi Kolom kini lewat partial bersama partials._columnCustomizationModal +
+  public/js/column-customization.js (utang de-dup §7 LUNAS 2026-07-28).
 --}}
 @php
     $selectedColumns = $selectedColumns ?? [];
