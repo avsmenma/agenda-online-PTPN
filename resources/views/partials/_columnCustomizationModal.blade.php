@@ -155,6 +155,12 @@
     .modal-header-custom { background: #f8f9fa; border-bottom: 1px solid #e9ecef; padding: 24px 40px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
     .modal-header-custom h3 { margin: 0; font-size: 24px; font-weight: 600; color: #212529; display: flex; align-items: center; gap: 12px; }
     .modal-body-custom { padding: 24px 32px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
+    /* #tabPanelKolom (wrapper tab pertama) meneruskan rantai flex .modal-body-custom
+       → .customization-grid, supaya flex:1/min-height:0 di bawah tetap bekerja seperti
+       sebelum tab ditambahkan. Tanpa ini panel Pilih Kolom + Preview jadi satu blok
+       scroll panjang (regresi layout senyap). display:'' dari switchColumnTab (Task 4)
+       mewarisi aturan ini; display:'none' tetap menang lewat inline style. */
+    #tabPanelKolom { display: flex; flex-direction: column; flex: 1; min-height: 0; }
     .customization-grid { display: flex; flex-direction: column; gap: 24px; flex: 1; min-height: 0; }
     .selection-panel { background: #f8f9fa; border-radius: 12px; padding: 24px; border: 1px solid #e9ecef; display: flex; flex-direction: column; flex-shrink: 0; }
     .panel-title { font-size: 18px; font-weight: 600; color: #212529; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }

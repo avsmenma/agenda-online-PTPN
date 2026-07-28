@@ -152,4 +152,29 @@ class ColumnCustomizationSharedTest extends TestCase
             ], false);
         }
     }
+
+    /**
+     * Regresi review: #tabPanelKolom (wrapper baru pembungkus .customization-grid)
+     * WAJIB meneruskan rantai flex .modal-body-custom → .customization-grid, kalau
+     * tidak flex:1/min-height:0 pada .customization-grid jadi tak berefek (parent
+     * langsungnya bukan flex container lagi) dan panel Pilih Kolom + Preview kolaps
+     * jadi satu blok scroll panjang — regresi layout senyap pada tab yang sudah
+     * dipakai 4 role di produksi. Ini bukan test layout terhitung (feature test tak
+     * bisa mengukur box CSS), hanya jaring supaya aturan ini tak terhapus tanpa sadar.
+     */
+    public function test_tabpanelkolom_meneruskan_rantai_flex(): void
+    {
+        $user = User::factory()->create(['role' => 'operator']);
+        $res = $this->actingAs($user)->get(route('documents.index'));
+        $res->assertOk();
+
+        $res->assertSee('#tabPanelKolom { display: flex; flex-direction: column; flex: 1; min-height: 0; }', false);
+
+        // Aturan #tabPanelKolom wajib sampai <head> sebelum markup modal (pola
+        // sama seperti jaring flash-of-unstyled-modal untuk aturan lain).
+        $res->assertSeeInOrder([
+            '#tabPanelKolom {',
+            'id="columnCustomizationModal"',
+        ], false);
+    }
 }
