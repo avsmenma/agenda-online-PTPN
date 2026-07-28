@@ -419,6 +419,16 @@ jari, perubahan kolom/beku dari server tak akan pernah terlihat oleh user lama �
 basi selalu menang. Penanda "user pernah resize" per-role sengaja **tidak** ikut sidik jari
 (kalau ikut, `layout` melompat balik ke `fitDataStretch` tiap kali kolom/beku berubah).
 
+**Cakupan sidik jari TERBATAS, bukan "apa pun yang memengaruhi urutan kolom"**: hanya
+`CFG.columns` + `CFG.frozen` yang masuk hash — `extraColumns`, `showHandler`, dan kolom "No"
+(rownum) SENGAJA di luar cakupan karena statis per-deploy, jadi deploy yang mengubah salah
+satunya (mis. menambah `extraColumns` baru) bisa menghidupkan kembali bug urutan kolom yang
+sama tanpa localStorage otomatis kadaluarsa. Pemisahan localStorage antar-role sepenuhnya
+bergantung pada `CFG.mountId` yang unik per role (dijaga test
+`test_mountid_berbeda_di_kelima_halaman_role` di `ColumnCustomizationSharedTest.php`) — begitu
+program "satukan 4 view Tabulator jadi 1 view + config" di atas menyeragamkan `mountId` tanpa
+sadar, pencemaran antar-role hidup lagi tanpa suara.
+
 **Dua urutan kolom yang WAJIB dibedakan** (tertukar = urutan di modal teracak tiap kali user
 membekukan kolom):
 - `DOCUMENT_TABULATOR_CONFIG.columns` = urutan **render** tabel
