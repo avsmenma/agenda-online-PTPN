@@ -7,11 +7,20 @@
 var __CCCFG = window.COLUMN_CUSTOMIZATION_CONFIG || { availableColumns: {}, selected: [] };
 let availableColumnsData = __CCCFG.availableColumns || {};
 let selectedColumnsOrder = Array.isArray(__CCCFG.selected) ? __CCCFG.selected.slice() : [];
+let frozenLeftOrder = Array.isArray(__CCCFG.frozen && __CCCFG.frozen.left) ? __CCCFG.frozen.left.slice() : [];
+let frozenRightOrder = Array.isArray(__CCCFG.frozen && __CCCFG.frozen.right) ? __CCCFG.frozen.right.slice() : [];
+// Kolom yang selalu beku kiri (document-tabulator.js membekukannya tanpa syarat).
+const PINNED_LEFT_COLUMNS = Array.isArray(__CCCFG.pinned) ? __CCCFG.pinned.slice() : ['nomor_agenda'];
+// Perkiraan lebar untuk peringatan "kolom beku memakan layar" (angka dari pembayaran).
+const FROZEN_WIDTH_MAP = { nomor_agenda: 210 };
+const FROZEN_WIDTH_DEFAULT = 132;
+const FROZEN_NO_COLUMN_WIDTH = 88;
 
 function openColumnCustomizationModal() {
     const modal = document.getElementById('columnCustomizationModal');
     modal.classList.add('show');
     document.body.style.overflow = 'hidden';
+    switchColumnTab('kolom');
     initializeModalState();
 }
 function closeColumnCustomizationModal() {
@@ -124,6 +133,19 @@ function saveColumnCustomization() {
     selectedColumnsOrder.forEach(function (columnKey) {
         url.searchParams.append('columns[]', columnKey);
     });
+
+    url.searchParams.delete('frozen_left[]');
+    url.searchParams.delete('frozen_right[]');
+    // Penanda WAJIB: tanpa ini "user melepas semua kolom beku" tidak bisa
+    // dibedakan dari "request tanpa konfigurasi beku" di sisi server.
+    url.searchParams.set('frozen_config', '1');
+    // Kolom yang sudah tidak ditampilkan tidak boleh ikut dikirim sebagai beku.
+    frozenLeftOrder
+        .filter(function (col) { return selectedColumnsOrder.indexOf(col) !== -1; })
+        .forEach(function (col) { url.searchParams.append('frozen_left[]', col); });
+    frozenRightOrder
+        .filter(function (col) { return selectedColumnsOrder.indexOf(col) !== -1; })
+        .forEach(function (col) { url.searchParams.append('frozen_right[]', col); });
 
     closeColumnCustomizationModal();
     window.location.href = url.toString();
@@ -265,6 +287,84 @@ function getDragAfterElement(container, y) {
         if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; }
         return closest;
     }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function switchColumnTab(tab) {
+    document.querySelectorAll('.column-tab').forEach(function (btn) {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    const panelKolom = document.getElementById('tabPanelKolom');
+    const panelBeku = document.getElementById('tabPanelBeku');
+    if (panelKolom) panelKolom.style.display = tab === 'kolom' ? '' : 'none';
+    if (panelBeku) panelBeku.style.display = tab === 'beku' ? '' : 'none';
+    if (tab === 'beku') renderFrozenTab();
+}
+
+function getFrozenState(key) {
+    if (frozenLeftOrder.indexOf(key) !== -1) return 'left';
+    if (frozenRightOrder.indexOf(key) !== -1) return 'right';
+    return 'none';
+}
+
+function setFrozenState(key, state) {
+    if (PINNED_LEFT_COLUMNS.indexOf(key) !== -1) return; // terkunci, abaikan
+    frozenLeftOrder = frozenLeftOrder.filter(function (k) { return k !== key; });
+    frozenRightOrder = frozenRightOrder.filter(function (k) { return k !== key; });
+    if (state === 'left') frozenLeftOrder.push(key);
+    if (state === 'right') frozenRightOrder.push(key);
+    renderFrozenTab();
+}
+
+// Render bersifat NON-DESTRUKTIF: frozenLeftOrder/frozenRightOrder tidak pernah
+// ditugaskan ulang di sini. Dulu fungsi ini memangkas kedua array padahal hanya
+// jalan saat user membuka tab Beku — akibatnya hasil simpan ikut bergantung pada
+// apakah tab itu pernah dibuka. Satu-satunya titik penegakan adalah filter di
+// saveColumnCustomization().
+function renderFrozenTab() {
+    const list = document.getElementById('frozenList');
+    if (!list) return;
+
+    list.innerHTML = selectedColumnsOrder.map(function (key) {
+        const label = availableColumnsData[key] || key;
+        const state = getFrozenState(key);
+        const terkunci = PINNED_LEFT_COLUMNS.indexOf(key) !== -1;
+        const opt = function (value, text) {
+            return '<button type="button" class="frozen-opt' + (state === value ? ' active' : '') + '"' +
+                (terkunci ? ' disabled' : ' onclick="setFrozenState(\'' + key + '\', \'' + value + '\')"') +
+                '>' + text + '</button>';
+        };
+        const catatan = terkunci
+            ? '<span class="frozen-row-note">identitas baris selalu terlihat</span>'
+            : '';
+        return '<div class="frozen-row"><span>' + label + ' ' + catatan + '</span>' +
+            '<span class="frozen-options">' + opt('left', 'Kiri') + opt('none', 'Bebas') + opt('right', 'Kanan') +
+            '</span></div>';
+    }).join('');
+
+    renderFrozenWarning();
+}
+
+function renderFrozenWarning() {
+    const box = document.getElementById('frozenWarning');
+    if (!box) return;
+
+    // Hanya kolom yang benar-benar ditampilkan yang dihitung. Penyaringan memakai
+    // variabel lokal, bukan menugaskan ulang state (lihat catatan non-destruktif).
+    const visibleFrozen = frozenLeftOrder
+        .concat(frozenRightOrder)
+        .filter(function (key) { return selectedColumnsOrder.indexOf(key) !== -1; });
+
+    const total = visibleFrozen.reduce(function (sum, key) {
+        return sum + (FROZEN_WIDTH_MAP[key] || FROZEN_WIDTH_DEFAULT);
+    }, FROZEN_NO_COLUMN_WIDTH);
+
+    if (total > window.innerWidth * 0.5) {
+        box.style.display = '';
+        box.textContent = 'Kolom beku memakan sekitar ' + Math.round(total) +
+            'px dari lebar layar Anda. Area yang bisa digulir jadi sempit — pertimbangkan mengurangi kolom beku.';
+    } else {
+        box.style.display = 'none';
+    }
 }
 
 // Tutup modal kustomisasi: klik luar + Escape + re-init drag saat modal dibuka.

@@ -253,4 +253,47 @@ class ColumnCustomizationSharedTest extends TestCase
         $this->assertGreaterThan($posLoopTulis, $posSet, 'set() ke URL terjadi sebelum pengelompokan per-name selesai — risiko nilai checked tertimpa oleh elemen unchecked bernama sama');
         $this->assertGreaterThan($posLoopTulis, $posDelete, 'delete() ke URL terjadi sebelum pengelompokan per-name selesai — risiko nilai checked tertimpa oleh elemen unchecked bernama sama');
     }
+
+    public function test_js_bersama_punya_logika_tab_beku(): void
+    {
+        $js = file_get_contents(public_path('js/column-customization.js'));
+
+        foreach ([
+            'function switchColumnTab',
+            'function getFrozenState',
+            'function setFrozenState',
+            'function renderFrozenTab',
+            'function renderFrozenWarning',
+        ] as $fungsi) {
+            $this->assertStringContainsString($fungsi, $js);
+        }
+
+        // Penanda wajib pada simpan (lihat spec §5.5).
+        $this->assertStringContainsString("'frozen_config'", $js);
+        $this->assertStringContainsString("'frozen_left[]'", $js);
+        $this->assertStringContainsString("'frozen_right[]'", $js);
+
+        // Kolom pinned dirender non-aktif, bukan bisa dilepas.
+        $this->assertStringContainsString('disabled', $js);
+    }
+
+    /**
+     * Invarian: renderFrozenTab() TIDAK boleh menugaskan ulang state beku.
+     * Dulu fungsi ini memangkas frozenLeftOrder/frozenRightOrder padahal hanya
+     * jalan saat tab Beku dibuka — akibatnya hasil simpan bergantung pada apakah
+     * tab itu pernah dibuka. Penyaringan hanya boleh di saveColumnCustomization().
+     */
+    public function test_render_tab_beku_tidak_menugaskan_ulang_state(): void
+    {
+        $js = file_get_contents(public_path('js/column-customization.js'));
+
+        $awal = strpos($js, 'function renderFrozenTab(');
+        $this->assertNotFalse($awal, 'fungsi renderFrozenTab tidak ditemukan');
+
+        $akhir = strpos($js, 'function renderFrozenWarning(', $awal);
+        $badan = substr($js, $awal, $akhir - $awal);
+
+        $this->assertStringNotContainsString('frozenLeftOrder =', $badan);
+        $this->assertStringNotContainsString('frozenRightOrder =', $badan);
+    }
 }
