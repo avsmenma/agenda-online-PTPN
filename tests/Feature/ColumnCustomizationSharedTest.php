@@ -564,13 +564,65 @@ class ColumnCustomizationSharedTest extends TestCase
         $this->assertSame(2, substr_count($badan, "table.on('rangeChanged'"));
 
         // Koreksi sisi kanan memakai += (menggulir kanan), bukan -= seperti
-        // sisi kiri.
-        $this->assertStringContainsString('holder.scrollLeft += (tertimbun + JARAK_AMAN)', $badan);
+        // sisi kiri. Sejak klem tepi beku-kiri (2026-07-28) basis koreksi
+        // (tertimbun + JARAK_AMAN) disimpan ke variabel 'koreksi' dulu
+        // (boleh diklem lebih kecil) sebelum diterapkan ke scrollLeft --
+        // bukan lagi ekspresi literal langsung seperti semula.
+        $this->assertStringContainsString('let koreksi = tertimbun + JARAK_AMAN;', $badan);
+        $this->assertStringContainsString('holder.scrollLeft += koreksi;', $badan);
 
         // Fungsi sisi kanan wajib dipakai SETELAH listener kedua terdaftar
         // (sanity urutan sumber, bukan sekadar hadir di mana pun).
         $posListenerKedua = strrpos($badan, "table.on('rangeChanged'");
         $this->assertGreaterThan($posFungsiKanan, $posListenerKedua);
+    }
+
+    /**
+     * Bug review 2026-07-28 (ditemukan sesudah kompensasi kanan di atas
+     * dipasang): kompensasi kanan sebelumnya SELALU menang -- kalau sel
+     * aktif lebih lebar daripada celah bebas antara blok beku-kiri & blok
+     * beku-kanan, tepi kanan sel didorong pas ke tepi blok kanan sampai
+     * tepi KIRI sel (awal isi, paling berguna utk teks kiri-ke-kanan) malah
+     * tertimbun blok beku-kiri -- kebalikan dari bug yang sedang diperbaiki
+     * listener ini. Perbaikan: klem koreksi supaya tepi kiri sel tidak
+     * pernah melewati tepi kanan blok beku-kiri (+ JARAK_AMAN yang sama
+     * dipakai listener kiri, bukan angka ajaib baru), dan lewati koreksi
+     * kalau hasil klem <= 0.
+     */
+    public function test_kompensasi_gulir_kanan_diklem_ke_tepi_beku_kiri(): void
+    {
+        $js = file_get_contents(public_path('js/document-tabulator.js'));
+
+        $awalFix = strpos($js, 'function wireFrozenScrollFix');
+        $this->assertNotFalse($awalFix, 'wireFrozenScrollFix tidak ditemukan');
+        $akhirFix = strpos($js, "table.on('dataLoadError'", $awalFix);
+        $this->assertNotFalse($akhirFix, 'penutup wireFrozenScrollFix tidak ditemukan');
+        $badan = substr($js, $awalFix, $akhirFix - $awalFix);
+
+        // Klem wajib memakai tepiKananKolomBeku() -- fungsi sisi kiri yang
+        // sudah ada -- bukan query DOM baru, dan JARAK_AMAN yang sama dipakai
+        // listener kiri (bukan angka ajaib baru).
+        $posKlem = strpos(
+            $badan,
+            'if (tepiKiri) koreksi = Math.min(koreksi, kotak.left - (tepiKiri + JARAK_AMAN));'
+        );
+        $this->assertNotFalse($posKlem, 'klem tepi beku-kiri tidak ditemukan di listener kanan');
+
+        // Klem wajib berada SETELAH pendaftaran listener kanan (bukan bocor
+        // ke listener kiri) -- sanity urutan sumber.
+        $posListenerKedua = strrpos($badan, "table.on('rangeChanged'");
+        $this->assertGreaterThan($posListenerKedua, $posKlem);
+
+        // Koreksi dilewati kalau hasil klem <= 0 -- satu tembakan per event,
+        // tak ada penerapan scrollLeft dengan nilai negatif/nol yang bisa
+        // memicu gulir bolak-balik.
+        $posSkip = strpos($badan, 'if (koreksi <= 0) return;', $posKlem);
+        $this->assertNotFalse($posSkip, 'guard koreksi <= 0 tidak ditemukan setelah klem');
+
+        // Penerapan akhir memakai variabel 'koreksi' (hasil klem), bukan lagi
+        // literal tertimbun + JARAK_AMAN langsung ke scrollLeft.
+        $posTerap = strpos($badan, 'holder.scrollLeft += koreksi;', $posSkip);
+        $this->assertNotFalse($posTerap, 'penerapan scrollLeft += koreksi tidak ditemukan setelah guard');
     }
 
     /**
