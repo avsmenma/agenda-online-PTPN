@@ -970,7 +970,19 @@
   let adaLebarTersimpan = false;
   // try/catch wajib: localStorage bisa melempar di mode privat / kuota penuh,
   // dan tabel TIDAK boleh gagal render karenanya.
-  try { adaLebarTersimpan = !!localStorage.getItem(USER_RESIZED_FLAG_KEY); } catch (e) {}
+  // Review akhir branch (2026-07-28): penanda saja TIDAK cukup. USER_RESIZED_FLAG_KEY
+  // sengaja tanpa sidik jari (lihat komentar di atasnya), tapi kunci LEBAR
+  // tersimpan Tabulator ('tabulator-' + PERSIST_ID + '-columns') justru IKUT
+  // sidik jari. Begitu user mengubah kolom/beku, sidik jari berganti -> kunci
+  // lebar lama ikut terhapus oleh blok pembersihan di bawah, sementara
+  // penanda "pernah resize" tetap true -> layout: 'fitData' TANPA lebar
+  // tersimpan -> tabel tak melebar penuh (ruang kosong di kanan), berulang
+  // tiap kali user menyentuh kolom. Kunci lebar AKTIF (milik sidik jari
+  // SEKARANG) wajib benar-benar ada, bukan cuma penandanya.
+  try {
+    const pernahResize = !!localStorage.getItem(USER_RESIZED_FLAG_KEY);
+    adaLebarTersimpan = pernahResize && localStorage.getItem('tabulator-' + PERSIST_ID + '-columns') !== null;
+  } catch (e) {}
 
   // Bersihkan kunci persistence BASI milik role ini (sidik jari lama, susunan
   // kolom yang sudah tak dipakai lagi) — tanpa ini localStorage tumbuh tanpa

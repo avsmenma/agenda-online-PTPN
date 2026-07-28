@@ -717,6 +717,43 @@ class ColumnCustomizationSharedTest extends TestCase
     }
 
     /**
+     * Review akhir branch (item 3, 2026-07-28): adaLebarTersimpan dulu HANYA
+     * membaca USER_RESIZED_FLAG_KEY (penanda "user pernah resize", sengaja
+     * TANPA sidik jari — lihat test di atas). Tapi kunci LEBAR tersimpan
+     * Tabulator sendiri ('tabulator-' + PERSIST_ID + '-columns') justru IKUT
+     * sidik jari, dan blok pembersihan kunci basi tepat di bawahnya menghapus
+     * kunci itu begitu user mengubah kolom/beku (persistenceID berganti).
+     * Akibatnya penanda tetap true tapi lebarnya sudah hilang -> layout jatuh
+     * ke 'fitData' TANPA lebar tersimpan -> tabel tak melebar penuh, berulang
+     * tiap kali user menyentuh kolom. Perbaikan: adaLebarTersimpan wajib true
+     * hanya bila KEDUANYA ada -- penanda *dan* kunci lebar aktif.
+     */
+    public function test_ada_lebar_tersimpan_mengecek_kunci_lebar_aktif(): void
+    {
+        $js = file_get_contents(public_path('js/document-tabulator.js'));
+
+        $awal = strpos($js, 'let adaLebarTersimpan = false;');
+        $this->assertNotFalse($awal, 'deklarasi adaLebarTersimpan tidak ditemukan');
+        $akhir = strpos($js, '// Bersihkan kunci persistence BASI', $awal);
+        $this->assertNotFalse($akhir, 'penutup blok adaLebarTersimpan (sebelum blok pembersihan) tidak ditemukan');
+        $badan = substr($js, $awal, $akhir - $awal);
+
+        // Try/catch tetap wajib (localStorage bisa melempar di mode privat).
+        $this->assertStringContainsString('try {', $badan);
+        $this->assertStringContainsString('catch (e) {}', $badan);
+
+        // Penanda resize dibaca.
+        $this->assertStringContainsString('localStorage.getItem(USER_RESIZED_FLAG_KEY)', $badan);
+
+        // adaLebarTersimpan WAJIB juga menuntut kunci lebar aktif benar-benar
+        // ada -- bukan cuma bergantung pada penanda.
+        $this->assertStringContainsString(
+            "adaLebarTersimpan = pernahResize && localStorage.getItem('tabulator-' + PERSIST_ID + '-columns') !== null;",
+            $badan
+        );
+    }
+
+    /**
      * localStorage bisa melempar di mode privat / kuota penuh, dan tabel TIDAK
      * boleh gagal render karenanya (aturan lama berkas ini). Blok pembersihan
      * kunci persistence basi (sidik jari lama) adalah akses localStorage BARU
