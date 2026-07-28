@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\DokumenHelper;
-use App\Support\FrozenColumnLayout;
+use App\Support\ColumnCustomization;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -87,7 +87,7 @@ class DashboardPembayaranController extends Controller
 
     
 
-    public function index()
+    public function index(Request $request)
     {
         $now = Carbon::now();
 
@@ -136,62 +136,20 @@ class DashboardPembayaranController extends Controller
         }
 
         // === Konfigurasi kolom beku (frozen) ===
-        // Dibaca/disimpan mengikuti pola selectedColumns di atas. Divalidasi
-        // ulang setiap request karena kolom yang dibekukan bisa saja sudah
-        // disembunyikan user lewat tab pertama modal.
-        $frozenAvailableColumns = $this->getPembayaranDashboardAvailableColumns();
-        $frozenDefault = ['left' => ['nomor_agenda'], 'right' => []];
-
-        // Modal selalu mengirim frozen_config=1 sebagai penanda. Tanpa penanda ini,
-        // "user melepas SEMUA kolom beku" (tidak ada frozen_left/frozen_right yang
-        // terkirim) tampak sama persis dengan "request tidak membawa konfigurasi beku"
-        // di sisi server — akibatnya preferensi lama dipakai ulang dan kolom membeku
-        // kembali dengan sendirinya. frozen_left/frozen_right tetap ikut diperiksa agar
-        // uji manual lewat URL (?frozen_left[]=nomor_agenda) tetap jalan.
-        $hasFrozenRequest = request()->has('frozen_config')
-            || request()->has('frozen_left')
-            || request()->has('frozen_right');
-
-        $user = Auth::user();
-
-        if ($hasFrozenRequest) {
-            $frozenRaw = [
-                'left'  => (array) request('frozen_left', []),
-                'right' => (array) request('frozen_right', []),
-            ];
-        } else {
-            if ($user && isset($user->table_columns_preferences['pembayaran_dashboard_frozen'])) {
-                $frozenRaw = $user->table_columns_preferences['pembayaran_dashboard_frozen'];
-            } else {
-                $frozenRaw = session('pembayaran_dashboard_frozen_columns', $frozenDefault);
-            }
-
-            $frozenRaw = is_array($frozenRaw) ? $frozenRaw : $frozenDefault;
-        }
-
-        $frozen = FrozenColumnLayout::normalize(
-            (array) ($frozenRaw['left'] ?? []),
-            (array) ($frozenRaw['right'] ?? []),
-            $selectedColumns,
-            $frozenAvailableColumns
-        );
-
-        $frozenLeft = $frozen['left'];
-        $frozenRight = $frozen['right'];
-
-        if ($hasFrozenRequest && $user) {
-            $preferences = $user->table_columns_preferences ?? [];
-            $preferences['pembayaran_dashboard_frozen'] = $frozen;
-            $user->table_columns_preferences = $preferences;
-            $user->save();
-        }
-
-        session(['pembayaran_dashboard_frozen_columns' => $frozen]);
-
-        // Urutan render tabel: beku kiri -> bebas -> beku kanan.
-        // $selectedColumns sengaja TIDAK diubah agar tab pertama modal tetap
-        // menampilkan urutan pilihan asli user.
-        $renderColumns = FrozenColumnLayout::renderOrder($selectedColumns, $frozenLeft, $frozenRight);
+        // Logika bersama 5 role — lihat App\Support\ColumnCustomization.
+        $pinnedColumns = ['nomor_agenda'];
+        $frozenResolved = ColumnCustomization::resolveFrozen($request, Auth::user(), [
+            'available'  => $this->getPembayaranDashboardAvailableColumns(),
+            'selected'   => $selectedColumns,
+            'default'    => ['left' => $pinnedColumns, 'right' => []],
+            'pinnedLeft' => $pinnedColumns,
+            'prefKey'    => 'pembayaran_dashboard_frozen',
+            'sessionKey' => 'pembayaran_dashboard_frozen_columns',
+        ]);
+        $frozenColumns = ['left' => $frozenResolved['left'], 'right' => $frozenResolved['right']];
+        $frozenLeft = $frozenResolved['left'];
+        $frozenRight = $frozenResolved['right'];
+        $renderColumns = $frozenResolved['render'];
 
         // Handler yang dianggap "belum siap dibayar"
         $belumSiapHandlers = ['akutansi', 'perpajakan', 'operator', 'team_verifikasi', 'ibu_a', 'ibu_b'];
@@ -626,6 +584,8 @@ class DashboardPembayaranController extends Controller
             'availableYears' => $availableYears,
             'mode' => $mode,
             'selectedColumns' => $selectedColumns,
+            'frozenColumns' => $frozenColumns,
+            'pinnedColumns' => $pinnedColumns,
             'availableColumns' => $availableColumns,
             'frozenLeft' => $frozenLeft,
             'frozenRight' => $frozenRight,

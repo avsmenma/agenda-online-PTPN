@@ -26,6 +26,10 @@ class ColumnCustomizationSharedTest extends TestCase
             $pdo->sqliteCreateFunction('REGEXP', fn ($p, $v) => preg_match('/' . $p . '/', (string) $v) ? 1 : 0, 2);
             $pdo->sqliteCreateFunction('SUBSTRING_INDEX', fn ($s, $d, $c) => implode($d, array_slice(explode($d, (string) $s), 0, (int) $c)), 3);
             $pdo->sqliteCreateFunction('LPAD', fn ($s, $l, $p) => str_pad((string) $s, (int) $l, (string) $p, STR_PAD_LEFT), 3);
+            // index() pembayaran menghitung dropdown filter Tahun via
+            // selectRaw('YEAR(created_at) as year') — YEAR() bukan fungsi SQLite
+            // bawaan (polyfill sama seperti PembayaranTabulatorSwitchTest::setUp()).
+            $pdo->sqliteCreateFunction('YEAR', fn ($v) => $v ? (int) substr((string) $v, 0, 4) : null, 1);
         }
     }
 
@@ -673,5 +677,48 @@ class ColumnCustomizationSharedTest extends TestCase
 
         $this->assertStringContainsString('awalanKunciKita', $badanLoop, 'penyaringan pola milik kita hilang dari kondisi penghapusan');
         $this->assertStringContainsString('k !== kunciBaruTabulator', $badanLoop, 'penjaga "bukan kunci yang baru dipasang" hilang — risiko kunci lebar aktif ikut terhapus setiap page load');
+    }
+
+    /**
+     * Task 6: pembayaran pindah ke modal bersama (partial + JS bersama), menggantikan
+     * modal/JS inline ~868 baris di dashboardPembayaran.blade.php.
+     */
+    public function test_pembayaran_memakai_modal_bersama(): void
+    {
+        $user = User::factory()->create(['role' => 'pembayaran']);
+        $res = $this->actingAs($user)->get(route('documents.pembayaran.index'));
+        $res->assertOk();
+
+        $res->assertSee('js/column-customization.js', false);
+        $res->assertSee('window.COLUMN_CUSTOMIZATION_CONFIG', false);
+        $res->assertSee('openColumnCustomizationModal()', false);
+
+        // Jejak modal inline lama benar-benar lenyap.
+        $res->assertDontSee('openColumnModal()', false);
+        $res->assertDontSee('toggleColumnSelection(', false);
+        $res->assertDontSee('applyTemplateAgenda', false);
+        $res->assertDontSee('pembayaran_columns', false);
+        $res->assertDontSee('enable_customization', false);
+
+        // Fungsi non-modal di blok yang sama WAJIB selamat.
+        $res->assertSee('function setViewMode', false);
+        $res->assertSee('function refreshPembayaranTable', false);
+        $res->assertSee('function changePerPage', false);
+        $res->assertSee('function toggleVendorGroup', false);
+    }
+
+    /** Nol definisi ganda: tiap nama fungsi bentrok hanya boleh muncul sekali. */
+    public function test_pembayaran_tidak_punya_definisi_fungsi_ganda(): void
+    {
+        $user = User::factory()->create(['role' => 'pembayaran']);
+        $html = $this->actingAs($user)->get(route('documents.pembayaran.index'))->getContent();
+
+        foreach (['selectAllColumns', 'removeAllColumns', 'updateSelectedCount', 'saveColumnCustomization'] as $nama) {
+            $this->assertSame(
+                0,
+                substr_count($html, 'function ' . $nama . '('),
+                "Definisi inline {$nama}() masih ada — akan menimpa versi bersama tanpa error."
+            );
+        }
     }
 }
