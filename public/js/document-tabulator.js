@@ -893,12 +893,31 @@
   // konfigurasi dari server tidak berubah — localStorage lama (dari sebelum
   // fitur Kolom Beku ada) selalu menang atas susunan baru dari server.
   //
-  // Perbaikan: persistenceID diikat ke SIDIK JARI daftar kunci kolom yang
-  // sedang dikirim server. Begitu susunan kolom berubah (pilihan, urutan, atau
-  // freeze Kiri/Bebas/Kanan), sidik jari berubah → kunci localStorage yang
-  // dipakai pun otomatis berbeda, sehingga simpanan basi (susunan lama) tidak
-  // pernah dipakai untuk menimpa susunan baru dari server. Hash djb2 sederhana
-  // (bukan kriptografis, cukup stabil & pendek), dijadikan string base36.
+  // Perbaikan: persistenceID diikat ke SIDIK JARI daftar kunci kolom + susunan
+  // freeze (CFG.frozen) yang sedang dikirim server. Begitu salah satu berubah,
+  // sidik jari berubah → kunci localStorage yang dipakai pun otomatis berbeda,
+  // sehingga simpanan basi (susunan lama) tidak pernah dipakai untuk menimpa
+  // susunan baru dari server. Hash djb2 sederhana (bukan kriptografis, cukup
+  // stabil & pendek), dijadikan string base36.
+  //
+  // BUG LANJUTAN 2026-07-28 (ditemukan review, sebelum ada di produksi):
+  // CFG.frozen WAJIB ikut di dalam hash, bukan cuma CFG.columns[].key.
+  // FrozenColumnLayout::renderOrder() (PHP) mempertahankan urutan RELATIF di
+  // dalam tiap kelompok kiri/bebas/kanan — jadi kalau kolom yang dibekukan ke
+  // KANAN kebetulan SUDAH berada di ekor daftar 'selected' (kasus lazim: kolom
+  // terakhir dibekukan ke kanan), array_merge($left,$middle,$right) di server
+  // menghasilkan urutan BYTE-IDENTIK dengan sebelum dibekukan — CFG.columns[].key
+  // tidak berubah sama sekali. Padahal buildColumns() di klien MENUNDA
+  // kelompokBekuKanan ke paling akhir (lihat komentarnya), jadi urutan definisi
+  // TABEL di klien tetap berubah. Tanpa CFG.frozen di hash, sidik jari tidak
+  // ikut berubah, localStorage lama (urutan sebelum freeze) menang lewat
+  // mergeDefinition, dan kolom beku-kanan mengambang lagi di tengah tabel —
+  // persis bug yang commit 9668455 perbaiki, hidup lagi lewat jalur berbeda.
+  // (Freeze KIRI tidak kena masalah yang sama: urutan definisi tabel untuk
+  // kelompok kiri tidak ditunda seperti kelompok kanan, jadi tidak wajib masuk
+  // hash — tapi tetap diikutkan di sini demi kejujuran & kesederhanaan: satu
+  // aturan "apa pun yang memengaruhi susunan kolom ikut di hash", bukan
+  // pengecualian per sisi yang gampang jadi bug baru kalau perilaku PHP berubah.)
   function hashSusunanKolom(str) {
     let h = 5381;
     for (let i = 0; i < str.length; i++) {
@@ -906,7 +925,16 @@
     }
     return h.toString(36);
   }
-  const sidikJariKolom = hashSusunanKolom((CFG.columns || []).map(function (c) { return c.key; }).join(','));
+  // Aman terhadap CFG.frozen yang tak ada / bukan objek / properti bukan array
+  // (role lama, konfigurasi belum lengkap) — tidak pernah melempar, jatuh ke [].
+  function daftarBekuAman(x) { return Array.isArray(x) ? x : []; }
+  const bekuKiriUntukHash = daftarBekuAman(CFG.frozen && CFG.frozen.left);
+  const bekuKananUntukHash = daftarBekuAman(CFG.frozen && CFG.frozen.right);
+  const sidikJariKolom = hashSusunanKolom(
+    (CFG.columns || []).map(function (c) { return c.key; }).join(',') +
+    '|L:' + bekuKiriUntukHash.join(',') +
+    '|R:' + bekuKananUntukHash.join(',')
+  );
   // Penanda role dari CFG.mountId — nilainya beda per role (operatorTabulatorTable,
   // akutansiTabulatorTable, verifikasiTabulatorTable, dst.), jadi cukup dipakai
   // apa adanya sebagai bagian kunci. Cadangan 'documents' bila mountId kosong
@@ -963,9 +991,10 @@
     // Opsi `columns: ['width']` di sini HANYA menentukan properti yang dibawa
     // Tabulator saat MEMBACA definisi tersimpan — bukan jaminan urutan tak ikut
     // terkunci (lihat penjelasan panjang di atas PERSIST_ID). Karena itu
-    // persistenceID sendiri yang mengunci kesegaran: begitu susunan kolom
-    // berubah, sidik jari berubah dan kunci localStorage ikut berganti — lebar
-    // hasil tarikan user tetap bertahan SELAMA susunan kolom tidak berubah.
+    // persistenceID sendiri yang mengunci kesegaran: begitu CFG.columns[].key
+    // ATAU CFG.frozen (kiri/kanan) berubah, sidik jari berubah dan kunci
+    // localStorage ikut berganti — lebar hasil tarikan user tetap bertahan
+    // SELAMA sidik jari (susunan kolom + freeze) tidak berubah.
     persistence: { columns: ['width'] },
     persistenceID: PERSIST_ID,
     height: '70vh',

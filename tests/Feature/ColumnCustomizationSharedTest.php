@@ -489,8 +489,10 @@ class ColumnCustomizationSharedTest extends TestCase
     /**
      * Sidik jari WAJIB dihitung dari daftar KUNCI KOLOM yang sedang dikirim
      * server (CFG.columns[].key) — bukan dari localStorage, bukan dari DOM —
-     * supaya begitu susunan kolom berubah (pilihan/urutan/freeze), kunci
-     * persistence ikut berganti dan simpanan basi tak bisa menimpa susunan baru.
+     * supaya begitu susunan kolom berubah (pilihan/urutan), kunci persistence
+     * ikut berganti dan simpanan basi tak bisa menimpa susunan baru. Cakupan
+     * freeze (CFG.frozen) diuji terpisah di
+     * test_sidik_jari_ikut_membaca_susunan_beku di bawah.
      */
     public function test_sidik_jari_dihitung_dari_daftar_kunci_kolom(): void
     {
@@ -501,15 +503,61 @@ class ColumnCustomizationSharedTest extends TestCase
         $akhir = strpos($js, 'const table = new Tabulator(mountEl()', $awal);
         $badan = substr($js, $awal, $akhir - $awal);
 
-        // Hash djb2 sederhana (bukan kriptografis) atas string gabungan kunci kolom.
+        // Hash djb2 sederhana (bukan kriptografis) atas string gabungan.
         $this->assertStringContainsString('charCodeAt(', $badan);
         $this->assertStringContainsString('.toString(36)', $badan);
-        // Input hash: CFG.columns[].key digabung koma — daftar kolom yang SEDANG
+        // Input hash mencakup CFG.columns[].key — daftar kolom yang SEDANG
         // dikirim server, urut sesuai urutan server (bukan urutan localStorage).
         $this->assertStringContainsString(
-            "hashSusunanKolom((CFG.columns || []).map(function (c) { return c.key; }).join(','))",
+            "(CFG.columns || []).map(function (c) { return c.key; }).join(',')",
             $badan
         );
+    }
+
+    /**
+     * Bug lanjutan 2026-07-28 (ditemukan review, sebelum sempat ke produksi):
+     * FrozenColumnLayout::renderOrder() (PHP) mempertahankan urutan RELATIF di
+     * dalam tiap kelompok kiri/bebas/kanan. Kalau kolom yang dibekukan ke
+     * KANAN kebetulan sudah berada di EKOR daftar 'selected' (kasus lazim:
+     * kolom terakhir dibekukan ke kanan), urutan CFG.columns[].key TIDAK
+     * berubah sama sekali walau freeze berubah — padahal buildColumns() di
+     * klien menunda kelompok beku-kanan ke paling akhir, jadi urutan definisi
+     * TABEL tetap berubah. Kalau sidik jari hanya dari CFG.columns[].key, ia
+     * gagal mendeteksi perubahan ini: localStorage lama menang lewat
+     * mergeDefinition, dan kolom beku-kanan mengambang lagi di tengah tabel —
+     * regresi terhadap bug yang commit 9668455 perbaiki, lewat jalur berbeda.
+     * Karena itu CFG.frozen (kiri DAN kanan) wajib ikut jadi input hash, dan
+     * pembacaannya wajib aman terhadap CFG.frozen yang tak ada/bukan array
+     * (tak pernah melempar).
+     */
+    public function test_sidik_jari_ikut_membaca_susunan_beku(): void
+    {
+        $js = file_get_contents(public_path('js/document-tabulator.js'));
+
+        $awal = strpos($js, 'function hashSusunanKolom(');
+        $this->assertNotFalse($awal, 'fungsi hashSusunanKolom tidak ditemukan');
+        $akhir = strpos($js, 'const table = new Tabulator(mountEl()', $awal);
+        $badan = substr($js, $awal, $akhir - $awal);
+
+        // Pembacaan CFG.frozen.left/right dijaga Array.isArray — tak pernah
+        // melempar walau CFG.frozen tak ada / bukan objek / propertinya bukan array.
+        $this->assertStringContainsString('Array.isArray(', $badan);
+        $this->assertStringContainsString('daftarBekuAman(CFG.frozen && CFG.frozen.left)', $badan);
+        $this->assertStringContainsString('daftarBekuAman(CFG.frozen && CFG.frozen.right)', $badan);
+
+        // Kedua daftar beku (kiri & kanan) WAJIB dipakai sebagai bagian string
+        // yang di-hash — dipersempit ke badan pemanggilan hashSusunanKolom()
+        // saja (dari deklarasi sidikJariKolom sampai deklarasi roleTag
+        // berikutnya) supaya assertion menggigit kalau salah satu daftar
+        // dibaca tapi dibuang begitu saja, tak pernah dipakai di input hash.
+        $posHash = strpos($badan, 'const sidikJariKolom = hashSusunanKolom(');
+        $this->assertNotFalse($posHash, 'perhitungan sidikJariKolom tidak ditemukan');
+        $posBerikutnya = strpos($badan, 'const roleTag = CFG.mountId', $posHash);
+        $this->assertNotFalse($posBerikutnya, 'deklarasi roleTag setelah sidikJariKolom tidak ditemukan');
+        $badanPanggilanHash = substr($badan, $posHash, $posBerikutnya - $posHash);
+
+        $this->assertStringContainsString('bekuKiriUntukHash.join(', $badanPanggilanHash, 'daftar beku kiri tidak ikut dipakai sebagai input hash');
+        $this->assertStringContainsString('bekuKananUntukHash.join(', $badanPanggilanHash, 'daftar beku kanan tidak ikut dipakai sebagai input hash');
     }
 
     /**
@@ -574,5 +622,44 @@ class ColumnCustomizationSharedTest extends TestCase
         $this->assertNotFalse($posCatch, 'blok catch SETELAH removeItem tidak ditemukan — try mungkin sudah tertutup sebelum removeItem dipanggil');
         $this->assertLessThan($posRemove, $posTry, 'localStorage.removeItem dipanggil di luar blok try');
         $this->assertGreaterThan($posRemove, $posCatch, 'catch menutup sebelum removeItem dipanggil — removeItem berada di luar blok try/catch');
+    }
+
+    /**
+     * Bug lanjutan 2026-07-28 (ditemukan review, sebelum sempat ke produksi):
+     * klausa `k !== kunciBaruTabulator` adalah satu-satunya hal yang mencegah
+     * blok pembersihan menghapus kunci lebar kolom yang BARU SAJA dipasang
+     * (persistenceID untuk susunan kolom yang sedang aktif SEKARANG). Tanpa
+     * klausa ini, setiap page load akan menghapus kunci lebarnya sendiri tepat
+     * setelah dipasang — lebar hasil tarikan user tidak akan pernah bertahan
+     * lagi lintas kunjungan (senyap total, lolos dari test lain karena tak ada
+     * yang memeriksa isi kondisi if-nya, hanya bahwa removeItem() dipanggil).
+     */
+    public function test_pembersihan_tidak_menghapus_kunci_yang_baru_dipasang(): void
+    {
+        $js = file_get_contents(public_path('js/document-tabulator.js'));
+
+        $posAwal = strpos($js, '// Bersihkan kunci persistence BASI milik role ini');
+        $this->assertNotFalse($posAwal, 'komentar blok pembersihan kunci basi tidak ditemukan');
+        $posTable = strpos($js, 'const table = new Tabulator(mountEl()', $posAwal);
+        $this->assertNotFalse($posTable);
+        $badan = substr($js, $posAwal, $posTable - $posAwal);
+
+        // Kunci yang baru dipasang WAJIB dihitung dari PERSIST_ID yang sedang
+        // aktif (bukan literal terpisah yang bisa lupa disinkronkan).
+        $this->assertStringContainsString("const kunciBaruTabulator = 'tabulator-' + PERSIST_ID + '-columns';", $badan);
+
+        // Kondisi if() di dalam loop penghapusan WAJIB memeriksa KEDUANYA:
+        // berpola milik kita (awalanKunciKita) DAN BUKAN kunci yang baru saja
+        // dipasang (k !== kunciBaruTabulator) — dipersempit ke badan loop
+        // for(...) saja supaya assertion menggigit tepat pada baris kondisi,
+        // bukan sekadar menemukan literal 'kunciBaruTabulator' di komentar.
+        $posFor = strpos($badan, 'for (let i = localStorage.length - 1; i >= 0; i--) {');
+        $this->assertNotFalse($posFor, 'loop penghapusan kunci basi tidak ditemukan');
+        $posTutupFor = strpos($badan, 'localStorage.removeItem(k);', $posFor);
+        $this->assertNotFalse($posTutupFor);
+        $badanLoop = substr($badan, $posFor, $posTutupFor - $posFor);
+
+        $this->assertStringContainsString('awalanKunciKita', $badanLoop, 'penyaringan pola milik kita hilang dari kondisi penghapusan');
+        $this->assertStringContainsString('k !== kunciBaruTabulator', $badanLoop, 'penjaga "bukan kunci yang baru dipasang" hilang — risiko kunci lebar aktif ikut terhapus setiap page load');
     }
 }
