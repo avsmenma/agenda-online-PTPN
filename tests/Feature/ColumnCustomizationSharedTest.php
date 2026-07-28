@@ -81,4 +81,20 @@ class ColumnCustomizationSharedTest extends TestCase
         $this->assertStringContainsString('COLUMN_CUSTOMIZATION_CONFIG', $js);
         $this->assertStringNotContainsString('@json', $js);
     }
+
+    /**
+     * Bukti adopsi Task 3: view operator memakai partial + JS bersama (modal JS inline
+     * lama sudah tidak ada), TANPA menghilangkan JS operator-only (hapus baris aktif).
+     */
+    public function test_view_operator_pakai_modal_bersama_tanpa_hilangkan_fitur_operator(): void
+    {
+        $user = User::factory()->create(['role' => 'operator']);
+        $res = $this->actingAs($user)->get(route('documents.index'));
+        $res->assertOk();
+        $res->assertSee('id="columnCustomizationModal"', false);
+        $res->assertSee('js/column-customization.js', false);
+        $res->assertDontSee('let availableColumnsData =', false);
+        // Fitur operator-only WAJIB tetap.
+        $res->assertSee('id="btnHapusBarisAktif"', false);
+    }
 }
