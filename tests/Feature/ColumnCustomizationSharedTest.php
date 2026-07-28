@@ -116,4 +116,40 @@ class ColumnCustomizationSharedTest extends TestCase
         // Fitur operator-only WAJIB tetap.
         $res->assertSee('id="btnHapusBarisAktif"', false);
     }
+
+    /**
+     * Tab kedua (Kolom Beku) hadir di keempat role, dan CSS-nya tetap lewat
+     * @push('styles') — urutan CSS sebelum markup adalah jaring
+     * flash-of-unstyled-modal yang sudah dipasang 2026-07-28.
+     */
+    public function test_tab_kolom_beku_hadir_di_semua_view(): void
+    {
+        $cases = [
+            ['role' => 'operator',        'route' => 'documents.index'],
+            ['role' => 'akutansi',        'route' => 'documents.akutansi.index'],
+            ['role' => 'perpajakan',      'route' => 'documents.perpajakan.index'],
+            ['role' => 'team_verifikasi', 'route' => 'documents.verifikasi.index'],
+        ];
+
+        foreach ($cases as $c) {
+            $user = User::factory()->create(['role' => $c['role']]);
+            $res = $this->actingAs($user)->get(route($c['route']));
+            $res->assertOk();
+
+            $res->assertSee('data-tab="kolom"', false);
+            $res->assertSee('data-tab="beku"', false);
+            $res->assertSee('id="tabPanelBeku"', false);
+            $res->assertSee('id="frozenList"', false);
+            $res->assertSee('id="frozenWarning"', false);
+            // Jembatan data untuk tab Beku.
+            $res->assertSee('frozen:', false);
+            $res->assertSee('pinned:', false);
+
+            // CSS tab wajib sampai <head> SEBELUM markup modal.
+            $res->assertSeeInOrder([
+                '.column-tabs {',
+                'id="columnCustomizationModal"',
+            ], false);
+        }
+    }
 }

@@ -7,6 +7,12 @@
 @php
     $availableColumns = $availableColumns ?? [];
     $selectedColumns = $selectedColumns ?? [];
+    // Kolom beku (tab kedua). Default defensif: partial tetap merender walau
+    // controller role belum mengirimnya.
+    $frozenColumns = $frozenColumns ?? ['left' => [], 'right' => []];
+    // Kolom yang TIDAK boleh dilepas dari beku kiri — document-tabulator.js
+    // membekukan nomor_agenda tanpa syarat, jadi kontrolnya dimatikan di modal.
+    $pinnedColumns = $pinnedColumns ?? ['nomor_agenda'];
 @endphp
 <div class="customization-modal" id="columnCustomizationModal">
     <div class="modal-content-custom">
@@ -17,7 +23,17 @@
             </h3>
         </div>
 
+        <div class="column-tabs">
+            <button type="button" class="column-tab active" data-tab="kolom" onclick="switchColumnTab('kolom')">
+                <i class="fa-solid fa-table-columns"></i> Kolom Tabel
+            </button>
+            <button type="button" class="column-tab" data-tab="beku" onclick="switchColumnTab('beku')">
+                <i class="fa-solid fa-thumbtack"></i> Kolom Beku
+            </button>
+        </div>
+
         <div class="modal-body-custom">
+            <div id="tabPanelKolom">
             <div class="customization-grid">
                 <div class="selection-panel">
                     <div class="panel-header">
@@ -97,6 +113,16 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            </div>
+
+            <div id="tabPanelBeku" style="display:none;">
+                <div class="panel-description">
+                    Tentukan kolom mana yang tetap terlihat saat tabel digulir ke samping.
+                    Kolom beku otomatis dipindahkan ke tepi tabel.
+                </div>
+                <div id="frozenWarning" class="frozen-warning" style="display:none;"></div>
+                <div id="frozenList"></div>
             </div>
         </div>
 
@@ -180,6 +206,16 @@
     .btn-save { background: #28a745; color: white; }
     .btn-save:hover { background: #218838; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3); }
     .btn-save:disabled { background: #adb5bd; cursor: not-allowed; transform: none; box-shadow: none; }
+    .column-tabs { display: flex; gap: 0.5rem; padding: 0 1.5rem; border-bottom: 1px solid #e2e8f0; }
+    .column-tab { padding: 0.75rem 1.1rem; border: none; background: transparent; font-size: 0.85rem; font-weight: 700; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; }
+    .column-tab.active { color: #0f4c3a; border-bottom-color: #0f4c3a; }
+    .frozen-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.6rem 0.9rem; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 0.5rem; }
+    .frozen-options { display: inline-flex; gap: 0.25rem; }
+    .frozen-opt { padding: 0.35rem 0.75rem; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 6px; font-size: 0.78rem; font-weight: 700; color: #64748b; cursor: pointer; }
+    .frozen-opt.active { background: #0f4c3a; border-color: #0f4c3a; color: #ffffff; }
+    .frozen-opt:disabled { opacity: 0.45; cursor: not-allowed; }
+    .frozen-row-note { font-size: 0.72rem; color: #94a3b8; font-weight: 600; }
+    .frozen-warning { padding: 0.7rem 0.9rem; margin-bottom: 0.75rem; border-radius: 8px; background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; font-size: 0.82rem; font-weight: 600; }
     @media (max-width: 768px) {
         .customization-modal { padding: 10px; }
         .modal-content-custom { max-height: 95vh; }
@@ -198,5 +234,7 @@
     window.COLUMN_CUSTOMIZATION_CONFIG = {
         availableColumns: @json($availableColumns),
         selected: @json(array_values($selectedColumns)),
+        frozen: @json(['left' => array_values($frozenColumns['left'] ?? []), 'right' => array_values($frozenColumns['right'] ?? [])]),
+        pinned: @json(array_values($pinnedColumns)),
     };
 </script>
