@@ -829,6 +829,34 @@ class TeamVerifikasiController extends Controller
             session(['team_verifikasi_dokumens_table_columns' => $selectedColumns]);
         }
 
+        // === Konfigurasi kolom beku (frozen) ===
+        // Dinormalkan ulang tiap request: kolom yang dibekukan bisa saja sudah
+        // disembunyikan user lewat tab pertama modal.
+        // Paraf (tanggal_paraf, pemaraf) dikeluarkan dari resolusi beku: kolom ini
+        // FIXED via extraColumns di view (bukan opsi kustomisasi utk verifikasi),
+        // persis filter defensif yang sudah ada di view untuk $selectedColumns —
+        // tanpa ini, preferensi lama yang menyertakan salah satunya bisa lolos ke
+        // $renderColumns dan menghasilkan kolom dobel dgn extraColumns.
+        $pinnedColumns = ['nomor_agenda'];
+        $frozenAvailableColumns = \Illuminate\Support\Arr::except($availableColumns, ['tanggal_paraf', 'pemaraf']);
+        $frozenSelectedColumns = array_values(array_filter(
+            $selectedColumns,
+            fn ($col) => !in_array($col, ['tanggal_paraf', 'pemaraf'], true)
+        ));
+        $frozenResolved = \App\Support\ColumnCustomization::resolveFrozen($request, Auth::user(), [
+            'available'  => $frozenAvailableColumns,
+            'selected'   => $frozenSelectedColumns,
+            'default'    => ['left' => $pinnedColumns, 'right' => []],
+            'pinnedLeft' => $pinnedColumns,
+            'prefKey'    => 'team_verifikasi_frozen',
+            'sessionKey' => 'team_verifikasi_dokumens_frozen_columns',
+        ]);
+        $frozenColumns = ['left' => $frozenResolved['left'], 'right' => $frozenResolved['right']];
+        // Urutan render tabel: beku kiri -> bebas -> beku kanan. $selectedColumns
+        // sengaja TIDAK diubah agar tab pertama modal tetap menampilkan urutan
+        // pilihan asli user.
+        $renderColumns = $frozenResolved['render'];
+
         // Load IE dropdown data
         $ieKategoriList = $ieSubKriteriaList = $ieItemSubKriteriaList = $ieJenisPembayaranList = [];
         try {
@@ -881,6 +909,9 @@ class TeamVerifikasiController extends Controller
             'suggestions' => $suggestions,
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
+            'frozenColumns' => $frozenColumns,
+            'pinnedColumns' => $pinnedColumns,
+            'renderColumns' => $renderColumns,
             'ieKategoriList' => $ieKategoriList,
             'ieSubKriteriaList' => $ieSubKriteriaList,
             'ieItemSubKriteriaList' => $ieItemSubKriteriaList,

@@ -314,4 +314,53 @@ class ColumnCustomizationSharedTest extends TestCase
         $this->assertStringNotContainsString('frozenLeftOrder =', $badan);
         $this->assertStringNotContainsString('frozenRightOrder =', $badan);
     }
+
+    /**
+     * Dua urutan kolom TIDAK boleh tertukar: DOCUMENT_TABULATOR_CONFIG.columns
+     * memakai urutan render (beku kiri -> bebas -> beku kanan), sedangkan modal
+     * menampilkan urutan pilihan asli user.
+     */
+    public function test_urutan_render_berbeda_dari_urutan_modal_saat_ada_beku_kanan(): void
+    {
+        $user = User::factory()->create(['role' => 'akutansi']);
+
+        $res = $this->actingAs($user)->get(route('documents.akutansi.index', [
+            'columns'       => ['nomor_agenda', 'nomor_spp', 'nilai_rupiah'],
+            'frozen_config' => '1',
+            'frozen_left'   => ['nomor_agenda'],
+            'frozen_right'  => ['nomor_spp'],
+        ]));
+        $res->assertOk();
+
+        // Modal: urutan pilihan asli.
+        $res->assertSee('"selected":["nomor_agenda","nomor_spp","nilai_rupiah"]', false);
+        // Tabel: nomor_spp pindah ke akhir karena dibekukan di kanan.
+        $res->assertSee('"frozen":{"left":["nomor_agenda"],"right":["nomor_spp"]}', false);
+    }
+
+    public function test_kolom_beku_tersimpan_dan_bisa_dikosongkan(): void
+    {
+        $user = User::factory()->create(['role' => 'akutansi']);
+
+        $this->actingAs($user)->get(route('documents.akutansi.index', [
+            'columns'       => ['nomor_agenda', 'nomor_spp'],
+            'frozen_config' => '1',
+            'frozen_left'   => ['nomor_agenda'],
+            'frozen_right'  => ['nomor_spp'],
+        ]))->assertOk();
+
+        $user->refresh();
+        $this->assertSame(['nomor_spp'], $user->table_columns_preferences['akutansi_frozen']['right']);
+
+        // Lepas semua: hanya penanda yang dikirim, tanpa frozen_left/right.
+        $this->actingAs($user)->get(route('documents.akutansi.index', [
+            'columns'       => ['nomor_agenda', 'nomor_spp'],
+            'frozen_config' => '1',
+        ]))->assertOk();
+
+        $user->refresh();
+        $this->assertSame([], $user->table_columns_preferences['akutansi_frozen']['right']);
+        // Kolom pinned tetap beku kiri.
+        $this->assertSame(['nomor_agenda'], $user->table_columns_preferences['akutansi_frozen']['left']);
+    }
 }

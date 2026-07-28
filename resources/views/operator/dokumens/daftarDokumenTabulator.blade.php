@@ -28,7 +28,8 @@
         // Task 4 fitur export bersama (ADITIF): mengisi ini memunculkan tombol Export
         // (Excel/PDF) di toolbar Tabulator (pola Task 3 pembayaran).
         'exportUrl'        => route('documents.export'),
-        'columns'          => collect($selectedColumns)->map(fn ($k) => ['key' => $k, 'label' => $availableColumns[$k] ?? $k])->values(),
+        'columns'          => collect($renderColumns ?? $selectedColumns)->map(fn ($k) => ['key' => $k, 'label' => $availableColumns[$k] ?? $k])->values(),
+        'frozen'           => $frozenColumns ?? ['left' => [], 'right' => []],
         'availableColumns' => $availableColumns,
         'selected'         => array_values($selectedColumns),
         'ie'               => [
@@ -96,9 +97,10 @@
   ============================================================================
 --}}
 
-{{-- Form GET tersembunyi untuk kustomisasi kolom (Tugas 7d). saveColumnCustomization()
-     menambah columns[] + enable_customization lalu submit → reload view Tabulator
-     (TANPA ?classic) dengan set kolom baru dari session. --}}
+{{-- Form GET tersembunyi untuk kustomisasi kolom (Tugas 7d) — kini tak lagi disubmit.
+     saveColumnCustomization() membangun URL (columns[]/frozen_config/frozen_left[]/
+     frozen_right[]) lalu mengarahkan browser ke situ → reload view Tabulator (TANPA
+     ?classic) dengan set kolom & kolom beku baru. --}}
 <form action="{{ route('documents.index') }}" method="GET" id="filterForm" class="d-none"></form>
 
 {{-- Form DELETE tersembunyi (Tugas 7a) — hapus tetap full-page submit + redirect. --}}

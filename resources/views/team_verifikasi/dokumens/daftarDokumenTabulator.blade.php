@@ -42,7 +42,8 @@
         // Task 4 fitur export bersama (ADITIF): mengisi ini memunculkan tombol Export
         // (Excel/PDF) di toolbar Tabulator (pola Task 3 pembayaran).
         'exportUrl'        => route('documents.verifikasi.export'),
-        'columns'          => collect($selectedColumns)->map(fn ($k) => ['key' => $k, 'label' => $availableColumns[$k] ?? $k])->values(),
+        'columns'          => collect($renderColumns ?? $selectedColumns)->map(fn ($k) => ['key' => $k, 'label' => $availableColumns[$k] ?? $k])->values(),
+        'frozen'           => $frozenColumns ?? ['left' => [], 'right' => []],
         'availableColumns' => $availableColumns,
         'selected'         => array_values($selectedColumns),
         // Kolom tetap khas verifikasi: Deadline + Status (server-object,
@@ -101,7 +102,9 @@
     </div>
 </div>
 
-{{-- Form GET tersembunyi untuk kustomisasi kolom (reload view Tabulator dgn kolom baru). --}}
+{{-- Form GET tersembunyi (peninggalan mekanisme lama, tidak lagi disubmit) — kustomisasi
+     kolom kini disimpan via pembangunan URL oleh saveColumnCustomization() lalu diarahkan
+     browser ke situ, bukan lewat form ini. --}}
 <form action="{{ route('documents.verifikasi.index') }}" method="GET" id="filterForm" class="d-none"></form>
 
 @include('partials._columnCustomizationModal')

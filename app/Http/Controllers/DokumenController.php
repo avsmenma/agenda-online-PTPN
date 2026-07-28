@@ -291,6 +291,24 @@ class DokumenController extends Controller
             session(['dokumens_table_columns' => $selectedColumns]);
         }
 
+        // === Konfigurasi kolom beku (frozen) ===
+        // Dinormalkan ulang tiap request: kolom yang dibekukan bisa saja sudah
+        // disembunyikan user lewat tab pertama modal.
+        $pinnedColumns = ['nomor_agenda'];
+        $frozenResolved = \App\Support\ColumnCustomization::resolveFrozen($request, auth()->user(), [
+            'available'  => $availableColumns,
+            'selected'   => $selectedColumns,
+            'default'    => ['left' => $pinnedColumns, 'right' => []],
+            'pinnedLeft' => $pinnedColumns,
+            'prefKey'    => null,
+            'sessionKey' => 'dokumens_frozen_columns',
+        ]);
+        $frozenColumns = ['left' => $frozenResolved['left'], 'right' => $frozenResolved['right']];
+        // Urutan render tabel: beku kiri -> bebas -> beku kanan. $selectedColumns
+        // sengaja TIDAK diubah agar tab pertama modal tetap menampilkan urutan
+        // pilihan asli user.
+        $renderColumns = $frozenResolved['render'];
+
         // Load dropdown options for inline editing
         $ieKategoriList = [];
         $ieSubKriteriaList = [];
@@ -349,6 +367,9 @@ class DokumenController extends Controller
             "suggestions" => $suggestions ?? [],
             "availableColumns" => $availableColumns,
             "selectedColumns" => $selectedColumns,
+            "frozenColumns" => $frozenColumns,
+            "pinnedColumns" => $pinnedColumns,
+            "renderColumns" => $renderColumns,
             "sortColumn" => $sortColumn,
             "sortOrder" => $sortOrder,
             "ieKategoriList" => $ieKategoriList,

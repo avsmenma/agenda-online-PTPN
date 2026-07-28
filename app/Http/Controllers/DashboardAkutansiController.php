@@ -470,6 +470,24 @@ class DashboardAkutansiController extends Controller
             session(['akutansi_dokumens_table_columns' => $selectedColumns]);
         }
 
+        // === Konfigurasi kolom beku (frozen) ===
+        // Dinormalkan ulang tiap request: kolom yang dibekukan bisa saja sudah
+        // disembunyikan user lewat tab pertama modal.
+        $pinnedColumns = ['nomor_agenda'];
+        $frozenResolved = \App\Support\ColumnCustomization::resolveFrozen($request, Auth::user(), [
+            'available'  => $availableColumns,
+            'selected'   => $selectedColumns,
+            'default'    => ['left' => $pinnedColumns, 'right' => []],
+            'pinnedLeft' => $pinnedColumns,
+            'prefKey'    => 'akutansi_frozen',
+            'sessionKey' => 'akutansi_dokumens_frozen_columns',
+        ]);
+        $frozenColumns = ['left' => $frozenResolved['left'], 'right' => $frozenResolved['right']];
+        // Urutan render tabel: beku kiri -> bebas -> beku kanan. $selectedColumns
+        // sengaja TIDAK diubah agar tab pertama modal tetap menampilkan urutan
+        // pilihan asli user.
+        $renderColumns = $frozenResolved['render'];
+
         // Calculate 4 dashboard-style stats + delay stats + total rupiah for bento grid
         // 1. Total Dokumen Agenda - semua dokumen dalam sistem (exclude CSV imports)
         $totalDokumenAgenda = Dokumen::excludeCsvImports()->count();
@@ -615,6 +633,9 @@ class DashboardAkutansiController extends Controller
             'suggestions' => $suggestions,
             'availableColumns' => $availableColumns,
             'selectedColumns' => $selectedColumns,
+            'frozenColumns' => $frozenColumns,
+            'pinnedColumns' => $pinnedColumns,
+            'renderColumns' => $renderColumns,
             'sortColumn' => $sortColumn,
             'sortOrder' => $sortOrder,
             'ieKategoriList' => $ieKategoriList,
