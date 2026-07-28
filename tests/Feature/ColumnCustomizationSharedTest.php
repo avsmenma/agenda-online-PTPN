@@ -861,17 +861,47 @@ class ColumnCustomizationSharedTest extends TestCase
     }
 
     /** Nol definisi ganda: tiap nama fungsi bentrok hanya boleh muncul sekali. */
+    /**
+     * Review akhir branch (item 4, 2026-07-28): daftar 4 nama ini ditulis di
+     * spec SEBELUM logika tab Beku dipindah ke column-customization.js —
+     * permukaan bentrok tumbuh jadi 9 fungsi (5 tambahan lahir dari situ:
+     * switchColumnTab/getFrozenState/setFrozenState/renderFrozenTab/
+     * renderFrozenWarning) tapi daftar penjaga tidak ikut tumbuh. Turut
+     * ditambah 3 identifier top-level (FROZEN_WIDTH_MAP/PINNED_LEFT_COLUMNS/
+     * selectedColumnsOrder) yang risikonya LEBIH PARAH dari sekadar "fungsi
+     * inline menimpa versi bersama": const/let terdeklarasi ganda di scope
+     * atas yang sama (dua <script> classic berbagi lexical scope global utk
+     * let/const) melempar SyntaxError dan MEMATIKAN SELURUH berkas bersama,
+     * bukan cuma satu fungsi.
+     */
     public function test_pembayaran_tidak_punya_definisi_fungsi_ganda(): void
     {
         $user = User::factory()->create(['role' => 'pembayaran']);
         $html = $this->actingAs($user)->get(route('documents.pembayaran.index'))->getContent();
 
-        foreach (['selectAllColumns', 'removeAllColumns', 'updateSelectedCount', 'saveColumnCustomization'] as $nama) {
+        foreach ([
+            'selectAllColumns', 'removeAllColumns', 'updateSelectedCount', 'saveColumnCustomization',
+            'switchColumnTab', 'getFrozenState', 'setFrozenState', 'renderFrozenTab', 'renderFrozenWarning',
+        ] as $nama) {
             $this->assertSame(
                 0,
                 substr_count($html, 'function ' . $nama . '('),
                 "Definisi inline {$nama}() masih ada — akan menimpa versi bersama tanpa error."
             );
+        }
+
+        // 3 identifier top-level (bentuk asli: FROZEN_WIDTH_MAP/PINNED_LEFT_COLUMNS
+        // = const, selectedColumnsOrder = let) — dicek KETIGA bentuk deklarasi
+        // (const/let/var) sekaligus, bukan cuma bentuk aslinya, karena redeclare
+        // dgn kata kunci APA PUN tetap SyntaxError di scope atas yang sama.
+        foreach (['FROZEN_WIDTH_MAP', 'PINNED_LEFT_COLUMNS', 'selectedColumnsOrder'] as $nama) {
+            foreach (['const', 'let', 'var'] as $kw) {
+                $this->assertSame(
+                    0,
+                    substr_count($html, $kw . ' ' . $nama),
+                    "Deklarasi ganda '{$kw} {$nama}' di script classic pembayaran — akan melempar SyntaxError & mematikan seluruh berkas bersama."
+                );
+            }
         }
     }
 }
