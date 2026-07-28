@@ -387,7 +387,8 @@ inline, program terpisah.
 Beku) dijadikan **acuan** dan digabung balik ke partial bersama `_columnCustomizationModal.blade.php`
 + `public/js/column-customization.js` — 4 role naik dari 1 tab ke 2 tab (Kolom Tabel + Kolom
 Beku), pembayaran turun dari salinan inline ~868 baris jadi pemakai partial bersama (god-file
-`pembayaranNEW/dashboardPembayaran.blade.php` berkurang ~933 baris). Sekarang **kelima** role
+`pembayaranNEW/dashboardPembayaran.blade.php` berkurang dari 3.396 → 2.531 baris, ≈865 baris).
+Sekarang **kelima** role
 keuangan (operator/akutansi/perpajakan/verifikasi/pembayaran) memakai satu modal, satu file JS.
 
 Resolusi kolom beku dipusatkan di **`App\Support\ColumnCustomization::resolveFrozen()`** —
@@ -442,8 +443,8 @@ menghitung badge "filter aktif". Jangan hapus tanpa grep ulang.
 **Verifikasi menyaring `tanggal_paraf`/`pemaraf`** sebelum resolusi beku, di
 `TeamVerifikasiController` — karena kolom Paraf di verifikasi adalah kolom TETAP lewat
 `extraColumns` (bukan kolom pilihan biasa); tanpa saringan ini, preferensi lama yang masih
-menyertakan kedua field itu menghasilkan kolom dobel di header. Query produksi mengonfirmasi
-1 akun (`sekar_verifikasi`) memang menyimpan preferensi berisi keduanya — bug ini nyata
+menyertakan kedua field itu menghasilkan kolom dobel di header. Query produksi 2026-07-28
+menemukan **1 akun verifikasi** yang preferensinya menyimpan kedua kolom itu — bug ini nyata
 mengenai user, bukan pencegahan preventif.
 
 **DIHAPUS:** tombol "Template Agenda" + fungsi `applyTemplateAgenda()` (bespoke pembayaran);
