@@ -146,6 +146,24 @@ class TwoFactorResetRequestTest extends TestCase
             ->assertSee('name="reason"', false);
     }
 
+    /**
+     * Skrip halaman ini menghapus semua .alert setelah 5 detik, jadi pesan
+     * kesalahan di kotak atas hilang sementara form-nya terbuka kembali —
+     * user melihat form tanpa tahu apa yang salah (tertangkap saat QA browser).
+     * Karena itu pesan alasan WAJIB juga tampil menetap di bawah kolomnya.
+     */
+    public function test_pesan_kesalahan_alasan_tampil_menetap_di_bawah_kolom(): void
+    {
+        $user = $this->userDengan2faAktif();
+
+        $this->withSession(['2fa_user_id' => $user->id])
+            ->from(route('2fa.verify'))
+            ->followingRedirects()
+            ->post(route('2fa.reset-request'), ['reason' => 'pendek'])
+            ->assertStatus(200)
+            ->assertSee('<span class="request-error">Alasan minimal 10 karakter.</span>', false);
+    }
+
     // =========================================================================
     // Jalur profil — pengaju masih bisa login. Menjaga agar ekstraksi trait
     // tidak mengubah perilaku jalur yang sudah dipakai di produksi.

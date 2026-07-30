@@ -311,6 +311,14 @@
             margin-top: 2px;
         }
 
+        .request-error {
+            display: block;
+            margin-top: 8px;
+            color: #fca5a5;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
         .btn-request {
             background: #d97706;
             box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);
@@ -462,6 +470,8 @@
                                 minlength="10"
                                 required>{{ old('reason', 'Kehilangan akses aplikasi authenticator dan recovery code tidak tersimpan.') }}</textarea>
                             <span class="helper-text">Minimal 10 karakter. Semakin jelas, semakin cepat ditinjau.</span>
+                            {{-- Menetap: kotak .alert di atas dihapus skrip setelah 5 detik. --}}
+                            @error('reason')<span class="request-error">{{ $message }}</span>@enderror
                         </div>
                         <button type="submit" class="btn-verify btn-request">
                             <i class="fas fa-shield-halved"></i>
