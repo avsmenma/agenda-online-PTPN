@@ -33,6 +33,14 @@ Route::middleware('guest')->group(function () {
     Route::get('/2fa/verify', [\App\Http\Controllers\TwoFactorController::class, 'showVerify'])->name('2fa.verify');
     Route::post('/2fa/verify', [\App\Http\Controllers\TwoFactorController::class, 'verify'])->middleware('throttle:5,1')->name('2fa.verify.store');
     Route::post('/2fa/verify-recovery', [\App\Http\Controllers\TwoFactorController::class, 'verifyRecoveryCode'])->middleware('throttle:5,1')->name('2fa.verify.recovery');
+
+    // Jalan keluar untuk akun yang kehilangan authenticator SEKALIGUS recovery code.
+    // Tanpa ini akun terkunci permanen: tombol pengajuan di /profile/account butuh
+    // login, sedangkan programmer menolak mereset tanpa request berstatus pending.
+    // Identitas pengaju dari session('2fa_user_id') — hanya terisi setelah password benar.
+    Route::post('/2fa/reset-request', [\App\Http\Controllers\TwoFactorResetRequestController::class, 'storeFromVerify'])
+        ->middleware('throttle:3,60')
+        ->name('2fa.reset-request');
 });
 
 // GET logout - accessible without CSRF token (fixes 419 PAGE EXPIRED)

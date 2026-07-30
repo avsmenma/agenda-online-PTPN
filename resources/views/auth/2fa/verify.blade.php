@@ -281,6 +281,46 @@
             text-align: center;
         }
 
+        .reason-input {
+            height: auto;
+            min-height: 88px;
+            padding: 12px 14px;
+            resize: vertical;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        /* Sengaja BUKAN .alert: skrip di bawah menghapus semua .alert setelah
+           5 detik, sedangkan catatan ini harus tetap terbaca saat form dibuka. */
+        .request-note {
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+            font-size: 12.5px;
+            line-height: 1.55;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            background: rgba(14, 165, 233, 0.15);
+            border: 1px solid rgba(125, 211, 252, 0.25);
+            color: #bae6fd;
+        }
+
+        .request-note i {
+            flex: 0 0 auto;
+            margin-top: 2px;
+        }
+
+        .btn-request {
+            background: #d97706;
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);
+        }
+
+        .btn-request:hover {
+            background: #b45309;
+            box-shadow: 0 8px 25px rgba(217, 119, 6, 0.55);
+        }
+
         @media (max-width: 480px) {
             .verify-card {
                 padding: 28px 24px;
@@ -392,6 +432,42 @@
                             <span>Verifikasi Recovery Code</span>
                         </button>
                     </form>
+
+                    @php
+                        // Kalau pengajuan tadi ditolak validasi, form dibuka kembali
+                        // supaya user tidak perlu mencari tautannya lagi.
+                        $showResetRequestForm = $errors->has('reason');
+                    @endphp
+
+                    <div class="recovery-link" id="resetRequestLink" style="display: {{ $showResetRequestForm ? 'none' : 'block' }};">
+                        <a href="#" id="showResetRequestForm">
+                            <i class="fas fa-shield-halved"></i>
+                            Recovery code juga hilang? Ajukan reset 2FA
+                        </a>
+                    </div>
+
+                    <form method="POST" action="{{ route('2fa.reset-request') }}" id="resetRequestForm" style="display: {{ $showResetRequestForm ? 'block' : 'none' }}; margin-top: 20px;">
+                        @csrf
+                        <div class="request-note">
+                            <i class="fas fa-circle-info"></i>
+                            <span>Pengajuan dikirim ke programmer. Setelah disetujui, 2FA akun Anda dinonaktifkan sehingga Anda bisa masuk dengan kata sandi saja — lalu segera atur ulang 2FA dan simpan recovery code-nya.</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="reason">Alasan Pengajuan</label>
+                            <textarea
+                                class="form-control reason-input"
+                                name="reason"
+                                id="reason"
+                                rows="3"
+                                minlength="10"
+                                required>{{ old('reason', 'Kehilangan akses aplikasi authenticator dan recovery code tidak tersimpan.') }}</textarea>
+                            <span class="helper-text">Minimal 10 karakter. Semakin jelas, semakin cepat ditinjau.</span>
+                        </div>
+                        <button type="submit" class="btn-verify btn-request">
+                            <i class="fas fa-shield-halved"></i>
+                            <span>Kirim Pengajuan Reset 2FA</span>
+                        </button>
+                    </form>
                 </div>
 
                 <div class="login-footer">
@@ -434,6 +510,20 @@
 
         recoveryCode?.addEventListener('input', function () {
             this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        });
+
+        const showResetRequestForm = document.getElementById('showResetRequestForm');
+        const resetRequestForm = document.getElementById('resetRequestForm');
+        const resetRequestLink = document.getElementById('resetRequestLink');
+        const reasonInput = document.getElementById('reason');
+
+        showResetRequestForm?.addEventListener('click', function (event) {
+            event.preventDefault();
+            resetRequestForm.style.display = 'block';
+            resetRequestLink.style.display = 'none';
+            setTimeout(function () {
+                reasonInput?.focus();
+            }, 80);
         });
 
         document.querySelectorAll('.alert').forEach(function (alert) {
