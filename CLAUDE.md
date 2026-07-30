@@ -508,6 +508,29 @@ akutansi/perpajakan/verifikasi/pembayaran; **sesi** untuk operator (`dokumens_fr
 - Spec/plan: `docs/superpowers/specs/2026-07-28-modal-kustomisasi-kolom-5-role-design.md`,
   `docs/superpowers/plans/2026-07-28-modal-kustomisasi-kolom-5-role.md`
 
+**Lingkaran mati reset 2FA DIPUTUS — SELESAI & ter-deploy 2026-07-30.** Akun yang kehilangan
+authenticator SEKALIGUS recovery code sebelumnya terkunci permanen, karena **ketiga** jalan
+keluar saling memblokir: tombol pengajuan hanya ada di `/profile/account` (butuh login),
+login butuh 2FA, dan `ProgrammerController::resetUserTwoFactor()` **menolak** mereset tanpa
+ada request berstatus `pending` (baris ~1023). Nyata mengenai akun operator `input`
+2026-07-30 — dan sebelumnya akun `verifikasi` (request #1, April 2026).
+Endpoint baru **`POST /2fa/reset-request`** (`2fa.reset-request`) ditaruh di grup **`guest`**
+bersama `/2fa/verify`, `throttle:3,60`, mengenali pengaju dari `session('2fa_user_id')` —
+yang hanya terisi `LoginController` **setelah password terbukti benar**, jadi bukan endpoint
+terbuka. Ia **HANYA** membuat baris `pending`; penonaktifan 2FA tetap wewenang programmer
+lewat `TwoFactorResetController::approve()` (dijaga test khusus). Gate programmer
+**TIDAK** dilonggarkan — sengaja, agar tiap reset selalu punya jejak permintaan.
+Aturan alasan + kelayakan diekstrak ke trait
+**`App\Http\Requests\Concerns\ValidatesTwoFactorResetReason`** dipakai bersama jalur profil
+dan jalur verifikasi (jangan tambah salinan ketiga). Jalur profil yang tadinya nol test
+kini ikut dijaga.
+> **Jebakan `auth/2fa/verify.blade.php`:** skrip di bawahnya menghapus **semua** `.alert`
+> setelah 5 detik. Catatan/pesan yang harus tetap terbaca WAJIB memakai kelas lain
+> (`.request-note`, `.request-error`) — bukan `.alert`. Cacat "form terbuka kembali tapi
+> alasannya sudah lenyap" tertangkap saat QA browser, bukan oleh suite.
+- Recovery code disimpan `encrypt(json_encode(...))` — **bisa didekripsi** dengan `APP_KEY`,
+  bukan hash. Jadi akun terkunci sebenarnya masih bisa ditolong tanpa mereset 2FA.
+
 ## 8. Hal Yang harus bisa dilakukan pada tabel tabulator
 
 - Terdapat sel aktif yang dapat digerakkan dengan tombol panah pada keyboard, dan tabel akan otomatis menggulir mengikuti sel aktif. - Sel aktif dapat dipindahkan secara instan cukup dengan mengeklik sel yang diinginkan.
