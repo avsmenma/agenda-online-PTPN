@@ -8,18 +8,23 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Pengajuan reset 2FA dari halaman /2fa/verify (pengaju BELUM login).
+ * Pengajuan reset 2FA — DUA jalur yang berbagi satu aturan.
  *
- * Latar: sebelum ini satu-satunya tombol pengajuan reset 2FA ada di
+ * 1. /2fa/verify        → pengaju BELUM login (terkunci), identitas dari
+ *                         session('2fa_user_id') yang hanya terisi setelah
+ *                         password diverifikasi benar di LoginController.
+ * 2. /profile/account   → pengaju masih bisa login (mis. mau ganti HP).
+ *
+ * Latar jalur 1: sebelum ini satu-satunya tombol pengajuan ada di
  * /profile/account yang ber-middleware 'auth'. User yang kehilangan
  * authenticator TIDAK bisa login, sehingga tak pernah bisa mengajukan —
  * sementara programmer menolak mereset tanpa request pending. Lingkaran
  * itu membuat akun terkunci permanen (nyata: akun `input` 2026-07-30).
  *
- * Identitas pengaju diambil dari session('2fa_user_id') yang HANYA terisi
- * setelah password diverifikasi benar di LoginController.
+ * Aturan alasan & kelayakan dibagi lewat trait ValidatesTwoFactorResetReason,
+ * jadi kedua jalur diuji di sini agar ekstraksi itu tidak diam-diam menyimpang.
  */
-class TwoFactorResetRequestFromVerifyTest extends TestCase
+class TwoFactorResetRequestTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -139,5 +144,45 @@ class TwoFactorResetRequestFromVerifyTest extends TestCase
             ->assertStatus(200)
             ->assertSee(route('2fa.reset-request'), false)
             ->assertSee('name="reason"', false);
+    }
+
+    // =========================================================================
+    // Jalur profil — pengaju masih bisa login. Menjaga agar ekstraksi trait
+    // tidak mengubah perilaku jalur yang sudah dipakai di produksi.
+    // =========================================================================
+
+    public function test_pengajuan_dari_halaman_profil_membuat_request_pending(): void
+    {
+        $user = $this->userDengan2faAktif();
+
+        $this->actingAs($user)
+            ->post(route('profile.2fa-reset-requests.store'), [
+                'reason' => 'Ganti ponsel baru, ingin menyiapkan ulang authenticator.',
+            ])
+            ->assertRedirect(route('profile.account'));
+
+        $this->assertDatabaseHas('two_factor_reset_requests', [
+            'requester_id' => $user->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_pengajuan_dari_profil_ditolak_saat_masih_ada_pending(): void
+    {
+        $user = $this->userDengan2faAktif();
+
+        TwoFactorResetRequest::create([
+            'requester_id' => $user->id,
+            'reason' => 'Pengajuan pertama yang belum ditangani programmer.',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('profile.2fa-reset-requests.store'), [
+                'reason' => 'Mencoba mengajukan untuk kedua kalinya dari profil.',
+            ])
+            ->assertSessionHasErrors('reason');
+
+        $this->assertDatabaseCount('two_factor_reset_requests', 1);
     }
 }
