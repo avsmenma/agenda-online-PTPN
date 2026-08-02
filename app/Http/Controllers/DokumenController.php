@@ -974,7 +974,7 @@ class DokumenController extends Controller
             'kategori', 'jenis_dokumen', 'jenis_sub_pekerjaan', 'jenis_pembayaran',
             'kebun', 'bagian', 'nama_pengirim', 'dibayar_kepada',
             'no_berita_acara', 'tanggal_berita_acara',
-            'no_spk', 'tanggal_spk', 'tanggal_berakhir_spk',
+            'no_spk', 'tanggal_spk', 'tanggal_berakhir_spk', 'nomor_kontrak',
             'nomor_miro', 'tanggal_miro', 'no_faktur', 'tanggal_faktur',
             'tanggal_paraf', 'pemaraf', 'bulan', 'tahun',
             'tanggal_dibayar',
