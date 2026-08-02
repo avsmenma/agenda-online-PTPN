@@ -1022,6 +1022,20 @@
           @endphp
         </select>
 
+        <select name="bulan" class="btn-month-select">
+          <option value="">Semua Bulan</option>
+          @php
+            $months = [
+              1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+              5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+              9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            ];
+            foreach ($months as $num => $name) {
+              $selected = request('bulan') == $num ? 'selected' : '';
+              echo "<option value=\"{$num}\" {$selected}>{$name}</option>";
+            }
+          @endphp
+
         <select name="status" class="btn-status-select">
           <option value="">Semua Status</option>
           <option value="belum_dibayar" {{ request('status') == 'belum_dibayar' ? 'selected' : '' }}>Belum Dibayar</option>

@@ -98,6 +98,12 @@ class BagianDokumenController extends Controller
             // Nilai status lain (peninggalan lama) diabaikan.
         }
 
+        // Month filter
+
+        if ($request->has('bulan') && $request->bulan) {
+            $query->where('bulan', $request->bulan);
+        }
+    
         // Year filter
         if ($request->has('tahun') && $request->tahun) {
             $query->where('tahun', $request->tahun);
