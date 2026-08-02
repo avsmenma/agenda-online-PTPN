@@ -1011,7 +1011,7 @@
           </div>
         </div>
 
-        <select name="tahun" class="btn-year-select" onChange="this.form.submit()">
+        <select name="tahun" class="btn-year-select">
           <option value="">Semua Tahun</option>
           @php
             $currentYear = date('Y');
@@ -1022,15 +1022,15 @@
           @endphp
         </select>
 
-        <select name="status" class="btn-status-select" onChange="this.form.submit()">
+        <select name="status" class="btn-status-select">
           <option value="">Semua Status</option>
           <option value="belum_dibayar" {{ request('status') == 'belum_dibayar' ? 'selected' : '' }}>Belum Dibayar</option>
           <option value="sudah_dibayar" {{ request('status') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
         </select>
 
-        <!-- <button type="submit" class="btn-filter">
+        <button type="submit" class="btn-filter">
           <i class="fa-solid fa-filter me-1"></i>Filter
-        </button> -->
+        </button>
         <button type="button" class="btn-refresh" id="btnRefreshTable" onclick="refreshDocumentTable()">
           <i class="fa-solid fa-arrows-rotate"></i> Refresh
         </button>
