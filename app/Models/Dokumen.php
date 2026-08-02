@@ -32,6 +32,7 @@ class Dokumen extends Model
         'dibayar_kepada',
         'no_berita_acara',
         'tanggal_berita_acara',
+        'nomor_kontrak',
         'no_spk',
         'tanggal_spk',
         'tanggal_berakhir_spk',

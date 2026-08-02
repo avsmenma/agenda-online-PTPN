@@ -59,6 +59,7 @@ return [
         'no_spk' => 'No SPK',
         'tanggal_spk' => 'Tanggal SPK',
         'tanggal_berakhir_spk' => 'Tanggal Akhir SPK',
+        'nomor_kontrak' => 'Nomor Kontrak',
         'no_berita_acara' => 'No Berita Acara (BA)',
         'tanggal_berita_acara' => 'Tanggal Berita Acara (BA)',
         'nomor_po' => 'No PO',

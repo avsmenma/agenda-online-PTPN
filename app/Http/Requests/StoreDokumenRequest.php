@@ -49,6 +49,7 @@ class StoreDokumenRequest extends FormRequest
             'tanggal_spp' => 'nullable|date',
             'uraian_spp' => 'nullable|string',
             'nilai_rupiah' => 'nullable|string',
+            'nomor_kontrak' => 'nullable|string|max:255'
         ];
 
         // Semua field optional (tidak wajib)
