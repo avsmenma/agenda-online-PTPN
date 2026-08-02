@@ -1024,17 +1024,9 @@
 
         <select name="bulan" class="btn-month-select" onChange="this.form.submit()">
           <option value="">Semua Bulan</option>
-          @php
-            $months = [
-              1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-              5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-              9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-            ];
-            foreach ($months as $num => $name) {
-              $selected = request('bulan') == $num ? 'selected' : '';
-              echo "<option value=\"{$num}\" {$selected}>{$name}</option>";
-            }
-          @endphp
+          @foreach(['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $b)
+            <option value="{{ $b }}" {{ request('bulan') == $b ? 'selected' : '' }}>{{ $b }}</option>
+          @endforeach
           </select>
 
         <select name="status" class="btn-status-select">
