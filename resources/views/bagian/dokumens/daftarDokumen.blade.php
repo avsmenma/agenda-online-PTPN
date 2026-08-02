@@ -1035,6 +1035,7 @@
               echo "<option value=\"{$num}\" {$selected}>{$name}</option>";
             }
           @endphp
+          </select>
 
         <select name="status" class="btn-status-select">
           <option value="">Semua Status</option>
