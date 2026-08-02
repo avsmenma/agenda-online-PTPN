@@ -1022,7 +1022,7 @@
           @endphp
         </select>
 
-        <select name="bulan" class="btn-month-select">
+        <select name="bulan" class="btn-month-select" onChange="this.form.submit()">
           <option value="">Semua Bulan</option>
           @php
             $months = [
