@@ -220,6 +220,7 @@ class TeamVerifikasiController extends Controller
                 'dokumens.tanggal_spk',
                 'dokumens.tanggal_berakhir_spk',
                 'dokumens.no_spk',
+                'dokumens.nomor_kontrak',
                 'dokumens.nomor_miro',
                 'dokumens.nama_pengirim',
                 'dokumens.jenis_pembayaran',
