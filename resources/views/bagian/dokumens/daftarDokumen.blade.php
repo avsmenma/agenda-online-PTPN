@@ -1028,9 +1028,9 @@
           <option value="sudah_dibayar" {{ request('status') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
         </select>
 
-        <button type="submit" class="btn-filter">
+        <!-- <button type="submit" class="btn-filter">
           <i class="fa-solid fa-filter me-1"></i>Filter
-        </button>
+        </button> -->
         <button type="button" class="btn-refresh" id="btnRefreshTable" onclick="refreshDocumentTable()">
           <i class="fa-solid fa-arrows-rotate"></i> Refresh
         </button>
