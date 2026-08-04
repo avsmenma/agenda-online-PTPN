@@ -1999,18 +1999,24 @@
 
   // === Tambah Baris (inline create) ===
   // Aktifkan tombol toolbar yang di-skeleton ditandai `disabled`, lalu wire klik.
-  // Alur robust (sesuai brief): minta nomor_agenda → POST inline-create → sisipkan
-  // baris server nyata (dgn id + data lengkap) di puncak; tampilkan pesan 422 duplikat.
+  // Nomor agenda TIDAK lagi diminta ke user lewat window.prompt: SERVER yang
+  // menomori (DokumenController::generateNextNomorAgenda) sehingga body sengaja
+  // dikirim kosong. Menghitung nomor di dalam request yang sama juga menutup celah
+  // balapan — dulu bila nomor diambil lewat permintaan terpisah, dua operator yang
+  // menekan tombol bersamaan bisa memperoleh nomor identik. Bila tabrakan tetap
+  // terjadi, server membalas 422 dan pesannya ditampilkan lewat toast.
+  // Nomor hasil generate tetap bisa diubah operator lewat inline edit
+  // (nomor_agenda ada di whitelist $editableFields).
   const addBtn = document.getElementById('btnTambahBarisTabulator');
   if (addBtn) {
     addBtn.removeAttribute('disabled');
     addBtn.addEventListener('click', function () {
-      const nomor = (window.prompt('Masukkan Nomor Agenda untuk baris baru:') || '').trim();
-      if (!nomor) return; // wajib nomor_agenda.
+      if (addBtn.disabled) return; // cegah klik ganda selagi permintaan berjalan
+      addBtn.disabled = true;
       fetch(CFG.inlineCreateUrl, {
         method: 'POST',
         headers: jsonHeaders(),
-        body: JSON.stringify({ nomor_agenda: nomor }),
+        body: JSON.stringify({}),
       })
         .then(async function (r) {
           const data = await r.json().catch(function () { return {}; });
@@ -2027,10 +2033,11 @@
           }
           table.addRow(data.row, true).then(function (newRow) {
             try { newRow.scrollTo(); } catch (e) {}
-            opToast('success', 'Baris baru ditambahkan.');
+            opToast('success', 'Baris baru ditambahkan — Nomor Agenda ' + (data.row.nomor_agenda || '') + '.');
           }).catch(function () {});
         })
-        .catch(function () { opToast('error', 'Koneksi gagal. Coba lagi.'); });
+        .catch(function () { opToast('error', 'Koneksi gagal. Coba lagi.'); })
+        .finally(function () { addBtn.disabled = false; });
     });
   }
 
