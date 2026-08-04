@@ -53,12 +53,46 @@ class InlineCreateDokumenTest extends TestCase
         $response->assertStatus(422)->assertJsonValidationErrors('nomor_agenda');
     }
 
-    public function test_nomor_agenda_kosong_ditolak(): void
+    public function test_nomor_agenda_kosong_dinomori_otomatis(): void
     {
         $response = $this->actingAs($this->operator())
             ->postJson('/documents/inline-create', ['nomor_agenda' => '']);
 
-        $response->assertStatus(422)->assertJsonValidationErrors('nomor_agenda');
+        $response->assertStatus(200)->assertJson(['success' => true]);
+        $this->assertSame('1_' . now()->year, $response->json('row.nomor_agenda'));
+    }
+
+    public function test_tanpa_kunci_nomor_agenda_dinomori_otomatis(): void
+    {
+        $response = $this->actingAs($this->operator())
+            ->postJson('/documents/inline-create', []);
+
+        $response->assertStatus(200)->assertJson(['success' => true]);
+        $this->assertSame('1_' . now()->year, $response->json('row.nomor_agenda'));
+    }
+
+    public function test_penomoran_otomatis_melanjutkan_nomor_tertinggi_tahun_berjalan(): void
+    {
+        $tahun = now()->year;
+        Dokumen::create(['nomor_agenda' => '7_' . $tahun, 'status' => 'draft']);
+        Dokumen::create(['nomor_agenda' => '3_' . $tahun, 'status' => 'draft']);
+        // Tahun lain tidak boleh ikut dihitung.
+        Dokumen::create(['nomor_agenda' => '99_' . ($tahun - 1), 'status' => 'draft']);
+
+        $response = $this->actingAs($this->operator())
+            ->postJson('/documents/inline-create', []);
+
+        $response->assertStatus(200);
+        $this->assertSame('8_' . $tahun, $response->json('row.nomor_agenda'));
+    }
+
+    public function test_nomor_agenda_manual_tetap_dihormati(): void
+    {
+        $response = $this->actingAs($this->operator())
+            ->postJson('/documents/inline-create', ['nomor_agenda' => 'AG-MANUAL']);
+
+        $response->assertStatus(200);
+        $this->assertSame('AG-MANUAL', $response->json('row.nomor_agenda'));
     }
 
     public function test_nomor_agenda_terlalu_panjang_ditolak(): void

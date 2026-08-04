@@ -390,6 +390,15 @@ class DokumenController extends Controller
      */
     public function inlineCreate(Request $request): \Illuminate\Http\JsonResponse
     {
+        // Tombol "Tambah Baris" di tabel Tabulator mengirim body kosong: nomor agenda
+        // dinomori SERVER, bukan diketik operator. Nomor manual (mis. dari form lama)
+        // tetap dihormati. Normalisasi dilakukan SEBELUM validasi supaya aturan
+        // `required`/`unique` tetap berlaku utuh — termasuk menangkap tabrakan bila
+        // dua operator menekan tombol pada saat yang sama (klien menampilkan pesannya).
+        if (trim((string) $request->input('nomor_agenda', '')) === '') {
+            $request->merge(['nomor_agenda' => $this->generateNextNomorAgenda()]);
+        }
+
         $validated = $request->validate([
             'nomor_agenda' => 'required|string|max:255|unique:dokumens,nomor_agenda',
         ], [
@@ -1507,28 +1516,41 @@ class DokumenController extends Controller
      * Get the next available nomor agenda for auto-generation.
      * Moved from routes/web.php closure for proper Separation of Concerns.
      */
+    /**
+     * Nomor agenda berikutnya untuk tahun berjalan, format "{urut}_{tahun}".
+     *
+     * SATU-SATUNYA sumber penomoran otomatis. Dipakai dua jalur:
+     *   - endpoint `documents.next-nomor-agenda` (tombol auto di form tambah dokumen)
+     *   - `inlineCreate()` (tombol "Tambah Baris" di tabel Tabulator)
+     * Jangan menyalin logikanya ke tempat ketiga.
+     */
+    private function generateNextNomorAgenda(): string
+    {
+        $currentYear = Carbon::now()->year;
+
+        $tertinggi = Dokumen::where('nomor_agenda', 'like', '%_' . $currentYear)
+            ->pluck('nomor_agenda')
+            ->map(function ($nomor) {
+                // Ambil bagian angka sebelum garis bawah.
+                $parts = explode('_', (string) $nomor);
+
+                return isset($parts[0]) && is_numeric($parts[0]) ? (int) $parts[0] : 0;
+            })
+            ->max();
+
+        return (($tertinggi ?? 0) + 1) . '_' . $currentYear;
+    }
+
     public function nextNomorAgenda()
     {
         try {
-            $currentYear = Carbon::now()->year;
-
-            // Find the highest nomor_agenda number for the current year
-            $latestDokumen = Dokumen::where('nomor_agenda', 'like', '%_' . $currentYear)
-                ->get()
-                ->map(function ($doc) {
-                    // Extract the numeric part before the underscore
-                    $parts = explode('_', $doc->nomor_agenda);
-                    return isset($parts[0]) && is_numeric($parts[0]) ? (int) $parts[0] : 0;
-                })
-                ->max();
-
-            $nextNumber = ($latestDokumen ?? 0) + 1;
-            $nextNomorAgenda = $nextNumber . '_' . $currentYear;
+            $nextNomorAgenda = $this->generateNextNomorAgenda();
 
             return response()->json([
                 'success' => true,
                 'next_nomor_agenda' => $nextNomorAgenda,
-                'current_highest' => $latestDokumen ?? 0,
+                // Diturunkan dari nomor berikutnya agar format nomor tetap satu sumber.
+                'current_highest' => ((int) explode('_', $nextNomorAgenda)[0]) - 1,
             ]);
         } catch (\Exception $e) {
             return response()->json([
