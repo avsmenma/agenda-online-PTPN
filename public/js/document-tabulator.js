@@ -593,7 +593,7 @@
     html += '<div class="deadline-time"><i class="fa-solid fa-calendar"></i><span>' + esc(d.received_display) + '</span></div>';
     html += '<div class="deadline-indicator deadline-' + esc(d.color) + '"><i class="fa-solid ' + esc(d.indicator_icon) + '"></i>' +
       '<span class="status-text">' + esc(d.indicator_label) + '</span></div>';
-    html += '<div class="deadline-age" style="font-size:10px;color:#6b7280;margin-top:4px;">' +
+    html += '<div class="deadline-age" style="font-size:10px;color:#6b7280;margin-top:2px;">' +
       '<i class="fa-solid fa-hourglass-half"></i><span>' + esc(d.age_text) + '</span></div>';
     if (d.footer) {
       if (d.footer.kind === 'paused') {
