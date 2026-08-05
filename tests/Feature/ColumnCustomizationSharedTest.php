@@ -478,12 +478,25 @@ class ColumnCustomizationSharedTest extends TestCase
      * viewport berdasarkan posisi (bukan properti sisi eksplisit), sehingga kolom
      * beku-kanan mengambang menutupi Deadline/Status/Paraf/Pengurus Dokumen saat
      * digulir. Perbaikan: kelompok beku-kanan ditunda (kelompokBekuKanan) dan
-     * ditambahkan PALING TERAKHIR — setelah extraColumns maupun kolom handler.
+     * ditambahkan setelah kolom bebas + extraColumns.
+     *
+     * PEMBARUAN 2026-08-05: kolom "Pengurus Dokumen" kini ikut DIBEKUKAN di kanan
+     * (frozen: true) supaya dropdown penerus dokumen tak perlu digulir jauh pada
+     * tabel lebar. Karena Tabulator menentukan sisi beku dari POSISI, blok beku
+     * paling belakang harus KONTIGU: kolom handler kini WAJIB berada SETELAH
+     * kelompokBekuKanan, kebalikan dari invariant lama.
+     *
+     * Invariant yang dijaga sekarang — tak boleh ada kolom NON-beku setelah
+     * kelompok beku-kanan:
+     *   1. extraColumns (non-beku) WAJIB sebelum kelompokBekuKanan.forEach
+     *   2. kolom handler WAJIB setelah kelompokBekuKanan.forEach
+     *   3. definisi kolom handler WAJIB memuat `frozen: true` — tanpa itu ia jadi
+     *      kolom non-beku di ujung dan bug 2026-07-28 hidup lagi lewat jalur ini.
+     *
      * Tak ada test runner JS di project ini (lihat catatan test lain di berkas
-     * ini), jadi test ini memeriksa bentuk sumber: penambahan kelompokBekuKanan
-     * WAJIB terjadi setelah penambahan extraColumns dan kolom "Pengurus Dokumen".
+     * ini), jadi test ini memeriksa bentuk sumber.
      */
-    public function test_build_columns_menunda_kelompok_beku_kanan_ke_akhir(): void
+    public function test_build_columns_menempatkan_blok_beku_kanan_kontigu_di_akhir(): void
     {
         $js = file_get_contents(public_path('js/document-tabulator.js'));
 
@@ -502,22 +515,37 @@ class ColumnCustomizationSharedTest extends TestCase
         $posHandler = strpos($badan, 'cfg.showHandler !== false');
         $this->assertNotFalse($posHandler, 'blok kolom handler (Pengurus Dokumen) tidak ditemukan di buildColumns');
 
-        // Penambahan (push) kelompok beku-kanan wajib jadi baris TERAKHIR di badan
-        // fungsi — dicari dari posisi TERAKHIR literal '.push(buildColumnDef(c))'
-        // di dalam badan, yang wajib berada di dalam forEach kelompokBekuKanan.
-        $posPushTerakhir = strrpos($badan, '.push(buildColumnDef(c))');
-        $this->assertNotFalse($posPushTerakhir, 'push(buildColumnDef(c)) tidak ditemukan di buildColumns');
-
-        $this->assertGreaterThan($posExtraColumns, $posPushTerakhir, 'push terakhir kolom terjadi SEBELUM extraColumns ditambahkan — kelompok beku-kanan belum jadi kelompok terakhir');
-        $this->assertGreaterThan($posHandler, $posPushTerakhir, 'push terakhir kolom terjadi SEBELUM kolom Pengurus Dokumen ditambahkan — kelompok beku-kanan belum jadi kelompok terakhir');
-
-        // forEach kelompokBekuKanan wajib berada SETELAH extraColumns & handler
-        // (bukan cuma push-nya) — deklarasi variabel boleh di awal, tapi
-        // forEach-nya sendiri (pemakaian) wajib menyusul di akhir.
         $posForEachKelompok = strrpos($badan, 'kelompokBekuKanan.forEach(');
         $this->assertNotFalse($posForEachKelompok, 'kelompokBekuKanan.forEach( tidak ditemukan di buildColumns');
-        $this->assertGreaterThan($posExtraColumns, $posForEachKelompok);
-        $this->assertGreaterThan($posHandler, $posForEachKelompok);
+
+        // 1. extraColumns TIDAK beku -> wajib mendahului kelompok beku-kanan.
+        $this->assertGreaterThan(
+            $posExtraColumns,
+            $posForEachKelompok,
+            'extraColumns (non-beku) ditambahkan SETELAH kelompok beku-kanan — blok beku terakhir jadi terputus'
+        );
+
+        // 2. Kolom handler ikut beku -> wajib menyusul SETELAH kelompok beku-kanan
+        //    agar blok beku paling belakang kontigu.
+        $this->assertGreaterThan(
+            $posForEachKelompok,
+            $posHandler,
+            'kolom Pengurus Dokumen ditambahkan SEBELUM kelompok beku-kanan — blok beku terakhir jadi terputus'
+        );
+
+        // 3. Definisi kolom handler wajib beku. Tanpa ini, ia jadi kolom non-beku
+        //    di ujung definisi dan kelompok beku-kanan berhenti menempel tepi.
+        $defHandler = substr($badan, $posHandler, 400);
+        $this->assertStringContainsString(
+            "field: 'handler'",
+            $defHandler,
+            'definisi kolom handler tidak ditemukan setelah gerbang showHandler'
+        );
+        $this->assertStringContainsString(
+            'frozen: true',
+            $defHandler,
+            'kolom Pengurus Dokumen kehilangan frozen: true — ia akan jadi kolom non-beku di ujung dan merusak blok beku-kanan'
+        );
     }
 
     /**

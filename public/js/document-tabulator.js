@@ -811,23 +811,42 @@
         editable: false,
       });
     });
-    // Kolom tetap "Pengurus Dokumen" (di luar kolom kustomisasi, selalu paling
-    // kanan dari kolom TETAP — paritas _tableRowsAjax.blade.php:250-252). Tanpa
-    // editor Tabulator; <select> menangani perubahan sendiri via listener change
-    // terdelegasi. Rollout 4 (pembayaran) — CFG.showHandler=false menyembunyikan
-    // kolom ini: pembayaran adalah ujung alur (tak ada "pengurus dokumen"
-    // berikutnya untuk di-forward). Role lain tak set showHandler → `!== false`
-    // bernilai true → kolom tetap ada (paritas byte-identik).
-    if (cfg.showHandler !== false) {
-      cols.push({ title: 'Pengurus Dokumen', field: 'handler', formatter: fmtHandler, editable: false });
-    }
-    // Kelompok beku-kanan ditambahkan PALING TERAKHIR (lihat catatan di atas) —
-    // setelah extraColumns maupun "Pengurus Dokumen", supaya benar-benar jadi
-    // kelompok terakhir dalam definisi tabel dan menempel tepi kanan viewport
-    // dengan tepat, bukan menutupi kolom tetap tersebut.
+    // Kelompok beku-kanan ditambahkan setelah kolom bebas & extraColumns (lihat
+    // catatan di atas) supaya benar-benar berada di ujung definisi tabel dan
+    // menempel tepi kanan viewport dengan tepat.
     kelompokBekuKanan.forEach(function (c) {
       cols.push(buildColumnDef(c));
     });
+    // Kolom tetap "Pengurus Dokumen" — di luar kolom kustomisasi, jadi TIDAK bisa
+    // disembunyikan lewat modal. Isinya <select> untuk meneruskan dokumen ke tahap
+    // berikutnya; tanpa editor Tabulator karena listener change terdelegasi yang
+    // menangani perubahannya.
+    //
+    // 2026-08-05 — kolom ini kini DIBEKUKAN di kanan secara permanen. Sebelumnya ia
+    // kolom biasa di ujung daftar, sehingga pada tabel lebar operator harus menggulir
+    // jauh ke kanan hanya untuk meneruskan dokumen — padahal itu kendali yang paling
+    // sering dipakai. Bandingkan dengan `nomor_agenda` yang dibekukan permanen di
+    // kiri (baris 775-779) dengan alasan sejenis: identitas baris selalu terlihat.
+    //
+    // WAJIB di-push PALING AKHIR, setelah kelompokBekuKanan. Modul FrozenColumns
+    // Tabulator menentukan sisi beku sebuah kolom dari POSISINYA dalam definisi
+    // tabel, bukan dari properti sisi eksplisit — kolom beku yang berada setelah
+    // seluruh kolom non-beku ditempelkan ke tepi kanan. Menaruhnya SEBELUM
+    // kelompokBekuKanan membuat kelompok itu mengambang menutupinya, yaitu persis
+    // bug yang diperbaiki review 2026-07-28 di catatan atas.
+    //
+    // Rollout 4 (pembayaran) — CFG.showHandler=false menyembunyikan kolom ini:
+    // pembayaran adalah ujung alur (tak ada "pengurus dokumen" berikutnya untuk
+    // di-forward). Role lain tak set showHandler → `!== false` bernilai true.
+    if (cfg.showHandler !== false) {
+      cols.push({
+        title: 'Pengurus Dokumen',
+        field: 'handler',
+        formatter: fmtHandler,
+        editable: false,
+        frozen: true,
+      });
+    }
     return cols;
   }
 
@@ -920,15 +939,16 @@
   // baru kalau perilaku PHP berubah.)
   //
   // CAKUPAN HASH — JUJUR, bukan "apa pun yang memengaruhi susunan kolom":
-  // hanya CFG.columns[].key + CFG.frozen (kiri/kanan) yang masuk. cfg.extraColumns,
-  // cfg.showHandler, dan kolom "No" (rownum, selalu paling kiri) IKUT menentukan
-  // urutan definisi tabel di buildColumns() tapi SENGAJA di luar hash — ketiganya
+  // CFG.columns[].key + CFG.frozen (kiri/kanan) + keadaan kolom handler (segmen H,
+  // ditambahkan 2026-08-05 saat kolom itu dibekukan di kanan). cfg.extraColumns
+  // dan kolom "No" (rownum, selalu paling kiri) IKUT menentukan
+  // urutan definisi tabel di buildColumns() tapi SENGAJA di luar hash — keduanya
   // literal statis per VIEW Blade (mis. extraColumns akutansi vs verifikasi beda
   // isi, tapi tidak pernah berubah tanpa deploy ulang), bukan sesuatu yang bisa
   // berbeda antar-page-load untuk role yang sama seperti CFG.columns/CFG.frozen
   // (dua-duanya berasal dari preferensi user yang bisa berubah kapan saja lewat
   // modal Kustomisasi Kolom). Konsekuensinya: deploy yang mengubah salah satu
-  // dari ketiganya (mis. menambah extraColumns baru) BISA mengulang kelas bug
+  // dari keduanya (mis. menambah extraColumns baru) BISA mengulang kelas bug
   // yang sama seperti freeze-kanan di atas — localStorage lama tak otomatis
   // kadaluarsa. Ini bukan bug aktif hari ini, murni batas yang perlu diingat
   // kalau ketiganya disentuh di masa depan.
@@ -944,10 +964,20 @@
   function daftarBekuAman(x) { return Array.isArray(x) ? x : []; }
   const bekuKiriUntukHash = daftarBekuAman(CFG.frozen && CFG.frozen.left);
   const bekuKananUntukHash = daftarBekuAman(CFG.frozen && CFG.frozen.right);
+  // Segmen H: keadaan kolom tetap "Pengurus Dokumen". DITAMBAHKAN 2026-08-05
+  // bersamaan dengan pembekuannya di kanan — lihat catatan "CAKUPAN HASH" di atas
+  // yang memang memperingatkan kasus ini. Tanpa segmen ini, sidik jari tidak
+  // berubah oleh deploy tersebut, sehingga localStorage lama (yang menyimpan
+  // URUTAN kolom, bukan cuma lebar) tetap menang dan kolom handler bertahan di
+  // posisi lamanya — perbaikannya tak akan pernah terlihat oleh user lama.
+  // Nilainya literal statis per view, jadi fungsinya semata memaksa kunci baru
+  // saat perilaku kolom ini berubah antar-deploy.
+  const keadaanHandlerUntukHash = CFG.showHandler !== false ? 'frozen-right' : 'off';
   const sidikJariKolom = hashSusunanKolom(
     (CFG.columns || []).map(function (c) { return c.key; }).join(',') +
     '|L:' + bekuKiriUntukHash.join(',') +
-    '|R:' + bekuKananUntukHash.join(',')
+    '|R:' + bekuKananUntukHash.join(',') +
+    '|H:' + keadaanHandlerUntukHash
   );
   // Penanda role dari CFG.mountId — nilainya beda per role (operatorTabulatorTable,
   // akutansiTabulatorTable, verifikasiTabulatorTable, dst.), jadi cukup dipakai
