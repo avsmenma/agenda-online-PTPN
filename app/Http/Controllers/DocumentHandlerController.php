@@ -6,6 +6,7 @@ use App\Helpers\ActivityLogHelper;
 use App\Models\Bagian;
 use App\Models\Dokumen;
 use App\Models\DokumenStatus;
+use App\Support\HandlerOptions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -111,6 +112,17 @@ class DocumentHandlerController extends Controller
                 'success' => false,
                 'message' => 'Kolom Bagian wajib diisi sebelum dokumen dikirim ke alur berikutnya.',
             ], 422);
+        }
+
+        // Dokumen hanya boleh dikembalikan ke bagian ASALNYA SENDIRI. Dropdown sudah
+        // dipangkas ke satu pilihan (App\Support\HandlerOptions::forDokumen), tapi opsi
+        // itu ditanam di data baris yang dikirim ke klien — jadi bisa diakali. Penegakan
+        // sebenarnya ada di sini; tanpa ini pemangkasan dropdown cuma kosmetik.
+        if (str_starts_with($targetHandler, 'bagian_')) {
+            $penolakan = $this->tolakBilaBukanBagianAsal($dokumen, $targetHandler);
+            if ($penolakan !== null) {
+                return $penolakan;
+            }
         }
 
         try {
@@ -327,6 +339,45 @@ class DocumentHandlerController extends Controller
         return $dokumen->roleStatuses()
             ->where('status', DokumenStatus::STATUS_PENDING)
             ->exists();
+    }
+
+    /**
+     * Kembalikan JsonResponse penolakan bila $targetHandler bukan bagian asal
+     * dokumen; null bila boleh lanjut.
+     *
+     * Pencocokan memakai peta yang SAMA dengan penyusun dropdown
+     * (App\Support\HandlerOptions::bagianMap) supaya apa yang ditawarkan UI dan apa
+     * yang diterima server tidak pernah berbeda aturan — termasuk toleransi baris
+     * lama yang menyimpan nama bagian, bukan kodenya.
+     */
+    private function tolakBilaBukanBagianAsal(Dokumen $dokumen, string $targetHandler): ?JsonResponse
+    {
+        $bagianDokumen = strtoupper(trim((string) $dokumen->bagian));
+
+        if ($bagianDokumen === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dokumen ini belum memiliki Bagian, sehingga tidak bisa dikembalikan ke bagian manapun.',
+            ], 422);
+        }
+
+        $asal = HandlerOptions::bagianMap()[$bagianDokumen] ?? null;
+
+        if ($asal === null) {
+            return response()->json([
+                'success' => false,
+                'message' => "Bagian dokumen ('{$dokumen->bagian}') tidak terdaftar sebagai bagian aktif.",
+            ], 422);
+        }
+
+        if ($asal['value'] !== $targetHandler) {
+            return response()->json([
+                'success' => false,
+                'message' => "Dokumen hanya boleh dikembalikan ke bagian asalnya, yaitu {$asal['label']}.",
+            ], 422);
+        }
+
+        return null;
     }
 
     private function isValidTarget(string $targetHandler): bool
