@@ -564,7 +564,7 @@
                 } else {
                     backgroundVideo.classList.add('is-ready');
                 }
-            }, 5000);
+            }, 0);
         });
 
         // ── Form submission loading state ───────────────────────────────
