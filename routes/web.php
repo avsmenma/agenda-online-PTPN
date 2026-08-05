@@ -132,36 +132,36 @@ Route::get('/api/welcome-message', [WelcomeMessageController::class, 'getMessage
 
 // Dashboard Team Verifikasi
 Route::get('dashboard/verifikasi', [TeamVerifikasiController::class, 'dashboard'])
-    ->middleware('auth', 'role:admin,team_verifikasi,verifikasi')
+    ->middleware('auth', 'role:team_verifikasi,verifikasi')
     ->name('dashboard.verifikasi');
 
 Route::get('dashboard/pembayaran', [DashboardPembayaranController::class, 'dashboard'])
-    ->middleware('auth', 'role:admin,pembayaran')
+    ->middleware('auth', 'role:pembayaran')
     ->name('dashboard.pembayaran');
 
 // Dashboard Team Akutansi & Perpajakan
 Route::get('dashboard/akutansi', [DashboardAkutansiController::class, 'dashboard'])
-    ->middleware('auth', 'role:admin,akutansi')
+    ->middleware('auth', 'role:akutansi')
   ->name('dashboard.akutansi');
 
 Route::get('dashboard/perpajakan', [DashboardPerpajakanController::class, 'dashboard'])
-    ->middleware('auth', 'role:admin,perpajakan')
+    ->middleware('auth', 'role:perpajakan')
   ->name('dashboard.perpajakan');
 
 // Backward compatibility routes removed — old dashboard URLs (Phase 2 cleanup)
 
 // Professional API routes for rejected documents
 Route::get('/api/documents/rejected/check', [DashboardController::class, 'checkRejectedDocuments'])
-    ->middleware('auth', 'role:admin,operator')
+    ->middleware('auth', 'role:operator')
     ->name('api.documents.rejected.check');
 Route::get('/api/documents/rejected/{dokumen}', [DashboardController::class, 'showRejectedDocument'])
-    ->middleware('auth', 'role:admin,operator,bagian')
+    ->middleware('auth', 'role:operator,bagian')
     ->name('api.documents.rejected.show');
 Route::get('/api/documents/verifikasi/rejected/check', [TeamVerifikasiController::class, 'checkRejectedDocuments'])
-    ->middleware('auth', 'role:admin,team_verifikasi')
+    ->middleware('auth', 'role:team_verifikasi')
     ->name('api.documents.verifikasi.rejected.check');
 Route::get('/api/documents/verifikasi/rejected/{dokumen}', [TeamVerifikasiController::class, 'showRejectedDocument'])
-    ->middleware('auth', 'role:admin,team_verifikasi')
+    ->middleware('auth', 'role:team_verifikasi')
     ->name('api.documents.verifikasi.rejected.show');
 
 // Backward compatibility routes removed — old rejected document URLs (Phase 2 cleanup)
@@ -267,7 +267,7 @@ Route::get('/api/documents/urgency/active', [OwnerDashboardController::class, 'g
     ->name('api.documents.urgency.active');
 
 // Professional Document Routes - Operator (Owner)
-Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('documents.')->group(function () {
+Route::middleware(['auth', 'role:operator'])->prefix('documents')->name('documents.')->group(function () {
     Route::get('/', [DokumenController::class, 'index'])->name('index');
     // Endpoint JSON progressive-load untuk Tabulator — STATIS, harus sebelum route {dokumen}.
     Route::get('/data', [DokumenController::class, 'datatable'])->name('data');
@@ -301,7 +301,7 @@ Route::middleware(['auth', 'role:admin,operator'])->prefix('documents')->name('d
 });
 
 // Inline edit — accessible by all roles that can handle documents
-Route::middleware(['auth', 'role:admin,operator,team_verifikasi,verifikasi,perpajakan,akutansi,pembayaran'])
+Route::middleware(['auth', 'role:operator,team_verifikasi,verifikasi,perpajakan,akutansi,pembayaran'])
     ->prefix('documents')->name('documents.')
     ->group(function () {
         Route::patch('/{dokumen}/inline-update', [DokumenController::class, 'inlineUpdate'])->name('inline-update');
@@ -316,13 +316,13 @@ Route::middleware(['auth'])
 
 
 // Professional Reports Routes
-Route::middleware(['auth', 'role:admin,operator'])->prefix('reports')->name('reports.')->group(function () {
+Route::middleware(['auth', 'role:operator'])->prefix('reports')->name('reports.')->group(function () {
     Route::get('/', [DokumenRekapanController::class, 'index'])->name('index');
 });
 
 // Rekapan Analitik — tersedia untuk semua role utama (owner & alur dokumen)
 Route::get('reports/analytics', [DokumenRekapanController::class, 'analytics'])
-    ->middleware('auth', 'role:admin,operator,owner,team_verifikasi,perpajakan,akutansi,pembayaran')
+    ->middleware('auth', 'role:operator,owner,team_verifikasi,perpajakan,akutansi,pembayaran')
     ->name('reports.analytics');
 
 // Backward compatibility routes removed — old dokumen/rekapan URLs (Phase 2 cleanup)
@@ -337,7 +337,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Professional Document Routes - Verifikasi (Team Verifikasi)
-Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:team_verifikasi,verifikasi'])->prefix('documents/verifikasi')->name('documents.verifikasi.')->group(function () {
     Route::get('/', [TeamVerifikasiController::class, 'dokumens'])->name('index');
     Route::get('/data', [TeamVerifikasiController::class, 'datatable'])->name('data');
     // Task 4 fitur export bersama: tombol Export toolbar Tabulator (CFG.exportUrl) — Excel/PDF
@@ -349,7 +349,7 @@ Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('do
 // Halaman laporan/rekapan Team Verifikasi dihapus.
 
 // Professional Returns Routes - Verifikasi
-Route::middleware(['auth', 'role:admin,team_verifikasi,verifikasi'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
+Route::middleware(['auth', 'role:team_verifikasi,verifikasi'])->prefix('returns/verifikasi')->name('returns.verifikasi.')->group(function () {
     // Halaman '/returns/verifikasi' (index) + '/stats' DIHAPUS 2026-07-05: halaman
     // "dokumen ditolak downstream" tanpa menu, tak dipakai lagi (dikonfirmasi pemilik).
     // Halaman pengembalian yang hidup ada di '/bagian' (menu "Pengembalian Ke Bagian").
@@ -396,7 +396,7 @@ Route::middleware(['auth', 'role:team_verifikasi,verifikasi,perpajakan,akutansi,
 });
 
 // Professional Document Routes - Pembayaran
-Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('documents/pembayaran')->name('documents.pembayaran.')->group(function () {
+Route::middleware(['auth', 'role:pembayaran'])->prefix('documents/pembayaran')->name('documents.pembayaran.')->group(function () {
     // URL diubah ke /daftar agar tidak terbentur cache redirect 301 lama (/documents/pembayaran → /dashboard/pembayaran).
     Route::get('/daftar', [DashboardPembayaranController::class, 'index'])->name('index');
     Route::get('/data', [DashboardPembayaranController::class, 'datatableTabulator'])->name('data');
@@ -408,7 +408,7 @@ Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('documents/pembayar
 });
 
 // Professional Reports Routes - Pembayaran
-Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('reports/pembayaran')->name('reports.pembayaran.')->group(function () {
+Route::middleware(['auth', 'role:pembayaran'])->prefix('reports/pembayaran')->name('reports.pembayaran.')->group(function () {
     // Redirect to dashboard - content is now on home page
     Route::get('/', fn() => redirect()->route('dashboard.pembayaran'))->name('index');
     Route::get('/delays', [DashboardPembayaranController::class, 'rekapanKeterlambatan'])->name('delays');
@@ -423,7 +423,7 @@ Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('reports/pembayaran
 // bersama sistem notifikasi popup lama.)
 
 // CSV Import Routes - Pembayaran
-Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('csv-import')->name('csv.import.')->group(function () {
+Route::middleware(['auth', 'role:pembayaran'])->prefix('csv-import')->name('csv.import.')->group(function () {
     Route::get('/', [\App\Http\Controllers\CsvImportController::class, 'index'])->name('index');
     Route::post('/upload', [\App\Http\Controllers\CsvImportController::class, 'upload'])->name('upload');
     Route::post('/preview', [\App\Http\Controllers\CsvImportController::class, 'preview'])->name('preview');
@@ -432,7 +432,7 @@ Route::middleware(['auth', 'role:admin,pembayaran'])->prefix('csv-import')->name
 
 
 // Professional Document Routes - Akutansi
-Route::middleware(['auth', 'role:admin,akutansi'])->prefix('documents/akutansi')->name('documents.akutansi.')->group(function () {
+Route::middleware(['auth', 'role:akutansi'])->prefix('documents/akutansi')->name('documents.akutansi.')->group(function () {
     Route::get('/', [DashboardAkutansiController::class, 'dokumens'])->name('index');
     // create/store/destroy DIHAPUS 2026-07-11: tak pernah di-link dari UI (create
     // error 500 karena view-nya tak ada; store/destroy hanya stub kosong).
@@ -455,7 +455,7 @@ Route::middleware(['auth', 'role:admin,akutansi'])->prefix('documents/akutansi')
 // Backward compatibility routes removed — old Akutansi URLs (Phase 2 cleanup)
 
 // Professional Document Routes - Perpajakan
-Route::middleware(['auth', 'role:admin,perpajakan'])->prefix('documents/perpajakan')->name('documents.perpajakan.')->group(function () {
+Route::middleware(['auth', 'role:perpajakan'])->prefix('documents/perpajakan')->name('documents.perpajakan.')->group(function () {
     Route::get('/', [DashboardPerpajakanController::class, 'dokumens'])->name('index');
     Route::get('/data', [DashboardPerpajakanController::class, 'datatable'])->name('data');
     // Task 4 fitur export bersama: tombol Export toolbar Tabulator (CFG.exportUrl) — Excel/PDF
