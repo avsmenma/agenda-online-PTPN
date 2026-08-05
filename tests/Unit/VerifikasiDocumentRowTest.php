@@ -200,7 +200,7 @@ class VerifikasiDocumentRowTest extends TestCase
         $this->assertSame('card', $row['deadline']['variant']);
         $this->assertSame('active', $row['deadline']['type']);
         $this->assertSame('green', $row['deadline']['color']);
-        $this->assertSame('AMAN', $row['deadline']['indicator_label']);
+        $this->assertSame('TEPAT WAKTU', $row['deadline']['indicator_label']);
     }
 
     public function test_deadline_card_terlambat_saat_umur_80_jam(): void

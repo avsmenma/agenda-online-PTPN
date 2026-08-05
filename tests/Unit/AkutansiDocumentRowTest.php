@@ -221,7 +221,7 @@ class AkutansiDocumentRowTest extends TestCase
         $this->assertSame('active', $row['deadline']['type']);
         $this->assertSame('green', $row['deadline']['color']);
         $this->assertSame('fa-check-circle', $row['deadline']['indicator_icon']);
-        $this->assertSame('AMAN', $row['deadline']['indicator_label']);
+        $this->assertSame('TEPAT WAKTU', $row['deadline']['indicator_label']);
         $this->assertNull($row['deadline']['footer']);
     }
 

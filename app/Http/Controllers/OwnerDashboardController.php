@@ -1378,7 +1378,7 @@ class OwnerDashboardController extends Controller
         // >= 72 hours = red (danger)
         $class = 'safe';
         $color = 'success';
-        $statusText = 'AMAN';
+        $statusText = 'TEPAT WAKTU';
 
         if ($totalHours >= 72) {
             $class = 'danger';
@@ -2159,7 +2159,7 @@ class OwnerDashboardController extends Controller
 
                     // Determine status using hours (thresholds are in hours)
                     if ($ageHours < $thresholds[0]) {
-                        $status = 'AMAN';
+                        $status = 'TEPAT WAKTU';
                         $statusStyle = 'StatusAman';
                     } elseif ($ageHours < $thresholds[1]) {
                         $status = 'PERINGATAN';
@@ -2337,7 +2337,7 @@ class OwnerDashboardController extends Controller
 
             // Determine status using hours (thresholds are in hours)
             if ($ageHours < $thresholds[0]) {
-                $status = 'AMAN';
+                $status = 'TEPAT WAKTU';
                 $statusClass = 'status-aman';
             } elseif ($ageHours < $thresholds[1]) {
                 $status = 'PERINGATAN';

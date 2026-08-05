@@ -74,11 +74,11 @@ class PerpajakanDocumentRowTest extends TestCase
     public function test_deadline_aktif_hijau_saat_diproses(): void
     {
         $d = $this->buatDokumen(['status' => 'sent_to_perpajakan']);
-        $this->buatRoleData($d, 'perpajakan', ['received_at' => now()->subHours(5)]); // <24j → AMAN/green
+        $this->buatRoleData($d, 'perpajakan', ['received_at' => now()->subHours(5)]); // <24j → TEPAT WAKTU/green
         $row = $this->row($d);
         $this->assertSame('card', $row['deadline']['variant']);
         $this->assertSame('green', $row['deadline']['color']);
-        $this->assertSame('AMAN', $row['deadline']['indicator_label']);
+        $this->assertSame('TEPAT WAKTU', $row['deadline']['indicator_label']);
         $this->assertSame('active', $row['deadline']['type']);
         $this->assertNull($row['deadline']['footer']);
     }

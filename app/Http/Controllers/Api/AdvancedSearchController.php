@@ -166,7 +166,7 @@ class AdvancedSearchController extends Controller
                     'status' => $statusOptions,
                     'bagian' => $bagianOptions,
                     'deadline' => [
-                        'aman' => 'AMAN (< 24 jam)',
+                        'aman' => 'TEPAT WAKTU (< 24 jam)',
                         'peringatan' => 'PERINGATAN (1-3 hari)',
                         'terlambat' => 'TERLAMBAT (> 3 hari)',
                     ]

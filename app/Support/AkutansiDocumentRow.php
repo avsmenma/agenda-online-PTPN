@@ -179,7 +179,7 @@ class AkutansiDocumentRow extends DocumentRow
             } elseif ($totalHours >= 24) {
                 $ageLabel = 'PERINGATAN'; $ageIcon = 'fa-exclamation-triangle';
             } else {
-                $ageLabel = 'AMAN'; $ageIcon = 'fa-check-circle';
+                $ageLabel = 'TEPAT WAKTU'; $ageIcon = 'fa-check-circle';
             }
 
             if ($isSent || $isCompleted || $isReturned) {
@@ -248,7 +248,7 @@ class AkutansiDocumentRow extends DocumentRow
             } elseif ($bypassTotalHours >= 24) {
                 $bypassAgeLabel = 'PERINGATAN'; $bypassAgeIcon = 'fa-exclamation-triangle';
             } else {
-                $bypassAgeLabel = 'AMAN'; $bypassAgeIcon = 'fa-check-circle';
+                $bypassAgeLabel = 'TEPAT WAKTU'; $bypassAgeIcon = 'fa-check-circle';
             }
 
             return [

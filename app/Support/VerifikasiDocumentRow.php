@@ -442,7 +442,7 @@ class VerifikasiDocumentRow extends DocumentRow
             $ageLabel = 'PERINGATAN';
             $ageIcon = 'fa-exclamation-triangle';
         } else {
-            $ageLabel = 'AMAN';
+            $ageLabel = 'TEPAT WAKTU';
             $ageIcon = 'fa-check-circle';
         }
 

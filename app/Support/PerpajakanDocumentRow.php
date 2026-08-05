@@ -194,7 +194,7 @@ class PerpajakanDocumentRow extends DocumentRow
             $totalHours = ($diff->days * 24) + $diff->h;
             if ($totalHours >= 72)      { $ageLabel = 'TERLAMBAT'; $ageIcon = 'fa-times-circle'; }
             elseif ($totalHours >= 24)  { $ageLabel = 'PERINGATAN'; $ageIcon = 'fa-exclamation-triangle'; }
-            else                        { $ageLabel = 'AMAN'; $ageIcon = 'fa-check-circle'; }
+            else                        { $ageLabel = 'TEPAT WAKTU'; $ageIcon = 'fa-check-circle'; }
 
             if ($isSent || $isCompleted || $isReturned) { $ageColor = 'gray'; }
             elseif ($totalHours >= 72)  { $ageColor = 'red'; }
@@ -251,7 +251,7 @@ class PerpajakanDocumentRow extends DocumentRow
             $totalHours = ($diff->days * 24) + $diff->h;
             if ($totalHours >= 72)     { $ageLabel = 'TERLAMBAT'; $ageIcon = 'fa-times-circle'; }
             elseif ($totalHours >= 24) { $ageLabel = 'PERINGATAN'; $ageIcon = 'fa-exclamation-triangle'; }
-            else                       { $ageLabel = 'AMAN'; $ageIcon = 'fa-check-circle'; }
+            else                       { $ageLabel = 'TEPAT WAKTU'; $ageIcon = 'fa-check-circle'; }
 
             return [
                 'variant'          => 'card',
