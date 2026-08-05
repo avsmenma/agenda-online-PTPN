@@ -394,13 +394,13 @@
 <body>
     <!-- Video Background -->
     <div class="video-background" aria-hidden="true">
-        <img
+        <!-- <img
             class="background-poster"
             src="{{ asset('images/landing-bg-poster.jpg') }}"
             width="1600"
             height="679"
             alt=""
-            fetchpriority="high">
+            fetchpriority="high"> -->
         <video muted loop playsinline preload="none" poster="{{ asset('images/landing-bg-poster.jpg') }}" aria-hidden="true">
             <source data-src="{{ asset('videos/landing-bg.mp4') }}" type="video/mp4">
         </video>
