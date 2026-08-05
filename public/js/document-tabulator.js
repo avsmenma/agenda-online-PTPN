@@ -973,11 +973,21 @@
   // Nilainya literal statis per view, jadi fungsinya semata memaksa kunci baru
   // saat perilaku kolom ini berubah antar-deploy.
   const keadaanHandlerUntukHash = CFG.showHandler !== false ? 'frozen-right' : 'off';
+  // Segmen V: penanda versi manual. Lebar kolom hasil tarikan user ikut tersimpan
+  // di localStorage, dan lebar itu MENANG atas lebar alami kolom. Akibatnya
+  // perubahan yang hanya memperkecil ISI sel (mis. memperpendek format tanggal
+  // pada kartu Deadline) tak akan pernah terlihat oleh user lama: kolomnya tetap
+  // selebar dulu. CFG.columns/CFG.frozen/showHandler tidak berubah oleh perubahan
+  // semacam itu, jadi tak ada pemicu alami. Naikkan angka ini SETIAP kali sebuah
+  // deploy mengubah lebar alami kolom tanpa mengubah daftar kolomnya.
+  //   v2 (2026-08-05) — format tanggal kartu Deadline diringkas jadi d/m/y H:i.
+  const VERSI_SUSUNAN_KOLOM = 'v2';
   const sidikJariKolom = hashSusunanKolom(
     (CFG.columns || []).map(function (c) { return c.key; }).join(',') +
     '|L:' + bekuKiriUntukHash.join(',') +
     '|R:' + bekuKananUntukHash.join(',') +
-    '|H:' + keadaanHandlerUntukHash
+    '|H:' + keadaanHandlerUntukHash +
+    '|V:' + VERSI_SUSUNAN_KOLOM
   );
   // Penanda role dari CFG.mountId — nilainya beda per role (operatorTabulatorTable,
   // akutansiTabulatorTable, verifikasiTabulatorTable, dst.), jadi cukup dipakai

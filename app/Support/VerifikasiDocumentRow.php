@@ -479,7 +479,7 @@ class VerifikasiDocumentRow extends DocumentRow
             'variant' => 'card',
             'type' => $type,
             'color' => $ageColor,
-            'received_display' => $receivedAt->format('d M Y, H:i'),
+            'received_display' => $receivedAt->format('d/m/y H:i'),
             'indicator_icon' => $ageIcon,
             'indicator_label' => $ageLabel,
             'age_text' => $ageText,
