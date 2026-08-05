@@ -489,6 +489,10 @@ Route::middleware(['auth', 'bagian'])
         // Return detail API - reads return_reason directly from dokumens table
         Route::get('/api/bagian/documents/{dokumen}/return-detail', [\App\Http\Controllers\BagianDokumenController::class, 'getReturnDetail'])
             ->name('api.bagian.documents.return-detail');
+
+        // Tandai notifikasi pengembalian sebagai sudah dibaca
+        Route::post('/bagian/notifikasi/tandai-dibaca', [\App\Http\Controllers\BagianDokumenController::class, 'tandaiNotifikasiDibaca'])
+            ->name('bagian.notifikasi.tandai-dibaca');
     });
 
 // =============================================================================

@@ -6,6 +6,7 @@ use App\Helpers\ActivityLogHelper;
 use App\Models\Bagian;
 use App\Models\Dokumen;
 use App\Models\DokumenStatus;
+use App\Services\DocumentReturnNotifier;
 use App\Support\HandlerOptions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -165,6 +166,17 @@ class DocumentHandlerController extends Controller
             }
 
             DB::commit();
+
+            // Notifikasi SETELAH commit — panggilan HTTP ke gateway WhatsApp tidak
+            // boleh menahan transaksi database, dan kegagalannya tidak boleh
+            // membatalkan pengembalian yang sudah sah.
+            if (str_starts_with($targetHandler, 'bagian_')) {
+                DocumentReturnNotifier::kirim(
+                    $dokumen,
+                    strtoupper(substr($targetHandler, strlen('bagian_'))),
+                    $alasanPengembalian
+                );
+            }
 
             return response()->json([
                 'success' => true,

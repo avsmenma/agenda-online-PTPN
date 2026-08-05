@@ -1151,72 +1151,22 @@ class TeamVerifikasiController extends Controller
                 'reason' => $request->bidang_return_reason ?? 'Dikembalikan ke bidang asal'
             ]);
 
-            // Map bidang codes to names
-            $bidangNames = [
-                'AKN' => 'Akuntansi',
-                'DPM' => 'Divisi Produksi dan Manufaktur',
-                'KPL' => 'Keuangan dan Pelaporan',
-                'PMO' => 'Project Management Office',
-                'PTI' => 'Pengadaan dan Teknologi Informasi',
-                'SDM' => 'Sumber Daya Manusia',
-                'SKH' => 'Sub Kontrak Hutan',
-                'TAN' => 'Tanaman dan Perkebunan',
-                'TEP' => 'Teknik dan Perencanaan',
-            ];
+            // Nama bagian dibaca dari tabel `bagians`. Peta kode→nama yang dulu
+            // di-hardcode di sini sudah dihapus: isinya tidak cocok dengan data
+            // produksi (di sana nama = kode) dan ikut membusuk tiap kali daftar
+            // bagian berubah.
+            $bidangName = \App\Models\Bagian::whereRaw('UPPER(TRIM(kode)) = ?', [$targetBidang])->value('nama')
+                ?: $targetBidang;
 
-            $bidangName = $bidangNames[$targetBidang] ?? $targetBidang;
-
-            // R6: Kirim notifikasi ke user Bagian setelah dokumen dikembalikan
-            try {
-                // Cari user dengan bagian_code yang sesuai
-                $bagianUsers = \App\Models\User::where('bagian_code', $targetBidang)
-                    ->whereNotNull('phone_number')
-                    ->where('phone_number', '!=', '')
-                    ->get();
-
-                if ($bagianUsers->isNotEmpty()) {
-                    $docUrl  = url(route('inbox.show', $dokumen->id, false));
-                    $reason  = $request->bidang_return_reason;
-                    $agenda  = $dokumen->nomor_agenda ?? 'N/A';
-                    $message = "🔔 *NOTIFIKASI SISTEM AGENDA ONLINE*\n\n"
-                        . "Dokumen dengan nomor agenda *{$agenda}* telah *dikembalikan* ke Bidang {$bidangName}.\n\n"
-                        . "📋 *Alasan Pengembalian:*\n{$reason}\n\n"
-                        . "Silakan lakukan perbaikan dan kirim ulang dokumen.\n\n"
-                        . "🔗 Lihat dokumen: {$docUrl}";
-
-                    $whatsAppService = app(\App\Services\FonnteWhatsAppService::class);
-
-                    foreach ($bagianUsers as $bagianUser) {
-                        $whatsAppService->sendMessage($bagianUser->phone_number, $message);
-                    }
-
-                    \Log::info('[R6] WhatsApp notification sent for returnToBidang', [
-                        'dokumen_id'   => $dokumen->id,
-                        'target_bidang' => $targetBidang,
-                        'notified_count' => $bagianUsers->count(),
-                    ]);
-                } else {
-                    // Fallback: Database notification (in-app) jika tidak ada nomor HP
-                    $bagianUsersAll = \App\Models\User::where('bagian_code', $targetBidang)->get();
-                    foreach ($bagianUsersAll as $bagianUser) {
-                        $bagianUser->notify(new \App\Notifications\DokumenDikembalikanNotification(
-                            $dokumen,
-                            $request->bidang_return_reason,
-                            $bidangName
-                        ));
-                    }
-
-                    \Log::info('[R6] In-app notification sent (no phone) for returnToBidang', [
-                        'dokumen_id'    => $dokumen->id,
-                        'target_bidang' => $targetBidang,
-                    ]);
-                }
-            } catch (\Exception $notifException) {
-                // Notifikasi gagal tidak boleh menghentikan alur utama
-                \Log::error('[R6] Failed to send return notification: ' . $notifException->getMessage(), [
-                    'dokumen_id' => $dokumen->id,
-                ]);
-            }
+            // Notifikasi ke user Bagian — logikanya dipakai bersama jalur dropdown
+            // Pengurus Dokumen lewat App\Services\DocumentReturnNotifier. Blok "R6"
+            // yang dulu ditulis inline di sini sudah dipindah ke sana; jangan
+            // dikembalikan menjadi salinan kedua.
+            \App\Services\DocumentReturnNotifier::kirim(
+                $dokumen,
+                $targetBidang,
+                $request->bidang_return_reason
+            );
 
             return response()->json([
                 'success'      => true,

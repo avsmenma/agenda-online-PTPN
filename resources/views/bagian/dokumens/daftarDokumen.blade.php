@@ -958,6 +958,72 @@
       background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
     }
 
+    /* Panel notifikasi pengembalian — kelas ber-scope, tanpa !important
+       (aturan 4: jangan tambah perang spesifisitas baru). */
+    .notif-pengembalian {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-left: 4px solid #b45309;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .notif-pengembalian__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: .75rem;
+    }
+
+    .notif-pengembalian__judul {
+      font-weight: 700;
+      color: #92400e;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .notif-pengembalian__tandai {
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: .35rem .75rem;
+      font-size: .82rem;
+      font-weight: 600;
+      color: #5a6a7b;
+      cursor: pointer;
+    }
+
+    .notif-pengembalian__tandai:hover {
+      background: #f4f7fb;
+    }
+
+    .notif-pengembalian__daftar {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: .6rem;
+    }
+
+    .notif-pengembalian__daftar li {
+      background: #fff;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: .6rem .75rem;
+    }
+
+    .notif-pengembalian__alasan {
+      color: #374151;
+      font-size: .9rem;
+      margin: .15rem 0 .2rem;
+      white-space: normal;
+      word-wrap: break-word;
+    }
+
   </style>
 
   <div class="container-fluid py-4">
@@ -997,6 +1063,41 @@
       ];
     @endphp
     @include('partials._infoCards', ['cards' => $cards])
+
+    {{-- Panel notifikasi pengembalian (in-app). Tampil HANYA bila ada yang belum
+         dibaca, jadi halaman tetap bersih di hari biasa. Bagian cuma punya satu
+         halaman, sehingga panel di sini setara lonceng global bagi mereka. --}}
+    @if(isset($notifPengembalian) && $notifPengembalian->isNotEmpty())
+      <div class="notif-pengembalian">
+        <div class="notif-pengembalian__head">
+          <span class="notif-pengembalian__judul">
+            <i class="fa-solid fa-bell"></i>
+            {{ $notifPengembalian->count() }} dokumen dikembalikan &amp; perlu diperbaiki
+          </span>
+          <form action="{{ route('bagian.notifikasi.tandai-dibaca') }}" method="POST" class="m-0">
+            @csrf
+            <button type="submit" class="notif-pengembalian__tandai">
+              <i class="fa-solid fa-check"></i> Tandai sudah dibaca
+            </button>
+          </form>
+        </div>
+        <ul class="notif-pengembalian__daftar">
+          @foreach($notifPengembalian as $notif)
+            @php $d = $notif->data; @endphp
+            <li>
+              <strong>{{ $d['nomor_agenda'] ?? '-' }}</strong>
+              @if(!empty($d['nomor_spp']))
+                <span class="text-muted">(SPP {{ $d['nomor_spp'] }})</span>
+              @endif
+              <div class="notif-pengembalian__alasan">{{ $d['alasan'] ?? '-' }}</div>
+              <small class="text-muted">
+                {{ $notif->created_at?->format('d/m/Y H:i') }}
+              </small>
+            </li>
+          @endforeach
+        </ul>
+      </div>
+    @endif
 
     <!-- Search & Filter -->
     <div class="search-box">
@@ -1105,6 +1206,27 @@
                               {{ $doc->tanggal_masuk ? $doc->tanggal_masuk->format('d-m-Y H:i') : '-' }}
                             @elseif($col == 'nilai_rupiah')
                               <strong style="color: #000000;">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong>
+                            @elseif($col == 'pengembalian')
+                              {{-- Kolom sempit khusus pengembalian. Badge + modal alasan sebenarnya
+                                   sudah lama ada di cabang $col == 'status' di bawah, tapi 'status'
+                                   tak pernah masuk daftar kolom Bagian sehingga TIDAK PERNAH tampil.
+                                   Di sinilah ia akhirnya bisa terlihat. --}}
+                              @if(strtolower($doc->status ?? '') === 'returned_to_bidang')
+                                <span class="badge-status badge-dikembalikan"
+                                  style="cursor: pointer;"
+                                  title="Klik untuk melihat alasan pengembalian"
+                                  onclick="event.stopPropagation(); showRejectionModal({{ $doc->id }})">
+                                  <i class="fa-solid fa-undo"></i>
+                                  <span>Dikembalikan,
+                                    <span style="text-decoration: underline; font-weight: 700;">Alasan</span>
+                                  </span>
+                                </span>
+                                @if($doc->returned_at)
+                                  <br><small class="text-muted">{{ \Carbon\Carbon::parse($doc->returned_at)->format('d/m/Y H:i') }}</small>
+                                @endif
+                              @else
+                                <span class="text-muted">-</span>
+                              @endif
                             @elseif($col == 'status')
                               @php
                                 // Simplified status for Bagian view

@@ -131,6 +131,12 @@ class BagianDokumenController extends Controller
             'uraian_spp' => 'Uraian SPP',
             'nilai_rupiah' => 'Nilai Rupiah',
             'umur_dokumen' => 'Waktu Pengerjaan',
+            // Kolom sempit khusus pengembalian. SENGAJA bukan kolom 'status' penuh:
+            // keputusan pemilik di atas melarang mengekspos status internal ke Bagian,
+            // sementara Bagian tetap wajib tahu dokumennya dikembalikan (saran penguji
+            // sidang 2026-08-05). Kolom ini hanya berisi info pengembalian, kosong
+            // untuk dokumen lain.
+            'pengembalian' => 'Pengembalian',
         ];
         // Catatan: "Status Pembayaran" TIDAK di sini — dirender sebagai kolom tetap
         // paling kanan (beku kanan) di view, bukan kolom yang bisa dikustom.
@@ -148,6 +154,7 @@ class BagianDokumenController extends Controller
             'nilai_rupiah',
             'tanggal_masuk',
             'umur_dokumen',
+            'pengembalian',
         ];
 
         // Guard: apa pun kolom yang diminta, batasi hanya ke daftar yang diizinkan
@@ -155,10 +162,10 @@ class BagianDokumenController extends Controller
 
         // If columns are provided in request, save to session
         if ($request->has('columns') && !empty($selectedColumns)) {
-            session(['bagian_dokumens_table_columns_v5' => $selectedColumns]);
+            session(['bagian_dokumens_table_columns_v6' => $selectedColumns]);
         } else {
             // Load from session or use default
-            $selectedColumns = session('bagian_dokumens_table_columns_v5', $defaultColumns);
+            $selectedColumns = session('bagian_dokumens_table_columns_v6', $defaultColumns);
 
             // If empty after filtering, use default
             if (empty($selectedColumns)) {
@@ -166,7 +173,7 @@ class BagianDokumenController extends Controller
             }
 
             // Update session to keep it in sync
-            session(['bagian_dokumens_table_columns_v5' => $selectedColumns]);
+            session(['bagian_dokumens_table_columns_v6' => $selectedColumns]);
         }
 
         // Filter akhir: buang kolom terlarang dari session lama.
@@ -185,6 +192,17 @@ class BagianDokumenController extends Controller
             ->count();
         $totalBelumDibayar = $totalDokumen - $totalSudahDibayar;
 
+        // Notifikasi pengembalian yang belum dibaca (in-app). Ditulis oleh
+        // App\Services\DocumentReturnNotifier saat dokumen dikembalikan ke bagian ini.
+        // Bagian hanya punya SATU halaman, jadi panel di sini sudah setara "lonceng
+        // global" bagi mereka — tanpa perlu menyentuh layouts/app.blade.php.
+        $notifPengembalian = auth()->user()
+            ->unreadNotifications()
+            ->where('type', \App\Notifications\DokumenDikembalikanNotification::class)
+            ->latest()
+            ->take(20)
+            ->get();
+
         return view('bagian.dokumens.daftarDokumen', compact(
             'dokumens',
             'bagianCode',
@@ -193,8 +211,23 @@ class BagianDokumenController extends Controller
             'selectedColumns',
             'totalDokumen',
             'totalBelumDibayar',
-            'totalSudahDibayar'
+            'totalSudahDibayar',
+            'notifPengembalian'
         ));
+    }
+
+    /**
+     * Tandai semua notifikasi pengembalian milik user ini sebagai sudah dibaca.
+     * Dipanggil tombol "Tandai sudah dibaca" di panel notifikasi Bagian.
+     */
+    public function tandaiNotifikasiDibaca()
+    {
+        auth()->user()
+            ->unreadNotifications()
+            ->where('type', \App\Notifications\DokumenDikembalikanNotification::class)
+            ->update(['read_at' => now()]);
+
+        return back()->with('success', 'Notifikasi ditandai sudah dibaca.');
     }
 
     /**
