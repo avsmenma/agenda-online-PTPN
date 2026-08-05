@@ -28,7 +28,7 @@
         'selected'         => array_values($selectedColumns),
         // Kolom tetap khas akutansi: Deadline + Status (dirender formatter server-object).
         'extraColumns'     => [
-            ['field' => 'deadline',     'title' => 'Deadline', 'formatter' => 'deadline'],
+            ['field' => 'deadline',     'title' => 'Deadline', 'formatter' => 'deadline', 'width' => 110],
             ['field' => 'status_badge', 'title' => 'Status',   'formatter' => 'akutansiStatus'],
         ],
         'ie'               => [

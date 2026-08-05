@@ -591,7 +591,12 @@
     // variant === 'card'
     let html = '<div class="deadline-card deadline-' + esc(d.type) + ' deadline-' + esc(d.color) + '">';
     html += '<div class="deadline-time"><i class="fa-solid fa-calendar"></i><span>' + esc(d.received_display) + '</span></div>';
-    html += '<div class="deadline-indicator deadline-' + esc(d.color) + '"><i class="fa-solid ' + esc(d.indicator_icon) + '"></i>' +
+    // Ikon di dalam pil DILEPAS 2026-08-05: ia menyumbang ~16px (ikon + gap) pada
+    // elemen terlebar di kartu, dan pil-lah yang menentukan lebar kolom Deadline
+    // (layout fitDataStretch mengukur isi terlebar). Nol informasi hilang — warna
+    // pil dan teksnya sudah menyatakan status yang sama. d.indicator_icon tetap
+    // dikirim server (dipakai varian lain & tetap tersedia bila ingin dipulihkan).
+    html += '<div class="deadline-indicator deadline-' + esc(d.color) + '">' +
       '<span class="status-text">' + esc(d.indicator_label) + '</span></div>';
     html += '<div class="deadline-age" style="font-size:10px;color:#6b7280;margin-top:2px;">' +
       '<i class="fa-solid fa-hourglass-half"></i><span>' + esc(d.age_text) + '</span></div>';
@@ -804,12 +809,17 @@
     // editor Tabulator; formatter merender objek server. Operator tak mengirim
     // extraColumns → tak ada kolom tambahan (paritas).
     (cfg.extraColumns || []).forEach(function (ec) {
-      cols.push({
+      const def = {
         title: ec.title,
         field: ec.field,
         formatter: EXTRA_FORMATTERS[ec.formatter] || fmtPlain,
         editable: false,
-      });
+      };
+      // Lebar opsional per kolom tetap. Tanpa ini layout 'fitDataStretch' menyetel
+      // lebar dari isi terlebar — untuk kolom Deadline itu berarti pil status yang
+      // memaksa kolom jadi lebar. Dipakai view peran lewat extraColumns[].width.
+      if (ec.width) def.width = ec.width;
+      cols.push(def);
     });
     // Kelompok beku-kanan ditambahkan setelah kolom bebas & extraColumns (lihat
     // catatan di atas) supaya benar-benar berada di ujung definisi tabel dan
@@ -981,7 +991,7 @@
   // semacam itu, jadi tak ada pemicu alami. Naikkan angka ini SETIAP kali sebuah
   // deploy mengubah lebar alami kolom tanpa mengubah daftar kolomnya.
   //   v2 (2026-08-05) — format tanggal kartu Deadline diringkas jadi d/m/y H:i.
-  const VERSI_SUSUNAN_KOLOM = 'v2';
+  const VERSI_SUSUNAN_KOLOM = 'v3';
   const sidikJariKolom = hashSusunanKolom(
     (CFG.columns || []).map(function (c) { return c.key; }).join(',') +
     '|L:' + bekuKiriUntukHash.join(',') +
