@@ -2091,27 +2091,139 @@
     });
   }
 
-  // === Dropdown Pengurus Dokumen (PATCH handler) ===
-  // Listener change TERDELEGASI (capture) untuk semua <select.op-handler-select>
-  // yang dirender formatter — tahan re-render Tabulator. Semantik payload mengikuti
-  // document-handler-select.blade.php:183-237 (kunci `target_handler`).
-  document.addEventListener('change', function (e) {
-    const sel = (e.target && e.target.closest) ? e.target.closest('.op-handler-select') : null;
-    if (!sel) return;
-    e.stopPropagation();
-    // Guard tambahan: select disabled tak seharusnya memicu change, tapi jaga
-    // agar aman bila DOM dimanipulasi di luar jalur normal (paritas gate server).
-    if (sel.disabled) return;
-    const id = sel.getAttribute('data-document-id');
-    const prev = sel.getAttribute('data-prev') || '';
-    const next = sel.value;
-    if (!next || next === prev) { sel.value = prev; return; }
+  // === Modal alasan pengembalian ke Bagian ===
+  // Mengembalikan dokumen ke Bagian WAJIB disertai alasan (server menolak < 10
+  // karakter). Dulu jalur dropdown menulis kalimat tetap "Dikembalikan melalui
+  // perubahan Pengurus Dokumen." sehingga Bagian tak pernah tahu apa yang harus
+  // diperbaiki — keluhan ini datang dari penguji sidang.
+  //
+  // Modal self-contained mengikuti pola tombol Export di berkas ini: CSS scoped
+  // .drm-* disuntik sekali, toggle kelas .show. Sengaja BUKAN modal Bootstrap —
+  // data-api BS5 mati di layout jQuery+BS5 (lihat catatan dropdown Export).
+  const mintaAlasanPengembalian = (function () {
+    let overlay = null;
+    let selesaikan = null;
+
+    function suntikCss() {
+      if (document.getElementById('drm-style')) return;
+      const st = document.createElement('style');
+      st.id = 'drm-style';
+      st.textContent = [
+        '.drm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10001;padding:2rem;overflow-y:auto;}',
+        '.drm-overlay.show{display:flex;align-items:flex-start;justify-content:center;}',
+        '.drm-card{background:#fff;border-radius:16px;width:100%;max-width:520px;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,.25);margin:1rem;}',
+        '.drm-head{padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;}',
+        '.drm-head h3{margin:0;font-size:1.15rem;font-weight:600;color:#1f2937;display:flex;align-items:center;gap:.6rem;}',
+        '.drm-head h3 i{color:#b45309;}',
+        '.drm-close{background:none;border:none;font-size:1.35rem;color:#6b7280;cursor:pointer;line-height:1;padding:.25rem;}',
+        '.drm-close:hover{color:#1f2937;}',
+        '.drm-body{padding:1.25rem 1.5rem;}',
+        '.drm-target{font-size:.9rem;color:#374151;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.6rem .75rem;margin-bottom:.9rem;}',
+        '.drm-target b{color:#92400e;}',
+        '.drm-label{display:block;font-weight:600;color:#374151;margin-bottom:.4rem;font-size:.9rem;}',
+        '.drm-input{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:.6rem .75rem;font-size:.92rem;color:#1f2937;resize:vertical;min-height:110px;font-family:inherit;}',
+        '.drm-input:focus{outline:none;border-color:#083E40;box-shadow:0 0 0 3px rgba(8,62,64,.12);}',
+        '.drm-count{margin-top:.4rem;font-size:.8rem;color:#6b7280;text-align:right;}',
+        '.drm-count.kurang{color:#b45309;}',
+        '.drm-foot{padding:1rem 1.5rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:.6rem;}',
+        '.drm-btn{border-radius:8px;padding:.5rem 1rem;font-weight:600;cursor:pointer;border:1px solid transparent;}',
+        '.drm-btn-cancel{background:#fff;border-color:#d1d5db;color:#5a6a7b;}',
+        '.drm-btn-cancel:hover{background:#f4f7fb;}',
+        '.drm-btn-go{background:#b45309;color:#fff;}',
+        '.drm-btn-go:hover{filter:brightness(1.1);}',
+        '.drm-btn-go:disabled{opacity:.5;cursor:not-allowed;}'
+      ].join('');
+      document.head.appendChild(st);
+    }
+
+    const MIN_ALASAN = 10;
+    const MAX_ALASAN = 1000;
+
+    function tutup(nilai) {
+      if (!overlay) return;
+      overlay.classList.remove('show');
+      const cb = selesaikan;
+      selesaikan = null;
+      if (cb) cb(nilai);
+    }
+
+    function bangun() {
+      suntikCss();
+      overlay = document.createElement('div');
+      overlay.className = 'drm-overlay';
+      overlay.innerHTML =
+        '<div class="drm-card" role="dialog" aria-modal="true" aria-label="Alasan pengembalian dokumen">' +
+          '<div class="drm-head">' +
+            '<h3><i class="fa-solid fa-rotate-left"></i>Kembalikan Dokumen</h3>' +
+            '<button type="button" class="drm-close" aria-label="Tutup"><i class="fa-solid fa-times"></i></button>' +
+          '</div>' +
+          '<div class="drm-body">' +
+            '<div class="drm-target">Dokumen akan dikembalikan ke <b data-drm-target></b>.</div>' +
+            '<label class="drm-label" for="drm-alasan">Alasan pengembalian <span style="color:#b91c1c">*</span></label>' +
+            '<textarea id="drm-alasan" class="drm-input" maxlength="' + MAX_ALASAN + '" ' +
+              'placeholder="Jelaskan apa yang perlu diperbaiki, agar Bagian tahu tindakan selanjutnya."></textarea>' +
+            '<div class="drm-count" data-drm-count></div>' +
+          '</div>' +
+          '<div class="drm-foot">' +
+            '<button type="button" class="drm-btn drm-btn-cancel" data-drm-batal>Batal</button>' +
+            '<button type="button" class="drm-btn drm-btn-go" data-drm-kirim disabled>Kembalikan</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(overlay);
+
+      const ta = overlay.querySelector('#drm-alasan');
+      const hitung = overlay.querySelector('[data-drm-count]');
+      const kirim = overlay.querySelector('[data-drm-kirim]');
+
+      function segarkan() {
+        const n = ta.value.trim().length;
+        const kurang = n < MIN_ALASAN;
+        kirim.disabled = kurang;
+        hitung.textContent = kurang
+          ? ('Minimal ' + MIN_ALASAN + ' karakter — kurang ' + (MIN_ALASAN - n))
+          : (n + ' / ' + MAX_ALASAN + ' karakter');
+        hitung.classList.toggle('kurang', kurang);
+      }
+
+      ta.addEventListener('input', segarkan);
+      kirim.addEventListener('click', function () {
+        if (ta.value.trim().length >= MIN_ALASAN) tutup(ta.value.trim());
+      });
+      overlay.querySelector('[data-drm-batal]').addEventListener('click', function () { tutup(null); });
+      overlay.querySelector('.drm-close').addEventListener('click', function () { tutup(null); });
+      overlay.addEventListener('click', function (ev) { if (ev.target === overlay) tutup(null); });
+      document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Escape' && overlay.classList.contains('show')) tutup(null);
+      });
+
+      overlay._ta = ta;
+      overlay._segarkan = segarkan;
+    }
+
+    // Resolve dengan string alasan, atau null bila dibatalkan.
+    return function (labelBagian) {
+      if (!overlay) bangun();
+      return new Promise(function (resolve) {
+        selesaikan = resolve;
+        overlay.querySelector('[data-drm-target]').textContent = labelBagian || 'bagian asal';
+        overlay._ta.value = '';
+        overlay._segarkan();
+        overlay.classList.add('show');
+        setTimeout(function () { overlay._ta.focus(); }, 50);
+      });
+    };
+  })();
+
+  // Kirim perubahan pengurus dokumen. `alasan` hanya diikutkan untuk target Bagian.
+  function kirimPerubahanHandler(sel, id, prev, next, alasan) {
     sel.disabled = true;
     sel.classList.add('is-saving');
+    const muatan = { target_handler: next };
+    if (alasan) muatan.return_reason = alasan;
     fetch(handlerUrl(id), {
       method: 'PATCH',
       headers: jsonHeaders(),
-      body: JSON.stringify({ target_handler: next }),
+      body: JSON.stringify(muatan),
     })
       .then(async function (r) {
         const data = await r.json().catch(function () { return {}; });
@@ -2138,5 +2250,35 @@
         sel.classList.remove('is-saving');
         opToast('error', 'Koneksi gagal. Coba lagi.');
       });
+  }
+
+  // === Dropdown Pengurus Dokumen (PATCH handler) ===
+  // Listener change TERDELEGASI (capture) untuk semua <select.op-handler-select>
+  // yang dirender formatter — tahan re-render Tabulator. Semantik payload mengikuti
+  // document-handler-select.blade.php:183-237 (kunci `target_handler`).
+  document.addEventListener('change', function (e) {
+    const sel = (e.target && e.target.closest) ? e.target.closest('.op-handler-select') : null;
+    if (!sel) return;
+    e.stopPropagation();
+    // Guard tambahan: select disabled tak seharusnya memicu change, tapi jaga
+    // agar aman bila DOM dimanipulasi di luar jalur normal (paritas gate server).
+    if (sel.disabled) return;
+    const id = sel.getAttribute('data-document-id');
+    const prev = sel.getAttribute('data-prev') || '';
+    const next = sel.value;
+    if (!next || next === prev) { sel.value = prev; return; }
+
+    // Target Bagian => minta alasan dulu. Batal mengembalikan pilihan semula
+    // TANPA menyentuh server.
+    if (next.indexOf('bagian_') === 0) {
+      const opsi = sel.options[sel.selectedIndex];
+      mintaAlasanPengembalian(opsi ? opsi.text : '').then(function (alasan) {
+        if (alasan === null) { sel.value = prev; return; }
+        kirimPerubahanHandler(sel, id, prev, next, alasan);
+      });
+      return;
+    }
+
+    kirimPerubahanHandler(sel, id, prev, next, null);
   }, true);
 })();

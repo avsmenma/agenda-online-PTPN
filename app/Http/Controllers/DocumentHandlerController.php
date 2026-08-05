@@ -118,10 +118,32 @@ class DocumentHandlerController extends Controller
         // dipangkas ke satu pilihan (App\Support\HandlerOptions::forDokumen), tapi opsi
         // itu ditanam di data baris yang dikirim ke klien — jadi bisa diakali. Penegakan
         // sebenarnya ada di sini; tanpa ini pemangkasan dropdown cuma kosmetik.
+        $alasanPengembalian = '';
         if (str_starts_with($targetHandler, 'bagian_')) {
             $penolakan = $this->tolakBilaBukanBagianAsal($dokumen, $targetHandler);
             if ($penolakan !== null) {
                 return $penolakan;
+            }
+
+            // Alasan pengembalian WAJIB — dulu jalur ini menulis kalimat tetap
+            // "Dikembalikan melalui perubahan Pengurus Dokumen." yang tidak memberi
+            // tahu Bagian apa yang harus diperbaiki. Ambang 10..1000 karakter
+            // disamakan dengan jalur pengembalian khusus (TeamVerifikasiController::
+            // returnToBidang) supaya kedua pintu memakai aturan yang sama.
+            $alasanPengembalian = trim((string) $request->input('return_reason', ''));
+
+            if (mb_strlen($alasanPengembalian) < 10) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Alasan pengembalian wajib diisi, minimal 10 karakter.',
+                ], 422);
+            }
+
+            if (mb_strlen($alasanPengembalian) > 1000) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Alasan pengembalian maksimal 1000 karakter.',
+                ], 422);
             }
         }
 
@@ -135,7 +157,7 @@ class DocumentHandlerController extends Controller
                 $this->returnDirectlyToOperator($dokumen, $currentHandler);
                 $message = 'Dokumen dikembalikan ke Operator.';
             } elseif (str_starts_with($targetHandler, 'bagian_')) {
-                $this->returnDirectlyToBagian($dokumen, $currentHandler, $targetHandler);
+                $this->returnDirectlyToBagian($dokumen, $currentHandler, $targetHandler, $alasanPengembalian);
                 $message = 'Dokumen dikembalikan ke bagian terkait.';
             } else {
                 $this->sendToApprovalInbox($dokumen, $currentHandler, $targetHandler);
@@ -226,7 +248,7 @@ class DocumentHandlerController extends Controller
         ActivityLogHelper::logReturned($dokumen, 'operator', 'Dikembalikan melalui perubahan Pengurus Dokumen.', $sourceRole);
     }
 
-    private function returnDirectlyToBagian(Dokumen $dokumen, string $sourceRole, string $targetHandler): void
+    private function returnDirectlyToBagian(Dokumen $dokumen, string $sourceRole, string $targetHandler, string $alasan): void
     {
         $this->markSourceProcessed($dokumen, $sourceRole);
         $this->clearPendingStatuses($dokumen);
@@ -237,13 +259,13 @@ class DocumentHandlerController extends Controller
             'current_handler' => $sourceRole === 'team_verifikasi' ? 'team_verifikasi' : $targetHandler,
             'status' => 'returned_to_bidang',
             'return_source' => $bagianCode,
-            'return_reason' => 'Dikembalikan melalui perubahan Pengurus Dokumen.',
+            'return_reason' => $alasan,
             'returned_at' => now(),
             'last_action_status' => 'returned_to_bidang',
         ]);
 
         $dokumen->setDisplayStatusForRole($sourceRole, 'dikembalikan');
-        ActivityLogHelper::logReturned($dokumen, $bagianCode, 'Dikembalikan melalui perubahan Pengurus Dokumen.', $sourceRole);
+        ActivityLogHelper::logReturned($dokumen, $bagianCode, $alasan, $sourceRole);
     }
 
     private function receiveBackFromBagian(Dokumen $dokumen): void
