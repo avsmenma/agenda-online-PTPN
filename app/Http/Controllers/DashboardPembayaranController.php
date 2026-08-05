@@ -123,6 +123,15 @@ class DashboardPembayaranController extends Controller
 
             $selectedColumns = is_array($selectedColumns) ? array_values(array_filter($selectedColumns)) : $defaultColumns;
 
+            // Saring terhadap katalog: preferensi tersimpan bisa memuat kunci kolom
+            // yang sudah DIHAPUS dari katalog, dan kunci basi itu akan dirender
+            // sebagai kolom berjudul kunci mentah. Lihat catatan sama di tiga
+            // controller peran lain (nomor_kontrak, 2026-08-04).
+            $selectedColumns = array_values(array_intersect(
+                $selectedColumns,
+                array_keys($this->getPembayaranDashboardAvailableColumns())
+            ));
+
             if (empty($selectedColumns)) {
                 $selectedColumns = $defaultColumns;
             }

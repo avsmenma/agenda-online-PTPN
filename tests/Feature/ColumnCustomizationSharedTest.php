@@ -1030,4 +1030,48 @@ class ColumnCustomizationSharedTest extends TestCase
             'mountId TIDAK unik antar role — pencemaran localStorage antar-role akan hidup lagi: ' . json_encode($mountIds)
         );
     }
+
+    /**
+     * Regresi nyata (2026-08-04): kolom `nomor_kontrak` sudah dihapus dari katalog,
+     * model, controller, DAN database, tapi TETAP muncul di tabel dua akun produksi
+     * — judulnya tampil sebagai kunci mentah "nomor_kontrak" karena katalog tak lagi
+     * punya labelnya.
+     *
+     * Sebabnya: jalur preferensi tersimpan (users.table_columns_preferences) dibaca
+     * mentah lalu hanya disaring terhadap dua daftar hardcode, tak pernah dicocokkan
+     * dengan katalog kolom. Jalur `?columns[]` sudah aman sejak awal — jalur inilah
+     * yang terlewat, di KEEMPAT controller peran sekaligus.
+     *
+     * Test ini menyuntikkan kunci hantu ke preferensi lalu memastikan ia tidak ikut
+     * dirender. Kunci sengaja dibuat mustahil ada di katalog agar tak lapuk saat
+     * katalog berubah.
+     */
+    public function test_preferensi_kolom_basi_tidak_ikut_dirender(): void
+    {
+        $kunciHantu = 'kolom_hantu_yang_sudah_dihapus';
+
+        $cases = [
+            ['role' => 'team_verifikasi', 'route' => 'documents.verifikasi.index',  'prefKey' => 'team_verifikasi'],
+            ['role' => 'perpajakan',      'route' => 'documents.perpajakan.index',  'prefKey' => 'perpajakan'],
+            ['role' => 'akutansi',        'route' => 'documents.akutansi.index',    'prefKey' => 'akutansi'],
+            ['role' => 'pembayaran',      'route' => 'documents.pembayaran.index',  'prefKey' => 'pembayaran_dashboard'],
+        ];
+
+        foreach ($cases as $c) {
+            $user = User::factory()->create([
+                'role' => $c['role'],
+                'table_columns_preferences' => [
+                    $c['prefKey'] => ['nomor_agenda', $kunciHantu, 'nomor_spp'],
+                ],
+            ]);
+
+            $html = $this->actingAs($user)->get(route($c['route']))->getContent();
+
+            $this->assertStringNotContainsString(
+                $kunciHantu,
+                $html,
+                "Kunci kolom basi ikut dirender di role {$c['role']} — preferensi tersimpan tidak disaring terhadap katalog kolom"
+            );
+        }
+    }
 }

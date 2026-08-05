@@ -498,6 +498,15 @@ class DashboardPerpajakanController extends Controller
             });
             $selectedColumns = array_values($selectedColumns);
 
+            // Preferensi tersimpan bisa memuat kunci kolom yang sudah DIHAPUS dari
+            // katalog (mis. kolom yang dicabut lewat migrasi). Tanpa penyaringan ini
+            // kunci basi tetap dirender sebagai kolom, dan judulnya jatuh ke kunci
+            // MENTAH karena katalog tak lagi punya labelnya. Terjadi nyata pada
+            // nomor_kontrak (2026-08-04): kolom sudah dihapus dari kode & database,
+            // tapi tetap muncul di dua akun yang preferensinya masih menyimpannya.
+            // Jalur ?columns[] sudah disaring sejak awal; jalur preferensi terlewat.
+            $selectedColumns = array_values(array_intersect($selectedColumns, array_keys($availableColumns)));
+
             // If empty after filtering, use default
             if (empty($selectedColumns)) {
                 $selectedColumns = $defaultColumns;
