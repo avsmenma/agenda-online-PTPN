@@ -11,7 +11,6 @@ use App\Models\Dokumen;
 use App\Models\DokumenStatus;
 use App\Models\DokumenPO;
 use App\Models\DokumenPR;
-use App\Models\Bagian;
 use App\Models\DibayarKepada;
 use App\Models\KategoriKriteria;
 use App\Models\SubKriteria;
@@ -78,10 +77,14 @@ class TeamVerifikasiController extends Controller
 
         $paginator = $query->paginate($size, ['*'], 'page', $page);
 
-        $handlerOptions = $this->buildVerifikasiHandlerOptions();
+        $bagianMap = \App\Support\HandlerOptions::bagianMap();
 
         $data = collect($paginator->items())
-            ->map(fn ($d) => \App\Support\VerifikasiDocumentRow::fromDokumen($d, $handlerOptions, 'team_verifikasi'))
+            ->map(fn ($d) => \App\Support\VerifikasiDocumentRow::fromDokumen(
+                $d,
+                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                'team_verifikasi'
+            ))
             ->all();
 
         return response()->json([
@@ -89,26 +92,6 @@ class TeamVerifikasiController extends Controller
             'total'     => $paginator->total(),
             'data'      => $data,
         ]);
-    }
-
-    /** Opsi pengurus dokumen (5 peran base + optgroup Bagian). Bentuk identik DokumenController::buildHandlerOptions(). */
-    private function buildVerifikasiHandlerOptions(): array
-    {
-        $handlerOptions = [
-            ['value' => 'operator',        'label' => 'Operator'],
-            ['value' => 'team_verifikasi', 'label' => 'Tim Verifikasi'],
-            ['value' => 'perpajakan',      'label' => 'Tim Perpajakan'],
-            ['value' => 'akutansi',        'label' => 'Tim Akuntansi'],
-            ['value' => 'pembayaran',      'label' => 'Tim Pembayaran'],
-        ];
-        $bagian = Bagian::active()->ordered()->get(['kode', 'nama']);
-        if ($bagian->isNotEmpty()) {
-            $handlerOptions[] = [
-                'optgroup' => 'Bagian',
-                'options'  => $bagian->map(fn ($b) => ['value' => 'bagian_' . strtolower($b->kode), 'label' => $b->nama ?: $b->kode])->all(),
-            ];
-        }
-        return $handlerOptions;
     }
 
     /**
@@ -128,10 +111,14 @@ class TeamVerifikasiController extends Controller
     public function exportDocuments(Request $request): \Symfony\Component\HttpFoundation\Response
     {
         $query = $this->buildVerifikasiQuery($request);
-        $handlerOptions = $this->buildVerifikasiHandlerOptions();
+        $bagianMap = \App\Support\HandlerOptions::bagianMap();
 
         $rows = $query->get()
-            ->map(fn (Dokumen $d) => \App\Support\VerifikasiDocumentRow::fromDokumen($d, $handlerOptions, 'team_verifikasi'))
+            ->map(fn (Dokumen $d) => \App\Support\VerifikasiDocumentRow::fromDokumen(
+                $d,
+                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                'team_verifikasi'
+            ))
             ->all();
 
         $catalog = config('document_columns.base');

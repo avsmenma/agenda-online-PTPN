@@ -134,12 +134,17 @@ class DokumenController extends Controller
 
         $paginator = $query->paginate($size, ['*'], 'page', $page);
 
-        // Bangun daftar opsi pengurus dokumen SEKALI per-request (hindari N+1);
-        // OperatorDocumentRow menanamkan apa adanya ke tiap baris.
-        $handlerOptions = $this->buildHandlerOptions();
+        // Peta bagian dibangun SEKALI per-request (hindari N+1); opsi pengurus
+        // dokumen lalu disusun per-baris karena optgroup Bagian kini menyempit ke
+        // bagian milik dokumen itu sendiri (App\Support\HandlerOptions).
+        $bagianMap = \App\Support\HandlerOptions::bagianMap();
 
         $data = collect($paginator->items())
-            ->map(fn ($d) => \App\Support\OperatorDocumentRow::fromDokumen($d, $handlerOptions, auth()->user()?->role))
+            ->map(fn ($d) => \App\Support\OperatorDocumentRow::fromDokumen(
+                $d,
+                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                auth()->user()?->role
+            ))
             ->all();
 
         return response()->json([
@@ -147,35 +152,6 @@ class DokumenController extends Controller
             'total'     => $paginator->total(),
             'data'      => $data,
         ]);
-    }
-
-    /**
-     * Susun daftar opsi pengurus dokumen (handler_options) SEKALI per-request.
-     * 5 opsi base peran + optgroup 'Bagian' (bila ada Bagian aktif). Sumber
-     * tunggal agar datatable() & inlineCreate() memakai bentuk yang identik
-     * (OperatorDocumentRow menanamkannya apa adanya ke tiap baris).
-     */
-    private function buildHandlerOptions(): array
-    {
-        $handlerOptions = [
-            ['value' => 'operator',        'label' => 'Operator'],
-            ['value' => 'team_verifikasi', 'label' => 'Tim Verifikasi'],
-            ['value' => 'perpajakan',      'label' => 'Tim Perpajakan'],
-            ['value' => 'akutansi',        'label' => 'Tim Akuntansi'],
-            ['value' => 'pembayaran',      'label' => 'Tim Pembayaran'],
-        ];
-        $bagian = Bagian::active()->ordered()->get(['kode', 'nama']);
-        if ($bagian->isNotEmpty()) {
-            $handlerOptions[] = [
-                'optgroup' => 'Bagian',
-                'options'  => $bagian->map(fn ($b) => [
-                    'value' => 'bagian_' . strtolower($b->kode),
-                    'label' => $b->nama ?: $b->kode,
-                ])->all(),
-            ];
-        }
-
-        return $handlerOptions;
     }
 
     /**
@@ -196,11 +172,15 @@ class DokumenController extends Controller
     public function exportDocuments(Request $request): \Symfony\Component\HttpFoundation\Response
     {
         $query = $this->buildOperatorQuery($request);
-        $handlerOptions = $this->buildHandlerOptions();
+        $bagianMap = \App\Support\HandlerOptions::bagianMap();
         $viewerRole = auth()->user()?->role;
 
         $rows = $query->get()
-            ->map(fn (Dokumen $d) => \App\Support\OperatorDocumentRow::fromDokumen($d, $handlerOptions, $viewerRole))
+            ->map(fn (Dokumen $d) => \App\Support\OperatorDocumentRow::fromDokumen(
+                $d,
+                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                $viewerRole
+            ))
             ->all();
 
         $catalog = config('document_columns.base');
@@ -438,7 +418,11 @@ class DokumenController extends Controller
             // Objek baris JSON untuk Tabulator — satu-satunya konsumen. Partial
             // _tableRowsAjax tak lagi dirender di sini (jalur render lama dilepas;
             // view classic-nya sudah dihapus (2026-07-23)).
-            'row'     => \App\Support\OperatorDocumentRow::fromDokumen($dokumen, $this->buildHandlerOptions(), auth()->user()?->role),
+            'row'     => \App\Support\OperatorDocumentRow::fromDokumen(
+                $dokumen,
+                \App\Support\HandlerOptions::forDokumen($dokumen->bagian, \App\Support\HandlerOptions::bagianMap()),
+                auth()->user()?->role
+            ),
         ]);
     }
 

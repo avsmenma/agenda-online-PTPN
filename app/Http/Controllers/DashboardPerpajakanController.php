@@ -10,7 +10,6 @@ use App\Models\DokumenPR;
 use App\Models\DibayarKepada;
 use App\Models\DokumenStatus;
 use App\Helpers\SearchHelper;
-use App\Models\Bagian;
 use App\Models\DocumentTracking;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Response;
@@ -59,11 +58,15 @@ class DashboardPerpajakanController extends Controller
             'dibayarKepadas', 'dokumenPos',
         ]);
 
-        $handlerOptions = $this->buildPerpajakanHandlerOptions();
+        $bagianMap = \App\Support\HandlerOptions::bagianMap();
         $viewerRole = Auth::user()?->role;
 
         $data = collect($paginator->items())
-            ->map(fn ($d) => \App\Support\PerpajakanDocumentRow::fromDokumen($d, $handlerOptions, $viewerRole))
+            ->map(fn ($d) => \App\Support\PerpajakanDocumentRow::fromDokumen(
+                $d,
+                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                $viewerRole
+            ))
             ->all();
 
         return response()->json([
@@ -71,26 +74,6 @@ class DashboardPerpajakanController extends Controller
             'total'     => $paginator->total(),
             'data'      => $data,
         ]);
-    }
-
-    /** Opsi pengurus dokumen (5 peran base + optgroup Bagian). Bentuk identik DokumenController::buildHandlerOptions(). */
-    private function buildPerpajakanHandlerOptions(): array
-    {
-        $handlerOptions = [
-            ['value' => 'operator',        'label' => 'Operator'],
-            ['value' => 'team_verifikasi', 'label' => 'Tim Verifikasi'],
-            ['value' => 'perpajakan',      'label' => 'Tim Perpajakan'],
-            ['value' => 'akutansi',        'label' => 'Tim Akuntansi'],
-            ['value' => 'pembayaran',      'label' => 'Tim Pembayaran'],
-        ];
-        $bagian = \App\Models\Bagian::active()->ordered()->get(['kode', 'nama']);
-        if ($bagian->isNotEmpty()) {
-            $handlerOptions[] = [
-                'optgroup' => 'Bagian',
-                'options'  => $bagian->map(fn ($b) => ['value' => 'bagian_' . strtolower($b->kode), 'label' => $b->nama ?: $b->kode])->all(),
-            ];
-        }
-        return $handlerOptions;
     }
 
     /**
@@ -108,11 +91,15 @@ class DashboardPerpajakanController extends Controller
     public function exportDocuments(Request $request): \Symfony\Component\HttpFoundation\Response
     {
         $query = $this->buildPerpajakanQuery($request);
-        $handlerOptions = $this->buildPerpajakanHandlerOptions();
+        $bagianMap = \App\Support\HandlerOptions::bagianMap();
         $viewerRole = Auth::user()?->role;
 
         $rows = $query->get()
-            ->map(fn (Dokumen $d) => \App\Support\PerpajakanDocumentRow::fromDokumen($d, $handlerOptions, $viewerRole))
+            ->map(fn (Dokumen $d) => \App\Support\PerpajakanDocumentRow::fromDokumen(
+                $d,
+                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                $viewerRole
+            ))
             ->all();
 
         $catalog = config('document_columns.base');

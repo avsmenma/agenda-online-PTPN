@@ -157,14 +157,13 @@ class OperatorDatatableTest extends TestCase
         );
     }
 
-    public function test_handler_options_berisi_5_opsi_base_dan_optgroup_bagian(): void
+    public function test_handler_options_berisi_5_opsi_base_dan_hanya_bagian_milik_dokumen(): void
     {
-        Bagian::create([
-            'kode' => 'KEU',
-            'nama' => 'Keuangan',
-        ]);
+        Bagian::create(['kode' => 'KEU', 'nama' => 'Keuangan']);
+        // Bagian lain yang TIDAK boleh ikut muncul — inilah inti aturannya.
+        Bagian::create(['kode' => 'SDM', 'nama' => 'Sumber Daya Manusia']);
 
-        $this->buatDokumen(1);
+        $this->buatDokumen(1)->update(['bagian' => 'KEU']);
 
         $response = $this->actingAs($this->operator())
             ->getJson(route('documents.data'));
@@ -186,5 +185,25 @@ class OperatorDatatableTest extends TestCase
         ];
 
         $this->assertSame($expected, $response->json('data.0.handler_options'));
+    }
+
+    public function test_dokumen_tanpa_bagian_tidak_dapat_optgroup_bagian(): void
+    {
+        Bagian::create(['kode' => 'KEU', 'nama' => 'Keuangan']);
+
+        // buatDokumen() tidak mengisi kolom bagian.
+        $this->buatDokumen(1);
+
+        $response = $this->actingAs($this->operator())
+            ->getJson(route('documents.data'));
+
+        $response->assertOk();
+
+        $opsi = $response->json('data.0.handler_options');
+
+        $this->assertCount(5, $opsi, 'Hanya 5 opsi peran, tanpa optgroup Bagian.');
+        foreach ($opsi as $item) {
+            $this->assertArrayNotHasKey('optgroup', $item);
+        }
     }
 }

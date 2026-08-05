@@ -49,11 +49,15 @@ class DashboardAkutansiController extends Controller
 
         $paginator = $query->paginate($size, ['*'], 'page', $page);
 
-        $handlerOptions = $this->buildAkutansiHandlerOptions();
+        $bagianMap = \App\Support\HandlerOptions::bagianMap();
         $viewerRole = Auth::user()?->role;
 
         $data = collect($paginator->items())
-            ->map(fn ($d) => \App\Support\AkutansiDocumentRow::fromDokumen($d, $handlerOptions, $viewerRole))
+            ->map(fn ($d) => \App\Support\AkutansiDocumentRow::fromDokumen(
+                $d,
+                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                $viewerRole
+            ))
             ->all();
 
         return response()->json([
@@ -61,34 +65,6 @@ class DashboardAkutansiController extends Controller
             'total'     => $paginator->total(),
             'data'      => $data,
         ]);
-    }
-
-    /**
-     * Opsi pengurus dokumen (handler_options) SEKALI per-request: 5 peran base +
-     * optgroup Bagian bila ada. Ditanam apa adanya oleh AkutansiDocumentRow.
-     * Bentuk identik DokumenController::buildHandlerOptions() (sumber tunggal bentuk).
-     */
-    private function buildAkutansiHandlerOptions(): array
-    {
-        $handlerOptions = [
-            ['value' => 'operator',        'label' => 'Operator'],
-            ['value' => 'team_verifikasi', 'label' => 'Tim Verifikasi'],
-            ['value' => 'perpajakan',      'label' => 'Tim Perpajakan'],
-            ['value' => 'akutansi',        'label' => 'Tim Akuntansi'],
-            ['value' => 'pembayaran',      'label' => 'Tim Pembayaran'],
-        ];
-        $bagian = \App\Models\Bagian::active()->ordered()->get(['kode', 'nama']);
-        if ($bagian->isNotEmpty()) {
-            $handlerOptions[] = [
-                'optgroup' => 'Bagian',
-                'options'  => $bagian->map(fn ($b) => [
-                    'value' => 'bagian_' . strtolower($b->kode),
-                    'label' => $b->nama ?: $b->kode,
-                ])->all(),
-            ];
-        }
-
-        return $handlerOptions;
     }
 
     /**
@@ -106,11 +82,15 @@ class DashboardAkutansiController extends Controller
     public function exportDocuments(Request $request): \Symfony\Component\HttpFoundation\Response
     {
         $query = $this->buildAkutansiQuery($request);
-        $handlerOptions = $this->buildAkutansiHandlerOptions();
+        $bagianMap = \App\Support\HandlerOptions::bagianMap();
         $viewerRole = Auth::user()?->role;
 
         $rows = $query->get()
-            ->map(fn (Dokumen $d) => \App\Support\AkutansiDocumentRow::fromDokumen($d, $handlerOptions, $viewerRole))
+            ->map(fn (Dokumen $d) => \App\Support\AkutansiDocumentRow::fromDokumen(
+                $d,
+                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                $viewerRole
+            ))
             ->all();
 
         $catalog = config('document_columns.base');
