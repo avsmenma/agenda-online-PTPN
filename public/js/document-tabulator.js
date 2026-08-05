@@ -581,7 +581,7 @@
   function fmtDeadline(cell) {
     const d = cell.getRow().getData().deadline;
     if (!d || d.variant === 'none') {
-      return '<div class="no-deadline"><i class="fa-solid fa-clock"></i><span>Belum diterima</span></div>';
+      return '<div class="no-deadline"><i class="fa-solid fa-clock"></i><span>Belum masuk</span></div>';
     }
     if (d.variant === 'sent_fallback') {
       return '<div class="deadline-card deadline-sent deadline-gray">' +
@@ -991,7 +991,7 @@
   // semacam itu, jadi tak ada pemicu alami. Naikkan angka ini SETIAP kali sebuah
   // deploy mengubah lebar alami kolom tanpa mengubah daftar kolomnya.
   //   v2 (2026-08-05) — format tanggal kartu Deadline diringkas jadi d/m/y H:i.
-  const VERSI_SUSUNAN_KOLOM = 'v3';
+  const VERSI_SUSUNAN_KOLOM = 'v4';
   const sidikJariKolom = hashSusunanKolom(
     (CFG.columns || []).map(function (c) { return c.key; }).join(',') +
     '|L:' + bekuKiriUntukHash.join(',') +

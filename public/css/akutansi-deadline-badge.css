@@ -473,11 +473,16 @@
     .no-deadline {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      /* Dirampingkan 2026-08-05 bersama penyempitan kolom Deadline (width 110):
+         pada lebar itu ruang isi sel hanya ~93px, sedangkan gaya lama menuntut
+         127px sehingga teksnya membungkus dan MENAIKKAN tinggi seluruh baris
+         kosong -- padahal baris kosong jauh lebih banyak daripada baris berkartu. */
+      white-space: nowrap;
+      gap: 4px;
       color: #9ca3af;
-      font-size: 11px;
+      font-size: 10px;
       font-style: italic;
-      padding: 8px 12px;
+      padding: 4px 8px;
       border-radius: 20px;
       background: #f9fafb;
       border: 1px dashed #d1d5db;
