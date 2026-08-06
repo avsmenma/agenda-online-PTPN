@@ -1181,10 +1181,16 @@
                             @elseif($col == 'nilai_rupiah')
                               <strong style="color: #000000;">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong>
                             @elseif($col == 'pengembalian')
-                              {{-- Kolom sempit khusus pengembalian. Badge + modal alasan sebenarnya
-                                   sudah lama ada di cabang $col == 'status' di bawah, tapi 'status'
-                                   tak pernah masuk daftar kolom Bagian sehingga TIDAK PERNAH tampil.
-                                   Di sinilah ia akhirnya bisa terlihat. --}}
+                              {{-- Kolom sempit khusus pengembalian. Badge + modal alasan dulu
+                                   berada di cabang $col == 'status' yang TIDAK PERNAH bisa tampil
+                                   ('status' tak ada di daftar kolom Bagian); cabang itu sudah
+                                   dihapus (commit c839666) dan di sinilah penggantinya.
+
+                                   Sel HANYA memuat badge. Tanggal & jam pengembalian sengaja
+                                   TIDAK ditulis di sini: modal sudah menampilkannya dengan format
+                                   yang sama (#rejectionTanggal <- rejected_at dari
+                                   BagianDokumenController::getReturnDetail). Menuliskannya dua
+                                   kali hanya menambah tinggi baris. --}}
                               @if(strtolower($doc->status ?? '') === 'returned_to_bidang')
                                 <span class="badge-status badge-dikembalikan"
                                   style="cursor: pointer;"
@@ -1195,9 +1201,6 @@
                                     <span style="text-decoration: underline; font-weight: 700;">Alasan</span>
                                   </span>
                                 </span>
-                                @if($doc->returned_at)
-                                  <br><small class="text-muted">{{ \Carbon\Carbon::parse($doc->returned_at)->format('d/m/Y H:i') }}</small>
-                                @endif
                               @else
                                 <span class="text-muted">-</span>
                               @endif
