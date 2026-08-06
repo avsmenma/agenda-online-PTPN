@@ -48,7 +48,7 @@ abstract class DocumentRow
         // Join nomor PO dengan fallback ke kolom CSV NO_PO.
         $row['nomor_po']           = $dokumen->dokumenPos->pluck('nomor_po')->filter()->join(', ') ?: ($dokumen->NO_PO ?? '-');
         $row['nomor_miro_display'] = $dokumen->nomor_miro_display;
-        $row['handler']            = $dokumen->current_handler;
+        $row['handler']            = static::handlerUntukTampilan($dokumen, $handlerOptions);
         $row['handler_options']    = $handlerOptions;
 
         // === can_change_handler: paritas gate dropdown pengurus. 'verifikasi' &
@@ -74,6 +74,65 @@ abstract class DocumentRow
     {
         $role = strtolower(trim((string) $role));
         return $role === 'verifikasi' ? 'team_verifikasi' : $role;
+    }
+
+    /**
+     * Nilai yang DITAMPILKAN (terpilih) di dropdown Pengurus Dokumen.
+     *
+     * Saat dokumen sedang dikembalikan ke Bagian, kolom `current_handler` di database
+     * SENGAJA tetap berisi role pengembali — bukan bagian tujuan. Itu bukan kelalaian:
+     * `can_change_handler` (baris di baseRow) membandingkan viewerRole dengan
+     * current_handler, jadi kalau diubah ke 'bagian_x' dropdown milik pengembali akan
+     * DISABLED dan dokumennya tak akan pernah bisa ditarik kembali. Perilaku itu
+     * ditetapkan commit a1c9260 (2026-05-13) dan tetap dipertahankan.
+     *
+     * Yang diperbaiki di sini murni TAMPILAN: dropdown dulu menampilkan "Tim Verifikasi"
+     * padahal badge di sebelahnya berkata "Dikembalikan ke AKN" — dua pesan bertentangan
+     * di satu baris. Sekarang yang tampil adalah bagian tujuan, sementara data dan
+     * mekanisme tarik-kembali tidak disentuh sama sekali.
+     *
+     * Bila return_source tidak punya opsi padanan (data lama yang return_source-nya
+     * berbeda dari kolom bagian), kembali ke current_handler — menampilkan opsi pertama
+     * yang kebetulan terpilih ("Operator") jauh lebih menyesatkan.
+     */
+    protected static function handlerUntukTampilan(Dokumen $dokumen, array $handlerOptions): ?string
+    {
+        if (strtolower((string) $dokumen->status) !== 'returned_to_bidang') {
+            return $dokumen->current_handler;
+        }
+
+        $kode = strtolower(trim((string) $dokumen->return_source));
+        if ($kode === '') {
+            return $dokumen->current_handler;
+        }
+
+        $nilai = 'bagian_' . $kode;
+
+        return static::opsiHandlerAda($nilai, $handlerOptions)
+            ? $nilai
+            : $dokumen->current_handler;
+    }
+
+    /** True bila $nilai ada sebagai <option>, termasuk di dalam optgroup. */
+    private static function opsiHandlerAda(string $nilai, array $handlerOptions): bool
+    {
+        foreach ($handlerOptions as $opsi) {
+            if (isset($opsi['optgroup'])) {
+                foreach (($opsi['options'] ?? []) as $anak) {
+                    if (($anak['value'] ?? null) === $nilai) {
+                        return true;
+                    }
+                }
+
+                continue;
+            }
+
+            if (($opsi['value'] ?? null) === $nilai) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
