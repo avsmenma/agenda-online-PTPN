@@ -2159,8 +2159,16 @@
         // Pill status kini menyatu ke kolom katalog 'status_pembayaran' di atas —
         // tanpa kolom tetap terpisah lagi (dulu dobel dgn "Status Pembayaran").
         'extraColumns' => [],
-        // Pembayaran = ujung alur, tanpa "Pengurus Dokumen" berikutnya untuk di-forward.
-        'showHandler' => false,
+        // Kolom "Pengurus Dokumen" DIHIDUPKAN 2026-08-06 (keputusan user). Dulu dimatikan
+        // dengan alasan "Pembayaran = ujung alur, tak ada tahap berikutnya untuk di-forward"
+        // — itu menjawab soal AKSI, bukan soal INFORMASI. Pembayaran adalah satu-satunya
+        // role yang menampilkan dokumen TANPA filter current_handler (termasuk hasil impor
+        // CSV), jadi merekalah yang paling sering melihat dokumen yang belum sampai ke
+        // mejanya dan paling butuh tahu posisinya.
+        // Dropdown otomatis nonaktif untuk dokumen di tahap lain (can_change_handler =
+        // viewerRole === current_handler), dan aktif untuk dokumen yang memang sedang di
+        // Pembayaran — sama persis dengan 4 role lain.
+        'showHandler' => true,
         // Freeze 2-tab (modal Kolom Beku di bawah) → frozen native Tabulator.
         'frozen' => ['left' => array_values($frozenLeft), 'right' => array_values($frozenRight)],
         'ie' => [
@@ -2444,7 +2452,8 @@
     {{-- Rollout 4: engine Tabulator bersama menggantikan renderer bespoke di atas.
          window.DOCUMENT_TABULATOR_CONFIG dibangun dari $pembayaranTabulatorConfig
          (dihitung dekat "Table Section" di atas — columns via FrozenColumnLayout::
-         renderOrder, frozen dari $frozenLeft/$frozenRight, showHandler:false. Pill
+         renderOrder, frozen dari $frozenLeft/$frozenRight, showHandler:true sejak
+         2026-08-06. Pill
          status kini menyatu ke kolom katalog 'status_pembayaran' via
          columns[].formatter='paymentPill', bukan extraColumns terpisah — fix QA
          dobel kolom Status). --}}

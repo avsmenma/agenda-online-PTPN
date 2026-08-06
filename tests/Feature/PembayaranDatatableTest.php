@@ -73,4 +73,50 @@ class PembayaranDatatableTest extends TestCase
     {
         $this->getJson(route('documents.pembayaran.data'))->assertUnauthorized();
     }
+
+    /**
+     * Kolom "Pengurus Dokumen" dihidupkan untuk Pembayaran 2026-08-06. Sebelumnya
+     * handler_options selalu dikirim kosong sehingga formatter merender '-'.
+     */
+    public function test_baris_membawa_opsi_pengurus_dokumen(): void
+    {
+        \App\Models\Bagian::create(['kode' => 'KEU', 'nama' => 'Keuangan']);
+        $this->buatDokumen('3', ['bagian' => 'KEU']);
+
+        $response = $this->actingAs($this->pembayaran())->getJson(route('documents.pembayaran.data'));
+
+        $response->assertOk();
+
+        $opsi = $response->json('data.0.handler_options');
+
+        $this->assertNotEmpty($opsi, 'handler_options kosong => dropdown akan merender "-".');
+        $this->assertSame('operator', $opsi[0]['value']);
+        $this->assertSame(
+            [['value' => 'bagian_keu', 'label' => 'Keuangan']],
+            $opsi[5]['options'],
+            'Optgroup Bagian harus menyempit ke bagian milik dokumen itu saja.'
+        );
+    }
+
+    public function test_dropdown_aktif_untuk_dokumen_di_pembayaran_dan_mati_untuk_tahap_lain(): void
+    {
+        $this->buatDokumen('4');                                    // current_handler = pembayaran
+        $this->buatDokumen('5', ['current_handler' => 'perpajakan']);
+
+        $response = $this->actingAs($this->pembayaran())->getJson(route('documents.pembayaran.data'));
+
+        $response->assertOk();
+
+        $baris = collect($response->json('data'))->keyBy('nomor_agenda');
+
+        $this->assertTrue(
+            $baris['4']['can_change_handler'],
+            'Dokumen yang sedang di Pembayaran harus bisa dipindahkan.'
+        );
+        $this->assertFalse(
+            $baris['5']['can_change_handler'],
+            'Dokumen di tahap lain hanya boleh DITAMPILKAN posisinya, tidak bisa diubah.'
+        );
+        $this->assertSame('perpajakan', $baris['5']['handler']);
+    }
 }

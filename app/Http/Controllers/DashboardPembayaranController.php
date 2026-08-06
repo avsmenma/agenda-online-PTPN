@@ -657,8 +657,18 @@ class DashboardPembayaranController extends Controller
 
         $paginator = $query->paginate($size, ['*'], 'page', $page);
 
+        // Opsi pengurus dokumen kini DIISI (dulu selalu []) karena kolom "Pengurus
+        // Dokumen" dihidupkan untuk Pembayaran — mereka satu-satunya role yang melihat
+        // dokumen TANPA filter current_handler (termasuk hasil impor CSV), jadi justru
+        // paling butuh tahu posisi tiap dokumen. Peta bagian dibangun sekali per-request.
+        $bagianMap = \App\Support\HandlerOptions::bagianMap();
+
         $data = collect($paginator->items())
-            ->map(fn ($d) => \App\Support\PembayaranDocumentRow::fromDokumen($d, [], 'pembayaran'))
+            ->map(fn ($d) => \App\Support\PembayaranDocumentRow::fromDokumen(
+                $d,
+                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                'pembayaran'
+            ))
             ->all();
 
         return response()->json([
