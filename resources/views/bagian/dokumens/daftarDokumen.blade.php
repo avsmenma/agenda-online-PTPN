@@ -1024,6 +1024,58 @@
       word-wrap: break-word;
     }
 
+    /* ===== Perjalanan dokumen (kolom Pengurus Dokumen) ===== */
+    .dj-cell {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      padding: 4px 6px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: none;
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+    }
+
+    .dj-cell:hover,
+    .dj-cell:focus-visible {
+      background: #f4f7fb;
+      border-color: #e2e8f0;
+    }
+
+    .dj-track {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .dj-node {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1.5px solid #cbd5e1;
+      flex: 0 0 auto;
+    }
+
+    .dj-node--selesai          { background: #10b981; border-color: #10b981; }
+    .dj-node--sekarang         { background: #0ea5e9; border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14, 165, 233, .18); }
+    .dj-node--dilewati         { background: #e2e8f0; border-color: #e2e8f0; }
+    .dj-node--belum            { background: #fff; border-color: #cbd5e1; }
+    .dj-node--netral           { background: #f1f5f9; border-color: #e2e8f0; }
+    .dj-node--perlu_diperbaiki { background: #f59e0b; border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, .22); }
+
+    .dj-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    .dj-cell--action .dj-label { color: #b45309; }
+
   </style>
 
   <div class="container-fluid py-4">
@@ -1344,8 +1396,30 @@
                           </td>
                         @endforeach
                         <td class="col-pengurus" onclick="event.stopPropagation()">
-                          {{-- Bagian view-only: posisi dokumen ditampilkan read-only (bukan dropdown yang bisa mengubah) --}}
-                          <span class="text-muted">{{ strtolower($doc->current_handler ?? 'operator') === 'operator' ? 'Operator' : \App\Models\Dokumen::getRoleDisplayNameIndo($doc->current_handler) }}</span>
+                          {{-- Bagian view-only: perjalanan ditampilkan read-only.
+                               Rinciannya di modal (Task 4) yang membaca data-perjalanan —
+                               tanpa endpoint baru, datanya sudah ada di halaman. --}}
+                          @php $jalan = $perjalanan[$doc->id] ?? null; @endphp
+                          @if($jalan)
+                            <button type="button"
+                                    class="dj-cell {{ $jalan['needs_action'] ? 'dj-cell--action' : '' }}"
+                                    title="Klik untuk melihat perjalanan dokumen"
+                                    data-perjalanan="{{ json_encode($jalan) }}"
+                                    onclick="event.stopPropagation(); tampilkanPerjalanan(this)">
+                              <span class="dj-track">
+                                @foreach($jalan['stages'] as $i => $tahap)
+                                  {{-- Simpul Bagian hanya ditampilkan di sel saat dokumen
+                                       dikembalikan; selebihnya ia inert dan hanya menambah derau. --}}
+                                  @if($i > 0 || $jalan['needs_action'])
+                                    <span class="dj-node dj-node--{{ $tahap['state'] }}"></span>
+                                  @endif
+                                @endforeach
+                              </span>
+                              <span class="dj-label">{{ $jalan['current_label'] }}</span>
+                            </button>
+                          @else
+                            <span class="text-muted">-</span>
+                          @endif
                         </td>
                         <td class="col-status_pembayaran">
                           @php

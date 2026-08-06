@@ -59,7 +59,7 @@ class BagianDokumenController extends Controller
         }
 
         // View-only monitoring: tampilkan semua dokumen milik bagian ini (kolom `bagian`)
-        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas'])
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
             ->where('bagian', $bagianCode)
             // Urut TERBARU → TERLAMA berdasarkan angka nomor agenda (bagian sebelum "_",
             // mis. "3075_2026" → 3075). REGEXP lama gagal karena ada sufiks "_2026".
@@ -203,6 +203,21 @@ class BagianDokumenController extends Controller
             ->take(20)
             ->get();
 
+        // Perjalanan dokumen dalam alur keuangan (kolom Pengurus Dokumen).
+        // roleData sudah ter-eager-load di query atas, jadi tidak ada query per-baris.
+        $perjalanan = [];
+        foreach ($dokumens as $dokumen) {
+            $roleCodeTerlacak = $dokumen->roleData
+                ->filter(fn ($rd) => $rd->received_at !== null)
+                ->pluck('role_code')
+                ->all();
+
+            $perjalanan[$dokumen->id] = \App\Support\DocumentJourney::forDokumen(
+                $dokumen,
+                $roleCodeTerlacak
+            );
+        }
+
         return view('bagian.dokumens.daftarDokumen', compact(
             'dokumens',
             'bagianCode',
@@ -212,7 +227,8 @@ class BagianDokumenController extends Controller
             'totalDokumen',
             'totalBelumDibayar',
             'totalSudahDibayar',
-            'notifPengembalian'
+            'notifPengembalian',
+            'perjalanan'
         ));
     }
 
