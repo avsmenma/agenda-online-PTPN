@@ -2722,11 +2722,12 @@
 
   {{-- Modal perjalanan dokumen. Diisi dari atribut data-perjalanan pada sel —
        TANPA panggilan AJAX, karena datanya sudah dirender bersama halaman. --}}
-  <div class="modal fade" id="perjalananModal" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="perjalananModal" tabindex="-1" aria-labelledby="perjalananModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content" style="border: none; border-radius: 16px;">
         <div class="modal-header" style="border-bottom: 1px solid #e2e8f0;">
-          <h5 class="modal-title" style="font-size: 1.05rem; font-weight: 700; color: #1f2937;">
+          <h5 class="modal-title" id="perjalananModalLabel" style="font-size: 1.05rem; font-weight: 700; color: #1f2937;">
             <i class="fa-solid fa-route me-2" style="color: #0ea5e9;"></i>Perjalanan Dokumen
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
@@ -2865,7 +2866,17 @@
         perlu_diperbaiki: 'perlu diperbaiki',
       };
 
-      daftar.innerHTML = (jalan.stages || []).map(function (tahap) {
+      // Simpul Bagian (stages[0]) disembunyikan kecuali dokumen sedang
+      // dikembalikan (needs_action) — aturan yang SAMA dipakai sel tabel
+      // (lihat kondisi "$i > 0 || $jalan['needs_action']" di kolom Pengurus Dokumen).
+      // Tanpa penyaringan ini, dokumen normal menampilkan baris pertama
+      // "Bagian (AKN) — BELUM" yang menyesatkan karena dokumennya justru
+      // berasal dari Bagian tersebut.
+      const tahapTampil = (jalan.stages || []).filter(function (tahap, i) {
+        return i > 0 || jalan.needs_action;
+      });
+
+      daftar.innerHTML = tahapTampil.map(function (tahap) {
         return '<li class="is-' + tahap.state + '">' +
           '<span class="dj-node dj-node--' + tahap.state + '"></span>' +
           '<span class="dj-nama"></span>' +
@@ -2876,7 +2887,7 @@
       // Teks disisipkan lewat textContent, bukan innerHTML — label memuat nama bagian
       // dari database dan tidak boleh diperlakukan sebagai HTML.
       Array.from(daftar.children).forEach(function (li, i) {
-        const tahap = jalan.stages[i];
+        const tahap = tahapTampil[i];
         li.querySelector('.dj-nama').textContent = tahap.label;
         li.querySelector('.dj-ket').textContent  = keterangan[tahap.state] || tahap.state;
       });

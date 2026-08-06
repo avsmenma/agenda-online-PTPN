@@ -142,6 +142,48 @@ class PerjalananDokumenBagianTest extends TestCase
         );
     }
 
+    public function test_modal_perjalanan_js_menyaring_simpul_bagian_kecuali_needs_action(): void
+    {
+        $this->dokumen('5');
+
+        $response = $this->actingAs($this->userBagian())
+            ->get(route('bagian.documents.index'))
+            ->assertOk();
+
+        $html = $response->getContent();
+
+        // Ambil badan fungsi tampilkanPerjalanan saja (bukan seluruh halaman) supaya
+        // assertion tak bisa lolos oleh kecocokan kebetulan di tempat lain pada file.
+        $awal = strpos($html, 'window.tampilkanPerjalanan = function');
+        $this->assertNotFalse($awal, 'Fungsi tampilkanPerjalanan tidak ditemukan di halaman.');
+        $akhir = strpos($html, 'window.showRejectionModal = function', $awal);
+        $this->assertNotFalse($akhir, 'Penanda akhir fungsi tampilkanPerjalanan tidak ditemukan.');
+        $badanFungsi = substr($html, $awal, $akhir - $awal);
+
+        // Dipersempit ke potongan kode filter yang khas — bukan string pendek seperti
+        // 'needs_action' saja, yang JUGA muncul di atribut
+        // data-perjalanan="{{ json_encode($jalan) }}" pada sel tabel (Task 3). Sebuah
+        // assertSee pendek akan selalu lolos lewat JSON itu, terlepas apakah modal
+        // betulan menyaring simpul Bagian atau tidak — persis pola kegagalan yang
+        // sudah tiga kali terjadi di berkas ini (lihat komentar test-test di atas).
+        $this->assertStringContainsString(
+            'const tahapTampil = (jalan.stages || []).filter(function (tahap, i) {',
+            $badanFungsi,
+            'Modal harus membangun daftar tahap terfilter (tahapTampil), bukan memakai jalan.stages mentah.'
+        );
+        $this->assertStringContainsString(
+            'return i > 0 || jalan.needs_action;',
+            $badanFungsi,
+            'Aturan filter modal harus sama persis dengan sel tabel: lewati stages[0] kecuali needs_action.'
+        );
+
+        // Modal WAJIB me-render dan mengisi teks dari tahapTampil yang SAMA (bukan
+        // jalan.stages mentah lagi) — kalau tidak, pemasangan indeks <li> dengan
+        // tahap akan meleset begitu simpul pertama disaring.
+        $this->assertStringContainsString('tahapTampil.map(function (tahap) {', $badanFungsi);
+        $this->assertStringContainsString('const tahap = tahapTampil[i];', $badanFungsi);
+    }
+
     public function test_markup_modal_perjalanan_ikut_dirender(): void
     {
         $this->dokumen('4');
