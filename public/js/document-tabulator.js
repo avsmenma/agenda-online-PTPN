@@ -65,6 +65,15 @@
     tanggal_paraf: 'date',
     tanggal_miro: 'date',
     tanggal_selesai_verifikasi_pajak: 'date',
+    // Sudah lama ada di DATE_COLS (jadi TAMPILANNYA dd-mm-yyyy) tapi tak pernah
+    // ada di sini — sehingga EDITORNYA jatuh ke 'text' dan user mengetik tanggal
+    // ke input teks bebas. Dua peta ini harus sejalan.
+    //
+    // 'tanggal_kembali_ke_bagian' & 'tanggal_hasil_koreksi_bagian' SENGAJA tidak
+    // ikut: kolom DB-nya tidak pernah ada (lihat catatan di
+    // DokumenController::inlineUpdate). Memberi mereka editor tanggal hanya
+    // membuat user mengisi sesuatu yang mustahil tersimpan.
+    tanggal_selesai_diproses: 'date',
     tanggal_dibayar: 'date',
     kebun: 'text',
     bagian: 'select_bagian',

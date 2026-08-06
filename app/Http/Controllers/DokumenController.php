@@ -971,6 +971,22 @@ class DokumenController extends Controller
             'nomor_miro', 'tanggal_miro', 'no_faktur', 'tanggal_faktur',
             'tanggal_paraf', 'pemaraf', 'bulan', 'tahun',
             'tanggal_dibayar',
+            // Kolom data biasa yang SUDAH lama tampil sebagai sel bisa-diedit di
+            // tabel, tetapi tak pernah masuk whitelist ini — sehingga setiap
+            // penyimpanan ditolak 422 "Field tidak dapat diedit." tanpa alasan yang
+            // terlihat oleh user. Diverifikasi 2026-08-06: nol logika bisnis
+            // memakainya (tanggal_selesai_diproses & kepala_sub_bagian hanya diisi
+            // impor CSV; keterangan hanya dipakai pencarian). Sejenis data dengan
+            // tanggal_spp, bukan jejak alur otomatis.
+            //
+            // SENGAJA TIDAK termasuk 'tanggal_kembali_ke_bagian' dan
+            // 'tanggal_hasil_koreksi_bagian': keduanya ada di katalog kolom
+            // (config/document_columns.php:50-51) tetapi KOLOM DB-NYA TIDAK PERNAH ADA
+            // (nol migrasi; diverifikasi langsung ke information_schema produksi
+            // 2026-08-06). Memasukkannya ke sini hanya mengubah penolakan 422 yang
+            // bersih menjadi error 500. Nasibnya menunggu keputusan pemilik: dibuatkan
+            // migrasi, atau dihapus dari katalog.
+            'tanggal_selesai_diproses', 'keterangan', 'kepala_sub_bagian',
             // Perpajakan-specific
             'jenis_pph', 'dpp_pph', 'ppn_terhutang', 'tanggal_selesai_verifikasi_pajak',
             'npwp', 'link_dokumen_pajak',
