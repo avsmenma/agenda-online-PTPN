@@ -189,3 +189,28 @@
 @media (prefers-reduced-motion: reduce) {
   .dbadge--clickable { transition: none; }
 }
+
+/* ============================================================
+   Kolom Paraf verifikasi
+   ============================================================
+   Dipindahkan APA ADANYA dari public/css/verifikasi-deadline-badge.css saat
+   berkas itu dihapus. Satu-satunya kelas di ketiga berkas lama yang masih punya
+   pemakai: formatter `parafBadge` (document-tabulator.js) untuk kolom Paraf
+   tetap milik verifikasi.
+
+   Sengaja TIDAK diselaraskan ke sistem pil .dbadge — commit penghapusan harus
+   behavior-preserving. Menyelaraskannya adalah keputusan tampilan tersendiri.
+   ============================================================ */
+
+.badge-paraf-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}

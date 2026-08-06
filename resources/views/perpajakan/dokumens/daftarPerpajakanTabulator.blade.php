@@ -88,10 +88,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('vendor/tabulator/tabulator.min.css') }}">
     <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/tabulator-agenda.css') }}">
-    <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/perpajakan-deadline-badge.css') }}">
-    {{-- Badge Deadline & Status bentuk baru (pil ringkas + popover rincian), satu
-         berkas untuk 3 role. Dimuat SETELAH berkas lama supaya menang bila ada
-         selector yang bertabrakan. --}}
+    {{-- Badge Deadline & Status (pil ringkas + popover rincian) — satu berkas
+         bersama untuk akutansi/perpajakan/verifikasi. Menggantikan
+         perpajakan-deadline-badge.css yang dihapus 2026-08-06. --}}
     <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/document-badges.css') }}">
     <style>
     /* Toolbar filter Tabulator */
