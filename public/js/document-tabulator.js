@@ -577,9 +577,21 @@
     'badge-locked': 'idle',
   };
 
+  // Buang emoji/simbol pembuka pada teks badge dari server (mis. '⏳ Draft',
+  // '🔒 Terkunci'). Dulu emoji itu satu-satunya penanda visual selain warna blok;
+  // sekarang titik 6px sudah mengerjakan tugas yang sama, jadi emoji hanya
+  // mengulang dan membuat pil terlihat ramai. Teks yang seluruhnya simbol
+  // dibiarkan apa adanya agar tidak berubah jadi pil kosong.
+  function bersihkanLabel(teks) {
+    const bersih = String(teks == null ? '' : teks).replace(/^[^\p{L}\p{N}]+\s*/u, '');
+    return bersih !== '' ? bersih : String(teks == null ? '' : teks);
+  }
+
   // Bangun pil. `detail` (opsional) = {head, rows:[[label,nilai]], note, link}
   // ditanam sebagai JSON di data-dbpop dan dibaca listener popover.
   function pill(state, label, detail) {
+    label = bersihkanLabel(label);
+    if (detail && detail.head) { detail.head = bersihkanLabel(detail.head); }
     const bisaKlik = detail && ((detail.rows && detail.rows.length) || detail.note || detail.link);
     let html = '<span class="dbadge dbadge--' + esc(state) + (bisaKlik ? ' dbadge--clickable' : '') + '"';
     if (bisaKlik) {
