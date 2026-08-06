@@ -60,6 +60,7 @@ class DocumentJourneyTest extends TestCase
         $hasil = DocumentJourney::forDokumen($this->dokumen(), ['team_verifikasi']);
         $peta  = $this->petaState($hasil);
 
+        $this->assertSame('belum', $peta['bagian']);
         $this->assertSame('selesai', $peta['operator']);
         $this->assertSame('sekarang', $peta['verifikasi']);
         $this->assertSame('belum', $peta['perpajakan']);
@@ -67,6 +68,7 @@ class DocumentJourneyTest extends TestCase
         $this->assertSame('belum', $peta['pembayaran']);
         $this->assertFalse($hasil['needs_action']);
         $this->assertSame('Verifikasi', $hasil['current_label']);
+        $this->assertSame(2, $hasil['current_index']);
     }
 
     public function test_dokumen_di_ujung_alur(): void
@@ -82,6 +84,7 @@ class DocumentJourneyTest extends TestCase
         $this->assertSame('selesai', $peta['perpajakan']);
         $this->assertSame('selesai', $peta['akutansi']);
         $this->assertSame('sekarang', $peta['pembayaran']);
+        $this->assertSame(5, $hasil['current_index']);
     }
 
     public function test_dokumen_dikembalikan_menyalakan_simpul_bagian(): void
@@ -128,6 +131,7 @@ class DocumentJourneyTest extends TestCase
         $this->assertSame('sekarang', $peta['operator']);
         $this->assertSame('belum', $peta['verifikasi']);
         $this->assertSame('Operator', $hasil['current_label']);
+        $this->assertSame(1, $hasil['current_index']);
     }
 
     public function test_current_handler_tak_dikenal_jatuh_ke_operator(): void
@@ -144,5 +148,15 @@ class DocumentJourneyTest extends TestCase
                 'Gagal untuk current_handler: ' . var_export($nilai, true)
             );
         }
+    }
+
+    public function test_label_simpul_bagian_tanpa_kode_bagian(): void
+    {
+        $hasil = DocumentJourney::forDokumen(
+            $this->dokumen(['bagian' => null, 'status' => 'returned_to_bidang']),
+            ['team_verifikasi']
+        );
+
+        $this->assertSame('Bagian', $hasil['stages'][0]['label']);
     }
 }
