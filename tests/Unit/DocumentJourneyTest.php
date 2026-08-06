@@ -159,4 +159,76 @@ class DocumentJourneyTest extends TestCase
 
         $this->assertSame('Bagian', $hasil['stages'][0]['label']);
     }
+
+    /**
+     * sendToRoleInbox() menulis baris dokumen_statuses 'pending' untuk tahap tujuan
+     * TANPA memajukan current_handler (approveFromRoleInbox() yang memajukannya, hanya
+     * saat dokumen diterima). Selama dokumen menunggu di inbox — bisa berhari-hari —
+     * Bagian tidak boleh melihatnya seolah masih di tahap lama: tahap tujuan yang
+     * pending WAJIB jadi posisi efektif, dengan state 'menunggu_diterima' (bukan
+     * 'sekarang', karena dokumen belum benar-benar diterima tahap itu).
+     */
+    public function test_tahap_pending_ditandai_menunggu_diterima(): void
+    {
+        $hasil = DocumentJourney::forDokumen(
+            $this->dokumen(), // current_handler default 'team_verifikasi'
+            ['team_verifikasi'],
+            ['perpajakan']
+        );
+        $peta = $this->petaState($hasil);
+
+        $this->assertSame('selesai', $peta['operator']);
+        $this->assertSame('selesai', $peta['verifikasi']);
+        $this->assertSame('menunggu_diterima', $peta['perpajakan']);
+        $this->assertSame('belum', $peta['akutansi']);
+        $this->assertSame('belum', $peta['pembayaran']);
+        $this->assertSame('Menunggu Perpajakan', $hasil['current_label']);
+        $this->assertSame(3, $hasil['current_index']);
+        $this->assertFalse($hasil['needs_action']);
+    }
+
+    /**
+     * Bila ada lebih dari satu baris pending (seharusnya tidak terjadi, tapi
+     * DocumentJourney tidak boleh crash karenanya), tahap dengan indeks TERKECIL
+     * yang menang.
+     */
+    public function test_lebih_dari_satu_tahap_pending_pakai_indeks_terkecil(): void
+    {
+        $hasil = DocumentJourney::forDokumen(
+            $this->dokumen(),
+            [],
+            ['pembayaran', 'perpajakan']
+        );
+        $peta = $this->petaState($hasil);
+
+        $this->assertSame('menunggu_diterima', $peta['perpajakan']);
+        $this->assertSame('belum', $peta['pembayaran']);
+        $this->assertSame(3, $hasil['current_index']);
+    }
+
+    /**
+     * Cabang $dikembalikan yang sudah ada tetap MENANG mutlak — dokumen yang
+     * dikembalikan ke Bagian tidak boleh sekaligus tampil "menunggu diterima" di
+     * tahap hilir, meski baris dokumen_statuses pending-nya masih ada.
+     */
+    public function test_dikembalikan_mengabaikan_role_code_menunggu(): void
+    {
+        $hasil = DocumentJourney::forDokumen(
+            // current_handler default 'team_verifikasi' => indeks 2 bila dihitung
+            // dari current_handler (tanpa campur tangan roleCodeMenunggu).
+            $this->dokumen(['status' => 'returned_to_bidang']),
+            ['team_verifikasi'],
+            ['perpajakan']
+        );
+        $peta = $this->petaState($hasil);
+
+        $this->assertSame('perlu_diperbaiki', $peta['bagian']);
+        $this->assertSame('netral', $peta['perpajakan']);
+        $this->assertTrue($hasil['needs_action']);
+        $this->assertSame('Perlu diperbaiki', $hasil['current_label']);
+        // current_index TIDAK boleh melompat ke indeks perpajakan (3) — buktikan
+        // roleCodeMenunggu betul-betul diabaikan, bukan cuma current_label/state
+        // yang kebetulan tertutup cabang $dikembalikan.
+        $this->assertSame(2, $hasil['current_index']);
+    }
 }

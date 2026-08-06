@@ -57,27 +57,42 @@ class DocumentJourney
 
     /**
      * @param  array<int,string>  $roleCodeTerlacak  role_code yang punya received_at
+     * @param  array<int,string>  $roleCodeMenunggu  role_code yang baris dokumen_statuses-nya
+     *                                                masih 'pending' (sudah dikirim, belum
+     *                                                diterima tahap tujuan)
      */
-    public static function forDokumen(Dokumen $dokumen, array $roleCodeTerlacak = []): array
-    {
+    public static function forDokumen(
+        Dokumen $dokumen,
+        array $roleCodeTerlacak = [],
+        array $roleCodeMenunggu = []
+    ): array {
         $sekarang     = self::indeksTahap($dokumen->current_handler);
         $dikembalikan = strtolower((string) $dokumen->status) === 'returned_to_bidang';
         $terlacak     = self::tahapTerlacak($roleCodeTerlacak);
+
+        // Dokumen dikembalikan menang mutlak — tahap tujuan pending tidak relevan lagi
+        // begitu bola kembali ke Bagian.
+        $indeksMenunggu = $dikembalikan ? null : self::indeksMenunggu($roleCodeMenunggu);
+        $efektif        = $indeksMenunggu ?? $sekarang;
 
         $stages = [];
         foreach (self::STAGES as $i => $tahap) {
             $stages[] = [
                 'key'   => $tahap['key'],
                 'label' => self::label($tahap, $dokumen),
-                'state' => self::keadaan($i, $sekarang, $tahap['key'], $dokumen, $terlacak, $dikembalikan),
+                'state' => self::keadaan($i, $efektif, $tahap['key'], $dokumen, $terlacak, $dikembalikan, $indeksMenunggu),
             ];
         }
 
+        $labelSekarang = self::STAGES[$efektif]['label'];
+        if ($indeksMenunggu !== null) {
+            // Jujur ke user: dokumen SUDAH DIKIRIM tapi BELUM DITERIMA tahap tujuan.
+            $labelSekarang = 'Menunggu ' . $labelSekarang;
+        }
+
         return [
-            'current_label' => $dikembalikan
-                ? 'Perlu diperbaiki'
-                : self::STAGES[$sekarang]['label'],
-            'current_index' => $sekarang,
+            'current_label' => $dikembalikan ? 'Perlu diperbaiki' : $labelSekarang,
+            'current_index' => $efektif,
             'needs_action'  => $dikembalikan,
             'stages'        => $stages,
         ];
@@ -126,13 +141,36 @@ class DocumentJourney
         return $hasil;
     }
 
+    /**
+     * Indeks tahap TERKECIL di antara role_code yang statusnya masih pending. Dipakai
+     * (bukan diduga) sebagai posisi efektif dokumen — sendToRoleInbox() menulis baris
+     * dokumen_statuses 'pending' untuk tahap tujuan TANPA memajukan current_handler,
+     * jadi current_handler saja bisa telat sampai berhari-hari.
+     *
+     * "Lebih dari satu tahap pending" seharusnya tak terjadi, tapi bila terjadi dipilih
+     * indeks terkecil — STAGES sudah berurutan menaik jadi cukup ambil kecocokan pertama.
+     */
+    private static function indeksMenunggu(array $roleCodeMenunggu): ?int
+    {
+        $tahapMenunggu = self::tahapTerlacak($roleCodeMenunggu);
+
+        foreach (self::STAGES as $i => $tahap) {
+            if (isset($tahapMenunggu[$tahap['key']])) {
+                return $i;
+            }
+        }
+
+        return null;
+    }
+
     private static function keadaan(
         int $i,
-        int $sekarang,
+        int $efektif,
         string $kunci,
         Dokumen $dokumen,
         array $terlacak,
-        bool $dikembalikan
+        bool $dikembalikan,
+        ?int $indeksMenunggu
     ): string {
         // Dokumen dikembalikan: bola di tangan Bagian, tahap hilir tidak relevan.
         if ($dikembalikan) {
@@ -143,11 +181,13 @@ class DocumentJourney
             return 'belum';
         }
 
-        if ($i === $sekarang) {
-            return 'sekarang';
+        if ($i === $efektif) {
+            // $efektif == $indeksMenunggu setiap kali tahap tujuan masih pending
+            // (lihat forDokumen()) — jadi cukup periksa apakah nilainya ada.
+            return $indeksMenunggu !== null ? 'menunggu_diterima' : 'sekarang';
         }
 
-        if ($i > $sekarang) {
+        if ($i > $efektif) {
             return 'belum';
         }
 

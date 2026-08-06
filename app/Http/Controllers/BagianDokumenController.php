@@ -11,6 +11,7 @@ use App\Models\KategoriKriteria;
 use App\Models\SubKriteria;
 use App\Models\ItemSubKriteria;
 use App\Models\DokumenRoleData;
+use App\Models\DokumenStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -59,7 +60,7 @@ class BagianDokumenController extends Controller
         }
 
         // View-only monitoring: tampilkan semua dokumen milik bagian ini (kolom `bagian`)
-        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData'])
+        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData', 'roleStatuses'])
             ->where('bagian', $bagianCode)
             // Urut TERBARU → TERLAMA berdasarkan angka nomor agenda (bagian sebelum "_",
             // mis. "3075_2026" → 3075). REGEXP lama gagal karena ada sufiks "_2026".
@@ -204,7 +205,8 @@ class BagianDokumenController extends Controller
             ->get();
 
         // Perjalanan dokumen dalam alur keuangan (kolom Pengurus Dokumen).
-        // roleData sudah ter-eager-load di query atas, jadi tidak ada query per-baris.
+        // roleData & roleStatuses sudah ter-eager-load di query atas, jadi tidak ada
+        // query per-baris.
         $perjalanan = [];
         foreach ($dokumens as $dokumen) {
             $roleCodeTerlacak = $dokumen->roleData
@@ -212,9 +214,18 @@ class BagianDokumenController extends Controller
                 ->pluck('role_code')
                 ->all();
 
+            // Baris dokumen_statuses berstatus pending = "sudah dikirim, belum diterima"
+            // tahap tujuan (sendToRoleInbox menulis ini TANPA memajukan current_handler).
+            // strtolower() di kedua sisi: data lama bisa beragam kapitalisasi.
+            $roleCodeMenunggu = $dokumen->roleStatuses
+                ->filter(fn ($rs) => strtolower((string) $rs->status) === strtolower(DokumenStatus::STATUS_PENDING))
+                ->pluck('role_code')
+                ->all();
+
             $perjalanan[$dokumen->id] = \App\Support\DocumentJourney::forDokumen(
                 $dokumen,
-                $roleCodeTerlacak
+                $roleCodeTerlacak,
+                $roleCodeMenunggu
             );
         }
 

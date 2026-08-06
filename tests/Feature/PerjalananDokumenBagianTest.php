@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Dokumen;
 use App\Models\DokumenRoleData;
+use App\Models\DokumenStatus;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -182,6 +183,35 @@ class PerjalananDokumenBagianTest extends TestCase
         // tahap akan meleset begitu simpul pertama disaring.
         $this->assertStringContainsString('tahapTampil.map(function (tahap) {', $badanFungsi);
         $this->assertStringContainsString('const tahap = tahapTampil[i];', $badanFungsi);
+    }
+
+    public function test_tahap_pending_dirender_menunggu_diterima(): void
+    {
+        $dokumen = $this->dokumen('6', ['current_handler' => 'team_verifikasi']);
+
+        // Baris dokumen_statuses pending untuk tahap tujuan = "sudah dikirim, belum
+        // diterima" (sendToRoleInbox tidak memajukan current_handler — lihat
+        // DocumentJourney::indeksMenunggu()). status_changed_at wajib diisi: NOT NULL
+        // di skema (2025_12_15_100001_create_dokumen_statuses_table), tidak ada
+        // ->nullable() di migrasi.
+        DokumenStatus::create([
+            'dokumen_id'        => $dokumen->id,
+            'role_code'         => 'perpajakan',
+            'status'            => DokumenStatus::STATUS_PENDING,
+            'status_changed_at' => now(),
+        ]);
+
+        // Dipersempit ke 'dj-node dj-node--menunggu_diterima' (bukan sekadar
+        // 'menunggu_diterima' atau 'menunggu diterima' polos): blok <style>
+        // mendefinisikan selector ".dj-node--menunggu_diterima { ... }" dan atribut
+        // data-perjalanan="{{ json_encode($jalan) }}" membawa nama state mentah
+        // 'menunggu_diterima' juga — keduanya membuat assertSee pendek lolos apa pun
+        // markup <span> yang sesungguhnya dirender (pola kegagalan yang sudah empat
+        // kali terjadi di berkas ini).
+        $this->actingAs($this->userBagian())
+            ->get(route('bagian.documents.index'))
+            ->assertOk()
+            ->assertSee('dj-node dj-node--menunggu_diterima', false);
     }
 
     public function test_markup_modal_perjalanan_ikut_dirender(): void

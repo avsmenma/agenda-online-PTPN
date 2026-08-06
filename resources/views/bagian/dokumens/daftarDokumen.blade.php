@@ -1066,6 +1066,8 @@
     .dj-node--belum            { background: #fff; border-color: #cbd5e1; }
     .dj-node--netral           { background: #f1f5f9; border-color: #e2e8f0; }
     .dj-node--perlu_diperbaiki { background: #f59e0b; border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, .22); }
+    /* Lingkaran berongga: sudah dikirim, belum diterima tahap tujuan — bukan "sudah sampai". */
+    .dj-node--menunggu_diterima { background: #fff; border-color: #0ea5e9; }
 
     .dj-label {
       font-size: 11px;
@@ -1109,6 +1111,8 @@
 
     .dj-list li.is-sekarang .dj-nama { color: #0369a1; }
     .dj-list li.is-sekarang .dj-ket  { color: #0369a1; }
+    .dj-list li.is-menunggu_diterima .dj-nama { color: #0369a1; }
+    .dj-list li.is-menunggu_diterima .dj-ket  { color: #0369a1; }
     .dj-list li.is-perlu_diperbaiki .dj-nama { color: #b45309; }
     .dj-list li.is-perlu_diperbaiki .dj-ket  { color: #b45309; }
     .dj-list li.is-dilewati .dj-nama { color: #94a3b8; }
@@ -2858,12 +2862,13 @@
       }
 
       const keterangan = {
-        selesai:          'selesai',
-        sekarang:         'sekarang',
-        dilewati:         'dilewati',
-        belum:            'belum',
-        netral:           '—',
-        perlu_diperbaiki: 'perlu diperbaiki',
+        selesai:            'selesai',
+        sekarang:           'sekarang',
+        menunggu_diterima:  'menunggu diterima',
+        dilewati:           'dilewati',
+        belum:              'belum',
+        netral:             '—',
+        perlu_diperbaiki:   'perlu diperbaiki',
       };
 
       // Simpul Bagian (stages[0]) disembunyikan kecuali dokumen sedang
