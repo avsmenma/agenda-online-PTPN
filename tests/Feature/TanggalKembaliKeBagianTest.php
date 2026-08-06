@@ -24,6 +24,26 @@ class TanggalKembaliKeBagianTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // buildVerifikasiQuery() memakai fungsi MySQL (REGEXP, SUBSTRING_INDEX) pada
+        // ORDER BY nomor_agenda — tak tersedia di SQLite. Polyfill sama dengan
+        // OperatorDatatableTest.
+        $pdo = \DB::connection()->getPdo();
+        if ($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+            $pdo->sqliteCreateFunction('regexp', function ($pattern, $value) {
+                return preg_match('/' . $pattern . '/u', (string) $value) ? 1 : 0;
+            });
+            $pdo->sqliteCreateFunction('substring_index', function ($str, $delim, $count) {
+                $parts = explode($delim, (string) $str);
+
+                return implode($delim, array_slice($parts, 0, (int) $count));
+            });
+        }
+    }
+
     private function dokumenDiVerifikasi(string $bagian = 'KEU'): Dokumen
     {
         return Dokumen::create([
@@ -110,6 +130,31 @@ class TanggalKembaliKeBagianTest extends TestCase
             $segar->tanggal_kembali_ke_bagian,
             'Pengembalian ke Operator tidak boleh mengisi stempel kembali-ke-Bagian.'
         );
+    }
+
+    public function test_nilai_ikut_terkirim_di_endpoint_tabel_verifikasi(): void
+    {
+        // buildVerifikasiQuery() memakai daftar select EKSPLISIT. Kolom yang tak
+        // disebut di sana sampai ke DTO sebagai null meski datanya ada di database —
+        // terbukti saat kolom ini baru dibuat: DB terisi, sel tetap menampilkan '-'.
+        Bagian::create(['kode' => 'KEU', 'nama' => 'Keuangan']);
+
+        $dokumen = $this->dokumenDiVerifikasi();
+        $dokumen->forceFill(['tanggal_kembali_ke_bagian' => '2026-08-06 12:45:55'])->save();
+
+        $response = $this->actingAs($this->verifikasi())
+            ->getJson(route('documents.verifikasi.data'));
+
+        $response->assertOk();
+
+        $baris = collect($response->json('data'))->firstWhere('id', $dokumen->id);
+
+        $this->assertNotNull($baris, 'Dokumen tidak muncul di endpoint tabel.');
+        $this->assertNotNull(
+            $baris['tanggal_kembali_ke_bagian'],
+            'Kolom tidak ikut di-select buildVerifikasiQuery() — sel akan selalu tampil "-".'
+        );
+        $this->assertSame('06/08/2026 12:45', $baris['dates']['tanggal_kembali_ke_bagian']);
     }
 
     public function test_kolom_ditandai_hanya_baca_di_klien(): void
