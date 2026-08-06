@@ -273,6 +273,9 @@ class DocumentHandlerController extends Controller
             'return_source' => $bagianCode,
             'return_reason' => $alasan,
             'returned_at' => now(),
+            // Stempel KHUSUS kembali-ke-Bagian. Beda dari `returned_at` di atas yang
+            // ditimpa setiap pengembalian ke siapa pun (termasuk ke Operator).
+            'tanggal_kembali_ke_bagian' => now(),
             'last_action_status' => 'returned_to_bidang',
         ]);
 

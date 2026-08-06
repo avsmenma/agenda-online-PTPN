@@ -1127,6 +1127,11 @@ class TeamVerifikasiController extends Controller
                 // Unified return fields
                 'return_reason' => $request->bidang_return_reason,
                 'returned_at' => now(),
+                // Stempel KHUSUS kembali-ke-Bagian. Beda dari `returned_at` di atas
+                // yang ditimpa setiap pengembalian ke siapa pun (termasuk ke Operator).
+                // Diisi di KEDUA pintu pengembalian ke Bagian — kalau hanya satu,
+                // kolomnya kosong separuh waktu tergantung jalur yang dipakai user.
+                'tanggal_kembali_ke_bagian' => now(),
             ]);
 
             \DB::commit();
