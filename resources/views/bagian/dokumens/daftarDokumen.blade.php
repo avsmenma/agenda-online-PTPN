@@ -1076,6 +1076,44 @@
 
     .dj-cell--action .dj-label { color: #b45309; }
 
+    .dj-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .dj-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .dj-list li:last-child { border-bottom: none; }
+
+    .dj-list .dj-nama {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .dj-list .dj-ket {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    .dj-list li.is-sekarang .dj-nama { color: #0369a1; }
+    .dj-list li.is-sekarang .dj-ket  { color: #0369a1; }
+    .dj-list li.is-perlu_diperbaiki .dj-nama { color: #b45309; }
+    .dj-list li.is-perlu_diperbaiki .dj-ket  { color: #b45309; }
+    .dj-list li.is-dilewati .dj-nama { color: #94a3b8; }
+    .dj-list li.is-netral .dj-nama   { color: #94a3b8; }
+
   </style>
 
   <div class="container-fluid py-4">
@@ -2682,6 +2720,24 @@
     }
   </script>
 
+  {{-- Modal perjalanan dokumen. Diisi dari atribut data-perjalanan pada sel —
+       TANPA panggilan AJAX, karena datanya sudah dirender bersama halaman. --}}
+  <div class="modal fade" id="perjalananModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border: none; border-radius: 16px;">
+        <div class="modal-header" style="border-bottom: 1px solid #e2e8f0;">
+          <h5 class="modal-title" style="font-size: 1.05rem; font-weight: 700; color: #1f2937;">
+            <i class="fa-solid fa-route me-2" style="color: #0ea5e9;"></i>Perjalanan Dokumen
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body" style="padding: 1.25rem 1.5rem;">
+          <ul class="dj-list" id="perjalananList"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Rejection Detail - Bagian -->
   <div class="modal fade" id="rejectionDetailModal" tabindex="-1" aria-labelledby="rejectionDetailModalLabel"
     aria-hidden="true">
@@ -2786,6 +2842,48 @@
   </div>
 
   <script>
+    // Modal perjalanan dokumen — dibaca dari atribut data-perjalanan pada sel,
+    // tanpa AJAX. Dipanggil dari onclick sel (Task 3).
+    window.tampilkanPerjalanan = function(tombol) {
+      const modalEl = document.getElementById('perjalananModal');
+      const daftar  = document.getElementById('perjalananList');
+      if (!modalEl || !daftar) return;
+
+      let jalan;
+      try {
+        jalan = JSON.parse(tombol.getAttribute('data-perjalanan') || '{}');
+      } catch (err) {
+        return;
+      }
+
+      const keterangan = {
+        selesai:          'selesai',
+        sekarang:         'sekarang',
+        dilewati:         'dilewati',
+        belum:            'belum',
+        netral:           '—',
+        perlu_diperbaiki: 'perlu diperbaiki',
+      };
+
+      daftar.innerHTML = (jalan.stages || []).map(function (tahap) {
+        return '<li class="is-' + tahap.state + '">' +
+          '<span class="dj-node dj-node--' + tahap.state + '"></span>' +
+          '<span class="dj-nama"></span>' +
+          '<span class="dj-ket"></span>' +
+        '</li>';
+      }).join('');
+
+      // Teks disisipkan lewat textContent, bukan innerHTML — label memuat nama bagian
+      // dari database dan tidak boleh diperlakukan sebagai HTML.
+      Array.from(daftar.children).forEach(function (li, i) {
+        const tahap = jalan.stages[i];
+        li.querySelector('.dj-nama').textContent = tahap.label;
+        li.querySelector('.dj-ket').textContent  = keterangan[tahap.state] || tahap.state;
+      });
+
+      new bootstrap.Modal(modalEl).show();
+    };
+
     window.showRejectionModal = function(dokumenId) {
       const modalEl = document.getElementById('rejectionDetailModal');
       if (!modalEl) return;

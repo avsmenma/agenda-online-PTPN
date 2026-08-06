@@ -141,4 +141,21 @@ class PerjalananDokumenBagianTest extends TestCase
             . '(16 dokumen) — indikasi N+1 pada perjalanan dokumen.'
         );
     }
+
+    public function test_markup_modal_perjalanan_ikut_dirender(): void
+    {
+        $this->dokumen('4');
+
+        // Dipersempit (dibuktikan mutasi): assertSee('tampilkanPerjalanan', false) polos
+        // HAMPA terhadap mutasi "ganti nama fungsi jadi tampilkanPerjalananX" — nama baru
+        // itu tetap MENGANDUNG substring 'tampilkanPerjalanan', jadi assertSee polos lolos
+        // apa pun nama fungsinya. 'window.tampilkanPerjalanan = function' menyasar deklarasi
+        // fungsi persis (bukan onclick sel dari Task 2 yang juga memuat substring sama).
+        $this->actingAs($this->userBagian())
+            ->get(route('bagian.documents.index'))
+            ->assertOk()
+            ->assertSee('id="perjalananModal"', false)
+            ->assertSee('window.tampilkanPerjalanan = function', false)
+            ->assertSee('data-perjalanan', false);
+    }
 }
