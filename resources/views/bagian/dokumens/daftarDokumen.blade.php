@@ -1164,35 +1164,9 @@
             </thead>
             <tbody>
               @foreach($dokumens as $index => $doc)
-              @php
-                $statusLower = strtolower($doc->status ?? '');
-                // Bagian bisa edit saat status belum dikirim atau dikembalikan
-                $canInlineEdit = false; // Bagian bersifat view-only: inline-edit dinonaktifkan
-              @endphp
               <tr>
                         <td class="col-no">{{ $dokumens->firstItem() + $index }}</td>
                         @foreach($selectedColumns as $col)
-                          @if(in_array($col, ['nomor_spp', 'uraian_spp', 'nilai_rupiah', 'tanggal_spp']) && $canInlineEdit)
-                            <td class="ie-cell"
-                                data-id="{{ $doc->id }}"
-                                data-field="{{ $col }}"
-                                @if($col === 'nilai_rupiah') data-raw="{{ $doc->nilai_rupiah ?? '' }}"
-                                @elseif($col === 'tanggal_spp') data-raw="{{ $doc->tanggal_spp ? $doc->tanggal_spp->format('Y-m-d') : '' }}"
-                                @else data-raw="{{ $doc->$col ?? '' }}"
-                                @endif
-                                onclick="event.stopPropagation()"
-                                title="Klik dua kali untuk mengedit">
-                              @if($col === 'uraian_spp')
-                                <span class="ie-display" style="display: block; white-space: normal; word-wrap: break-word; line-height: 1.5; max-width: 300px;">{{ $doc->uraian_spp ?? '-' }}</span>
-                              @elseif($col === 'nilai_rupiah')
-                                <span class="ie-display"><strong style="color: #000000;">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong></span>
-                              @elseif($col === 'tanggal_spp')
-                                <span class="ie-display">{{ $doc->tanggal_spp ? $doc->tanggal_spp->format('d-m-Y') : '-' }}</span>
-                              @else
-                                <span class="ie-display">{{ $doc->$col ?? '-' }}</span>
-                              @endif
-                            </td>
-                          @else
                           <td class="col-{{ $col }}">
                             @if($col == 'nomor_agenda')
                               <strong style="color: #000000;">{{ $doc->nomor_agenda }}</strong>
@@ -1226,57 +1200,6 @@
                                 @endif
                               @else
                                 <span class="text-muted">-</span>
-                              @endif
-                            @elseif($col == 'status')
-                              @php
-                                // Simplified status for Bagian view
-                                $displayStatus = 'terkirim';
-                                $statusClass = 'badge-terkirim';
-                                $statusIcon = 'fa-check';
-                                $statusText = 'Terkirim';
-
-                                if ($statusLower == 'belum dikirim') {
-                                  $displayStatus = 'belum_dikirim';
-                                  $statusClass = 'badge-draft';
-                                  $statusIcon = 'fa-file-lines';
-                                  $statusText = 'Belum Dikirim';
-                                } elseif ($statusLower == 'menunggu_approval_keuangan') {
-                                  $displayStatus = 'menunggu_approve';
-                                  $statusClass = 'badge-warning';
-                                  $statusIcon = 'fa-clock';
-                                  $statusText = 'Menunggu Approve';
-                                } elseif ($statusLower == 'returned_to_bidang') {
-                                  $displayStatus = 'dikembalikan';
-                                  $statusClass = 'badge-dikembalikan';
-                                  $statusIcon = 'fa-undo';
-                                  $statusText = 'Dikembalikan';
-                                }
-                              @endphp
-                              @if($displayStatus == 'belum_dikirim')
-                                <span class="badge-status {{ $statusClass }}">
-                                  <i class="fa-solid {{ $statusIcon }}"></i>
-                                  <span>{{ $statusText }}</span>
-                                </span>
-                              @elseif($displayStatus == 'menunggu_approve')
-                                <span class="badge-status {{ $statusClass }}"
-                                  style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529;">
-                                  <i class="fa-solid {{ $statusIcon }}"></i>
-                                  <span>{{ $statusText }}</span>
-                                </span>
-                              @elseif($displayStatus == 'dikembalikan')
-                                <span class="badge-status {{ $statusClass }}"
-                                  style="cursor: pointer;"
-                                  onclick="event.stopPropagation(); showRejectionModal({{ $doc->id }})">
-                                  <i class="fa-solid {{ $statusIcon }}"></i>
-                                  <span>Dikembalikan,
-                                    <span style="text-decoration: underline; font-weight: 700;">Alasan</span>
-                                  </span>
-                                </span>
-                              @else
-                                <span class="badge-status {{ $statusClass }}">
-                                  <i class="fa-solid {{ $statusIcon }}"></i>
-                                  <span>{{ $statusText }}</span>
-                                </span>
                               @endif
                             @elseif($col == 'uraian_spp')
                               <span
@@ -1416,7 +1339,6 @@
                               -
                             @endif
                           </td>
-                          @endif {{-- end @if(in_array...) / @else non-editable --}}
                         @endforeach
                         <td class="col-pengurus" onclick="event.stopPropagation()">
                           {{-- Bagian view-only: posisi dokumen ditampilkan read-only (bukan dropdown yang bisa mengubah) --}}
