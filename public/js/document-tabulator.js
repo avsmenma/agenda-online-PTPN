@@ -148,6 +148,39 @@
     const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
     return m ? m[1] + '-' + m[2] + '-' + m[3] : '';
   }
+  // 'YYYY-MM-DD' → 'dd-mm-yyyy' untuk ditampilkan di editor. Kosong/tak sah → ''.
+  function isoKeTampilan(iso) {
+    const m = String(iso === null || iso === undefined ? '' : iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m ? m[3] + '-' + m[2] + '-' + m[1] : '';
+  }
+
+  // 'dd-mm-yyyy' → 'YYYY-MM-DD' untuk dikirim ke server (Carbon::parse menerimanya).
+  // Balikan: string ISO bila sah, '' bila sengaja dikosongkan, null bila TIDAK SAH.
+  // Pemisah '-', '/', dan '.' sama-sama diterima karena ketiganya lazim diketik.
+  function tampilanKeIso(teks) {
+    const s = String(teks === null || teks === undefined ? '' : teks).trim();
+    if (s === '') return '';
+
+    const m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+    if (!m) return null;
+
+    const tgl = +m[1], bln = +m[2], thn = +m[3];
+
+    // Rentang tahun waras. Ini yang menutup bug lama: tahun 0002 (hasil Chrome
+    // melengkapi digit pertama dengan nol) tidak akan pernah lolos lagi.
+    if (thn < 1900 || thn > 2999) return null;
+    if (bln < 1 || bln > 12 || tgl < 1 || tgl > 31) return null;
+
+    // Tolak tanggal yang tak pernah ada, mis. 31-02-2026.
+    const uji = new Date(Date.UTC(thn, bln - 1, tgl));
+    if (uji.getUTCFullYear() !== thn || uji.getUTCMonth() + 1 !== bln || uji.getUTCDate() !== tgl) {
+      return null;
+    }
+
+    const dua = function (n) { return (n < 10 ? '0' : '') + n; };
+    return thn + '-' + dua(bln) + '-' + dua(tgl);
+  }
+
   // Terapkan pola PHP-date (subset d,m,Y,H,i) ke nilai Y-m-d[ H:i] → string tampilan.
   function formatDateForCol(field, raw) {
     if (raw === null || raw === undefined || raw === '') return '-';
@@ -265,23 +298,96 @@
     });
     return input;
   }
-  // Date: <input type=date>, nilai pra-isi & kirim = 'YYYY-MM-DD' (yang diminta server).
+  // Date: input TEKS ber-format dd-mm-yyyy. Nilai yang dikirim ke server tetap
+  // 'YYYY-MM-DD' (yang diminta Carbon::parse di DokumenController::inlineUpdate).
+  //
+  // SENGAJA BUKAN <input type="date"> lagi. Dua sebabnya nyata dan terbukti di
+  // produksi 2026-08-06, bukan preferensi gaya:
+  //
+  //  1. TERLEMPAR KELUAR SAAT MENGETIK TAHUN. Chrome memancarkan event 'change'
+  //     begitu tanggal menjadi "lengkap & sah", DAN ia melengkapi tahun dengan nol
+  //     di depan. Mengetik "2" sebagai digit pertama tahun menghasilkan tahun 0002
+  //     -> tanggal sah -> 'change' menyala -> commit -> editor tertutup dan nilai
+  //     sampah tersimpan. Korbannya nyata: dokumen 5721_2026 (id 5722) tersimpan
+  //     tanggal_spp = 0002-08-02. Karena itu commit di sini HANYA lewat Enter/blur,
+  //     TIDAK PERNAH lewat 'change'.
+  //
+  //  2. FORMAT MENGIKUTI LOCALE BROWSER. <input type="date"> merender segmennya
+  //     sesuai locale browser (en-US -> mm/dd/yyyy). Tak ada atribut HTML untuk
+  //     memaksa dd-mm-yyyy, padahal tabel menampilkan d-m-Y (DocumentRow::
+  //     formatDates). Editor dan tampilan jadi saling bertentangan.
+  //
+  // Harganya: pemilih tanggal bawaan browser hilang. Itu tak terhindarkan — tak ada
+  // cara mengendalikan urutan segmen <input type="date">.
   function dateEditor(cell, onRendered, success, cancel) {
     const input = document.createElement('input');
-    input.type = 'date';
+    input.type = 'text';
     input.className = 'op-inline-editor';
-    input.value = toDateInput(cell.getValue());
+    input.inputMode = 'numeric';
+    input.placeholder = 'dd-mm-yyyy';
+    input.maxLength = 10;
+    input.value = isoKeTampilan(toDateInput(cell.getValue()));
     input.style.width = '100%';
     input.style.boxSizing = 'border-box';
-    onRendered(function () { input.focus(); });
-    let done = false;
-    function commit() { if (done) return; done = true; success(input.value); }
-    input.addEventListener('change', commit);
-    input.addEventListener('blur', commit);
-    input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); commit(); }
-      else if (e.key === 'Escape') { e.preventDefault(); done = true; cancel(); }
+    onRendered(function () { input.focus(); input.select(); });
+
+    // Sisipkan '-' otomatis saat mengetik, TAPI hanya bila kursor di ujung —
+    // supaya user yang menyunting bagian tengah tidak terlempar kursornya.
+    input.addEventListener('input', function () {
+      if (input.selectionStart !== input.value.length) return;
+      const angka = input.value.replace(/\D/g, '').slice(0, 8);
+      let hasil = angka;
+      if (angka.length > 4) {
+        hasil = angka.slice(0, 2) + '-' + angka.slice(2, 4) + '-' + angka.slice(4);
+      } else if (angka.length > 2) {
+        hasil = angka.slice(0, 2) + '-' + angka.slice(2);
+      }
+      input.value = hasil;
+      tandaiSah();
     });
+
+    // Penanda sah/tak-sah lewat gaya inline, BUKAN kelas CSS: kelas
+    // .op-inline-editor sendiri tak punya stylesheet di manapun (semua editor di
+    // berkas ini memakai gaya inline), jadi kelas baru tak akan terlihat.
+    function tandaiSah() {
+      input.style.outline = '';
+      input.style.backgroundColor = '';
+    }
+    function tandaiTakSah() {
+      input.style.outline = '2px solid #e11d48';
+      input.style.backgroundColor = '#fff1f2';
+    }
+
+    let done = false;
+
+    // Balikan true bila editor boleh ditutup.
+    function commit() {
+      if (done) return true;
+      const iso = tampilanKeIso(input.value);
+      if (iso === null) return false;
+      done = true;
+      success(iso);
+      return true;
+    }
+
+    // Blur dengan isi tak sah: batalkan, jangan menjebak user di dalam sel.
+    input.addEventListener('blur', function () {
+      if (done) return;
+      if (!commit()) { done = true; cancel(); }
+    });
+
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        // Tak sah: tahan di dalam editor & tandai, jangan buang ketikan user.
+        if (!commit()) { tandaiTakSah(); input.select(); }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        done = true;
+        cancel();
+      }
+    });
+
     return input;
   }
 
