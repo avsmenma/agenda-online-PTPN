@@ -214,6 +214,29 @@ class PerjalananDokumenBagianTest extends TestCase
             ->assertSee('dj-node dj-node--menunggu_diterima', false);
     }
 
+    public function test_dokumen_lunas_tidak_ada_titik_sekarang(): void
+    {
+        // tanggal_dibayar terisi = definisi kanonik lunas (sama dgn kartu "Sudah
+        // Dibayar" di BagianDokumenController). current_handler sengaja BUKAN
+        // 'pembayaran' (mis. data lama yang belum sempat diupdate) untuk
+        // membuktikan $lunas benar-benar MENANG, bukan kebetulan current_handler
+        // ada di ujung alur.
+        $this->dokumen('7', [
+            'current_handler' => 'perpajakan',
+            'tanggal_dibayar' => now(),
+        ]);
+
+        $response = $this->actingAs($this->userBagian())
+            ->get(route('bagian.documents.index'))
+            ->assertOk();
+
+        // Buktikan markup perjalanan memang dirender (bukan assertDontSee hampa
+        // krn sel tak pernah tampil sama sekali) — lihat pola pengujian di
+        // test-test lain berkas ini.
+        $response->assertSee('dj-node dj-node--selesai', false);
+        $response->assertDontSee('dj-node dj-node--sekarang', false);
+    }
+
     public function test_markup_modal_perjalanan_ikut_dirender(): void
     {
         $this->dokumen('4');

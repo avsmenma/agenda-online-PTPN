@@ -11,12 +11,21 @@ use Tests\TestCase;
  * Menguji App\Support\DocumentJourney — penentu posisi dokumen dalam alur keuangan
  * untuk role Bagian.
  *
- * Aturan (spec 2026-08-06):
- *   sekarang         : indeks == indeks current_handler
- *   selesai          : indeks < sekarang DAN ada jejak
- *   dilewati         : indeks < sekarang TANPA jejak
- *   belum            : indeks > sekarang
- *   perlu_diperbaiki : status returned_to_bidang -> simpul Bagian
+ * Aturan warna (spec 2026-08-06, direvisi):
+ *   sekarang           : indeks == indeks efektif (current_handler, atau tahap
+ *                         pending bila ada) -> BIRU
+ *   menunggu_diterima  : indeks == indeks efektif TAPI tahap tujuan masih pending
+ *                         (sudah dikirim, belum diterima) -> biru berongga
+ *   selesai            : indeks != efektif DAN ada jejak (di depan MAUPUN di
+ *                         belakang efektif — dokumen bisa berjalan MUNDUR) -> HIJAU
+ *   dilewati           : indeks < efektif TANPA jejak -> abu-abu
+ *   belum              : indeks > efektif TANPA jejak -> putih/berongga
+ *   perlu_diperbaiki   : status returned_to_bidang -> simpul Bagian -> oranye
+ *   lunas ($lunas=true): MENANG MUTLAK atas semua di atas -> SEMUA tahap
+ *                         'selesai', nol titik biru, current_label 'Selesai dibayar'
+ *
+ * State 'netral' (abu-abu seragam utk semua tahap hilir saat dikembalikan) SUDAH
+ * DIHAPUS — bertabrakan dgn aturan "tahap yang sudah dilalui harus hijau".
  */
 class DocumentJourneyTest extends TestCase
 {
@@ -89,6 +98,12 @@ class DocumentJourneyTest extends TestCase
 
     public function test_dokumen_dikembalikan_menyalakan_simpul_bagian(): void
     {
+        // current_handler default 'team_verifikasi', terlacak=['team_verifikasi']
+        // => operator (jejak khusus via tanggal_masuk) & verifikasi (jejak eksplisit)
+        // sudah pernah dilalui => 'selesai' (BUKAN 'netral' seragam — state itu
+        // sudah dihapus, tahap yang punya jejak wajib tetap hijau meski dokumen
+        // dikembalikan). perpajakan/akutansi/pembayaran tak pernah punya jejak =>
+        // 'belum'.
         $hasil = DocumentJourney::forDokumen(
             $this->dokumen(['status' => 'returned_to_bidang']),
             ['team_verifikasi']
@@ -96,11 +111,99 @@ class DocumentJourneyTest extends TestCase
         $peta = $this->petaState($hasil);
 
         $this->assertSame('perlu_diperbaiki', $peta['bagian']);
-        $this->assertSame('netral', $peta['operator']);
-        $this->assertSame('netral', $peta['verifikasi']);
-        $this->assertSame('netral', $peta['pembayaran']);
+        $this->assertSame('selesai', $peta['operator']);
+        $this->assertSame('selesai', $peta['verifikasi']);
+        $this->assertSame('belum', $peta['perpajakan']);
+        $this->assertSame('belum', $peta['akutansi']);
+        $this->assertSame('belum', $peta['pembayaran']);
         $this->assertTrue($hasil['needs_action']);
         $this->assertSame('Bagian (AKN)', $hasil['stages'][0]['label']);
+    }
+
+    /**
+     * Dokumen sempat sampai Perpajakan (jejak ada di verifikasi & perpajakan)
+     * sebelum dikembalikan verifikasi->bagian. Tahap yang sudah dilalui tetap
+     * 'selesai' (hijau) — bukan disamaratakan abu-abu seperti aturan lama.
+     */
+    public function test_dokumen_dikembalikan_tahap_dengan_jejak_jadi_selesai(): void
+    {
+        $hasil = DocumentJourney::forDokumen(
+            $this->dokumen(['status' => 'returned_to_bidang']),
+            ['team_verifikasi', 'perpajakan']
+        );
+        $peta = $this->petaState($hasil);
+
+        $this->assertSame('perlu_diperbaiki', $peta['bagian']);
+        $this->assertSame('selesai', $peta['operator']);
+        $this->assertSame('selesai', $peta['verifikasi']);
+        $this->assertSame('selesai', $peta['perpajakan']);
+        $this->assertSame('belum', $peta['akutansi']);
+        $this->assertSame('belum', $peta['pembayaran']);
+    }
+
+    /**
+     * Dokumen sempat sampai Akuntansi lalu dikirim MUNDUR ke Verifikasi (gerak
+     * mundur didukung: DocumentHandlerController::returnDirectlyToOperator() /
+     * moveDirectlyToTeamVerifikasi() dari role hilir). Tahap akuntansi yang ada DI
+     * DEPAN posisi sekarang tapi sudah pernah dilalui wajib 'selesai', bukan
+     * 'belum' — sebelumnya cacat ini menghapus jejak tahap yang sudah dilalui.
+     */
+    public function test_dokumen_mundur_dari_akutansi_ke_verifikasi_tetap_selesai(): void
+    {
+        $hasil = DocumentJourney::forDokumen(
+            $this->dokumen(['current_handler' => 'team_verifikasi']),
+            ['team_verifikasi', 'akutansi']
+        );
+        $peta = $this->petaState($hasil);
+
+        $this->assertSame('sekarang', $peta['verifikasi']);
+        $this->assertSame('selesai', $peta['akutansi']);
+        $this->assertSame('belum', $peta['perpajakan']);
+        $this->assertSame('belum', $peta['pembayaran']);
+    }
+
+    public function test_dokumen_lunas_semua_tahap_selesai(): void
+    {
+        $hasil = DocumentJourney::forDokumen(
+            $this->dokumen(['current_handler' => 'pembayaran']),
+            [],
+            [],
+            true
+        );
+        $peta = $this->petaState($hasil);
+
+        $this->assertSame('selesai', $peta['bagian']);
+        $this->assertSame('selesai', $peta['operator']);
+        $this->assertSame('selesai', $peta['verifikasi']);
+        $this->assertSame('selesai', $peta['perpajakan']);
+        $this->assertSame('selesai', $peta['akutansi']);
+        $this->assertSame('selesai', $peta['pembayaran']);
+        $this->assertFalse($hasil['needs_action']);
+        $this->assertSame('Selesai dibayar', $hasil['current_label']);
+    }
+
+    /**
+     * Lunas menang mutlak — bahkan atas status returned_to_bidang. Tidak boleh
+     * menampilkan 'perlu_diperbaiki' begitu dokumen sudah terbayar.
+     */
+    public function test_dokumen_lunas_menang_atas_dikembalikan(): void
+    {
+        $hasil = DocumentJourney::forDokumen(
+            $this->dokumen(['status' => 'returned_to_bidang']),
+            ['team_verifikasi'],
+            [],
+            true
+        );
+        $peta = $this->petaState($hasil);
+
+        $this->assertSame('selesai', $peta['bagian']);
+        $this->assertSame('selesai', $peta['operator']);
+        $this->assertSame('selesai', $peta['verifikasi']);
+        $this->assertSame('selesai', $peta['perpajakan']);
+        $this->assertSame('selesai', $peta['akutansi']);
+        $this->assertSame('selesai', $peta['pembayaran']);
+        $this->assertFalse($hasil['needs_action']);
+        $this->assertSame('Selesai dibayar', $hasil['current_label']);
     }
 
     public function test_tahap_tanpa_jejak_ditandai_dilewati(): void
@@ -223,7 +326,9 @@ class DocumentJourneyTest extends TestCase
         $peta = $this->petaState($hasil);
 
         $this->assertSame('perlu_diperbaiki', $peta['bagian']);
-        $this->assertSame('netral', $peta['perpajakan']);
+        // perpajakan tak pernah ada di roleCodeTerlacak => tetap 'belum' (aturan
+        // normal), BUKAN state khusus akibat roleCodeMenunggu diabaikan.
+        $this->assertSame('belum', $peta['perpajakan']);
         $this->assertTrue($hasil['needs_action']);
         $this->assertSame('Perlu diperbaiki', $hasil['current_label']);
         // current_index TIDAK boleh melompat ke indeks perpajakan (3) — buktikan

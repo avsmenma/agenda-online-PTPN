@@ -222,10 +222,16 @@ class BagianDokumenController extends Controller
                 ->pluck('role_code')
                 ->all();
 
+            // Definisi kanonik "lunas" — SAMA dengan kartu "Sudah Dibayar" di atas
+            // ($totalSudahDibayar). Jangan buat definisi kedua. Kolom sudah ter-eager-load
+            // pada $dokumen sendiri (bukan relasi), jadi tidak menambah query per-baris.
+            $lunas = $dokumen->tanggal_dibayar !== null || $dokumen->status_pembayaran === 'sudah_dibayar';
+
             $perjalanan[$dokumen->id] = \App\Support\DocumentJourney::forDokumen(
                 $dokumen,
                 $roleCodeTerlacak,
-                $roleCodeMenunggu
+                $roleCodeMenunggu,
+                $lunas
             );
         }
 

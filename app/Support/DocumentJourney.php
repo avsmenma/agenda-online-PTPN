@@ -60,12 +60,20 @@ class DocumentJourney
      * @param  array<int,string>  $roleCodeMenunggu  role_code yang baris dokumen_statuses-nya
      *                                                masih 'pending' (sudah dikirim, belum
      *                                                diterima tahap tujuan)
+     * @param  bool  $lunas  dokumen sudah dibayar lunas — menang MUTLAK atas semua
+     *                        aturan lain (termasuk $dikembalikan): seluruh tahap
+     *                        'selesai', nol titik biru.
      */
     public static function forDokumen(
         Dokumen $dokumen,
         array $roleCodeTerlacak = [],
-        array $roleCodeMenunggu = []
+        array $roleCodeMenunggu = [],
+        bool $lunas = false
     ): array {
+        if ($lunas) {
+            return self::hasilLunas($dokumen);
+        }
+
         $sekarang     = self::indeksTahap($dokumen->current_handler);
         $dikembalikan = strtolower((string) $dokumen->status) === 'returned_to_bidang';
         $terlacak     = self::tahapTerlacak($roleCodeTerlacak);
@@ -94,6 +102,30 @@ class DocumentJourney
             'current_label' => $dikembalikan ? 'Perlu diperbaiki' : $labelSekarang,
             'current_index' => $efektif,
             'needs_action'  => $dikembalikan,
+            'stages'        => $stages,
+        ];
+    }
+
+    /**
+     * Dokumen lunas: seluruh tahap 'selesai' termasuk simpul Bagian, nol titik biru.
+     * Menang mutlak atas $dikembalikan — begitu dokumen terbayar, status
+     * returned_to_bidang jadi riwayat, bukan lagi state aktif yang perlu ditindak.
+     */
+    private static function hasilLunas(Dokumen $dokumen): array
+    {
+        $stages = [];
+        foreach (self::STAGES as $tahap) {
+            $stages[] = [
+                'key'   => $tahap['key'],
+                'label' => self::label($tahap, $dokumen),
+                'state' => 'selesai',
+            ];
+        }
+
+        return [
+            'current_label' => 'Selesai dibayar',
+            'current_index' => count(self::STAGES) - 1,
+            'needs_action'  => false,
             'stages'        => $stages,
         ];
     }
@@ -172,9 +204,16 @@ class DocumentJourney
         bool $dikembalikan,
         ?int $indeksMenunggu
     ): string {
-        // Dokumen dikembalikan: bola di tangan Bagian, tahap hilir tidak relevan.
+        // Dokumen dikembalikan: bola di tangan Bagian, simpul Bagian menyala oranye.
+        // Tahap lain dihitung dengan aturan NORMAL (selesai bila ada jejak, belum
+        // bila tidak) — BUKAN lagi 'netral' seragam: tahap yang sudah dilalui
+        // sebelum dikembalikan tetap harus tampak hijau, bukan disamaratakan abu-abu.
         if ($dikembalikan) {
-            return $i === 0 ? 'perlu_diperbaiki' : 'netral';
+            if ($i === 0) {
+                return 'perlu_diperbaiki';
+            }
+
+            return self::adaJejak($kunci, $dokumen, $terlacak) ? 'selesai' : 'belum';
         }
 
         if ($i === 0) {
@@ -187,8 +226,13 @@ class DocumentJourney
             return $indeksMenunggu !== null ? 'menunggu_diterima' : 'sekarang';
         }
 
+        // Tahap DI DEPAN posisi sekarang bisa saja sudah pernah dilalui — dokumen
+        // MUNDUR (mis. DocumentHandlerController::returnDirectlyToOperator() /
+        // moveDirectlyToTeamVerifikasi() dari role hilir) tetap meninggalkan jejak
+        // received_at di tahap yang kini berada di depan current_handler. Jangan
+        // menghapus jejak itu jadi 'belum' begitu saja.
         if ($i > $efektif) {
-            return 'belum';
+            return self::adaJejak($kunci, $dokumen, $terlacak) ? 'selesai' : 'belum';
         }
 
         return self::adaJejak($kunci, $dokumen, $terlacak) ? 'selesai' : 'dilewati';
