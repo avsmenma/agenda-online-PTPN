@@ -457,6 +457,27 @@
   // Setelah edit sukses: susun objek update baris agar FORMATTER Tugas 5 merender
   // ulang dgn benar. Simpan raw_value ke field (untuk editor berikutnya) + key
   // turunan tampilan (nilai_rupiah_formatted / *_formatted / dates[field] / *_safe).
+  // Terapkan patch hasil edit LALU paksa baris dirender ulang.
+  //
+  // row.update() SAJA TIDAK CUKUP. Tabulator hanya merender ulang sel yang nilai
+  // FIELD-nya berubah, sementara di sini:
+  //   - patch[field] IDENTIK dengan isi sel, karena editor sudah menuliskannya
+  //     lebih dulu lewat success() — jadi Tabulator menganggap tak ada perubahan;
+  //   - kunci turunan tampilan (dates[field], nilai_rupiah_formatted, dst) BUKAN
+  //     field kolom manapun, sehingga mengubahnya tidak merender apa pun.
+  // Akibatnya sel bertahan menampilkan nilai lama — '-' bila sebelumnya kosong —
+  // sampai user menekan Enter lagi atau memuat ulang halaman.
+  //
+  // Terbukti di produksi 2026-08-06: setelah menyimpan, row.getData().tanggal_spp
+  // sudah '2026-08-10' DAN dates.tanggal_spp sudah '10-08-2026', tetapi sel masih
+  // menampilkan '-'. Memanggil row.reformat() seketika memperbaikinya.
+  //
+  // Berlaku untuk SEMUA field berturunan tampilan, bukan hanya tanggal.
+  function applyPostEditPatch(row, field, fieldType, resData) {
+    row.update(buildPostEditPatch(field, fieldType, resData, row.getData()));
+    row.reformat();
+  }
+
   function buildPostEditPatch(field, fieldType, data, rowData) {
     const raw = (data.raw_value !== undefined) ? data.raw_value
       : (data.display_value !== undefined ? data.display_value : '');
@@ -537,7 +558,7 @@
       const before = row.getData()[f];
       return patchCell(id, f, '').then(function (res) {
         if (!res.ok) return null; // gagal → anak ini TIDAK dikosongkan.
-        row.update(buildPostEditPatch(f, FIELD_TYPE[f] || 'text', res.data, row.getData()));
+        applyPostEditPatch(row, f, FIELD_TYPE[f] || 'text', res.data);
         return { id: id, field: f, before: before, after: '' };
       });
     });
@@ -567,7 +588,7 @@
         return;
       }
       // row.update() TIDAK memicu cellEdited (hanya edit-oleh-user yang memicu).
-      row.update(buildPostEditPatch(field, fieldType, res.data, row.getData()));
+      applyPostEditPatch(row, field, fieldType, res.data);
       const parentChange = { id: row.getData().id, field: field, before: oldValue, after: newValue };
       // Masalah 3: kategori/jenis_dokumen berubah → kosongkan anak yang tak lagi
       // valid, lalu satukan ke SATU entri riwayat bersama perubahan induk.
@@ -1385,7 +1406,7 @@
       // tanggal pada baris yang sama bisa tersimpan bersamaan, dan buildPostEditPatch
       // menyusun ulang peta `dates` dari data baris — salinan basi akan menjatuhkan
       // hasil sel yang lebih dulu selesai.
-      row.update(buildPostEditPatch(field, fieldType, res.data, row.getData()));
+      applyPostEditPatch(row, field, fieldType, res.data);
       return { ok: true, before: before };
     });
   }
