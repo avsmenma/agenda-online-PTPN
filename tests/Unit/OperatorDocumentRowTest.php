@@ -349,26 +349,34 @@ class OperatorDocumentRowTest extends TestCase
 
     public function test_dates_kolom_non_cast_diparse_defensif(): void
     {
-        // tanggal_kembali_ke_bagian BUKAN kolom DB (tak ada di $fillable/$casts
+        // tanggal_hasil_koreksi_bagian BUKAN kolom DB (tak ada di $fillable/$casts
         // model Dokumen) — di-set langsung ke atribut in-memory (bukan mass
         // assignment) untuk menguji jalur parse defensif OperatorDocumentRow.
+        //
+        // Sebelumnya test ini memakai tanggal_kembali_ke_bagian, tetapi kolom itu
+        // DIBUATKAN migrasi 2026-08-06 dan kini ber-cast 'datetime' — nilai tak sah
+        // akan dilempar Eloquent sebelum jalur defensif ini tersentuh. Bila kelak
+        // tanggal_hasil_koreksi_bagian ikut dibuatkan kolom, test ini harus pindah
+        // lagi ke kolom lain yang benar-benar non-cast.
         $dokumen = $this->buatDokumen();
-        $dokumen->tanggal_kembali_ke_bagian = '2026-07-05 14:00:00';
+        $dokumen->tanggal_hasil_koreksi_bagian = '2026-07-05 14:00:00';
 
         $row = $this->baris($dokumen);
 
-        $this->assertSame('05/07/2026 14:00', $row['dates']['tanggal_kembali_ke_bagian']);
+        $this->assertSame('05/07/2026 14:00', $row['dates']['tanggal_hasil_koreksi_bagian']);
     }
 
     public function test_dates_kolom_non_cast_tak_terparse_jadi_strip(): void
     {
         // Nilai mentah yang tidak bisa di-parse Carbon → fallback '-'.
+        // Kolom non-cast; lihat catatan di test sebelumnya soal perpindahan dari
+        // tanggal_kembali_ke_bagian.
         $dokumen = $this->buatDokumen();
-        $dokumen->tanggal_kembali_ke_bagian = 'bukan-tanggal-valid';
+        $dokumen->tanggal_hasil_koreksi_bagian = 'bukan-tanggal-valid';
 
         $row = $this->baris($dokumen);
 
-        $this->assertSame('-', $row['dates']['tanggal_kembali_ke_bagian']);
+        $this->assertSame('-', $row['dates']['tanggal_hasil_koreksi_bagian']);
     }
 
     public function test_status_dokumen_custom_fallback_ke_csv(): void
