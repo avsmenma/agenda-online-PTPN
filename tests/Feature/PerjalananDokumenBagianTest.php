@@ -59,11 +59,21 @@ class PerjalananDokumenBagianTest extends TestCase
     {
         $this->dokumen('1');
 
+        // Dipersempit (fix round 1): assertSee('dj-node', false) polos cocok dengan
+        // selector CSS telanjang ".dj-node { ... }" di blok <style> — hampa terlepas dari
+        // apakah markup betulan dirender. assertSee('Verifikasi', false) polos cocok
+        // dengan teks console.log statis di layouts/app.blade.php ("Team Verifikasi",
+        // ~baris 4023-4715) — tak berkaitan dengan fitur ini. Dibuktikan reviewer: ubah
+        // @if($jalan) jadi @if(false) di view (seluruh markup dj-cell/dj-track/dj-node/
+        // dj-label tak dirender, jatuh ke fallback '-') → test ini TETAP PASS dengan
+        // assertion lama. '<span class="dj-track">' hanya muncul di markup yang benar-benar
+        // dirender (bukan CSS, bukan JS lain); '>Verifikasi<' menyasar teks node HTML yang
+        // terlihat (bukan console.log string di file lain).
         $this->actingAs($this->userBagian())
             ->get(route('bagian.documents.index'))
             ->assertOk()
-            ->assertSee('dj-node', false)
-            ->assertSee('Verifikasi', false);
+            ->assertSee('<span class="dj-track">', false)
+            ->assertSee('>Verifikasi<', false);
     }
 
     public function test_dokumen_dikembalikan_ditandai_perlu_diperbaiki(): void
