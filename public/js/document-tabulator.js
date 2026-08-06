@@ -558,58 +558,74 @@
   //     tak pernah menyala untuk mereka — perilaku mereka tak berubah.
   //   - style/title dirender HANYA bila field ada (opsional, null di akutansi/
   //     perpajakan → tak ada atribut tambahan → HTML byte-identik dgn sebelumnya).
+  // --- Sistem badge bersama (kolom Deadline & Status) ---
+  // Yang tampil di sel HANYA status. Sisanya (tanggal masuk, lama pengerjaan,
+  // catatan) pindah ke popover saat pil diklik — keputusan user 2026-08-06.
+  // Sebelumnya sel Deadline berisi kartu bertumpuk 4 baris yang menentukan lebar
+  // kolom SEKALIGUS tinggi baris.
+
+  // Warna deadline dari server: green|yellow|red|gray.
+  const DEADLINE_STATE = { green: 'ok', yellow: 'warn', red: 'late', gray: 'idle' };
+
+  // Kelas status_badge dari server (6 nilai, lihat DocumentRow::badge()).
+  const STATUS_STATE = {
+    'badge-selesai': 'ok',
+    'badge-warning': 'warn',
+    'badge-dikembalikan': 'late',
+    'badge-proses': 'busy',
+    'badge-sent': 'busy',
+    'badge-locked': 'idle',
+  };
+
+  // Bangun pil. `detail` (opsional) = {head, rows:[[label,nilai]], note, link}
+  // ditanam sebagai JSON di data-dbpop dan dibaca listener popover.
+  function pill(state, label, detail) {
+    const bisaKlik = detail && ((detail.rows && detail.rows.length) || detail.note || detail.link);
+    let html = '<span class="dbadge dbadge--' + esc(state) + (bisaKlik ? ' dbadge--clickable' : '') + '"';
+    if (bisaKlik) {
+      html += ' tabindex="0" role="button" title="Klik untuk melihat rincian"' +
+        ' data-dbpop="' + esc(JSON.stringify(detail)) + '"';
+    }
+    html += ' onclick="event.stopPropagation()">' + esc(label) + '</span>';
+    return html;
+  }
+
   function fmtAkutansiStatus(cell) {
     const b = cell.getRow().getData().status_badge;
     if (!b || (!b.class && !b.text)) return '-';
-    let html = '<span class="badge-status ' + esc(b.class) + '"';
-    if (b.style) { html += ' style="' + esc(b.style) + '"'; }
-    if (b.title) { html += ' title="' + esc(b.title) + '"'; }
-    html += ' onclick="event.stopPropagation()">';
-    if (b.icon) { html += '<i class="fa-solid ' + esc(b.icon) + ' me-1"></i>'; }
-    html += esc(b.text);
-    if (b.link && b.link.href) {
-      html += ' <a href="' + esc(b.link.href) + '" class="text-white text-decoration-underline fw-bold" ' +
-        'style="color:#fff !important;text-decoration:underline !important;font-weight:600 !important;" ' +
-        'onclick="event.stopPropagation()">' + esc(b.link.text) + '</a>';
-    }
-    html += '</span>';
-    return html;
+
+    const state = STATUS_STATE[b.class] || 'idle';
+    const detail = { state: state, head: b.text, rows: [] };
+
+    if (b.title) { detail.note = b.title; }
+    if (b.link && b.link.href) { detail.link = { href: b.link.href, text: b.link.text || 'Lihat detail' }; }
+
+    return pill(state, b.text, detail);
   }
 
   // Kolom Deadline akutansi dari row.deadline. Port _rows.blade.php:291-413
   // (kartu umur / bypass / belum-diterima) — semua nilai sudah dihitung server.
   function fmtDeadline(cell) {
     const d = cell.getRow().getData().deadline;
+
     if (!d || d.variant === 'none') {
-      return '<div class="no-deadline"><i class="fa-solid fa-clock"></i><span>Belum masuk</span></div>';
+      return '<span class="dbadge dbadge--idle dbadge--empty">Belum masuk</span>';
     }
+
     if (d.variant === 'sent_fallback') {
-      return '<div class="deadline-card deadline-sent deadline-gray">' +
-        '<div class="deadline-label" style="font-size:10px;color:#6b7280;font-weight:600;">' +
-        '<i class="fa-solid fa-paper-plane"></i> Terkirim ke Pembayaran</div></div>';
+      return pill('idle', 'Terkirim', { state: 'idle', head: 'Terkirim ke Pembayaran', rows: [],
+        note: 'Dokumen sudah diteruskan ke Tim Pembayaran.' });
     }
-    // variant === 'card'
-    let html = '<div class="deadline-card deadline-' + esc(d.type) + ' deadline-' + esc(d.color) + '">';
-    html += '<div class="deadline-time"><i class="fa-solid fa-calendar"></i><span>' + esc(d.received_display) + '</span></div>';
-    // Ikon di dalam pil DILEPAS 2026-08-05: ia menyumbang ~16px (ikon + gap) pada
-    // elemen terlebar di kartu, dan pil-lah yang menentukan lebar kolom Deadline
-    // (layout fitDataStretch mengukur isi terlebar). Nol informasi hilang — warna
-    // pil dan teksnya sudah menyatakan status yang sama. d.indicator_icon tetap
-    // dikirim server (dipakai varian lain & tetap tersedia bila ingin dipulihkan).
-    html += '<div class="deadline-indicator deadline-' + esc(d.color) + '">' +
-      '<span class="status-text">' + esc(d.indicator_label) + '</span></div>';
-    html += '<div class="deadline-age" style="font-size:10px;color:#6b7280;margin-top:2px;">' +
-      '<i class="fa-solid fa-hourglass-half"></i><span>' + esc(d.age_text) + '</span></div>';
-    if (d.footer) {
-      if (d.footer.kind === 'paused') {
-        html += '<div class="deadline-paused-label"><i class="fa-solid ' + esc(d.footer.icon) + '"></i> ' + esc(d.footer.text) + '</div>';
-      } else {
-        html += '<div class="deadline-label" style="font-size:8px;color:#6b7280;margin-top:4px;font-weight:600;">' +
-          '<i class="fa-solid ' + esc(d.footer.icon) + '"></i> ' + esc(d.footer.text) + '</div>';
-      }
-    }
-    html += '</div>';
-    return html;
+
+    // variant === 'card' — dulu kartu bertumpuk, kini satu pil + popover.
+    const state = DEADLINE_STATE[d.color] || 'idle';
+    const detail = { state: state, head: d.indicator_label, rows: [] };
+
+    if (d.received_display) { detail.rows.push(['Masuk', d.received_display]); }
+    if (d.age_text) { detail.rows.push(['Dikerjakan', d.age_text]); }
+    if (d.footer && d.footer.text) { detail.note = d.footer.text; }
+
+    return pill(state, d.indicator_label, detail);
   }
 
   // Badge status pembayaran (Rollout 4) dari row.status_badge {state,class,text} —
@@ -2281,4 +2297,123 @@
 
     kirimPerubahanHandler(sel, id, prev, next, null);
   }, true);
+
+  // === Popover rincian badge (kolom Deadline & Status) ===
+  // Sel tabel hanya memuat status; tanggal masuk, lama pengerjaan, dan catatan
+  // muncul di sini saat pil diklik. CSS-nya di public/css/document-badges.css
+  // (.dbpop-*) — bukan disuntik dari JS, supaya bisa di-cache browser.
+  (function wireBadgePopover() {
+    let pop = null;
+
+    function elemen() {
+      if (pop) return pop;
+      pop = document.createElement('div');
+      pop.className = 'dbpop';
+      document.body.appendChild(pop);
+      return pop;
+    }
+
+    function tutup() {
+      if (pop) pop.classList.remove('is-open');
+    }
+
+    function render(detail) {
+      const el = elemen();
+      const warna = {
+        ok: '#10b981', warn: '#f59e0b', late: '#f43f5e', busy: '#0ea5e9', idle: '#94a3b8',
+      }[detail.state] || '#94a3b8';
+
+      let html = '<div class="dbpop__head" style="color:' + esc(warna) + '">' +
+        '<span class="dbpop__dot" style="background:' + esc(warna) + '"></span>' +
+        esc(detail.head || '') + '</div>';
+
+      (detail.rows || []).forEach(function (baris) {
+        html += '<div class="dbpop__row">' +
+          '<span class="dbpop__label">' + esc(baris[0]) + '</span>' +
+          '<span class="dbpop__value">' + esc(baris[1]) + '</span></div>';
+      });
+
+      if (detail.note) {
+        html += '<div class="dbpop__note">' + esc(detail.note) + '</div>';
+      }
+
+      if (detail.link && detail.link.href) {
+        html += '<a class="dbpop__link" href="' + esc(detail.link.href) + '">' +
+          esc(detail.link.text || 'Lihat detail') + '</a>';
+      }
+
+      el.innerHTML = html;
+      return el;
+    }
+
+    function tempatkan(el, pemicu) {
+      const r = pemicu.getBoundingClientRect();
+      el.classList.add('is-open');
+
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      const pad = 8;
+
+      // Bawah pil bila muat, jika tidak balik ke atas.
+      let atas = r.bottom + 6;
+      if (atas + h > window.innerHeight - pad) {
+        atas = Math.max(pad, r.top - h - 6);
+      }
+
+      // Rata kiri dengan pil, dijepit agar tak keluar layar.
+      let kiri = r.left;
+      if (kiri + w > window.innerWidth - pad) { kiri = window.innerWidth - w - pad; }
+      if (kiri < pad) { kiri = pad; }
+
+      el.style.top = atas + 'px';
+      el.style.left = kiri + 'px';
+    }
+
+    function buka(pemicu) {
+      let detail;
+      try {
+        detail = JSON.parse(pemicu.getAttribute('data-dbpop') || '{}');
+      } catch (err) {
+        return;
+      }
+      tempatkan(render(detail), pemicu);
+    }
+
+    document.addEventListener('click', function (e) {
+      const pemicu = e.target.closest ? e.target.closest('[data-dbpop]') : null;
+
+      if (pemicu) {
+        e.stopPropagation();
+        // Klik pil yang sama saat popover terbuka = tutup.
+        if (pop && pop.classList.contains('is-open') && pop._pemicu === pemicu) {
+          tutup();
+          pop._pemicu = null;
+          return;
+        }
+        buka(pemicu);
+        pop._pemicu = pemicu;
+        return;
+      }
+
+      // Klik di dalam popover tidak menutupnya (mis. menekan tautan).
+      if (pop && e.target.closest && e.target.closest('.dbpop')) return;
+
+      tutup();
+    }, true);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { tutup(); return; }
+      const pemicu = document.activeElement;
+      if ((e.key === 'Enter' || e.key === ' ') && pemicu && pemicu.hasAttribute && pemicu.hasAttribute('data-dbpop')) {
+        e.preventDefault();
+        buka(pemicu);
+        pop._pemicu = pemicu;
+      }
+    });
+
+    // Popover memakai position:fixed terhadap pil — begitu tabel digulir,
+    // posisinya tak lagi sahih. Ditutup, bukan dipaksa mengikuti.
+    window.addEventListener('scroll', tutup, true);
+    window.addEventListener('resize', tutup);
+  })();
 })();

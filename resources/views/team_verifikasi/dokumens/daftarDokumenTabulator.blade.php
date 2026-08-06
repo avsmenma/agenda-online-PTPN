@@ -109,6 +109,10 @@
     <link rel="stylesheet" href="{{ asset('vendor/tabulator/tabulator.min.css') }}">
     <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/tabulator-agenda.css') }}">
     <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/verifikasi-deadline-badge.css') }}">
+    {{-- Badge Deadline & Status bentuk baru (pil ringkas + popover rincian), satu
+         berkas untuk 3 role. Dimuat SETELAH berkas lama supaya menang bila ada
+         selector yang bertabrakan. --}}
+    <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/document-badges.css') }}">
     <style>
     /* Toolbar filter Tabulator */
     .tabulator-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }

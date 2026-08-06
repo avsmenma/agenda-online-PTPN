@@ -1,0 +1,191 @@
+/*
+ * Badge dokumen bersama — kolom Deadline & Status pada view Tabulator
+ * akutansi / perpajakan / verifikasi.
+ *
+ * SATU berkas untuk tiga role. Menggantikan tampilan lama yang tersebar di
+ * public/css/{akutansi,perpajakan,verifikasi}-deadline-badge.css — tiga berkas
+ * ~90% identik (2.380 baris). Namespace .dbadge-* / .dbpop-* SENGAJA baru agar
+ * bisa hidup berdampingan dengan CSS lama sampai yang lama dihapus terpisah.
+ *
+ * Prinsip (keputusan user 2026-08-06): yang tampil di sel HANYA status. Tanggal
+ * masuk, lama pengerjaan, dan catatan pindah ke popover saat pil diklik.
+ * Sebelumnya sel Deadline berisi kartu bertumpuk 4 baris yang menentukan lebar
+ * kolom SEKALIGUS tinggi baris.
+ *
+ * Warna dibawa TITIK 6px, bukan blok pekat. Saat banyak baris berstatus sama,
+ * blok pekat membuat seluruh tabel terasa darurat dan justru menghilangkan
+ * kemampuan memindai. Titik menyampaikan semantik yang sama dengan bobot jauh
+ * lebih ringan.
+ *
+ * Nol !important — semua selector di bawah cukup spesifik tanpa itu (aturan 4).
+ */
+
+/* ============================================================
+   Pil status
+   ============================================================ */
+
+.dbadge {
+  --db-ink: #475569;
+  --db-dot: #64748b;
+  --db-tint: rgba(100, 116, 139, .10);
+  --db-edge: rgba(100, 116, 139, .22);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--db-edge);
+  border-radius: 999px;
+  background: var(--db-tint);
+  color: var(--db-ink);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: middle;
+  font-family: inherit;
+}
+
+.dbadge::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--db-dot);
+}
+
+/* Varian semantik */
+.dbadge--ok    { --db-ink: #047857; --db-dot: #10b981; --db-tint: rgba(16, 185, 129, .10); --db-edge: rgba(16, 185, 129, .28); }
+.dbadge--warn  { --db-ink: #b45309; --db-dot: #f59e0b; --db-tint: rgba(245, 158, 11, .12); --db-edge: rgba(245, 158, 11, .30); }
+.dbadge--late  { --db-ink: #be123c; --db-dot: #f43f5e; --db-tint: rgba(244, 63, 94, .10); --db-edge: rgba(244, 63, 94, .28); }
+.dbadge--busy  { --db-ink: #0369a1; --db-dot: #0ea5e9; --db-tint: rgba(14, 165, 233, .10); --db-edge: rgba(14, 165, 233, .28); }
+.dbadge--idle  { --db-ink: #475569; --db-dot: #94a3b8; --db-tint: rgba(100, 116, 139, .10); --db-edge: rgba(100, 116, 139, .22); }
+
+/* Hanya pil yang punya detail yang terasa bisa diklik. */
+.dbadge--clickable {
+  cursor: pointer;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+
+.dbadge--clickable:hover,
+.dbadge--clickable:focus-visible {
+  background: color-mix(in srgb, var(--db-tint) 60%, var(--db-dot) 12%);
+  border-color: var(--db-dot);
+}
+
+.dbadge--clickable:focus-visible {
+  outline: 2px solid var(--db-dot);
+  outline-offset: 2px;
+}
+
+/* Sel kosong: sama tenangnya, tanpa border penuh. */
+.dbadge--empty {
+  border-style: dashed;
+  opacity: .75;
+}
+
+/* ============================================================
+   Popover detail
+   ============================================================ */
+
+.dbpop {
+  position: fixed;
+  z-index: 10050;
+  min-width: 210px;
+  max-width: 280px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 28px -8px rgba(15, 23, 42, .28), 0 2px 6px rgba(15, 23, 42, .06);
+  font-size: 12px;
+  color: #0f172a;
+  display: none;
+}
+
+.dbpop.is-open { display: block; }
+
+.dbpop__head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-bottom: 9px;
+  margin-bottom: 9px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+
+.dbpop__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.dbpop__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 3px 0;
+}
+
+.dbpop__label {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dbpop__value {
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.dbpop__note {
+  margin-top: 9px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dbpop__link {
+  display: inline-block;
+  margin-top: 9px;
+  color: #0369a1;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Tema gelap — halaman Tabulator memakai kelas .dark di root. */
+.dark .dbpop {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+.dark .dbpop__head { border-bottom-color: #334155; }
+.dark .dbpop__value { color: #f1f5f9; }
+.dark .dbpop__label { color: #94a3b8; }
+.dark .dbpop__note { background: #0f172a; color: #cbd5e1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dbadge--clickable { transition: none; }
+}
