@@ -57,4 +57,24 @@ return [
 
     // Roles to send notifications to
     'notify_roles' => ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pengingat dokumen menggantung di inbox
+    |--------------------------------------------------------------------------
+    |
+    | Dipakai App\Services\PendingApprovalReminderService. TERPISAH dari
+    | 'thresholds' di atas: yang itu berbasis deadline (butuh received_at terisi),
+    | sedangkan yang ini mengukur lama status 'pending' — jendela "sudah dikirim
+    | tapi belum di-approve" yang tidak terpantau mekanisme deadline.
+    |
+    | hours          : berapa jam menggantung sebelum pengingat pertama dikirim.
+    | cooldown_hours : jarak minimal antar-pengingat untuk dokumen & peran yang
+    |                  sama, supaya dokumen yang lama tertahan tidak mengirim
+    |                  pesan tiap jam.
+    */
+    'pending_approval' => [
+        'hours'          => env('WHATSAPP_PENDING_APPROVAL_HOURS', 6),
+        'cooldown_hours' => env('WHATSAPP_PENDING_APPROVAL_COOLDOWN', 24),
+    ],
 ];

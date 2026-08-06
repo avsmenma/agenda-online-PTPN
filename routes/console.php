@@ -26,6 +26,17 @@ Schedule::command('notifications:send-late-documents')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/late-document-notifications.log'));
 
+// Pengingat dokumen yang menggantung di inbox (terkirim tapi belum di-approve).
+// TERPISAH dari perintah di atas: yang itu berbasis deadline dan menyaring
+// received_at IS NOT NULL, sedangkan received_at sengaja kosong sampai dokumen
+// di-approve — sehingga jendela "menunggu approval" tak terpantau olehnya.
+// Ambang & masa tenang di config/fonnte.php ('pending_approval').
+Schedule::command('notifications:send-pending-approval')
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/pending-approval-reminders.log'));
+
 // Auto-forward dokumen ke Pembayaran ketika status_pembayaran = sudah_dibayar
 // oleh project eksternal. Jalan setiap menit, tidak boleh overlap.
 Schedule::command('dokumen:process-auto-forward')

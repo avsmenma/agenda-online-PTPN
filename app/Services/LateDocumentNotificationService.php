@@ -257,20 +257,9 @@ class LateDocumentNotificationService
      */
     protected function getUsersByRole(string $roleCode): Collection
     {
-        // Map roleCode to database role values
-        $roleMapping = [
-            'team_verifikasi' => ['team_verifikasi', 'verifikasi', 'Team Verifikasi'],
-            'perpajakan' => ['perpajakan', 'Perpajakan'],
-            'akutansi' => ['akutansi', 'Akutansi'],
-            'pembayaran' => ['pembayaran', 'Pembayaran'],
-        ];
-
-        $roles = $roleMapping[$roleCode] ?? [$roleCode];
-
-        return User::whereIn('role', $roles)
-            ->whereNotNull('phone_number')
-            ->where('phone_number', '!=', '')
-            ->get();
+        // Pemetaan alias peran dipindah ke App\Support\RoleRecipients agar dipakai
+        // bersama PendingApprovalReminderService — jangan kembalikan jadi salinan.
+        return \App\Support\RoleRecipients::withPhone($roleCode);
     }
 
     /**
