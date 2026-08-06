@@ -426,17 +426,23 @@ git commit -m "feat(bagian): kelas DocumentJourney penentu posisi dokumen dalam 
 
 ---
 
-### Task 2: Sambungkan ke controller Bagian
+### Task 2: Sambungkan controller + render rangkaian tahap di sel
+
+> Controller yang menghitung dan view yang merender adalah SATU hasil. Memisahkannya
+> akan meninggalkan test merah di antara tugas — hasil yang tidak bisa diuji sendiri.
 
 **Files:**
 - Modify: `app/Http/Controllers/BagianDokumenController.php:62` (eager load) dan blok
   `return view(...)` di `index()`
+- Modify: `resources/views/bagian/dokumens/daftarDokumen.blade.php` — sel `col-pengurus`
+  (cari `<td class="col-pengurus"`), dan blok `<style>` yang sudah ada (sisipkan sebelum
+  `</style>`)
 - Test: `tests/Feature/PerjalananDokumenBagianTest.php`
 
 **Interfaces:**
 - Consumes: `DocumentJourney::forDokumen(Dokumen, array): array` (Task 1).
-- Produces: variabel view `$perjalanan` — `array<int, array>` berkunci `dokumen.id`,
-  nilainya hasil `forDokumen()`.
+- Produces: variabel view `$perjalanan` — `array<int, array>` berkunci `dokumen.id`;
+  markup `.dj-cell` ber-atribut `data-perjalanan` (JSON) yang dibaca Task 3.
 
 - [ ] **Step 1: Tulis test yang gagal**
 
@@ -620,33 +626,7 @@ Dan tambahkan `'perjalanan'` ke daftar `compact(...)`:
         ));
 ```
 
-- [ ] **Step 4: Jalankan test — masih GAGAL, tapi karena view**
-
-Run: `php artisan test --filter=PerjalananDokumenBagianTest`
-Expected: `test_tidak_ada_n_plus_1_saat_dokumen_bertambah` LULUS; tiga test lain masih
-FAIL karena view belum merender apa pun. Ini benar — render dikerjakan Task 3.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add app/Http/Controllers/BagianDokumenController.php tests/Feature/PerjalananDokumenBagianTest.php
-git commit -m "feat(bagian): hitung perjalanan dokumen di controller, eager-load roleData"
-```
-
----
-
-### Task 3: Render rangkaian tahap di sel
-
-**Files:**
-- Modify: `resources/views/bagian/dokumens/daftarDokumen.blade.php` — sel `col-pengurus`
-  (cari `<td class="col-pengurus"`), dan blok `<style>` yang sudah ada (sisipkan sebelum
-  `</style>`)
-
-**Interfaces:**
-- Consumes: variabel view `$perjalanan` (Task 2), berkunci `dokumen.id`.
-- Produces: markup `.dj-cell` ber-atribut `data-perjalanan` (JSON) yang dibaca Task 4.
-
-- [ ] **Step 1: Ganti isi sel**
+- [ ] **Step 4: Ganti isi sel**
 
 Ganti seluruh isi `<td class="col-pengurus" ...>` (saat ini satu `<span>` berisi label
 handler) dengan:
@@ -680,7 +660,7 @@ handler) dengan:
                         </td>
 ```
 
-- [ ] **Step 2: Tambahkan CSS ber-scope**
+- [ ] **Step 5: Tambahkan CSS ber-scope**
 
 Sisipkan sebelum `</style>` di blok `<style>` view yang sudah ada. Nol `!important`:
 
@@ -738,12 +718,12 @@ Sisipkan sebelum `</style>` di blok `<style>` view yang sudah ada. Nol `!importa
     .dj-cell--action .dj-label { color: #b45309; }
 ```
 
-- [ ] **Step 3: Jalankan test, pastikan LULUS**
+- [ ] **Step 6: Jalankan test, pastikan LULUS**
 
 Run: `php artisan view:clear && php artisan test --filter=PerjalananDokumenBagianTest`
 Expected: PASS — 4 test
 
-- [ ] **Step 4: Buktikan test menggigit (aturan 8)**
+- [ ] **Step 7: Buktikan test menggigit (aturan 8)**
 
 | Mutasi | Test yang harus gagal |
 |---|---|
@@ -755,16 +735,16 @@ Pulihkan, lalu:
 Run: `git diff resources/views/bagian/dokumens/daftarDokumen.blade.php`
 Expected: hanya berisi perubahan Step 1 & 2 (bukan sisa mutasi)
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add resources/views/bagian/dokumens/daftarDokumen.blade.php
-git commit -m "feat(bagian): render rangkaian tahap perjalanan di kolom Pengurus Dokumen"
+git add app/Http/Controllers/BagianDokumenController.php resources/views/bagian/dokumens/daftarDokumen.blade.php tests/Feature/PerjalananDokumenBagianTest.php
+git commit -m "feat(bagian): tampilkan perjalanan dokumen di kolom Pengurus Dokumen"
 ```
 
 ---
 
-### Task 4: Modal rincian perjalanan
+### Task 3: Modal rincian perjalanan
 
 **Files:**
 - Modify: `resources/views/bagian/dokumens/daftarDokumen.blade.php` — tambah markup modal
@@ -772,8 +752,8 @@ git commit -m "feat(bagian): render rangkaian tahap perjalanan di kolom Pengurus
   `tampilkanPerjalanan` (di blok `<script>` yang sudah ada, dekat `showRejectionModal`)
 
 **Interfaces:**
-- Consumes: atribut `data-perjalanan` pada `.dj-cell` (Task 3).
-- Produces: `window.tampilkanPerjalanan(tombol)` — dipanggil dari `onclick` sel.
+- Consumes: atribut `data-perjalanan` pada `.dj-cell` (Task 2).
+- Produces: `window.tampilkanPerjalanan(tombol)` — dipanggil dari `onclick` sel (Task 2).
 
 - [ ] **Step 1: Tambahkan markup modal**
 
@@ -801,7 +781,7 @@ Sisipkan tepat SEBELUM markup `<div class="modal fade" id="rejectionDetailModal"
 
 - [ ] **Step 2: Tambahkan CSS daftar modal**
 
-Sisipkan sebelum `</style>`, setelah blok CSS Task 3:
+Sisipkan sebelum `</style>`, setelah blok CSS Task 2:
 
 ```css
     .dj-list {
@@ -933,7 +913,7 @@ git commit -m "feat(bagian): modal rincian perjalanan dokumen"
 
 ---
 
-### Task 5: Suite penuh, deploy, QA browser
+### Task 4: Suite penuh, deploy, QA browser
 
 **Files:** tidak ada perubahan kode.
 
