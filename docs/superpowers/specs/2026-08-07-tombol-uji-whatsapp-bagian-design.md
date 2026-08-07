@@ -304,13 +304,24 @@ mock.
 Disalin juga ke docblock controller.
 
 1. Hapus `app/Http/Controllers/UjiWhatsAppBagianController.php`
-2. Hapus `resources/views/bagian/partials/_ujiWhatsApp.blade.php`
+2. Hapus `resources/views/bagian/partials/_ujiWhatsApp.blade.php`. Direktori
+   `resources/views/bagian/partials/` **dibuat baru** oleh fitur ini (ia satu-satunya
+   isinya) — kalau jadi kosong sesudah dihapus, hapus juga direktorinya (pola sama
+   dengan `resources/views/tracking/` yang dihapus di audit dead-code 2026-07-26).
 3. Di `daftarDokumen.blade.php` hapus **dua** sisipan: tombol `id="btnUjiWhatsApp"` di
    toolbar filter, dan baris `@include('bagian.partials._ujiWhatsApp')`
-4. Hapus baris route `bagian.uji-whatsapp` di `routes/web.php`
+4. Hapus baris route `bagian.uji-whatsapp` di `routes/web.php` **beserta blok
+   komentarnya** (3 baris "SEMENTARA (2026-08-07) ..." tepat di atasnya) — komentar itu
+   menerangkan route ini dan akan menggantung kalau routenya hilang tapi komentarnya
+   tertinggal.
 5. Hapus `tests/Feature/UjiWhatsAppBagianTest.php`
 6. Di `DocumentReturnNotifier`: hapus `pesanUjiCoba()` + konstanta `PENANDA_UJI`,
    kembalikan `namaBagian()` ke `private` **bila tak ada pemakai lain**
+7. Di `tests/Feature/NotifikasiPengembalianBagianTest.php`, docblock test
+   `test_pesan_whatsapp_menyusun_argumen_pada_posisi_yang_benar()` merujuk ke
+   `UjiWhatsAppBagianTest` (dihapus di langkah 5) — perbaiki rujukan itu. **Test ini
+   sendiri wajib tetap hidup, JANGAN ikut dihapus:** ia menjaga jalur produksi
+   (`DocumentReturnNotifier::kirim()`), bukan fitur uji coba ini.
 
 Langkah 6 **opsional** — tanda tangan `susunPesan()` yang menerima nilai biasa adalah
 perbaikan yang berdiri sendiri (lebih mudah diuji, tak terikat objek `Dokumen`) dan

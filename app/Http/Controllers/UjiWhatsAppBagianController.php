@@ -21,16 +21,28 @@ use Illuminate\Support\Facades\Auth;
  *
  * DAFTAR PENCABUTAN (setelah sesi uji coba selesai):
  *   1. Hapus berkas ini
- *   2. Hapus resources/views/bagian/partials/_ujiWhatsApp.blade.php
+ *   2. Hapus resources/views/bagian/partials/_ujiWhatsApp.blade.php. Direktori
+ *      resources/views/bagian/partials/ DIBUAT BARU oleh fitur ini (ia satu-
+ *      satunya isinya) — kalau jadi kosong sesudah dihapus, hapus juga
+ *      direktorinya (pola sama dengan resources/views/tracking/ yang dihapus
+ *      di audit dead-code 2026-07-26).
  *   3. Di resources/views/bagian/dokumens/daftarDokumen.blade.php hapus DUA
  *      sisipan: tombol id="btnUjiWhatsApp" di toolbar filter, dan baris
  *      @include('bagian.partials._ujiWhatsApp') di dekat modal lain
- *   4. Hapus route bernama 'bagian.uji-whatsapp' di routes/web.php
+ *   4. Hapus baris route bernama 'bagian.uji-whatsapp' di routes/web.php
+ *      BESERTA BLOK KOMENTARNYA (3 baris "SEMENTARA (2026-08-07) ..." tepat di
+ *      atasnya) — komentar itu menerangkan route ini dan akan menggantung kalau
+ *      routenya hilang tapi komentarnya tertinggal.
  *   5. Hapus tests/Feature/UjiWhatsAppBagianTest.php
  *   6. Di DocumentReturnNotifier: hapus pesanUjiCoba() + konstanta PENANDA_UJI;
  *      kembalikan namaBagian() ke private BILA tak ada pemakai lain.
  *      Tanda tangan susunPesan() yang menerima nilai biasa BOLEH dipertahankan —
  *      itu perbaikan yang berdiri sendiri.
+ *   7. Di tests/Feature/NotifikasiPengembalianBagianTest.php, docblock test
+ *      test_pesan_whatsapp_menyusun_argumen_pada_posisi_yang_benar() merujuk ke
+ *      UjiWhatsAppBagianTest (dihapus di langkah 5 di atas) — perbaiki rujukan
+ *      itu. TEST INI SENDIRI WAJIB TETAP HIDUP, JANGAN ikut dihapus: ia menjaga
+ *      jalur produksi (DocumentReturnNotifier::kirim()), bukan fitur uji coba ini.
  *
  * Cek bagian_code kosong SENGAJA tidak ada di sini: middleware CheckBagianRole
  * sudah menolaknya dengan 403 sebelum request sampai ke controller.
