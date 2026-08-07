@@ -1231,6 +1231,14 @@
         <button type="button" class="btn-refresh" id="btnRefreshTable" onclick="refreshDocumentTable()">
           <i class="fa-solid fa-arrows-rotate"></i> Refresh
         </button>
+
+        {{-- SEMENTARA — pemicu modal uji kiriman WhatsApp. type="button" WAJIB:
+             toolbar ini ada di dalam <form method="GET">, tanpa itu tombolnya
+             men-submit form dan memuat ulang halaman. Hapus bersama partial
+             bagian.partials._ujiWhatsApp. --}}
+        <button type="button" class="uwa-tombol" id="btnUjiWhatsApp">
+          <i class="fa-solid fa-flask"></i> Uji Kirim Pesan
+        </button>
       </form>
     </div>
 
@@ -2737,6 +2745,11 @@
       </div>
     </div>
   </div>
+
+  {{-- SEMENTARA — modal uji kiriman WhatsApp untuk sesi uji coba pengguna.
+       Hapus baris ini bersama partialnya (lihat docblock
+       App\Http\Controllers\UjiWhatsAppBagianController). --}}
+  @include('bagian.partials._ujiWhatsApp')
 
   <!-- Modal: Rejection Detail - Bagian -->
   <div class="modal fade" id="rejectionDetailModal" tabindex="-1" aria-labelledby="rejectionDetailModalLabel"

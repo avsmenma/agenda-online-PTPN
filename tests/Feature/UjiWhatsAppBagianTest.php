@@ -135,4 +135,43 @@ class UjiWhatsAppBagianTest extends TestCase
             'Alasan gagal diseragamkan jadi pesan generik — user tak akan tahu apa yang harus diperbaiki.'
         );
     }
+
+    public function test_tombol_dan_modal_uji_tampil_di_halaman_bagian(): void
+    {
+        \App\Models\Bagian::create(['kode' => 'TAN', 'nama' => 'Tanaman']);
+
+        $response = $this->actingAs($this->userBagian('TAN'))
+            ->get(route('bagian.documents.index'))
+            ->assertOk();
+
+        $html = $response->getContent();
+
+        $response->assertSee('Uji Kirim Pesan');
+        $response->assertSee('ujiWhatsAppModal', false);
+
+        // Tombol berada di dalam <form method="GET"> milik toolbar filter. Tanpa
+        // type="button" ia men-submit form dan memuat ulang halaman sebelum modalnya
+        // sempat terbuka — cacat yang tak terlihat di test manapun kalau tidak
+        // diperiksa di sini.
+        $this->assertMatchesRegularExpression(
+            '/<button[^>]*type="button"[^>]*id="btnUjiWhatsApp"/',
+            $html,
+            'Tombol Uji Kirim Pesan tidak bertipe button — ia akan men-submit form filter.'
+        );
+
+        // CSS WAJIB berada di dalam <head>, artinya lewat @push('styles'). Kalau ia
+        // ditulis <style> polos di badan, tombol sempat tampil telanjang sebelum
+        // gayanya ter-parse — regresi flash-of-unstyled yang persis pernah terjadi
+        // saat ekstraksi modal Kustomisasi Kolom.
+        $posCss  = strpos($html, '.uwa-tombol {');
+        $posHead = strpos($html, '</head>');
+
+        $this->assertNotFalse($posCss, 'CSS tombol uji tidak dirender sama sekali.');
+        $this->assertNotFalse($posHead, 'Layout tidak punya </head> — asumsi test ini salah.');
+        $this->assertLessThan(
+            $posHead,
+            $posCss,
+            "CSS tombol uji dirender di badan, bukan di <head> — @push('styles') tidak dipakai."
+        );
+    }
 }
