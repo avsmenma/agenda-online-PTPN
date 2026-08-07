@@ -89,7 +89,12 @@ class UjiWhatsAppBagianController extends Controller
      */
     private static function alasanTerbaca(array $hasil): string
     {
-        $pesanApi = trim((string) ($hasil['message'] ?? ''));
+        // $hasil['message'] berasal dari respons Fonnte apa adanya (lihat
+        // FonnteWhatsAppService::sendMessage()) — bila API mengembalikan array/objek
+        // di situ, (string) langsung memicu warning "Array to string conversion".
+        // Nilai non-skalar diperlakukan sebagai kosong, bukan dipaksa jadi string.
+        $mentah   = $hasil['message'] ?? '';
+        $pesanApi = is_scalar($mentah) ? trim((string) $mentah) : '';
         $ekor     = $pesanApi !== '' ? $pesanApi : 'tanpa keterangan';
 
         return match ($hasil['reason'] ?? '') {
