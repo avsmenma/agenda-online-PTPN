@@ -72,6 +72,21 @@ class UjiWhatsAppBagianTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_route_dibatasi_throttle_5_per_menit(): void
+    {
+        // Tiap kiriman memotong kuota Fonnte berbayar — throttle:5,1 bukan
+        // formalitas. Diperiksa lewat definisi route, BUKAN dengan menembak
+        // endpoint 6 kali (lambat & rapuh).
+        $route = \Illuminate\Support\Facades\Route::getRoutes()->getByName('bagian.uji-whatsapp');
+
+        $this->assertNotNull($route, 'Route bagian.uji-whatsapp tidak ditemukan.');
+        $this->assertContains(
+            'throttle:5,1',
+            $route->gatherMiddleware(),
+            'Middleware throttle:5,1 tidak terpasang di route bagian.uji-whatsapp.'
+        );
+    }
+
     public function test_nomor_tidak_sah_ditolak_dan_tidak_memanggil_gateway(): void
     {
         // Validasi harus menggigit SEBELUM kuota Fonnte terpakai.
