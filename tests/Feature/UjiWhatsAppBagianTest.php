@@ -174,6 +174,19 @@ class UjiWhatsAppBagianTest extends TestCase
             'Tombol Uji Kirim Pesan tidak bertipe button — ia akan men-submit form filter.'
         );
 
+        // Tombol toolbar WAJIB meminjam .btn-refresh untuk ukurannya (bukan cuma
+        // .uwa-*) — tanpa itu partial global compact-document-ui.blade.php menimpa
+        // tinggi/paddingnya via !important dan tombol kembali beda tinggi dari
+        // tetangganya (44px vs 34px, cacat yang sama persis yang baru diperbaiki).
+        // Diikat ke tag <button id="btnUjiWhatsApp"> lewat regex — assertSee polos
+        // akan lolos palsu karena tombol Refresh sungguhan di halaman yang sama
+        // juga membawa kelas .btn-refresh.
+        $this->assertMatchesRegularExpression(
+            '/<button(?=[^>]*\bid="btnUjiWhatsApp")(?=[^>]*\bclass="[^"]*\bbtn-refresh\b)[^>]*>/',
+            $html,
+            'Tombol Uji Kirim Pesan tidak lagi membawa kelas btn-refresh — ukurannya akan melenceng lagi dari tombol Refresh (34px vs 44px).'
+        );
+
         // CSS WAJIB berada di dalam <head>, artinya lewat @push('styles'). Kalau ia
         // ditulis <style> polos di badan, tombol sempat tampil telanjang sebelum
         // gayanya ter-parse — regresi flash-of-unstyled yang persis pernah terjadi
