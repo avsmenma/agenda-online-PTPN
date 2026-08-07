@@ -39,6 +39,25 @@
   }
   .uwa-tombol:active { transform: translateY(0); }
 
+  /* Tombol pemicu di toolbar MEMINJAM .btn-refresh untuk ukurannya, bukan menyalin
+     angkanya. Sebabnya konkret: partial global compact-document-ui menimpa tinggi &
+     padding .btn-refresh lewat !important dengan daftar kelas yang di-hardcode —
+     .uwa-* tidak ada di daftar itu, jadi tombol yang menetapkan ukurannya sendiri
+     selalu lebih tinggi daripada tetangganya (44px vs 34px, terukur di produksi
+     2026-08-07). Meminjam kelasnya membuat ukurannya ikut berubah sendiri bila
+     partial global itu berubah.
+
+     Selektor button.* (0,1,1) dipakai agar warna di sini menang atas .btn-refresh
+     (0,1,0) yang dirender belakangan di badan halaman — tanpa satu pun !important. */
+  button.uwa-tombol-toolbar {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 2px 6px rgba(245, 158, 11, .3);
+  }
+  button.uwa-tombol-toolbar:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, .4);
+  }
+
   .uwa-ket {
     background: #fffbeb;
     border: 1px solid #fde68a;
