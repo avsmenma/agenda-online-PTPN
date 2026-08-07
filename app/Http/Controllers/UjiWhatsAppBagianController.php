@@ -7,6 +7,7 @@ use App\Services\FonnteWhatsAppService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 /**
  * ============================ FITUR SEMENTARA ============================
@@ -59,8 +60,10 @@ class UjiWhatsAppBagianController extends Controller
             'nomor_hp.regex'    => 'Masukkan nomor WhatsApp yang sah, contoh 081234567890.',
         ]);
 
+        $bagianCode = strtoupper(trim((string) Auth::user()->bagian_code));
+
         $pesan = DocumentReturnNotifier::pesanUjiCoba(
-            DocumentReturnNotifier::namaBagian(strtoupper(trim((string) Auth::user()->bagian_code))),
+            DocumentReturnNotifier::namaBagian($bagianCode),
             // Tautan diarahkan ke halaman Bagian, BUKAN inbox dokumen contoh:
             // dokumen 9999_2026 tidak ada, dan responden yang menekan tautan mati
             // akan menyimpulkan "sistemnya rusak" — kesan pertama yang mahal.
@@ -68,6 +71,17 @@ class UjiWhatsAppBagianController extends Controller
         );
 
         $hasil = $wa->sendMessage($data['nomor_hp'], $pesan);
+
+        // Endpoint ini bisa mengirim ke nomor Indonesia mana pun, 5x/menit, dan log
+        // Fonnte hanya mencatat nomor tujuan — bukan pelakunya. Dicatat di sini supaya
+        // penyalahgunaan bisa ditelusuri ke akun. Isi pesan SENGAJA tidak dicatat —
+        // isinya tetap sama setiap kali.
+        Log::info('[uji-whatsapp-bagian] Percobaan kirim pesan uji', [
+            'user_id'     => Auth::id(),
+            'bagian_code' => $bagianCode,
+            'nomor_hp'    => $data['nomor_hp'],
+            'berhasil'    => ($hasil['success'] ?? false) === true,
+        ]);
 
         if (($hasil['success'] ?? false) === true) {
             return response()->json([
