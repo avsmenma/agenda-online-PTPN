@@ -1236,7 +1236,7 @@
              toolbar ini ada di dalam <form method="GET">, tanpa itu tombolnya
              men-submit form dan memuat ulang halaman. Hapus bersama partial
              bagian.partials._ujiWhatsApp. --}}
-        <button type="button" class="uwa-tombol" id="btnUjiWhatsApp">
+        <button type="button" class="btn-refresh uwa-tombol-toolbar" id="btnUjiWhatsApp">
           <i class="fa-solid fa-flask"></i> Uji Kirim Pesan
         </button>
       </form>
