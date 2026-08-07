@@ -493,6 +493,13 @@ Route::middleware(['auth', 'bagian'])
         // Tandai notifikasi pengembalian sebagai sudah dibaca
         Route::post('/bagian/notifikasi/tandai-dibaca', [\App\Http\Controllers\BagianDokumenController::class, 'tandaiNotifikasiDibaca'])
             ->name('bagian.notifikasi.tandai-dibaca');
+
+        // SEMENTARA (2026-08-07) — tombol uji kiriman WhatsApp untuk sesi uji coba
+        // pengguna. throttle:5,1 bukan formalitas: tiap kiriman memotong kuota Fonnte
+        // berbayar. Hapus bersama UjiWhatsAppBagianController (lihat docblock-nya).
+        Route::post('/bagian/uji-whatsapp', [\App\Http\Controllers\UjiWhatsAppBagianController::class, 'kirim'])
+            ->name('bagian.uji-whatsapp')
+            ->middleware('throttle:5,1');
     });
 
 // =============================================================================
