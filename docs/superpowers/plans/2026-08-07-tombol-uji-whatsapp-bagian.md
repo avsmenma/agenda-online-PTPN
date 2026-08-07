@@ -708,25 +708,43 @@ Buat `resources/views/bagian/partials/_ujiWhatsApp.blade.php`:
   .uwa-hasil--gagal { color: #b91c1c; }
 
   .uwa-kirim:disabled { opacity: .6; cursor: progress; }
+
+  /* Bentuk cangkang modal. Dua modal lain di berkas ini memakai atribut style=
+     inline untuk hal yang sama; DI SINI TIDAK — CLAUDE.md aturan 4 melarang CSS
+     inline baru, dan style= adalah spesifisitas tertinggi yang justru memulai
+     perang yang dilarang itu. Selektor .uwa-modal .modal-* (0,2,0) sudah menang
+     atas .modal-* milik Bootstrap (0,1,0) tanpa satu pun !important. */
+  .uwa-modal .modal-content { border: none; border-radius: 16px; }
+  .uwa-modal .modal-header  { border-bottom: 1px solid #e2e8f0; }
+  .uwa-modal .modal-footer  { border-top: 1px solid #e2e8f0; }
+  .uwa-modal .modal-body    { padding: 1.25rem 1.5rem; }
+  .uwa-modal .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+  .uwa-modal .modal-title i { color: #d97706; }
 </style>
 @endpush
 
 {{-- Markup statis + dibuka lewat instance bootstrap.Modal eksplisit — pola yang
      SAMA dengan #perjalananModal & #rejectionDetailModal di berkas ini. Jangan
      mengarang mekanisme ketiga. --}}
-<div class="modal fade" id="ujiWhatsAppModal" tabindex="-1" aria-labelledby="ujiWhatsAppModalLabel"
-  aria-hidden="true">
+<div class="modal fade uwa-modal" id="ujiWhatsAppModal" tabindex="-1"
+  aria-labelledby="ujiWhatsAppModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border: none; border-radius: 16px;">
-      <div class="modal-header" style="border-bottom: 1px solid #e2e8f0;">
-        <h5 class="modal-title" id="ujiWhatsAppModalLabel"
-          style="font-size: 1.05rem; font-weight: 700; color: #1f2937;">
-          <i class="fa-solid fa-flask me-2" style="color: #d97706;"></i>Uji Kirim Pesan WhatsApp
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ujiWhatsAppModalLabel">
+          <i class="fa-solid fa-flask" aria-hidden="true"></i>Uji Kirim Pesan WhatsApp
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
       </div>
 
-      <div class="modal-body" style="padding: 1.25rem 1.5rem;">
+      <div class="modal-body">
         <div class="uwa-ket">
           Uji coba ini akan mengirim <strong>satu pesan WhatsApp</strong> berisi
           pemberitahuan <strong>&ldquo;dokumen dikembalikan&rdquo;</strong> ke nomor yang
@@ -743,7 +761,7 @@ Buat `resources/views/bagian/partials/_ujiWhatsApp.blade.php`:
         <div class="uwa-hasil" id="uwaHasil" role="status" aria-live="polite"></div>
       </div>
 
-      <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
+      <div class="modal-footer">
         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
         <button type="button" class="uwa-tombol uwa-kirim" id="uwaKirim">
           <i class="fa-brands fa-whatsapp"></i> Kirim
