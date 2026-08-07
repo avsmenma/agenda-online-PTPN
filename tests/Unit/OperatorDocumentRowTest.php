@@ -59,6 +59,65 @@ class OperatorDocumentRowTest extends TestCase
         return OperatorDocumentRow::fromDokumen($dokumen, $handlerOptions, $viewerRole);
     }
 
+    /**
+     * Salinan dokumen dengan cast satu kolom DILEPAS, supaya jalur parse defensif
+     * DocumentRow::formatDates() (cabang untuk nilai yang BUKAN DateTimeInterface)
+     * benar-benar tereksekusi.
+     *
+     * Dulu helper ini tak perlu: cukup memakai kolom tanggal yang kebetulan belum
+     * ber-cast. tanggal_kembali_ke_bagian dipakai sampai 2026-08-06, lalu
+     * tanggal_hasil_koreksi_bagian sampai 2026-08-07 — keduanya kini ber-cast
+     * 'datetime', dan pemeriksaan seluruh peta formatDates() terhadap $casts
+     * menemukan TIDAK ADA lagi kolom tanggal non-cast yang tersisa.
+     *
+     * Melepas cast secara eksplisit lebih jujur daripada berburu kolom yang
+     * kebetulan terlupakan — kolom semacam itu akan hilang lagi pada migrasi
+     * berikutnya, dan tesnya ikut pindah-pindah tanpa alasan yang sebenarnya.
+     *
+     * setRawAttributes() TIDAK cukup sendirian: cast diterapkan saat atribut
+     * DIBACA, bukan saat ditulis, jadi nilai mentah tetap akan dikonversi Carbon
+     * (atau melempar exception untuk nilai tak sah) sebelum formatDates() sempat
+     * melihatnya.
+     */
+    private function dokumenTanpaCastKoreksiBagian(mixed $nilai): Dokumen
+    {
+        $asli = $this->buatDokumen();
+
+        // Kunci cast di-unset secara hardcode (bukan lewat properti) supaya ikut
+        // terbawa saat Eloquent membuat instance baru lewat newFromBuilder().
+        //
+        // $table DAN getForeignKey() WAJIB dideklarasikan eksplisit: Dokumen tidak
+        // menyetel $table (mengandalkan tebakan default dari nama kelas), dan
+        // relasi roleStatuses/dibayarKepadas/dokumenPos (dipanggil baris()) juga
+        // memakai foreign key default — keduanya ditebak dari class_basename($this).
+        // Untuk kelas anonim, class_basename() menghasilkan string berisi path
+        // berkas + baris (mis. "OperatorDocumentRowTest.php:188$0"), bukan
+        // "Dokumen", sehingga getTable() menebak tabel dan getForeignKey() menebak
+        // kolom yang tak pernah ada.
+        $prototipe = new class extends Dokumen
+        {
+            protected $table = 'dokumens';
+
+            public function getForeignKey(): string
+            {
+                return 'dokumen_id';
+            }
+
+            public function getCasts(): array
+            {
+                $casts = parent::getCasts();
+                unset($casts['tanggal_hasil_koreksi_bagian']);
+
+                return $casts;
+            }
+        };
+
+        $dokumen = $prototipe->newQuery()->findOrFail($asli->id);
+        $dokumen->tanggal_hasil_koreksi_bagian = $nilai;
+
+        return $dokumen;
+    }
+
     public function test_status_dikembalikan_saat_returned_to_operator(): void
     {
         $dokumen = $this->buatDokumen([
@@ -349,17 +408,10 @@ class OperatorDocumentRowTest extends TestCase
 
     public function test_dates_kolom_non_cast_diparse_defensif(): void
     {
-        // tanggal_hasil_koreksi_bagian BUKAN kolom DB (tak ada di $fillable/$casts
-        // model Dokumen) — di-set langsung ke atribut in-memory (bukan mass
-        // assignment) untuk menguji jalur parse defensif OperatorDocumentRow.
-        //
-        // Sebelumnya test ini memakai tanggal_kembali_ke_bagian, tetapi kolom itu
-        // DIBUATKAN migrasi 2026-08-06 dan kini ber-cast 'datetime' — nilai tak sah
-        // akan dilempar Eloquent sebelum jalur defensif ini tersentuh. Bila kelak
-        // tanggal_hasil_koreksi_bagian ikut dibuatkan kolom, test ini harus pindah
-        // lagi ke kolom lain yang benar-benar non-cast.
-        $dokumen = $this->buatDokumen();
-        $dokumen->tanggal_hasil_koreksi_bagian = '2026-07-05 14:00:00';
+        // Nilai mentah berupa string (bukan Carbon) harus tetap terformat benar
+        // lewat cabang parse defensif. Lihat dokumenTanpaCastKoreksiBagian() untuk
+        // alasan cast dilepas alih-alih memakai kolom yang kebetulan non-cast.
+        $dokumen = $this->dokumenTanpaCastKoreksiBagian('2026-07-05 14:00:00');
 
         $row = $this->baris($dokumen);
 
@@ -368,11 +420,9 @@ class OperatorDocumentRowTest extends TestCase
 
     public function test_dates_kolom_non_cast_tak_terparse_jadi_strip(): void
     {
-        // Nilai mentah yang tidak bisa di-parse Carbon → fallback '-'.
-        // Kolom non-cast; lihat catatan di test sebelumnya soal perpindahan dari
-        // tanggal_kembali_ke_bagian.
-        $dokumen = $this->buatDokumen();
-        $dokumen->tanggal_hasil_koreksi_bagian = 'bukan-tanggal-valid';
+        // Nilai mentah yang tidak bisa di-parse Carbon → fallback '-', BUKAN
+        // exception yang menjatuhkan seluruh baris tabel.
+        $dokumen = $this->dokumenTanpaCastKoreksiBagian('bukan-tanggal-valid');
 
         $row = $this->baris($dokumen);
 

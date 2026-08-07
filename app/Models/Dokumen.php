@@ -50,6 +50,7 @@ class Dokumen extends Model
         'pemaraf',
         'tanggal_selesai_diproses',
         'tanggal_kembali_ke_bagian',
+        'tanggal_hasil_koreksi_bagian',
         'kepala_sub_bagian',
         'status_dokumen_csv',
         // Workflow tracking (kept for compatibility)
@@ -130,6 +131,7 @@ class Dokumen extends Model
         'tanggal_paraf' => 'datetime',
         'tanggal_selesai_diproses' => 'datetime',
         'tanggal_kembali_ke_bagian' => 'datetime',
+        'tanggal_hasil_koreksi_bagian' => 'datetime',
         // Perpajakan casts
         'tanggal_faktur' => 'date',
         'tanggal_selesai_verifikasi_pajak' => 'date',
