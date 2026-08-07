@@ -7,6 +7,7 @@ use App\Models\Dokumen;
 use App\Models\User;
 use App\Notifications\DokumenDikembalikanNotification;
 use App\Services\DocumentReturnNotifier;
+use App\Services\FonnteWhatsAppService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -173,5 +174,57 @@ class NotifikasiPengembalianBagianTest extends TestCase
             // 'showRejectionModal': fungsi JS itu ada di halaman terlepas dari
             // kolomnya, jadi assertion-nya akan hampa.
             ->assertSee('Klik untuk melihat alasan pengembalian', false);
+    }
+
+    /**
+     * susunPesan() diubah 2026-08-07 dari menerima objek Dokumen menjadi menerima
+     * nilai biasa (agenda, nama bagian, alasan, tautan) supaya template pesannya
+     * bisa dipakai bersama panel uji coba WhatsApp (lihat UjiWhatsAppBagianTest).
+     * Tak satu pun test lain di berkas ini mengisi phone_number dengan nilai asli,
+     * sehingga cabang WhatsApp di kirim() (satu-satunya pemanggil susunPesan() di
+     * jalur produksi) sebelumnya TIDAK PERNAH tereksekusi oleh suite ini — kalau
+     * argumen tertukar di kirim(), tak ada test yang merah dan pesan WhatsApp
+     * produksi bisa berbunyi "dikembalikan ke Bagian Nilai rupiah tidak cocok."
+     * tanpa ada yang tahu sampai user melihatnya. Test ini menutup celah itu.
+     */
+    public function test_pesan_whatsapp_menyusun_argumen_pada_posisi_yang_benar(): void
+    {
+        Bagian::create(['kode' => 'KEU', 'nama' => 'Keuangan']);
+        $user = $this->userBagian('KEU');
+        $user->update(['phone_number' => '081234567890']);
+
+        $dokumen = $this->dokumen('KEU');
+        $alasan  = 'Nilai rupiah tidak cocok.';
+
+        $pesanTerkirim = null;
+
+        $this->mock(FonnteWhatsAppService::class, function ($mock) use (&$pesanTerkirim) {
+            $mock->shouldReceive('sendMessage')
+                ->once()
+                ->andReturnUsing(function ($nomor, $pesan) use (&$pesanTerkirim) {
+                    $pesanTerkirim = $pesan;
+
+                    return ['status' => true];
+                });
+        });
+
+        DocumentReturnNotifier::kirim($dokumen, 'KEU', $alasan);
+
+        $this->assertNotNull($pesanTerkirim, 'sendMessage() tidak pernah dipanggil.');
+
+        // Nama bagian wajib TEPAT setelah "ke Bagian " — bukan cuma "ada di suatu
+        // tempat di string". Assertion "mengandung nama bagian" saja tidak cukup:
+        // nama bagian tetap ada di string meski tertukar posisi dengan alasan.
+        $this->assertStringContainsString('ke Bagian Keuangan.', $pesanTerkirim);
+
+        // Alasan wajib TEPAT setelah label "Alasan Pengembalian:*\n".
+        $this->assertStringContainsString("Alasan Pengembalian:*\n" . $alasan, $pesanTerkirim);
+
+        // Nomor agenda dokumen wajib muncul di antara "agenda *" dan "*".
+        $this->assertStringContainsString('agenda *' . $dokumen->nomor_agenda . '*', $pesanTerkirim);
+
+        // Tautan wajib URL dokumen yang benar, bukan string kosong.
+        $tautanDiharapkan = url(route('inbox.show', $dokumen->id, false));
+        $this->assertStringContainsString('Lihat dokumen: ' . $tautanDiharapkan, $pesanTerkirim);
     }
 }
