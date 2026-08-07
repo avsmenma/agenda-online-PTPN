@@ -194,38 +194,51 @@ Tautan pesan uji memakai `route('bagian.documents.index')` — halaman yang bisa
 dan kebetulan memang halaman yang sedang diuji. Jalur produksi tetap memakai
 `route('inbox.show', $dokumen->id)` seperti sebelumnya.
 
-### 4.5 Panel UI
+### 4.5 UI — satu tombol di toolbar + modal
 
-Berkas baru `resources/views/bagian/partials/_ujiWhatsApp.blade.php`, dipasang dengan
-**satu baris `@include`** di `resources/views/bagian/dokumens/daftarDokumen.blade.php`,
-tepat setelah `@include('partials._infoCards', …)` dan sebelum panel notifikasi
-pengembalian.
+**Rancangan awal memakai panel permanen di bawah kartu info. Dibatalkan user:**
+*"jelek, dan memakan space"*. Alasannya sahih — panel itu menempati ruang di setiap
+kunjungan padahal hanya ditekan sekali per responden, dan halaman Bagian adalah
+halaman pemantauan, bukan halaman uji coba.
 
-Isi panel: kotak bergaris putus-putus, ikon 🧪, judul "Uji coba pemberitahuan
-WhatsApp", satu kalimat keterangan, input nomor, tombol Kirim, dan satu baris hasil.
+**Tombol** `Uji Kirim Pesan` diletakkan di toolbar filter, **tepat setelah tombol
+Refresh** yang sudah ada. Wajib `type="button"` — toolbar itu berada di dalam
+`<form method="GET">`, dan tombol tanpa `type` akan men-submit form lalu memuat ulang
+halaman sebelum modalnya sempat terbuka.
 
-**Inline, bukan modal.** Modal Bootstrap di layout ini punya riwayat bermasalah
-(data-api BS5 mati di layout jQuery+BS5, lihat memori `bootstrap-dropdown-pure-css`).
-Panel inline melewati persoalan itu sepenuhnya dan tak butuh satu baris pun kode
-penggerak modal.
+Nama tombol memakai **"Uji Kirim Pesan"** (bukan "Test/Uji Kirim Pesan") mengikuti
+aturan project: UI berbahasa Indonesia.
 
-Gaya visual **sengaja dibuat berbeda** dari komponen lain di halaman — garis putus-putus
-dan ikon labu kimia — supaya siapa pun langsung tahu ini bukan fitur produksi, dan tahu
-persis apa yang harus dihapus nanti.
+**Modal** `#ujiWhatsAppModal` berisi, berurutan:
 
-**CSS:** kelas ber-scope `.uwa-*`, **nol `!important`**, ditaruh di `@push('styles')`.
-Mengikuti persis pola `.notif-pengembalian` yang sudah ada di halaman ini
-(*"kelas ber-scope, tanpa !important"*).
+1. Keterangan bahwa uji ini akan **mengirim pemberitahuan "dokumen dikembalikan"** ke
+   nomor yang dimasukkan, dan bahwa **tidak ada dokumen yang benar-benar dikembalikan**
+   — pesannya bertanda `[UJI COBA]`.
+2. Input nomor WhatsApp.
+3. Satu baris hasil (kosong sampai tombol ditekan).
+4. Tombol Batal & Kirim.
 
-> **Wajib dicek saat implementasi:** apakah layout yang dipakai
-> `bagian/dokumens/daftarDokumen.blade.php` benar-benar punya `@stack('styles')`.
-> Kalau tidak ada, CSS-nya tak akan pernah dirender dan panelnya tampil telanjang.
-> Jangan berasumsi — buka layout-nya.
+**Modal Bootstrap, digerakkan eksplisit.** Berkas ini sudah punya dua modal yang
+bekerja dengan pola itu (`#perjalananModal`, `#rejectionDetailModal`) — markup statis di
+Blade, dibuka lewat `new bootstrap.Modal(el).show()`. Ikuti pola yang sama, jangan
+mengarang mekanisme ketiga. Yang bermasalah di layout ini adalah dropdown/modal yang
+**disuntik JS** lalu mengandalkan data-api (memori `bootstrap-dropdown-pure-css`);
+markup statis + instance eksplisit terbukti jalan di halaman yang sama.
 
-**JS:** IIFE kecil di dalam partial. `fetch` POST dengan header CSRF, tombol dinonaktifkan
-selagi mengirim (mencegah klik ganda), hasil ditulis ke baris hasil dengan
-`textContent` — **bukan `innerHTML`** — karena pesan galat Fonnte adalah teks dari
-pihak luar dan tidak boleh diperlakukan sebagai HTML.
+**Penempatan markup modal:** di dalam partial yang sama dengan tombolnya, ditaruh
+bersama modal-modal lain di dekat akhir `@section('content')`. Satu berkas partial
+memuat tombol + modal + CSS + JS sekaligus, supaya pencabutan tetap satu penghapusan.
+
+**CSS:** kelas ber-scope `.uwa-*`, **nol `!important`**, lewat `@push('styles')`
+(`@stack('styles')` ada di `layouts/app.blade.php:3071`, sebelum `</head>` di 3122 —
+sudah diverifikasi, bukan asumsi). Tombolnya meminjam bentuk `.btn-refresh` yang sudah
+ada (tinggi 44px, radius 8px, inline-flex) agar sebaris rapi dengannya, dengan warna
+berbeda supaya tetap terbaca sebagai tombol uji, bukan aksi biasa.
+
+**JS:** IIFE di dalam partial. `fetch` POST dengan header CSRF, tombol Kirim
+dinonaktifkan selagi mengirim (mencegah klik ganda yang memakan dua kuota), hasil
+ditulis dengan `textContent` — **bukan `innerHTML`** — karena pesan galat Fonnte adalah
+teks dari pihak luar.
 
 ## 5. Alur data
 
@@ -273,10 +286,12 @@ dijaga → test GAGAL → pulihkan → LULUS → `git diff` kosong.
 
 Suite hijau tidak cukup (CLAUDE.md aturan 9). Yang wajib diperiksa langsung di produksi:
 
-1. Panel tampil di bawah kartu info, gayanya tidak rusak (bukti bahwa `@push('styles')`
-   benar-benar sampai).
-2. Nomor kosong → pesan galat tampil, tidak ada kiriman.
-3. Nomor sah → **satu kiriman sungguhan.**
+1. Tombol `Uji Kirim Pesan` tampil sebaris dengan Refresh, tingginya sama, tidak
+   membungkus ke baris baru pada lebar layar biasa.
+2. Menekannya **membuka modal** — bukan men-submit form filter (bukti `type="button"`
+   terpasang).
+3. Nomor kosong → pesan galat tampil di dalam modal, tidak ada kiriman.
+4. Nomor sah → **satu kiriman sungguhan.**
 
 Langkah 3 **membutuhkan nomor WhatsApp asli dan memotong kuota Fonnte.** Karena itu
 langkah ini tidak dijalankan diam-diam: user diminta menyebutkan nomor yang boleh
@@ -290,7 +305,8 @@ Disalin juga ke docblock controller.
 
 1. Hapus `app/Http/Controllers/UjiWhatsAppBagianController.php`
 2. Hapus `resources/views/bagian/partials/_ujiWhatsApp.blade.php`
-3. Hapus baris `@include('bagian.partials._ujiWhatsApp')` di `daftarDokumen.blade.php`
+3. Di `daftarDokumen.blade.php` hapus **dua** sisipan: tombol `id="btnUjiWhatsApp"` di
+   toolbar filter, dan baris `@include('bagian.partials._ujiWhatsApp')`
 4. Hapus baris route `bagian.uji-whatsapp` di `routes/web.php`
 5. Hapus `tests/Feature/UjiWhatsAppBagianTest.php`
 6. Di `DocumentReturnNotifier`: hapus `pesanUjiCoba()` + konstanta `PENANDA_UJI`,

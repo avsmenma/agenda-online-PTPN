@@ -2,14 +2,14 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Menambah satu panel di halaman role Bagian yang, setelah nomor WhatsApp
-diketik dan tombol ditekan, mengirim satu pesan WhatsApp contoh "dokumen dikembalikan"
-lewat gateway Fonnte dan melaporkan hasil sebenarnya.
+**Goal:** Menambah tombol **Uji Kirim Pesan** di toolbar halaman role Bagian yang
+membuka modal berisi keterangan + input nomor, lalu mengirim satu pesan WhatsApp contoh
+"dokumen dikembalikan" lewat gateway Fonnte dan melaporkan hasil sebenarnya.
 
-**Architecture:** Panel Blade tersendiri → `POST /bagian/uji-whatsapp` (ber-throttle) →
-controller khusus → template pesan **dipakai bersama** dengan
-`DocumentReturnNotifier` (bukan disalin) → `FonnteWhatsAppService::sendMessage()` →
-hasil asli diteruskan ke JSON.
+**Architecture:** Tombol toolbar → modal Blade (partial tersendiri) →
+`POST /bagian/uji-whatsapp` (ber-throttle) → controller khusus → template pesan
+**dipakai bersama** dengan `DocumentReturnNotifier` (bukan disalin) →
+`FonnteWhatsAppService::sendMessage()` → hasil asli diteruskan ke JSON.
 
 **Tech Stack:** Laravel 12, PHP 8.2, Blade, `fetch` polos (tanpa Alpine/jQuery baru),
 PHPUnit, Fonnte WhatsApp Gateway.
@@ -46,8 +46,8 @@ PHPUnit, Fonnte WhatsApp Gateway.
 | `app/Services/DocumentReturnNotifier.php` | Sumber tunggal pesan pengembalian. Bertambah satu pintu masuk untuk pesan uji. | Modifikasi |
 | `app/Http/Controllers/UjiWhatsAppBagianController.php` | Menerima nomor, menyusun pesan uji, memanggil Fonnte, menerjemahkan hasil. | **Baru** |
 | `routes/web.php` | Satu baris route di grup `['auth','bagian']` yang sudah ada. | Modifikasi |
-| `resources/views/bagian/partials/_ujiWhatsApp.blade.php` | Markup + CSS + JS panel uji. Mandiri; menghapusnya menghapus seluruh UI-nya. | **Baru** |
-| `resources/views/bagian/dokumens/daftarDokumen.blade.php` | Satu baris `@include`. | Modifikasi |
+| `resources/views/bagian/partials/_ujiWhatsApp.blade.php` | CSS + markup modal + JS. Mandiri; menghapusnya menghapus hampir seluruh UI-nya. | **Baru** |
+| `resources/views/bagian/dokumens/daftarDokumen.blade.php` | Dua sisipan: tombol di toolbar (harus di sana, sebaris dengan Refresh) + `@include` partial. | Modifikasi |
 | `tests/Feature/UjiWhatsAppBagianTest.php` | Semua test fitur ini. | **Baru** |
 
 ---
@@ -414,8 +414,9 @@ use Illuminate\Support\Facades\Auth;
  * DAFTAR PENCABUTAN (setelah sesi uji coba selesai):
  *   1. Hapus berkas ini
  *   2. Hapus resources/views/bagian/partials/_ujiWhatsApp.blade.php
- *   3. Hapus baris @include('bagian.partials._ujiWhatsApp') di
- *      resources/views/bagian/dokumens/daftarDokumen.blade.php
+ *   3. Di resources/views/bagian/dokumens/daftarDokumen.blade.php hapus DUA
+ *      sisipan: tombol id="btnUjiWhatsApp" di toolbar filter, dan baris
+ *      @include('bagian.partials._ujiWhatsApp') di dekat modal lain
  *   4. Hapus route bernama 'bagian.uji-whatsapp' di routes/web.php
  *   5. Hapus tests/Feature/UjiWhatsAppBagianTest.php
  *   6. Di DocumentReturnNotifier: hapus pesanUjiCoba() + konstanta PENANDA_UJI;
@@ -550,13 +551,13 @@ Daftar pencabutan ada di docblock-nya."
 
 ---
 
-## Task 3: Panel UI di halaman Bagian
+## Task 3: Tombol di toolbar + modal
 
 **Files:**
-- Create: `resources/views/bagian/partials/_ujiWhatsApp.blade.php`
-- Modify: `resources/views/bagian/dokumens/daftarDokumen.blade.php` (satu baris `@include`,
-  tepat setelah `@include('partials._infoCards', ['cards' => $cards])` — cari baris itu,
-  sekitar baris 1157)
+- Create: `resources/views/bagian/partials/_ujiWhatsApp.blade.php` (memuat CSS, tombol,
+  modal, dan JS sekaligus — satu berkas supaya pencabutan tetap satu penghapusan)
+- Modify: `resources/views/bagian/dokumens/daftarDokumen.blade.php` (dua sisipan: satu
+  baris tombol di toolbar, satu baris `@include` untuk modal+CSS+JS)
 - Test: `tests/Feature/UjiWhatsAppBagianTest.php` (tambah 1 test)
 
 **Interfaces:**
@@ -564,12 +565,16 @@ Daftar pencabutan ada di docblock-nya."
   `userBagian(string $kode = 'TAN'): User` yang sudah ada di berkas test sejak Task 2
 - Produces: —
 
+**Catatan rancangan (jangan diubah sendiri):** rancangan awal memakai panel permanen di
+bawah kartu info. **Dibatalkan user** — memakan ruang di setiap kunjungan padahal hanya
+ditekan sekali per responden. Yang benar adalah tombol di toolbar + modal.
+
 - [ ] **Step 1: Tulis test yang gagal**
 
 Tambahkan test ini ke `tests/Feature/UjiWhatsAppBagianTest.php`:
 
 ```php
-    public function test_panel_uji_tampil_di_halaman_bagian(): void
+    public function test_tombol_dan_modal_uji_tampil_di_halaman_bagian(): void
     {
         \App\Models\Bagian::create(['kode' => 'TAN', 'nama' => 'Tanaman']);
 
@@ -577,35 +582,42 @@ Tambahkan test ini ke `tests/Feature/UjiWhatsAppBagianTest.php`:
             ->get(route('bagian.documents.index'))
             ->assertOk();
 
-        $response->assertSee('Uji coba pemberitahuan WhatsApp');
+        $html = $response->getContent();
 
-        // CSS panel WAJIB berada di dalam <head>, artinya lewat @push('styles').
-        // Kalau ia ditulis <style> polos di badan, panel sempat tampil telanjang
-        // sebelum gayanya ter-parse — regresi flash-of-unstyled yang persis pernah
-        // terjadi saat ekstraksi modal Kustomisasi Kolom.
-        //
-        // Membandingkan posisi terhadap </head> — BUKAN assertSeeInOrder terhadap
-        // judul panel. Assertion yang membandingkan CSS dengan markupnya sendiri
-        // akan tetap hijau saat <style> dipindah ke badan (CSS-nya toh tetap
-        // muncul lebih dulu daripada div-nya), jadi hampa.
-        $html    = $response->getContent();
-        $posCss  = strpos($html, '.uwa-panel {');
+        $response->assertSee('Uji Kirim Pesan');
+        $response->assertSee('ujiWhatsAppModal', false);
+
+        // Tombol berada di dalam <form method="GET"> milik toolbar filter. Tanpa
+        // type="button" ia men-submit form dan memuat ulang halaman sebelum modalnya
+        // sempat terbuka — cacat yang tak terlihat di test manapun kalau tidak
+        // diperiksa di sini.
+        $this->assertMatchesRegularExpression(
+            '/<button[^>]*type="button"[^>]*id="btnUjiWhatsApp"/',
+            $html,
+            'Tombol Uji Kirim Pesan tidak bertipe button — ia akan men-submit form filter.'
+        );
+
+        // CSS WAJIB berada di dalam <head>, artinya lewat @push('styles'). Kalau ia
+        // ditulis <style> polos di badan, tombol sempat tampil telanjang sebelum
+        // gayanya ter-parse — regresi flash-of-unstyled yang persis pernah terjadi
+        // saat ekstraksi modal Kustomisasi Kolom.
+        $posCss  = strpos($html, '.uwa-tombol {');
         $posHead = strpos($html, '</head>');
 
-        $this->assertNotFalse($posCss, 'CSS panel uji tidak dirender sama sekali.');
+        $this->assertNotFalse($posCss, 'CSS tombol uji tidak dirender sama sekali.');
         $this->assertNotFalse($posHead, 'Layout tidak punya </head> — asumsi test ini salah.');
         $this->assertLessThan(
             $posHead,
             $posCss,
-            "CSS panel uji dirender di badan, bukan di <head> — @push('styles') tidak dipakai."
+            "CSS tombol uji dirender di badan, bukan di <head> — @push('styles') tidak dipakai."
         );
     }
 ```
 
 - [ ] **Step 2: Jalankan test, pastikan GAGAL**
 
-Run: `php artisan test --filter=test_panel_uji_tampil_di_halaman_bagian`
-Expected: FAIL — teks "Uji coba pemberitahuan WhatsApp" tidak ditemukan.
+Run: `php artisan test --filter=test_tombol_dan_modal_uji_tampil_di_halaman_bagian`
+Expected: FAIL — teks "Uji Kirim Pesan" tidak ditemukan.
 
 - [ ] **Step 3: Buat partial**
 
@@ -614,9 +626,9 @@ Buat `resources/views/bagian/partials/_ujiWhatsApp.blade.php`:
 ```blade
 {{--
   ============================ FITUR SEMENTARA ============================
-  Panel uji kiriman WhatsApp untuk sesi UJI COBA PENGGUNA (2026-08-07).
-  Gaya visualnya SENGAJA berbeda dari komponen lain (garis putus-putus, ikon
-  labu kimia) supaya siapa pun langsung tahu ini bukan fitur produksi.
+  Modal uji kiriman WhatsApp untuk sesi UJI COBA PENGGUNA (2026-08-07).
+  Tombol pemicunya disisipkan terpisah di toolbar filter daftarDokumen.blade.php
+  (cari id="btnUjiWhatsApp").
 
   Daftar pencabutan lengkap ada di docblock
   App\Http\Controllers\UjiWhatsAppBagianController.
@@ -626,102 +638,138 @@ Buat `resources/views/bagian/partials/_ujiWhatsApp.blade.php`:
 <style>
   /* Kelas ber-scope .uwa-*, NOL !important — mengikuti pola .notif-pengembalian
      di halaman yang sama. Jangan berperang spesifisitas dengan Bootstrap CDN. */
-  .uwa-panel {
-    border: 2px dashed #f59e0b;
-    background: #fffbeb;
-    border-radius: 12px;
-    padding: 16px 18px;
-    margin-bottom: 18px;
-  }
-  .uwa-judul {
-    display: flex;
+
+  /* Bentuk meniru .btn-refresh (tinggi 44px, radius 8px, inline-flex) supaya
+     sebaris rapi dengannya. Warnanya sengaja beda: ini tombol uji, bukan aksi
+     sehari-hari. */
+  .uwa-tombol {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+    min-height: 44px;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-weight: 700;
-    font-size: 15px;
-    color: #92400e;
-    margin-bottom: 4px;
   }
+  .uwa-tombol:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  }
+  .uwa-tombol:active { transform: translateY(0); }
+
   .uwa-ket {
-    font-size: 13px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
     color: #78350f;
-    margin-bottom: 12px;
-    line-height: 1.5;
+    margin-bottom: 16px;
   }
-  .uwa-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
+  .uwa-ket strong { color: #92400e; }
+
+  .uwa-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
   }
   .uwa-input {
-    flex: 1 1 220px;
-    min-width: 0;
-    padding: 8px 12px;
-    border: 1px solid #d6b47a;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
     border-radius: 8px;
     font-size: 14px;
-    background: #fff;
     color: #1a2340;
   }
   .uwa-input:focus {
     outline: 2px solid #f59e0b;
     outline-offset: 1px;
+    border-color: #f59e0b;
   }
-  .uwa-tombol {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 8px;
-    background: #d97706;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .uwa-tombol:hover:not(:disabled) { background: #b45309; }
-  .uwa-tombol:disabled { opacity: .6; cursor: progress; }
+
   .uwa-hasil {
-    flex-basis: 100%;
     font-size: 13px;
     line-height: 1.5;
-    margin-top: 4px;
+    margin-top: 10px;
     min-height: 1em;
   }
   .uwa-hasil--ok    { color: #047857; }
   .uwa-hasil--gagal { color: #b91c1c; }
+
+  .uwa-kirim:disabled { opacity: .6; cursor: progress; }
 </style>
 @endpush
 
-<div class="uwa-panel">
-  <div class="uwa-judul">
-    <span aria-hidden="true">🧪</span>
-    Uji coba pemberitahuan WhatsApp
-  </div>
-  <p class="uwa-ket">
-    Masukkan nomor WhatsApp Bapak/Ibu, lalu tekan Kirim. Sistem akan mengirim
-    <strong>satu pesan contoh</strong> yang bentuknya sama persis dengan pemberitahuan
-    saat dokumen benar-benar dikembalikan. Pesannya bertanda
-    <strong>[UJI COBA]</strong> &mdash; tidak ada dokumen yang benar-benar dikembalikan.
-  </p>
+{{-- Markup statis + dibuka lewat instance bootstrap.Modal eksplisit — pola yang
+     SAMA dengan #perjalananModal & #rejectionDetailModal di berkas ini. Jangan
+     mengarang mekanisme ketiga. --}}
+<div class="modal fade" id="ujiWhatsAppModal" tabindex="-1" aria-labelledby="ujiWhatsAppModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border: none; border-radius: 16px;">
+      <div class="modal-header" style="border-bottom: 1px solid #e2e8f0;">
+        <h5 class="modal-title" id="ujiWhatsAppModalLabel"
+          style="font-size: 1.05rem; font-weight: 700; color: #1f2937;">
+          <i class="fa-solid fa-flask me-2" style="color: #d97706;"></i>Uji Kirim Pesan WhatsApp
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
 
-  <div class="uwa-form">
-    <label class="visually-hidden" for="uwaNomor">Nomor WhatsApp</label>
-    <input type="tel" id="uwaNomor" class="uwa-input"
-           placeholder="Contoh: 081234567890" autocomplete="tel" inputmode="numeric">
-    <button type="button" id="uwaKirim" class="uwa-tombol">Kirim pesan uji</button>
-    <div class="uwa-hasil" id="uwaHasil" role="status" aria-live="polite"></div>
+      <div class="modal-body" style="padding: 1.25rem 1.5rem;">
+        <div class="uwa-ket">
+          Uji coba ini akan mengirim <strong>satu pesan WhatsApp</strong> berisi
+          pemberitahuan <strong>&ldquo;dokumen dikembalikan&rdquo;</strong> ke nomor yang
+          Bapak/Ibu masukkan &mdash; bentuknya sama persis dengan pemberitahuan sungguhan.
+          <br><br>
+          <strong>Tidak ada dokumen yang benar-benar dikembalikan.</strong> Pesannya
+          memakai data contoh dan bertanda <strong>[UJI COBA]</strong>.
+        </div>
+
+        <label class="uwa-label" for="uwaNomor">Nomor WhatsApp</label>
+        <input type="tel" id="uwaNomor" class="uwa-input"
+               placeholder="Contoh: 081234567890" autocomplete="tel" inputmode="numeric">
+
+        <div class="uwa-hasil" id="uwaHasil" role="status" aria-live="polite"></div>
+      </div>
+
+      <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="uwa-tombol uwa-kirim" id="uwaKirim">
+          <i class="fa-brands fa-whatsapp"></i> Kirim
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
   (function () {
+    const pemicu = document.getElementById('btnUjiWhatsApp');
+    const modalEl = document.getElementById('ujiWhatsAppModal');
     const tombol = document.getElementById('uwaKirim');
     const input  = document.getElementById('uwaNomor');
     const hasil  = document.getElementById('uwaHasil');
-    if (!tombol || !input || !hasil) return;
+    if (!pemicu || !modalEl || !tombol || !input || !hasil) return;
 
     const URL_KIRIM = @json(route('bagian.uji-whatsapp'));
+
+    pemicu.addEventListener('click', function () {
+      hasil.textContent = '';
+      hasil.className = 'uwa-hasil';
+      new bootstrap.Modal(modalEl).show();
+      setTimeout(function () { input.focus(); }, 300);
+    });
 
     function tulisHasil(teks, ok) {
       // textContent, BUKAN innerHTML — pesan galat Fonnte adalah teks dari pihak
@@ -739,7 +787,7 @@ Buat `resources/views/bagian/partials/_ujiWhatsApp.blade.php`:
       }
 
       tombol.disabled = true;
-      const labelAsli = tombol.textContent;
+      const isiAsli = tombol.innerHTML;
       tombol.textContent = 'Mengirim…';
       hasil.textContent = '';
 
@@ -776,7 +824,7 @@ Buat `resources/views/bagian/partials/_ujiWhatsApp.blade.php`:
         tulisHasil('Gagal menghubungi server: ' + e.message, false);
       } finally {
         tombol.disabled = false;
-        tombol.textContent = labelAsli;
+        tombol.innerHTML = isiAsli;
       }
     });
 
@@ -787,60 +835,89 @@ Buat `resources/views/bagian/partials/_ujiWhatsApp.blade.php`:
 </script>
 ```
 
-- [ ] **Step 4: Pasang partial di view Bagian**
+- [ ] **Step 4: Sisipkan tombol di toolbar**
 
-Di `resources/views/bagian/dokumens/daftarDokumen.blade.php`, cari baris:
-
-```blade
-    @include('partials._infoCards', ['cards' => $cards])
-```
-
-Tambahkan tepat di bawahnya:
+Di `resources/views/bagian/dokumens/daftarDokumen.blade.php`, cari tombol Refresh
+(sekitar baris 1234):
 
 ```blade
-
-    {{-- SEMENTARA — panel uji kiriman WhatsApp untuk sesi uji coba pengguna.
-         Hapus baris ini bersama partialnya (lihat docblock
-         App\Http\Controllers\UjiWhatsAppBagianController). --}}
-    @include('bagian.partials._ujiWhatsApp')
+        <button type="button" class="btn-refresh" id="btnRefreshTable" onclick="refreshDocumentTable()">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
 ```
 
-- [ ] **Step 5: Jalankan test, pastikan LULUS**
+Tambahkan tepat **di bawahnya**, masih di dalam `<form>` yang sama:
+
+```blade
+
+        {{-- SEMENTARA — pemicu modal uji kiriman WhatsApp. type="button" WAJIB:
+             toolbar ini ada di dalam <form method="GET">, tanpa itu tombolnya
+             men-submit form dan memuat ulang halaman. Hapus bersama partial
+             bagian.partials._ujiWhatsApp. --}}
+        <button type="button" class="uwa-tombol" id="btnUjiWhatsApp">
+          <i class="fa-solid fa-flask"></i> Uji Kirim Pesan
+        </button>
+```
+
+- [ ] **Step 5: Sisipkan partial (CSS + modal + JS)**
+
+Masih di berkas yang sama, cari modal yang sudah ada:
+
+```blade
+  <!-- Modal: Rejection Detail - Bagian -->
+```
+
+Tambahkan tepat **di atas baris itu**:
+
+```blade
+  {{-- SEMENTARA — modal uji kiriman WhatsApp untuk sesi uji coba pengguna.
+       Hapus baris ini bersama partialnya (lihat docblock
+       App\Http\Controllers\UjiWhatsAppBagianController). --}}
+  @include('bagian.partials._ujiWhatsApp')
+
+```
+
+- [ ] **Step 6: Jalankan test, pastikan LULUS**
 
 Run: `php artisan test --filter=UjiWhatsAppBagianTest`
 Expected: PASS (6 test)
 
-- [ ] **Step 6: Buktikan test menggigit**
+- [ ] **Step 7: Buktikan test menggigit**
 
-Dua mutasi, satu per satu (pulihkan sebelum lanjut):
+Tiga mutasi, satu per satu (pulihkan sebelum lanjut):
 
 1. Komentari baris `@include('bagian.partials._ujiWhatsApp')` →
-   `test_panel_uji_tampil_di_halaman_bagian` harus **GAGAL**.
-2. Di partial, hapus baris `@push('styles')` dan `@endpush` (biarkan `<style>` polos di
-   badan) → `test_panel_uji_tampil_di_halaman_bagian` harus **GAGAL** pada
-   `assertLessThan`, karena CSS kini dirender setelah `</head>`.
+   `test_tombol_dan_modal_uji_tampil_di_halaman_bagian` harus **GAGAL**.
+2. Hapus `type="button"` dari tombol `#btnUjiWhatsApp` → assertion regex harus **GAGAL**.
+3. Di partial, hapus baris `@push('styles')` dan `@endpush` (biarkan `<style>` polos di
+   badan) → assertion `assertLessThan` harus **GAGAL**, karena CSS kini dirender
+   setelah `</head>`.
 
-Setelah keduanya: pulihkan, jalankan ulang filter (hijau), `git diff` bersih.
+Setelah ketiganya: pulihkan, jalankan ulang filter (hijau), `git diff` bersih.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add resources/views/bagian/partials/_ujiWhatsApp.blade.php
 git add resources/views/bagian/dokumens/daftarDokumen.blade.php
 git add tests/Feature/UjiWhatsAppBagianTest.php
-git commit -m "feat(bagian): panel uji kiriman WhatsApp di halaman dokumen (SEMENTARA)
+git commit -m "feat(bagian): tombol Uji Kirim Pesan + modal WhatsApp (SEMENTARA)
 
-Panel inline di bawah kartu info, BUKAN modal: data-api Bootstrap 5 mati di
-layout jQuery+BS5 ini, dan panel inline melewati persoalan itu tanpa satu
-baris pun kode penggerak modal.
+Tombol di toolbar filter, sebaris dengan Refresh. Rancangan awal memakai
+panel permanen di bawah kartu info; dibatalkan user karena memakan ruang
+di setiap kunjungan padahal hanya ditekan sekali per responden.
 
-Gaya visual sengaja dibuat berbeda (garis putus-putus + ikon labu kimia)
-supaya jelas ini bukan fitur produksi dan jelas apa yang harus dihapus.
-Kelas ber-scope .uwa-*, nol !important, CSS lewat @push('styles') mengikuti
-pola .notif-pengembalian di halaman yang sama.
+type=\"button\" wajib: toolbar berada di dalam <form method=\"GET\">, tanpa
+itu tombolnya men-submit form dan memuat ulang halaman sebelum modal
+sempat terbuka. Dijaga assertion regex.
 
-Hasil ditulis dengan textContent, bukan innerHTML - pesan galat Fonnte
-adalah teks dari pihak luar."
+Modal mengikuti pola #perjalananModal yang sudah ada di berkas ini: markup
+statis + instance bootstrap.Modal eksplisit. Isinya menjelaskan lebih dulu
+bahwa uji ini mengirim pemberitahuan dokumen dikembalikan dan tak ada
+dokumen yang benar-benar dikembalikan, baru meminta nomor.
+
+CSS lewat @push('styles'), kelas ber-scope .uwa-*, nol !important. Hasil
+ditulis textContent - pesan galat Fonnte adalah teks dari pihak luar."
 ```
 
 ---
