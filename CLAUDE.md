@@ -531,6 +531,20 @@ kini ikut dijaga.
 - Recovery code disimpan `encrypt(json_encode(...))` — **bisa didekripsi** dengan `APP_KEY`,
   bukan hash. Jadi akun terkunci sebenarnya masih bisa ditolong tanpa mereset 2FA.
 
+**Tombol "Uji Kirim Pesan" WhatsApp di halaman Bagian — SEMENTARA, dibuat 2026-08-07.**
+Menjawab butir C4 kuesioner uji coba pengguna role Bagian (lewat apa responden ingin diberi
+tahu saat dokumennya dikembalikan) sekaligus membuktikan Fonnte benar-benar bisa mengirim
+dari produksi — nol dari delapan akun Bagian punya `phone_number` terisi, sehingga cabang
+WhatsApp di `DocumentReturnNotifier` belum pernah sekali pun berjalan di produksi. Tombolnya
+mengirim satu pesan **contoh** berpenanda `[UJI COBA]` ke nomor yang diketik saat itu juga,
+lewat template yang sama dengan pesan pengembalian sungguhan
+(`DocumentReturnNotifier::pesanUjiCoba()`). **Ini bukan fitur permanen — DAFTAR PENCABUTAN
+lengkap ada di docblock `App\Http\Controllers\UjiWhatsAppBagianController`**, baca itu
+sebelum menyentuh berkas mana pun terkait fitur ini.
+
+- Spec/plan: `docs/superpowers/specs/2026-08-07-tombol-uji-whatsapp-bagian-design.md`,
+  `docs/superpowers/plans/2026-08-07-tombol-uji-whatsapp-bagian.md`
+
 ## 8. Hal Yang harus bisa dilakukan pada tabel tabulator
 
 - Terdapat sel aktif yang dapat digerakkan dengan tombol panah pada keyboard, dan tabel akan otomatis menggulir mengikuti sel aktif. - Sel aktif dapat dipindahkan secara instan cukup dengan mengeklik sel yang diinginkan.
