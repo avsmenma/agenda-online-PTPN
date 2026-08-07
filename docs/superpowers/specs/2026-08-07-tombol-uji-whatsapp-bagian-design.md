@@ -97,10 +97,15 @@ Pesan galat Indonesia: *"Masukkan nomor WhatsApp yang sah, contoh 081234567890."
 `DocumentReturnNotifier::namaBagian()`. Responden dari TAN menerima "Bagian Tanaman",
 bukan nama karangan — inilah yang membuat pesan contoh tetap terasa nyata.
 
-Bila `bagian_code` kosong, controller `abort(403, 'Bagian code not configured for this
-user')` — perilaku yang sama persis dengan `BagianDokumenController::index()`. Jangan
-diam-diam memakai nilai cadangan: akun Bagian tanpa `bagian_code` adalah salah
-konfigurasi yang harus terlihat, bukan ditambal.
+**Tidak perlu cek `bagian_code` kosong di controller.** Rancangan awal memuatnya, lalu
+dicabut setelah membaca `App\Http\Middleware\CheckBagianRole`: middleware itu **sudah**
+menolak akun Bagian tanpa `bagian_code` dengan 403 (`"Bagian code not configured for
+this user."`) sebelum request sampai ke controller. Menambahkan cek kedua hanya
+melahirkan cabang yang tak pernah tereksekusi — dan cabang mati tak bisa diuji, jadi
+tak bisa dipercaya.
+
+`BagianDokumenController::index()` memang punya `abort(403)` serupa; itu peninggalan
+yang juga tak terjangkau, di luar cakupan pekerjaan ini.
 
 `namaBagian()` diubah dari `private static` menjadi `public static`. Ia sudah membaca
 tabel `bagians` (bukan peta kode→nama yang di-hardcode), jadi memakainya kembali
