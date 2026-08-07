@@ -980,12 +980,16 @@ class DokumenController extends Controller
             // tanggal_spp, bukan jejak alur otomatis.
             //
             // SENGAJA TIDAK termasuk 'tanggal_kembali_ke_bagian' dan
-            // 'tanggal_hasil_koreksi_bagian': keduanya ada di katalog kolom
-            // (config/document_columns.php:50-51) tetapi KOLOM DB-NYA TIDAK PERNAH ADA
-            // (nol migrasi; diverifikasi langsung ke information_schema produksi
-            // 2026-08-06). Memasukkannya ke sini hanya mengubah penolakan 422 yang
-            // bersih menjadi error 500. Nasibnya menunggu keputusan pemilik: dibuatkan
-            // migrasi, atau dihapus dari katalog.
+            // 'tanggal_hasil_koreksi_bagian': kolomnya SUDAH ada (migrasi
+            // 2026_08_06_100000 & 2026_08_07_100000), tapi keduanya diisi OTOMATIS
+            // oleh alur — bukan diketik user. 'tanggal_kembali_ke_bagian' diisi
+            // DocumentHandlerController::returnDirectlyToBagian() &
+            // TeamVerifikasiController::returnToBidang() saat dokumen dikembalikan
+            // ke Bagian; 'tanggal_hasil_koreksi_bagian' diisi
+            // DocumentHandlerController::receiveBackFromBagian() saat Tim Verifikasi
+            // menarik kembali dokumen hasil revisi. Memasukkan keduanya ke whitelist
+            // ini akan membuat stempel jejak alur itu bisa ditimpa ketikan user lewat
+            // inline-edit.
             'tanggal_selesai_diproses', 'keterangan', 'kepala_sub_bagian',
             // Perpajakan-specific
             'jenis_pph', 'dpp_pph', 'ppn_terhutang', 'tanggal_selesai_verifikasi_pajak',

@@ -70,9 +70,10 @@
     // ke input teks bebas. Dua peta ini harus sejalan.
     //
     // 'tanggal_kembali_ke_bagian' & 'tanggal_hasil_koreksi_bagian' SENGAJA tidak
-    // ikut: kolom DB-nya tidak pernah ada (lihat catatan di
-    // DokumenController::inlineUpdate). Memberi mereka editor tanggal hanya
-    // membuat user mengisi sesuatu yang mustahil tersimpan.
+    // ikut: keduanya hanya-baca (ada di NON_EDITABLE_FIELDS di bawah) karena
+    // diisi OTOMATIS oleh alur, bukan diketik user — lihat whitelist sisi
+    // server di DokumenController::inlineUpdate. Memberi mereka editor tanggal
+    // hanya membuat user mengisi sesuatu yang toh akan ditolak server.
     tanggal_selesai_diproses: 'date',
     tanggal_dibayar: 'date',
     kebun: 'text',
@@ -99,13 +100,14 @@
   };
 
   // Kolom yang TIDAK boleh diedit (paritas plan §Global Constraints).
-  // Kolom hanya-baca. 'tanggal_kembali_ke_bagian' masuk sini karena diisi OTOMATIS
-  // saat Team Verifikasi mengembalikan dokumen ke Bagian (DocumentHandlerController::
-  // returnDirectlyToBagian & TeamVerifikasiController::returnToBidang) — bukan
-  // diketik. Tanpa ini, selnya akan tampak bisa diedit lalu ditolak server, persis
-  // bug yang baru diperbaiki di kolom lain.
   // Kolom yang diisi OTOMATIS oleh server — dibuat hanya-baca supaya user tak
-  // mengetik lalu ditolak server.
+  // mengetik lalu ditolak server. 'tanggal_kembali_ke_bagian' masuk sini karena
+  // diisi DocumentHandlerController::returnDirectlyToBagian() &
+  // TeamVerifikasiController::returnToBidang() saat dokumen dikembalikan ke
+  // Bagian; 'tanggal_hasil_koreksi_bagian' masuk sini karena diisi
+  // DocumentHandlerController::receiveBackFromBagian() saat Tim Verifikasi
+  // menarik kembali dokumen hasil revisi. Tanpa ini, selnya akan tampak bisa
+  // diedit lalu ditolak server, persis bug yang baru diperbaiki di kolom lain.
   const NON_EDITABLE_FIELDS = ['tanggal_masuk', 'status', 'nomor_mirror', 'keterangan', 'tanggal_kembali_ke_bagian', 'tanggal_hasil_koreksi_bagian'];
 
   // Peta format tanggal per kolom — IDENTIK OperatorDocumentRow::formatDates.
