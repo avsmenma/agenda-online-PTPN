@@ -308,6 +308,16 @@ class DocumentHandlerController extends Controller
             'return_reason' => null,
             'returned_at' => null,
             'last_action_status' => 'returned_from_bidang',
+            // Stempel hasil koreksi Bagian. Ditaruh DI SINI, bukan di update(),
+            // karena method ini hanya terpanggil lewat gerbang
+            // $canReceiveReturnedBagian yang menuntut status dokumen
+            // 'returned_to_bidang' — forward biasa operator→verifikasi jatuh ke
+            // moveDirectlyToTeamVerifikasi() dan tidak boleh ikut terstempel.
+            //
+            // Sengaja DITIMPA tiap siklus koreksi (keputusan user 2026-08-07):
+            // kolomnya sepasang dengan tanggal_kembali_ke_bagian yang juga ditimpa
+            // tiap pengembalian, jadi keduanya selalu menunjuk siklus yang sama.
+            'tanggal_hasil_koreksi_bagian' => now(),
         ]);
 
         $dokumen->setDisplayStatusForRole('team_verifikasi', 'sedang_diproses');

@@ -104,7 +104,9 @@
   // returnDirectlyToBagian & TeamVerifikasiController::returnToBidang) — bukan
   // diketik. Tanpa ini, selnya akan tampak bisa diedit lalu ditolak server, persis
   // bug yang baru diperbaiki di kolom lain.
-  const NON_EDITABLE_FIELDS = ['tanggal_masuk', 'status', 'nomor_mirror', 'keterangan', 'tanggal_kembali_ke_bagian'];
+  // Kolom yang diisi OTOMATIS oleh server — dibuat hanya-baca supaya user tak
+  // mengetik lalu ditolak server.
+  const NON_EDITABLE_FIELDS = ['tanggal_masuk', 'status', 'nomor_mirror', 'keterangan', 'tanggal_kembali_ke_bagian', 'tanggal_hasil_koreksi_bagian'];
 
   // Peta format tanggal per kolom — IDENTIK OperatorDocumentRow::formatDates.
   // Dipakai saat menyusun ulang tampilan tanggal setelah edit sukses agar sel

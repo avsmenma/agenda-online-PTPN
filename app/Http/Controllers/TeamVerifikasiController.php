@@ -225,6 +225,7 @@ class TeamVerifikasiController extends Controller
                 // disebut akan sampai ke DTO sebagai null meski datanya ada di DB.
                 // Terbukti saat kolom ini baru dibuat — database terisi, sel tetap '-'.
                 'dokumens.tanggal_kembali_ke_bagian',
+                'dokumens.tanggal_hasil_koreksi_bagian',
                 // Perpajakan columns
                 'dokumens.no_faktur',
                 'dokumens.tanggal_faktur',
