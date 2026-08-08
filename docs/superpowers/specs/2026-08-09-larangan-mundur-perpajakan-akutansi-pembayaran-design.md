@@ -44,11 +44,18 @@ tidak pernah berbeda aturan"*:
 ```php
 private const TANPA_JALUR_MUNDUR = ['perpajakan', 'akutansi', 'pembayaran'];
 
-public static function bolehMenunjuk(string $rolePengguna, string $target): bool;
+public static function bolehMenunjuk(?string $rolePengguna, string $target): bool;
 ```
 
 `false` bila `$rolePengguna` ada di daftar **dan** `$target` adalah `operator` atau
 berawalan `bagian_`. Selain itu `true`.
+
+**Kedua argumen WAJIB dinormalisasi lewat `App\Support\Role::normalize()` sebelum
+dibandingkan.** Ini bukan kerapian: `Role::ALIASES` memuat `'akuntansi' => 'akutansi'`
+(ejaan proyek ini memang menyimpang), jadi akun yang kolom `role`-nya berisi `akuntansi`
+akan **lolos dari larangan tanpa suara** bila dibandingkan mentah. Alias serupa ada untuk
+verifikasi (`verifikasi`, `ibu b`, …) dan operator (`tarapul`, `ibu a`, …). Dijaga test
+khusus.
 
 - **UI** — `forDokumen()` memakainya untuk memangkas opsi.
 - **Server** — `update()` memakainya untuk menolak, tanpa pengecualian apa pun.
@@ -110,19 +117,32 @@ tidak bergantung pada `DocumentRow` — ia hanya menerima `?string`.
 public static function forDokumen(
     ?string $bagian,
     array $bagianMap,
-    string $rolePengguna,
+    ?string $rolePengguna,
     ?string $handlerDipertahankan
 ): array
 ```
 
-Kedua parameter baru **wajib, tanpa nilai default**. Call site baru yang lupa mengisinya
-akan error keras alih-alih diam-diam mengembalikan daftar penuh — CLAUDE.md aturan 6
-melarang fitur yang mati tanpa suara.
+Kedua parameter baru **wajib, tanpa nilai default** — meski bertipe nullable. Call site
+baru yang lupa mengisinya akan error keras alih-alih diam-diam mengembalikan daftar penuh
+(CLAUDE.md aturan 6 melarang fitur yang mati tanpa suara). Tipe nullable dipakai karena
+`auth()->user()?->role` memang bisa `null`; `null` berarti "tak ada di daftar larangan"
+sehingga daftar penuh — perilaku yang benar untuk permintaan tanpa sesi.
 
-Konsekuensinya **6 call site** ikut diperbarui: `DokumenController` (2×),
-`DashboardAkutansiController` (2×), `DashboardPerpajakanController` (2×),
-`TeamVerifikasiController`, `DashboardPembayaranController` — masing-masing sudah
-mengetahui rolenya sendiri dan memegang `$d`.
+Konsekuensinya **10 call site** ikut diperbarui:
+
+| Berkas | Baris |
+|---|---|
+| `DokumenController` | 145 (datatable), 181 (export), 423 (baris hasil quick-add) |
+| `DashboardAkutansiController` | 58 (datatable), 91 (export) |
+| `DashboardPerpajakanController` | 67 (datatable), 100 (export) |
+| `TeamVerifikasiController` | 85 (datatable), 119 (export) |
+| `DashboardPembayaranController` | 669 (datatable) |
+
+Masing-masing sudah memegang `$d` dan mengetahui rolenya sendiri (`$viewerRole`,
+`auth()->user()?->role`, atau literal `'team_verifikasi'`/`'pembayaran'`). Nomor baris
+di atas adalah kondisi saat spec ditulis — verifikasi ulang dengan
+`grep -n "HandlerOptions::forDokumen" app/Http/Controllers/` sebelum menyunting, dan
+pastikan **nol** sisa pemanggilan berargumen dua setelah selesai.
 
 ## 6. Opsi terlarang yang tersisa dirender non-aktif
 
@@ -186,6 +206,7 @@ data dan tidak mengirim WhatsApp apa pun.
 | 1 | perpajakan/akutansi/pembayaran: tanpa `operator`, tanpa optgroup Bagian | Perilaku inti, ketiga role |
 | 2 | operator & verifikasi: daftar tetap utuh 5 peran + Bagian | Gerbang tidak melebar |
 | 3 | `bolehMenunjuk()` benar untuk tiap pasangan role×target | Aturan itu sendiri |
+| 3b | Alias role ikut terlarang: `'akuntansi'`, `'Akutansi'`, `' PEMBAYARAN '`, `'Tim Perpajakan'` | Tanpa `Role::normalize()` larangan gagal tanpa suara untuk akun beralias |
 | 4 | perpajakan + `handlerDipertahankan='operator'` → opsi Operator bertahan, ber-`disabled` | Pengecualian tampilan §4.1 |
 | 5 | pembayaran + `handlerDipertahankan='bagian_akn'` → optgroup Bagian bertahan, ber-`disabled` | Kasus `returned_to_bidang` §4.1 |
 | 6 | Nilai yang dipertahankan TIDAK menghidupkan opsi terlarang lain | Pengecualian sempit, bukan pintu belakang |
