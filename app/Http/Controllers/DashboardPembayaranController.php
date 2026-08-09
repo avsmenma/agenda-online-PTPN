@@ -666,7 +666,12 @@ class DashboardPembayaranController extends Controller
         $data = collect($paginator->items())
             ->map(fn ($d) => \App\Support\PembayaranDocumentRow::fromDokumen(
                 $d,
-                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                \App\Support\HandlerOptions::forDokumen(
+                    $d->bagian,
+                    $bagianMap,
+                    'pembayaran',
+                    \App\Support\DocumentRow::handlerTampilanMentah($d)
+                ),
                 'pembayaran'
             ))
             ->all();

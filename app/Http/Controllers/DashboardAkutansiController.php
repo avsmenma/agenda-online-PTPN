@@ -55,7 +55,12 @@ class DashboardAkutansiController extends Controller
         $data = collect($paginator->items())
             ->map(fn ($d) => \App\Support\AkutansiDocumentRow::fromDokumen(
                 $d,
-                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                \App\Support\HandlerOptions::forDokumen(
+                    $d->bagian,
+                    $bagianMap,
+                    $viewerRole,
+                    \App\Support\DocumentRow::handlerTampilanMentah($d)
+                ),
                 $viewerRole
             ))
             ->all();
@@ -88,7 +93,12 @@ class DashboardAkutansiController extends Controller
         $rows = $query->get()
             ->map(fn (Dokumen $d) => \App\Support\AkutansiDocumentRow::fromDokumen(
                 $d,
-                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                \App\Support\HandlerOptions::forDokumen(
+                    $d->bagian,
+                    $bagianMap,
+                    $viewerRole,
+                    \App\Support\DocumentRow::handlerTampilanMentah($d)
+                ),
                 $viewerRole
             ))
             ->all();

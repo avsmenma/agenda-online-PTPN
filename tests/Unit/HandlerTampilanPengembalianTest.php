@@ -44,7 +44,12 @@ class HandlerTampilanPengembalianTest extends TestCase
 
         return VerifikasiDocumentRow::fromDokumen(
             $dokumen,
-            HandlerOptions::forDokumen($dokumen->bagian, HandlerOptions::bagianMap()),
+            HandlerOptions::forDokumen(
+                $dokumen->bagian,
+                HandlerOptions::bagianMap(),
+                'team_verifikasi',
+                VerifikasiDocumentRow::handlerTampilanMentah($dokumen)
+            ),
             'team_verifikasi'
         );
     }

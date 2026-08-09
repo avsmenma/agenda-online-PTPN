@@ -82,7 +82,12 @@ class TeamVerifikasiController extends Controller
         $data = collect($paginator->items())
             ->map(fn ($d) => \App\Support\VerifikasiDocumentRow::fromDokumen(
                 $d,
-                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                \App\Support\HandlerOptions::forDokumen(
+                    $d->bagian,
+                    $bagianMap,
+                    'team_verifikasi',
+                    \App\Support\DocumentRow::handlerTampilanMentah($d)
+                ),
                 'team_verifikasi'
             ))
             ->all();
@@ -116,7 +121,12 @@ class TeamVerifikasiController extends Controller
         $rows = $query->get()
             ->map(fn (Dokumen $d) => \App\Support\VerifikasiDocumentRow::fromDokumen(
                 $d,
-                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                \App\Support\HandlerOptions::forDokumen(
+                    $d->bagian,
+                    $bagianMap,
+                    'team_verifikasi',
+                    \App\Support\DocumentRow::handlerTampilanMentah($d)
+                ),
                 'team_verifikasi'
             ))
             ->all();

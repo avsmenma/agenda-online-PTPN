@@ -137,13 +137,19 @@ class DokumenController extends Controller
         // Peta bagian dibangun SEKALI per-request (hindari N+1); opsi pengurus
         // dokumen lalu disusun per-baris karena optgroup Bagian kini menyempit ke
         // bagian milik dokumen itu sendiri (App\Support\HandlerOptions).
-        $bagianMap = \App\Support\HandlerOptions::bagianMap();
+        $bagianMap  = \App\Support\HandlerOptions::bagianMap();
+        $viewerRole = auth()->user()?->role;
 
         $data = collect($paginator->items())
             ->map(fn ($d) => \App\Support\OperatorDocumentRow::fromDokumen(
                 $d,
-                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
-                auth()->user()?->role
+                \App\Support\HandlerOptions::forDokumen(
+                    $d->bagian,
+                    $bagianMap,
+                    $viewerRole,
+                    \App\Support\DocumentRow::handlerTampilanMentah($d)
+                ),
+                $viewerRole
             ))
             ->all();
 
@@ -178,7 +184,12 @@ class DokumenController extends Controller
         $rows = $query->get()
             ->map(fn (Dokumen $d) => \App\Support\OperatorDocumentRow::fromDokumen(
                 $d,
-                \App\Support\HandlerOptions::forDokumen($d->bagian, $bagianMap),
+                \App\Support\HandlerOptions::forDokumen(
+                    $d->bagian,
+                    $bagianMap,
+                    $viewerRole,
+                    \App\Support\DocumentRow::handlerTampilanMentah($d)
+                ),
                 $viewerRole
             ))
             ->all();
@@ -420,7 +431,12 @@ class DokumenController extends Controller
             // view classic-nya sudah dihapus (2026-07-23)).
             'row'     => \App\Support\OperatorDocumentRow::fromDokumen(
                 $dokumen,
-                \App\Support\HandlerOptions::forDokumen($dokumen->bagian, \App\Support\HandlerOptions::bagianMap()),
+                \App\Support\HandlerOptions::forDokumen(
+                    $dokumen->bagian,
+                    \App\Support\HandlerOptions::bagianMap(),
+                    auth()->user()?->role,
+                    \App\Support\DocumentRow::handlerTampilanMentah($dokumen)
+                ),
                 auth()->user()?->role
             ),
         ]);

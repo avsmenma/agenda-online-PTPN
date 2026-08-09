@@ -115,7 +115,8 @@ class HandlerOptions
 
     /**
      * Opsi untuk SATU dokumen: 5 peran + optgroup Bagian berisi PALING BANYAK satu
-     * entri, yaitu bagian milik dokumen itu.
+     * entri, yaitu bagian milik dokumen itu — lalu dipangkas sesuai wewenang
+     * $rolePengguna.
      *
      * Bagian kosong atau tak dikenal => tanpa optgroup Bagian sama sekali. Itu
      * disengaja: lebih baik tidak menawarkan pilihan daripada menawarkan bagian
@@ -124,9 +125,16 @@ class HandlerOptions
      * Operator.
      *
      * @param  array<string, array{value: string, label: string}>  $bagianMap  hasil bagianMap()
+     * @param  ?string  $rolePengguna        peran penonton; null = tanpa sesi, tak dilarang
+     * @param  ?string  $handlerDipertahankan nilai pengurus yang SEDANG DITAMPILKAN untuk
+     *                                        baris ini (DocumentRow::handlerTampilanMentah)
      */
-    public static function forDokumen(?string $bagian, array $bagianMap): array
-    {
+    public static function forDokumen(
+        ?string $bagian,
+        array $bagianMap,
+        ?string $rolePengguna,
+        ?string $handlerDipertahankan
+    ): array {
         $options = self::ROLE_OPTIONS;
 
         $kunci = strtoupper(trim((string) $bagian));
@@ -138,6 +146,70 @@ class HandlerOptions
             ];
         }
 
-        return $options;
+        return self::pangkasTerlarang($options, $rolePengguna, $handlerDipertahankan);
+    }
+
+    /**
+     * Buang opsi yang tak boleh ditunjuk $rolePengguna.
+     *
+     * Opsi yang kebetulan merupakan pengurus yang SEDANG DITAMPILKAN untuk baris
+     * itu TIDAK dibuang, melainkan ditandai 'disabled' => true. Kalau dibuang,
+     * <select> kehilangan nilai terpilihnya dan browser jatuh ke opsi pertama —
+     * tabel lalu menampilkan pengurus yang keliru. Bahaya itu sudah pernah
+     * terjadi; lihat catatan di DocumentRow::handlerUntukTampilan().
+     */
+    private static function pangkasTerlarang(
+        array $options,
+        ?string $rolePengguna,
+        ?string $handlerDipertahankan
+    ): array {
+        $hasil = [];
+
+        foreach ($options as $opsi) {
+            if (isset($opsi['optgroup'])) {
+                $anak = [];
+
+                foreach (($opsi['options'] ?? []) as $o) {
+                    $disaring = self::saringOpsi($o, $rolePengguna, $handlerDipertahankan);
+
+                    if ($disaring !== null) {
+                        $anak[] = $disaring;
+                    }
+                }
+
+                if ($anak !== []) {
+                    $hasil[] = ['optgroup' => $opsi['optgroup'], 'options' => $anak];
+                }
+
+                continue;
+            }
+
+            $disaring = self::saringOpsi($opsi, $rolePengguna, $handlerDipertahankan);
+
+            if ($disaring !== null) {
+                $hasil[] = $disaring;
+            }
+        }
+
+        return $hasil;
+    }
+
+    /** Null bila opsi harus dibuang; array opsi (mungkin ber-'disabled') bila dipertahankan. */
+    private static function saringOpsi(
+        array $opsi,
+        ?string $rolePengguna,
+        ?string $handlerDipertahankan
+    ): ?array {
+        $nilai = (string) ($opsi['value'] ?? '');
+
+        if (self::bolehMenunjuk($rolePengguna, $nilai)) {
+            return $opsi;
+        }
+
+        if ($handlerDipertahankan !== null && $nilai === $handlerDipertahankan) {
+            return $opsi + ['disabled' => true];
+        }
+
+        return null;
     }
 }
