@@ -95,4 +95,58 @@ class HandlerOptionsTest extends TestCase
         $this->assertArrayNotHasKey('LAMA', $peta);
         $this->assertSame(self::OPSI_PERAN, HandlerOptions::forDokumen('LAMA', $peta));
     }
+
+    public function test_tiga_role_tak_boleh_menunjuk_operator_maupun_bagian(): void
+    {
+        foreach (['perpajakan', 'akutansi', 'pembayaran'] as $role) {
+            $this->assertFalse(
+                HandlerOptions::bolehMenunjuk($role, 'operator'),
+                "Role {$role} masih boleh menunjuk Operator"
+            );
+            $this->assertFalse(
+                HandlerOptions::bolehMenunjuk($role, 'bagian_akn'),
+                "Role {$role} masih boleh menunjuk Bagian"
+            );
+        }
+    }
+
+    public function test_role_terlarang_tetap_boleh_menunjuk_peran_lain(): void
+    {
+        foreach (['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'] as $target) {
+            $this->assertTrue(
+                HandlerOptions::bolehMenunjuk('perpajakan', $target),
+                "Perpajakan seharusnya masih boleh menunjuk {$target}"
+            );
+        }
+    }
+
+    public function test_operator_dan_verifikasi_tidak_ikut_dilarang(): void
+    {
+        foreach (['operator', 'team_verifikasi'] as $role) {
+            $this->assertTrue(HandlerOptions::bolehMenunjuk($role, 'operator'), $role);
+            $this->assertTrue(HandlerOptions::bolehMenunjuk($role, 'bagian_akn'), $role);
+        }
+    }
+
+    public function test_alias_peran_dan_target_ikut_dinormalisasi(): void
+    {
+        // Role::ALIASES memuat 'akuntansi' => 'akutansi'. Tanpa normalisasi, akun
+        // yang kolom role-nya berisi alias LOLOS dari larangan tanpa suara.
+        foreach (['akuntansi', 'Akutansi', ' PEMBAYARAN ', 'Tim Perpajakan'] as $alias) {
+            $this->assertFalse(
+                HandlerOptions::bolehMenunjuk($alias, 'operator'),
+                "Alias peran '{$alias}' lolos dari larangan"
+            );
+        }
+
+        // Sisi target juga: 'Operator' berhuruf besar harus tetap tertangkap.
+        $this->assertFalse(HandlerOptions::bolehMenunjuk('perpajakan', 'Operator'));
+    }
+
+    public function test_peran_kosong_tidak_dilarang(): void
+    {
+        // null/'' = permintaan tanpa sesi. Bukan anggota daftar, jadi tak dilarang.
+        $this->assertTrue(HandlerOptions::bolehMenunjuk(null, 'operator'));
+        $this->assertTrue(HandlerOptions::bolehMenunjuk('', 'operator'));
+    }
 }

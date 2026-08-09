@@ -38,6 +38,20 @@ class HandlerOptions
     ];
 
     /**
+     * Peran yang TIDAK punya jalur mundur: tak boleh menunjuk Operator maupun
+     * Bagian. Dokumen bermasalah dikembalikan lewat Tim Verifikasi.
+     *
+     * Melengkapi keputusan 2026-07-24 yang menghapus halaman "Pengembalian"
+     * perpajakan & akutansi — halamannya hilang, tapi dropdown Pengurus Dokumen
+     * masih menyediakan jalurnya sampai perubahan ini.
+     */
+    private const TANPA_JALUR_MUNDUR = [
+        'perpajakan',
+        'akutansi',
+        'pembayaran',
+    ];
+
+    /**
      * Peta bagian aktif — dibangun SEKALI per-request lalu dioper ke forDokumen()
      * untuk tiap baris, supaya tidak ada query per-baris (N+1). Ini menggantikan
      * alasan lama "bangun handler options sekali per-request": query tetap sekali,
@@ -75,6 +89,28 @@ class HandlerOptions
         }
 
         return $map;
+    }
+
+    /**
+     * Bolehkah $rolePengguna memindahkan dokumen ke $target?
+     *
+     * Dipakai DUA sisi supaya UI dan server tak pernah berbeda aturan:
+     * forDokumen() memangkas opsi dengannya, DocumentHandlerController::update()
+     * menolak dengan 403 memakainya.
+     *
+     * Kedua argumen dinormalisasi: Role::ALIASES memuat 'akuntansi' => 'akutansi'
+     * (ejaan proyek ini memang menyimpang), jadi perbandingan mentah akan
+     * meloloskan akun beralias tanpa suara.
+     */
+    public static function bolehMenunjuk(?string $rolePengguna, string $target): bool
+    {
+        if (!in_array(Role::normalize($rolePengguna), self::TANPA_JALUR_MUNDUR, true)) {
+            return true;
+        }
+
+        $tujuan = Role::normalize($target);
+
+        return $tujuan !== 'operator' && !str_starts_with($tujuan, 'bagian_');
     }
 
     /**
