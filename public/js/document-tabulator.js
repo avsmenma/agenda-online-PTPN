@@ -630,7 +630,13 @@
     const canChange = !!d.can_change_handler;
     function optionHtml(o) {
       const val = (o.value === null || o.value === undefined) ? '' : String(o.value);
-      return '<option value="' + esc(val) + '"' + (val === current ? ' selected' : '') + '>' + esc(o.label) + '</option>';
+      // `disabled` dipakai opsi yang dipertahankan HANYA demi kejujuran tampilan
+      // (lihat App\Support\HandlerOptions::pangkasTerlarang): nilainya adalah
+      // pengurus baris ini, tapi role penonton tak boleh menunjuknya.
+      return '<option value="' + esc(val) + '"' +
+        (val === current ? ' selected' : '') +
+        (o.disabled ? ' disabled' : '') +
+        '>' + esc(o.label) + '</option>';
     }
     // Paritas document-handler-select.blade.php:53 — disabled kecuali viewer
     // adalah pengurus dokumen saat ini (dan tak ada status pending).
