@@ -545,6 +545,21 @@ sebelum menyentuh berkas mana pun terkait fitur ini.
 - Spec/plan: `docs/superpowers/specs/2026-08-07-tombol-uji-whatsapp-bagian-design.md`,
   `docs/superpowers/plans/2026-08-07-tombol-uji-whatsapp-bagian.md`
 
+**Larangan jalur mundur ke Operator & Bagian (perpajakan, akutansi, pembayaran) —
+SELESAI 2026-08-09.** Ketiga role tak lagi bisa memindahkan dokumen ke Operator
+maupun ke Bagian; jalan mundur mereka lewat Tim Verifikasi. Aturannya SATU tempat:
+`App\Support\HandlerOptions::bolehMenunjuk()`, dipakai penyusun dropdown (memangkas)
+DAN `DocumentHandlerController::update()` (menolak 403 sebelum transaksi & sebelum
+notifier). Perbandingan peran WAJIB lewat `Role::normalize()` — alias
+`'akuntansi' => 'akutansi'` membuat perbandingan mentah gagal tanpa suara.
+Opsi terlarang yang kebetulan merupakan pengurus baris itu TIDAK dibuang melainkan
+ditandai `disabled` (dirender `<option disabled>` oleh `document-tabulator.js`):
+ketiga role melihat dokumen milik role lain, dan membuang opsinya membuat `<select>`
+jatuh ke opsi pertama sehingga menampilkan pengurus yang KELIRU. `forDokumen()` kini
+berargumen empat — 10 call site. Operator & verifikasi TIDAK berubah.
+- Spec/plan: `docs/superpowers/specs/2026-08-09-larangan-mundur-perpajakan-akutansi-pembayaran-design.md`,
+  `docs/superpowers/plans/2026-08-09-larangan-mundur-perpajakan-akutansi-pembayaran.md`
+
 ## 8. Hal Yang harus bisa dilakukan pada tabel tabulator
 
 - Terdapat sel aktif yang dapat digerakkan dengan tombol panah pada keyboard, dan tabel akan otomatis menggulir mengikuti sel aktif. - Sel aktif dapat dipindahkan secara instan cukup dengan mengeklik sel yang diinginkan.

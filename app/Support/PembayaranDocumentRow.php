@@ -24,10 +24,11 @@ use App\Models\Dokumen;
  * TIDAK PERNAH mengeluarkan key 'deadline' (beda dari akutansi/perpajakan/
  * verifikasi yang punya buildDeadline()).
  *
- * TANPA forward: base menaruh handler/handler_options/can_change_handler,
- * dibiarkan apa adanya (tak dipakai view pembayaran; engine Tabulator akan
- * menyembunyikan kolomnya via showHandler:false — bagian Task 3, bukan
- * tugas file ini).
+ * DENGAN forward: base menaruh handler/handler_options/can_change_handler dan
+ * ketiganya kini DIPAKAI — kolom "Pengurus Dokumen" dihidupkan untuk pembayaran
+ * (dashboardPembayaran.blade.php: showHandler => true). Kalimat lama di sini yang
+ * menyatakan kolomnya disembunyikan sudah tidak berlaku. Sejak 2026-08-09 opsi
+ * Operator & Bagian dipangkas untuk role ini (App\Support\HandlerOptions).
  *
  * Kolom katalog (getPembayaranDashboardAvailableColumns(),
  * DashboardPembayaranController.php:911-961): sebagian besar sudah dipasok

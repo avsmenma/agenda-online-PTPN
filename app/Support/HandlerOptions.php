@@ -11,8 +11,9 @@ use App\Models\Bagian;
  * (DokumenController, DashboardAkutansiController, DashboardPerpajakanController,
  * TeamVerifikasiController) — komentar di sana pun sudah mengakui "bentuk identik".
  *
- * Pembayaran TIDAK memakai kelas ini: PembayaranDocumentRow berjalan dengan
- * showHandler: false dan menerima $handlerOptions = [] (default).
+ * Pembayaran IKUT memakai kelas ini sejak kolom "Pengurus Dokumen" dihidupkan
+ * untuk role tersebut (dashboardPembayaran.blade.php: showHandler => true);
+ * kalimat lama yang menyatakan sebaliknya sudah tidak berlaku.
  *
  * PERUBAHAN PERILAKU (keputusan user 2026-08-06): optgroup Bagian dipersempit
  * ke bagian MILIK DOKUMEN ITU SENDIRI — bukan lagi seluruh bagian aktif. Dulu
