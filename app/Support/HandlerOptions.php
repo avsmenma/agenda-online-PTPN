@@ -5,8 +5,8 @@ namespace App\Support;
 use App\Models\Bagian;
 
 /**
- * Sumber TUNGGAL opsi dropdown "Pengurus Dokumen" untuk 4 role Tabulator
- * (operator/akutansi/perpajakan/verifikasi). Menggantikan 4 salinan
+ * Sumber TUNGGAL opsi dropdown "Pengurus Dokumen" untuk 5 role Tabulator
+ * (operator/akutansi/perpajakan/verifikasi/pembayaran). Menggantikan 4 salinan
  * build*HandlerOptions() yang dulu identik di masing-masing controller
  * (DokumenController, DashboardAkutansiController, DashboardPerpajakanController,
  * TeamVerifikasiController) — komentar di sana pun sudah mengakui "bentuk identik".
