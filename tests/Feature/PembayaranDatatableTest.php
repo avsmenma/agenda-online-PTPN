@@ -76,11 +76,17 @@ class PembayaranDatatableTest extends TestCase
 
     /**
      * Kolom "Pengurus Dokumen" dihidupkan untuk Pembayaran 2026-08-06. Sebelumnya
-     * handler_options selalu dikirim kosong sehingga formatter merender '-'.
+     * handler_options selalu dikirim kosong sehingga formatter merender '-'. Sejak
+     * 2026-08-09 pembayaran tak lagi menerima opsi Operator maupun optgroup Bagian
+     * — lihat App\Support\HandlerOptions::bolehMenunjuk().
      */
     public function test_baris_membawa_opsi_pengurus_dokumen(): void
     {
         \App\Models\Bagian::create(['kode' => 'KEU', 'nama' => 'Keuangan']);
+        // current_handler tidak dioper => tetap default buatDokumen() = 'pembayaran',
+        // jadi handler yang DITAMPILKAN untuk baris ini adalah 'pembayaran' sendiri —
+        // bukan 'operator' atau 'bagian_keu' — sehingga keduanya terpangkas TOTAL
+        // (dibuang, bukan dipertahankan ber-disabled).
         $this->buatDokumen('3', ['bagian' => 'KEU']);
 
         $response = $this->actingAs($this->pembayaran())->getJson(route('documents.pembayaran.data'));
@@ -90,11 +96,18 @@ class PembayaranDatatableTest extends TestCase
         $opsi = $response->json('data.0.handler_options');
 
         $this->assertNotEmpty($opsi, 'handler_options kosong => dropdown akan merender "-".');
-        $this->assertSame('operator', $opsi[0]['value']);
+        $this->assertFalse(
+            collect($opsi)->contains(fn ($o) => ($o['value'] ?? null) === 'operator'),
+            'Opsi Operator harus terpangkas total untuk pembayaran (HandlerOptions::bolehMenunjuk).'
+        );
+        $this->assertFalse(
+            collect($opsi)->contains(fn ($o) => ($o['optgroup'] ?? null) === 'Bagian'),
+            'Optgroup Bagian harus terpangkas total untuk pembayaran (HandlerOptions::bolehMenunjuk).'
+        );
         $this->assertSame(
-            [['value' => 'bagian_keu', 'label' => 'Keuangan']],
-            $opsi[5]['options'],
-            'Optgroup Bagian harus menyempit ke bagian milik dokumen itu saja.'
+            ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'],
+            array_column($opsi, 'value'),
+            'Sisa opsi harus persis 4 peran maju, berurutan (larangan jalur mundur 2026-08-09).'
         );
     }
 
