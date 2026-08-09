@@ -77,6 +77,26 @@ abstract class DocumentRow
     }
 
     /**
+     * Nilai pengurus yang AKAN ditampilkan untuk baris ini, dihitung TANPA daftar
+     * opsi.
+     *
+     * Dipisah dari handlerUntukTampilan() karena penyusun opsi
+     * (App\Support\HandlerOptions::forDokumen) perlu mengetahui nilai ini agar
+     * tidak memangkasnya — sementara handlerUntukTampilan() sendiri butuh daftar
+     * opsi untuk memeriksa padanan. Tanpa pemisahan, keduanya saling menunggu.
+     */
+    public static function handlerTampilanMentah(Dokumen $dokumen): ?string
+    {
+        if (strtolower((string) $dokumen->status) !== 'returned_to_bidang') {
+            return $dokumen->current_handler;
+        }
+
+        $kode = strtolower(trim((string) $dokumen->return_source));
+
+        return $kode === '' ? $dokumen->current_handler : 'bagian_' . $kode;
+    }
+
+    /**
      * Nilai yang DITAMPILKAN (terpilih) di dropdown Pengurus Dokumen.
      *
      * Saat dokumen sedang dikembalikan ke Bagian, kolom `current_handler` di database
@@ -97,18 +117,15 @@ abstract class DocumentRow
      */
     protected static function handlerUntukTampilan(Dokumen $dokumen, array $handlerOptions): ?string
     {
-        if (strtolower((string) $dokumen->status) !== 'returned_to_bidang') {
-            return $dokumen->current_handler;
+        $nilai = static::handlerTampilanMentah($dokumen);
+
+        // Nilai yang sama dengan current_handler tak perlu dibuktikan punya opsi:
+        // kedua cabang di bawah akan menghasilkan nilai yang identik.
+        if ($nilai === $dokumen->current_handler) {
+            return $nilai;
         }
 
-        $kode = strtolower(trim((string) $dokumen->return_source));
-        if ($kode === '') {
-            return $dokumen->current_handler;
-        }
-
-        $nilai = 'bagian_' . $kode;
-
-        return static::opsiHandlerAda($nilai, $handlerOptions)
+        return static::opsiHandlerAda((string) $nilai, $handlerOptions)
             ? $nilai
             : $dokumen->current_handler;
     }

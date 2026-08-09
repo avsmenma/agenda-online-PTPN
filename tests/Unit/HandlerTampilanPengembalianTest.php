@@ -141,4 +141,36 @@ class HandlerTampilanPengembalianTest extends TestCase
 
         $this->assertSame('team_verifikasi', $baris['handler']);
     }
+
+    public function test_handler_tampilan_mentah_tak_butuh_daftar_opsi(): void
+    {
+        // Nilai yang sama dengan yang dipakai handlerUntukTampilan(), tapi dihitung
+        // tanpa daftar opsi — inilah yang dioper ke HandlerOptions::forDokumen()
+        // supaya opsi tersebut tidak ikut terpangkas.
+        Bagian::create(['kode' => 'AKN', 'nama' => 'AKN']);
+
+        $dikembalikan = $this->dokumen([
+            'nomor_agenda'  => '11_2026',
+            'status'        => 'returned_to_bidang',
+            'return_source' => 'AKN',
+        ]);
+        $this->assertSame('bagian_akn', VerifikasiDocumentRow::handlerTampilanMentah($dikembalikan));
+
+        $biasa = $this->dokumen(['nomor_agenda' => '12_2026']);
+        $this->assertSame('team_verifikasi', VerifikasiDocumentRow::handlerTampilanMentah($biasa));
+
+        $tanpaSumber = $this->dokumen([
+            'nomor_agenda'  => '13_2026',
+            'status'        => 'returned_to_bidang',
+            'return_source' => null,
+        ]);
+        $this->assertSame('team_verifikasi', VerifikasiDocumentRow::handlerTampilanMentah($tanpaSumber));
+
+        $sumberBasi = $this->dokumen([
+            'nomor_agenda'  => '14_2026',
+            'status'        => 'sedang diproses',
+            'return_source' => 'AKN',
+        ]);
+        $this->assertSame('team_verifikasi', VerifikasiDocumentRow::handlerTampilanMentah($sumberBasi));
+    }
 }
