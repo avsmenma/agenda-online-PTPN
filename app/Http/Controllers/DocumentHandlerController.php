@@ -58,6 +58,23 @@ class DocumentHandlerController extends Controller
             ], 403);
         }
 
+        // Perpajakan/akutansi/pembayaran tidak punya jalur mundur — dokumen
+        // bermasalah dikembalikan lewat Tim Verifikasi, bukan langsung ke Operator
+        // atau Bagian. Melengkapi keputusan 2026-07-24 yang menghapus halaman
+        // "Pengembalian" kedua role pertama; dropdown masih menyisakan jalurnya.
+        //
+        // Ditaruh SEBELUM beginTransaction() dan sebelum DocumentReturnNotifier,
+        // supaya percobaan yang ditolak tidak mengubah data dan tidak mengirim
+        // notifikasi apa pun.
+        if (!HandlerOptions::bolehMenunjuk($userRole, $targetHandler)) {
+            return response()->json([
+                'success' => false,
+                'message' => Dokumen::getRoleDisplayNameIndo($userRole)
+                    . ' tidak dapat mengembalikan dokumen ke Operator atau Bagian. '
+                    . 'Kembalikan melalui Tim Verifikasi.',
+            ], 403);
+        }
+
         if ($this->hasPendingApproval($dokumen)) {
             return response()->json([
                 'success' => false,
