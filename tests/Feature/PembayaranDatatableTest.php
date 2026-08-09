@@ -67,6 +67,50 @@ class PembayaranDatatableTest extends TestCase
         $response->assertOk();
         $nomorAgendaList = collect($response->json('data'))->pluck('nomor_agenda');
         $this->assertTrue($nomorAgendaList->contains('2-CSV'));
+
+        // Argumen ke-4 HandlerOptions::forDokumen() (App\Support\DocumentRow::
+        // handlerTampilanMentah()) adalah satu-satunya yang mencegah baris ini
+        // menampilkan "Tim Verifikasi" padahal dokumennya masih di Operator —
+        // lihat App\Support\HandlerOptions::pangkasTerlarang(). Tanpanya <select>
+        // kehilangan opsi terpilih dan browser jatuh ke opsi pertama.
+        $row = collect($response->json('data'))->firstWhere('nomor_agenda', '2-CSV');
+        $this->assertSame('operator', $row['handler']);
+        $this->assertSame(
+            ['value' => 'operator', 'label' => 'Operator', 'disabled' => true],
+            $row['handler_options'][0]
+        );
+    }
+
+    /**
+     * Dokumen `returned_to_bidang` yang dikembalikan lewat `returns.verifikasi.*`
+     * menyimpan `current_handler = 'team_verifikasi'` (bukan `bagian_x`) — lihat
+     * TeamVerifikasiController::returnToBidang(). Nilai yang DITAMPILKAN tetap
+     * bagian tujuan (DocumentRow::handlerTampilanMentah()), dan optgroup Bagian
+     * di handler_options harus bertahan ber-disabled demi kejujuran tampilan
+     * (desain §4.1) — pembayaran tak boleh menunjuk Bagian secara langsung.
+     */
+    public function test_baris_dikembalikan_ke_bagian_mempertahankan_handler_bagian_dan_opsi_nonaktif(): void
+    {
+        \App\Models\Bagian::create(['kode' => 'KEU', 'nama' => 'Keuangan']);
+        $this->buatDokumen('6', [
+            'current_handler' => 'team_verifikasi',
+            'status'          => 'returned_to_bidang',
+            'return_source'   => 'KEU',
+            'bagian'          => 'KEU',
+        ]);
+
+        $response = $this->actingAs($this->pembayaran())->getJson(route('documents.pembayaran.data'));
+        $response->assertOk();
+
+        $row = collect($response->json('data'))->firstWhere('nomor_agenda', '6');
+        $this->assertSame('bagian_keu', $row['handler']);
+
+        $optgroupBagian = collect($row['handler_options'])->firstWhere('optgroup', 'Bagian');
+        $this->assertNotNull($optgroupBagian, 'Optgroup Bagian harus tetap ada demi tampilan (desain §4.1).');
+        $this->assertSame(
+            ['value' => 'bagian_keu', 'label' => 'Keuangan', 'disabled' => true],
+            $optgroupBagian['options'][0]
+        );
     }
 
     public function test_endpoint_data_menolak_tamu(): void

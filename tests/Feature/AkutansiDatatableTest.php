@@ -86,4 +86,27 @@ class AkutansiDatatableTest extends TestCase
     {
         $this->getJson(route('documents.akutansi.data'))->assertUnauthorized();
     }
+
+    /**
+     * Akutansi melihat SEMUA dokumen (base query hanya menyingkirkan
+     * returned_to_bidang) — termasuk yang masih di Operator, kasus paling umum
+     * di layar akutansi. Argumen ke-4 HandlerOptions::forDokumen() (App\Support\
+     * DocumentRow::handlerTampilanMentah()) adalah satu-satunya yang mencegah
+     * baris ini menampilkan "Tim Verifikasi" padahal dokumennya masih di
+     * Operator — lihat App\Support\HandlerOptions::pangkasTerlarang().
+     */
+    public function test_baris_operator_mempertahankan_handler_dan_opsi_operator_nonaktif(): void
+    {
+        $this->buatDokumen('3', ['current_handler' => 'operator', 'status' => 'draft']);
+
+        $response = $this->actingAs($this->akutansi())->getJson(route('documents.akutansi.data'));
+        $response->assertOk();
+
+        $row = collect($response->json('data'))->firstWhere('nomor_agenda', '3');
+        $this->assertSame('operator', $row['handler']);
+        $this->assertSame(
+            ['value' => 'operator', 'label' => 'Operator', 'disabled' => true],
+            $row['handler_options'][0]
+        );
+    }
 }
