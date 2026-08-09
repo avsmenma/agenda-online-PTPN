@@ -146,28 +146,53 @@ pastikan **nol** sisa pemanggilan berargumen dua setelah selesai.
 
 ## 6. Opsi terlarang yang tersisa dirender non-aktif
 
-Klaim awal "opsi yang dipertahankan selalu berada di select yang disabled" **benar untuk
-perpajakan & akutansi, tapi tidak untuk pembayaran.**
+**Koreksi 2026-08-09 (review akhir branch):** paragraf ini semula mengklaim dokumen yang
+dikembalikan **pembayaran** ke Bagian menyimpan `current_handler = 'pembayaran'`, sehingga
+select-nya "aktif" bagi user pembayaran walau nilai tampilnya `bagian_x` — opsi terlarang
+yang sungguhan bisa dipilih. Klaim itu **keliru**, sudah diverifikasi ulang ke kode.
 
-`can_change_handler = isCurrentHandler && !hasPending` (`DocumentRow.php:61`). Dokumen
-yang dulu dikembalikan **pembayaran** ke Bagian menyimpan `current_handler = 'pembayaran'`
-(bukan `bagian_x`), sehingga bagi user pembayaran select-nya **aktif** sementara nilai
-tampilnya `bagian_x` — opsi terlarang di dalam dropdown yang bisa dipilih.
+`DocumentHandlerController.php:288`:
 
-Baris seperti itu tak bisa lahir lagi setelah perubahan ini, tapi yang sudah ada tetap
-ada. Karena itu opsi yang dipertahankan semata-mata demi tampilan diberi penanda:
+```php
+'current_handler' => $sourceRole === 'team_verifikasi' ? 'team_verifikasi' : $targetHandler,
+```
+
+Untuk `$sourceRole` mana pun selain `team_verifikasi` — termasuk `pembayaran` — nilai yang
+tersimpan adalah `$targetHandler` itu sendiri (`bagian_x`), **bukan** `'pembayaran'`.
+Satu-satunya nilai lain yang mungkin muncul adalah `'team_verifikasi'`, lewat satu-satunya
+jalur hidup `returns.verifikasi.*` (`TeamVerifikasiController::returnToBidang()`, ~baris
+1140) yang SELALU menulis `current_handler = 'team_verifikasi'` apa pun asal
+pengembaliannya. `current_handler` baris `returned_to_bidang` karena itu tidak pernah sama
+dengan nama role penonton (`pembayaran`) — hanya `'team_verifikasi'` atau `bagian_x`.
+
+`can_change_handler = isCurrentHandler && !hasPending` (`DocumentRow.php:61`) membandingkan
+`viewerRole` dengan `current_handler`. Karena keduanya tak pernah sama pada baris
+`returned_to_bidang`, `can_change_handler` **selalu false** tepat pada baris yang
+menampilkan opsi Bagian ber-`disabled`. Pola yang sama berlaku untuk opsi Operator
+ber-`disabled` di perpajakan/akutansi: ia hanya bertahan ber-`disabled` ketika
+`current_handler` dokumen `'operator'`, sementara `viewerRole`-nya perpajakan/akutansi —
+tak pernah sama juga.
+
+Dengan kata lain, **setiap baris yang menampilkan opsi ber-`disabled` ini sudah punya
+`can_change_handler = false`, untuk ketiga role — bukan hanya perpajakan & akutansi seperti
+klaim awal.** `fmtHandler()` di `public/js/document-tabulator.js` menyetel `disabled` pada
+`<select>` itu sendiri bila `can_change_handler` false (paritas
+`document-handler-select.blade.php:53`), jadi seluruh dropdown sudah terkunci di sisi klien
+sebelum opsi ber-`disabled` di dalamnya sempat relevan. **Atribut `disabled` pada opsi
+bukan penjaga yang menutup celah nyata — celah itu tidak pernah ada.** Ia adalah
+**pertahanan berlapis (defense-in-depth)**: penegak sesungguhnya adalah `<select>` yang
+sudah nonaktif di sisi klien dan `HandlerOptions::bolehMenunjuk()` di sisi server (§7).
+Atribut ini tetap layak dipertahankan — kalau kelak `can_change_handler` berubah, `disabled`
+pada opsi mencegah user memilih target yang pasti ditolak server, tanpa bergantung pada
+asumsi yang keliru soal isi `current_handler`:
 
 ```php
 ['value' => 'bagian_akn', 'label' => 'Akuntansi', 'disabled' => true]
 ```
 
-dan `fmtHandler()` di `public/js/document-tabulator.js` merender ` disabled` bila
-`o.disabled` bernilai true.
-
 **Perubahan mesin bersama ini ADITIF.** Role yang tak pernah menyetel `disabled` tidak
 berubah sama sekali — disiplin yang sama dipakai saat `showHandler` ditambahkan pada
-Rollout 4. Server tetap penjaga sesungguhnya; atribut `disabled` hanya mencegah user
-memilih sesuatu yang pasti ditolak.
+Rollout 4.
 
 ## 7. Penegakan sisi server
 
