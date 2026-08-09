@@ -136,8 +136,13 @@ class LaranganJalurMundurTest extends TestCase
 
     public function test_akun_beralias_akuntansi_ikut_ditolak(): void
     {
-        // Kolom role produksi bisa berisi alias. Tanpa Role::normalize() di
-        // bolehMenunjuk(), akun seperti ini LOLOS tanpa suara.
+        // Kolom role produksi bisa berisi alias. Akun ini tertangkap oleh
+        // normalisasi berlapis: DocumentHandlerController::update() (baris 33)
+        // sudah memanggil Role::normalize() sebelum guard baru ini dievaluasi,
+        // dibackstop independen oleh Role::normalize() di dalam bolehMenunjuk()
+        // sendiri. Test INI tidak membuktikan lapisan kedua itu — pembuktiannya
+        // ada di HandlerOptionsTest::test_alias_peran_dan_target_ikut_dinormalisasi,
+        // yang memanggil bolehMenunjuk() langsung dengan string alias mentah.
         Bagian::create(['kode' => 'KEU', 'nama' => 'Keuangan']);
         $dokumen = $this->dokumenDi('akutansi');
 
