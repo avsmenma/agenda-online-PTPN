@@ -1231,11 +1231,58 @@
     }
   } catch (e) {}
 
+  // === Penjagaan balapan respons AJAX (2026-08-10) ===
+  // Tiap perubahan filter memanggil table.replaceData() (lihat wireFilters di
+  // bawah), dan Tabulator 6.3.1 TIDAK punya pembatalan permintaan bawaan —
+  // permintaan lama dibiarkan berjalan sampai selesai. Masalahnya: kueri yang
+  // lebih LUAS dijawab server lebih LAMBAT daripada yang sempit. Diukur di
+  // produksi 2026-08-10 saat mengetik "5661" di kotak cari operator:
+  //
+  //   search=5661 -> 0,5 dtk (4 baris)      search=5  -> 1,9 dtk (5.768 baris)
+  //   search=566  -> 0,8 dtk (45 baris)     search=56 -> 2,4 dtk (671 baris)
+  //
+  // Jadi begitu user mengetik lebih lambat dari debounce 300ms, respons BASI
+  // mendarat paling belakangan dan menimpa hasil yang benar: kotak cari berisi
+  // "5661" tetapi tabel menampilkan seluruh dokumen. Makin spesifik pencarian
+  // user, makin PASTI kalah — selisih waktunya justru melebar.
+  //
+  // Penjagaannya: batalkan permintaan yang tersalip. Promise permintaan yang
+  // dibatalkan sengaja dibiarkan MENGGANTUNG (tak resolve, tak reject) — bila
+  // ditolak, Tabulator menyalakan dataLoadError sehingga kotak "Coba lagi"
+  // (showLoadError) muncul untuk pembatalan yang kita sengaja sendiri.
+  // Kontrak ajaxRequestFunc diverifikasi langsung di produksi: `url` datang
+  // TANPA query string (param wajib dirangkai di sini), config = {method:'get'},
+  // dan `params` sudah memuat page+size milik progressiveLoad.
+  let permintaanBerjalan = null;
+  function ajaxDenganPembatalan(url, config, params) {
+    if (permintaanBerjalan) permintaanBerjalan.abort();
+    const kendali = new AbortController();
+    permintaanBerjalan = kendali;
+    const kueri = new URLSearchParams(params).toString();
+    return fetch(url + (url.indexOf('?') === -1 ? '?' : '&') + kueri, {
+      method: (config && config.method) || 'get',
+      headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin',
+      signal: kendali.signal,
+    }).then(function (res) {
+      if (permintaanBerjalan === kendali) permintaanBerjalan = null;
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }).catch(function (err) {
+      // Pembatalan yang kita sengaja: bungkam, jangan sampai jadi kotak error.
+      if (err && err.name === 'AbortError') return new Promise(function () {});
+      throw err;
+    });
+  }
+
   const table = new Tabulator(mountEl(), {
     ajaxURL: CFG.dataUrl,
     // Tugas 7c: parameter filter aktif (search/year/status_filter) dibaca live dari
     // toolbar tiap request — cocok nama dgn buildOperatorQuery. Fungsi hoisted.
     ajaxParams: getFilterParams,
+    // Membatalkan permintaan tersalip supaya respons basi tak menimpa hasil baru
+    // (penjelasan lengkap + angka pengukurannya tepat di atas blok ini).
+    ajaxRequestFunc: ajaxDenganPembatalan,
     // Progressive load (scroll): Tabulator membaca `last_page` & `data` dari respons
     // endpoint /documents/data ({last_page,total,data}) — nama field default cocok.
     progressiveLoad: 'scroll',
