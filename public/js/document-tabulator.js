@@ -1265,9 +1265,19 @@
       credentials: 'same-origin',
       signal: kendali.signal,
     }).then(function (res) {
-      if (permintaanBerjalan === kendali) permintaanBerjalan = null;
       if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.json();
+    }).then(function (data) {
+      // Penandaan "selesai" WAJIB di sini, SETELAH badan respons terurai —
+      // bukan di .then(res) di atas. Promise fetch() sendiri resolve begitu
+      // HEADER tiba, sedangkan badan (ratusan baris x puluhan kolom) masih
+      // mengalir setelahnya; di pembayaran jeda itu terukur 2,6 detik. Menandai
+      // selesai di titik header membuat permintaan berikutnya melihat null lalu
+      // TIDAK membatalkan apa pun, sehingga respons basi tetap menang — persis
+      // bug yang sedang diperbaiki, lolos dari suite hijau dan hanya tertangkap
+      // saat QA browser di produksi 2026-08-10.
+      if (permintaanBerjalan === kendali) permintaanBerjalan = null;
+      return data;
     }).catch(function (err) {
       // Pembatalan yang kita sengaja: bungkam, jangan sampai jadi kotak error.
       if (err && err.name === 'AbortError') return new Promise(function () {});

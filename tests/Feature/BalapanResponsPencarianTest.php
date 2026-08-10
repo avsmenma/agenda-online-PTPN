@@ -85,6 +85,35 @@ class BalapanResponsPencarianTest extends TestCase
     }
 
     /**
+     * Lubang yang hampir lolos (tertangkap QA browser produksi 2026-08-10,
+     * SESUDAH suite hijau): promise fetch() resolve begitu HEADER tiba, bukan
+     * saat badan respons selesai. Menandai permintaan "selesai" di titik header
+     * membuat permintaan berikutnya melihat null lalu tidak membatalkan apa pun
+     * — pembatalannya jadi menyala-mati bergantian dan respons basi tetap
+     * menang. Terukur di pembayaran: header tiba 645 ms, badan baru selesai
+     * 3.297 ms.
+     *
+     * Jadi penandaan selesai WAJIB berada setelah res.json() terurai.
+     */
+    public function test_permintaan_baru_ditandai_selesai_setelah_badan_terurai(): void
+    {
+        $badan = $this->badanFungsiPembatalan($this->sumberMesin());
+
+        $posJson = strpos($badan, 'return res.json();');
+        $this->assertNotFalse($posJson, 'penguraian badan respons (res.json) tidak ditemukan');
+
+        $posTandaSelesai = strpos($badan, 'permintaanBerjalan = null');
+        $this->assertNotFalse($posTandaSelesai, 'penandaan permintaan selesai tidak ditemukan');
+
+        $this->assertGreaterThan(
+            $posJson,
+            $posTandaSelesai,
+            'permintaan ditandai selesai SEBELUM badan respons terurai — promise fetch() resolve saat header '
+            . 'tiba, jadi permintaan berikutnya akan melihat null dan tidak membatalkan apa pun'
+        );
+    }
+
+    /**
      * Permintaan yang kita batalkan sendiri TIDAK boleh ditolak ke Tabulator:
      * penolakan menyalakan dataLoadError -> showLoadError() memunculkan kotak
      * "Coba lagi" untuk pembatalan yang memang disengaja. Diverifikasi di
