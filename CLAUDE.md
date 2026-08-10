@@ -578,6 +578,18 @@ Aditif (47 baris, nol penghapusan), berlaku ke kelima role keuangan sekaligus.
 > `url` datang **tanpa** query string — param wajib dirangkai sendiri; `config` =
 > `{method:'get'}`; `params` sudah memuat `page`+`size` milik `progressiveLoad`.
 >
+> **JEBAKAN — promise `fetch()` resolve saat HEADER tiba, bukan saat badan respons
+> selesai.** Versi pertama perbaikan ini menandai permintaan "selesai" di
+> `.then(res)` (titik header), sehingga permintaan berikutnya melihat `null` dan
+> **tidak membatalkan apa pun** — pembatalan menyala-mati bergantian dan respons basi
+> tetap menang. Terukur di pembayaran: header tiba 645 ms, badan baru selesai
+> 3.297 ms (baris pembayaran jauh lebih gemuk). Operator lolos hanya karena
+> muatannya ringan — **satu role hijau bukan bukti kelima role hijau.** Penandaan
+> selesai karena itu WAJIB di `.then(data)` SETELAH `res.json()` terurai; dijaga
+> assertion urutan di `BalapanResponsPencarianTest`. Cacat ini lolos dari suite
+> hijau 411 test dan hanya tertangkap saat QA browser di produksi — contoh hidup
+> aturan 9 §3.
+>
 > **Catatan terpisah:** `table.on('dataLoaded', ...)` (baris ~2196, pemanggil
 > `clearLoadError()`) **tak pernah menyala** di Tabulator ini — hanya `dataProcessed` yang
 > menyala. Sudah begitu SEBELUM perbaikan ini (dibuktikan pada tabel yang belum disentuh),
