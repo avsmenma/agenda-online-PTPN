@@ -560,6 +560,30 @@ berargumen empat — 10 call site. Operator & verifikasi TIDAK berubah.
 - Spec/plan: `docs/superpowers/specs/2026-08-09-larangan-mundur-perpajakan-akutansi-pembayaran-design.md`,
   `docs/superpowers/plans/2026-08-09-larangan-mundur-perpajakan-akutansi-pembayaran.md`
 
+**Balapan respons pencarian DIPERBAIKI — 2026-08-10.** Kotak cari Tabulator menampilkan
+hasil yang benar sekejap lalu "kembali normal": tiap perubahan filter memanggil
+`table.replaceData()` dan **Tabulator 6.3.1 tak punya pembatalan permintaan bawaan**
+(diperiksa di produksi: modul ajax-nya nol method abort). Kueri yang lebih LUAS dijawab
+server lebih LAMBAT (diukur: `search=56` → 2,4 dtk/671 baris vs `search=5661` → 0,5 dtk/4
+baris), jadi begitu user mengetik lebih lambat dari debounce 300 ms, respons BASI mendarat
+paling belakangan dan menimpa hasil benar — kotak cari berisi "5661" tapi tabel memuat
+seluruh dokumen. **Makin spesifik pencarian, makin pasti kalah**; mengetik cepat (<300 ms
+per huruf) hanya melahirkan satu permintaan sehingga bug tampak "kadang-kadang".
+Perbaikannya: `ajaxRequestFunc: ajaxDenganPembatalan` di `document-tabulator.js` —
+membatalkan permintaan tersalip lewat `AbortController`. Promise yang dibatalkan sengaja
+dibiarkan **menggantung** (tak resolve, tak reject); bila ditolak, Tabulator menyalakan
+`dataLoadError` → kotak "Coba lagi" palsu untuk pembatalan yang kita sengaja sendiri.
+Aditif (47 baris, nol penghapusan), berlaku ke kelima role keuangan sekaligus.
+> Kontrak `ajaxRequestFunc` (diverifikasi empiris di produksi, bukan dari dokumentasi):
+> `url` datang **tanpa** query string — param wajib dirangkai sendiri; `config` =
+> `{method:'get'}`; `params` sudah memuat `page`+`size` milik `progressiveLoad`.
+>
+> **Catatan terpisah:** `table.on('dataLoaded', ...)` (baris ~2196, pemanggil
+> `clearLoadError()`) **tak pernah menyala** di Tabulator ini — hanya `dataProcessed` yang
+> menyala. Sudah begitu SEBELUM perbaikan ini (dibuktikan pada tabel yang belum disentuh),
+> sengaja tidak dibundel. Dampaknya kecil: `clearLoadError()` tetap dipanggil di awal
+> `reload()` dan oleh tombol "Coba lagi".
+
 ## 8. Hal Yang harus bisa dilakukan pada tabel tabulator
 
 - Terdapat sel aktif yang dapat digerakkan dengan tombol panah pada keyboard, dan tabel akan otomatis menggulir mengikuti sel aktif. - Sel aktif dapat dipindahkan secara instan cukup dengan mengeklik sel yang diinginkan.
