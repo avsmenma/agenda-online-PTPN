@@ -194,21 +194,31 @@
   }
 
   /* font-size 16px WAJIB: di bawah itu iOS otomatis memperbesar halaman saat
-     field difokus, dan user tak bisa mengembalikannya. Selektor ketiga
-     (.search-box .form-control) + !important WAJIB: partial GLOBAL
+     field difokus, dan user tak bisa mengembalikannya. Selektor ketiga & keempat
+     (.search-box .form-control DAN .search-box .input-group-text) + !important
+     WAJIB, dan WAJIB ditangani BERSAMA: partial GLOBAL
      compact-document-ui.blade.php baris ~899-919, di dalam
-     @media (max-width: 1400px) miliknya sendiri, mengunci
-     ".search-box .form-control" (antara lain) ke "font-size: 0.74rem
+     @media (max-width: 1400px) miliknya sendiri, mengunci KEDUANYA (input DAN
+     kotak ikon kaca pembesar di sebelahnya) ke "font-size: 0.74rem
      !important; min-height/height: 34px !important;". Breakpoint 1400px itu
      jauh lebih lebar dari breakpoint ponsel (768px) sehingga blok itu SELALU
      aktif di ponsel juga — bukan hanya di layar sedang. Tanpa !important yang
-     menyamai + selektor .form-control di sini, aturan global itu selalu
-     menang dan input tetap ~11.84px (dibuktikan terukur di produksi), bukan
-     16px. Ini semata melawan !important global yang sudah ada, BUKAN
-     preferensi gaya (lihat CLAUDE.md §4). */
+     menyamai + kedua selektor di sini, aturan global itu selalu menang dan
+     input tetap ~11.84px (dibuktikan terukur di produksi), bukan 16px. Kotak
+     ikon (.input-group-text) WAJIB ikut disamakan tingginya: align-items:
+     stretch bawaan Bootstrap pada .input-group TIDAK menyelamatkan ini,
+     karena stretch hanya berlaku untuk anak ber-tinggi auto, sedangkan
+     "height: 34px !important" dari partial global adalah tinggi eksplisit —
+     dibuktikan terukur di produksi (input 44px vs ikon tetap 34px, pincang
+     10px) saat perbaikan pertama hanya menangani .form-control tanpa
+     .input-group-text. Jangan tambahkan salah satu tanpa yang lain di masa
+     depan — keduanya harus selalu berubah bersama. Ini semata melawan
+     !important global yang sudah ada, BUKAN preferensi gaya (lihat
+     CLAUDE.md §4). */
   body.bagian-layout .search-filter-form input,
   body.bagian-layout .search-filter-form select,
-  body.bagian-layout .search-box .form-control {
+  body.bagian-layout .search-box .form-control,
+  body.bagian-layout .search-box .input-group-text {
     width: 100%;
     font-size: 16px !important;
     min-height: 44px !important; /* ambang target sentuh Apple HIG */

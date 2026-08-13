@@ -345,11 +345,11 @@ class MobileBagianTest extends TestCase
         // font-size minimal 16px pada input mencegah iOS auto-zoom saat field
         // difokus — penyebab keluhan "layarnya meloncat sendiri". Dipersempit
         // ke badan aturan ".search-filter-form input/select, .search-box
-        // .form-control": Blok B kartu (Task 3) sudah punya deklarasi
-        // "font-size: 16px" sendiri (.mob-card__nilai) sehingga
-        // assertStringContainsString mentah di seluruh berkas lolos terus,
-        // tak peduli nilai font-size input sebenarnya — terbukti hampa saat
-        // dicoba mutasi jadi 14px. Selektor ".search-box .form-control" +
+        // .form-control, .search-box .input-group-text": Blok B kartu (Task 3)
+        // sudah punya deklarasi "font-size: 16px" sendiri (.mob-card__nilai)
+        // sehingga assertStringContainsString mentah di seluruh berkas lolos
+        // terus, tak peduli nilai font-size input sebenarnya — terbukti hampa
+        // saat dicoba mutasi jadi 14px. Selektor ".search-box .form-control" +
         // "!important" WAJIB ada di badan aturan ini: partial GLOBAL
         // compact-document-ui.blade.php baris ~899-919, di dalam
         // @media (max-width: 1400px) miliknya sendiri, mengunci
@@ -360,6 +360,14 @@ class MobileBagianTest extends TestCase
         $badanAturan = $this->cssRuleBody($css, 'body.bagian-layout .search-filter-form input');
         $this->assertStringContainsString('.search-box .form-control', $badanAturan);
         $this->assertStringContainsString('font-size: 16px !important', $badanAturan);
+
+        // .search-box .input-group-text (kotak ikon kaca pembesar) WAJIB ikut
+        // aturan yang sama: dikunci partial global yang SAMA (baris ~899-919)
+        // ke height: 34px !important — tinggi EKSPLISIT yang tak tertolong
+        // align-items: stretch bawaan Bootstrap (stretch hanya berlaku untuk
+        // anak ber-tinggi auto). Tanpa selektor ini, input jadi 44px tapi
+        // kotak ikon tetap 34px — pincang 10px, terukur nyata di produksi.
+        $this->assertStringContainsString('.search-box .input-group-text', $badanAturan);
     }
 
     public function test_target_sentuh_minimal_44px(): void
