@@ -171,16 +171,26 @@
 
   /* ===== Blok B — .bagian-layout: filter, toolbar, paginasi ===== */
 
+  /* align-items: stretch menimpa align-items: center dari aturan dasar
+     (daftarDokumen.blade.php ~baris 37) — tanpa ini kontrol jadi terpusat
+     selebar konten intrinsiknya sendiri, bukan melebar penuh mengikuti
+     flex-direction: column di atas. */
   body.bagian-layout .search-filter-form {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 10px;
     width: 100%;
   }
 
+  /* min-width: 0 WAJIB: aturan dasar .search-input-group (daftarDokumen.blade.php
+     ~baris 42-45) menyetel min-width: 250px, yang mengalahkan width: 100% di
+     viewport sempit — inilah sumber input yang meluber sampai 251px di dalam
+     form 375px, bukan sekadar hilang width. */
   body.bagian-layout .search-input-group,
   body.bagian-layout .search-filter-form .input-group {
     width: 100%;
+    min-width: 0;
   }
 
   /* font-size 16px WAJIB: di bawah itu iOS otomatis memperbesar halaman saat
@@ -192,10 +202,20 @@
     min-height: 44px; /* ambang target sentuh Apple HIG */
   }
 
-  /* Dua tombol toolbar berdampingan, berbagi lebar sama rata. */
+  /* Dua tombol toolbar menumpuk vertikal (konsisten dengan input/select di
+     atasnya lewat align-items: stretch pada .search-filter-form), masing-masing
+     melebar penuh — BUKAN berdampingan: parent flex-direction: column membuat
+     flex: 1 1 0 mengatur TINGGI, bukan lebar, jadi width: 100% dipakai di sini.
+     !important pada min-height & height WAJIB: partial GLOBAL
+     compact-document-ui.blade.php (baris ~28-45, dimuat semua role dari layout)
+     mengunci .btn-refresh ke "min-height: 36px !important; height: 36px
+     !important;" — tanpa !important yang menyamai di sini, aturan global itu
+     selalu menang dan tombol tetap 36px. Ini semata melawan !important global
+     yang sudah ada, BUKAN preferensi gaya (lihat CLAUDE.md §4). */
   body.bagian-layout .btn-refresh {
-    flex: 1 1 0;
-    min-height: 44px;
+    width: 100%;
+    min-height: 44px !important;
+    height: auto !important;
     justify-content: center;
   }
 

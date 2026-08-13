@@ -59,6 +59,26 @@ class MobileBagianTest extends TestCase
         return file_get_contents($path);
     }
 
+    /**
+     * Ambil badan (isi antara "{" dan "}" pertama setelahnya) aturan CSS yang
+     * selector-nya diawali persis oleh $selectorAwal. Dipakai untuk
+     * mempersempit assertion ke SATU aturan spesifik — CLAUDE.md aturan 8:
+     * assertion yang mencari string di seluruh berkas biasanya hampa karena
+     * string yang sama kebetulan sudah ada di aturan lain yang tak berkaitan
+     * (terbukti nyata: "font-size: 16px" & "min-height: 44px" masing-masing
+     * muncul di lebih dari satu aturan tak berkaitan di berkas ini).
+     */
+    private function cssRuleBody(string $css, string $selectorAwal): string
+    {
+        $posisi = strpos($css, $selectorAwal);
+        $this->assertNotFalse($posisi, "Aturan CSS berawalan \"{$selectorAwal}\" tidak ditemukan.");
+
+        $akhir = strpos($css, '}', $posisi);
+        $this->assertNotFalse($akhir, "Aturan CSS berawalan \"{$selectorAwal}\" tidak tertutup.");
+
+        return substr($css, $posisi, $akhir - $posisi);
+    }
+
     public function test_seluruh_aturan_mobile_terkurung_media_query(): void
     {
         $css = $this->mobileCss();
@@ -329,13 +349,7 @@ class MobileBagianTest extends TestCase
         // (.mob-card__nilai) sehingga assertStringContainsString mentah di
         // seluruh berkas lolos terus, tak peduli nilai font-size input
         // sebenarnya — terbukti hampa saat dicoba mutasi jadi 14px.
-        $posisiAturan = strpos($css, 'body.bagian-layout .search-filter-form input');
-        $this->assertNotFalse($posisiAturan, 'Aturan .search-filter-form input tidak ditemukan.');
-
-        $akhirAturan = strpos($css, '}', $posisiAturan);
-        $this->assertNotFalse($akhirAturan, 'Aturan .search-filter-form input tidak tertutup.');
-
-        $badanAturan = substr($css, $posisiAturan, $akhirAturan - $posisiAturan);
+        $badanAturan = $this->cssRuleBody($css, 'body.bagian-layout .search-filter-form input');
         $this->assertStringContainsString('font-size: 16px', $badanAturan);
     }
 
@@ -343,7 +357,31 @@ class MobileBagianTest extends TestCase
     {
         $css = $this->mobileCss();
 
-        // 44px = ambang target sentuh Apple HIG.
-        $this->assertStringContainsString('min-height: 44px', $css);
+        // 44px = ambang target sentuh Apple HIG. "min-height: 44px" muncul di
+        // TIGA aturan berbeda (input/select filter, tombol .btn-refresh,
+        // .page-link paginasi) — assertion mentah di seluruh berkas hanya
+        // butuh SATU dari ketiganya benar untuk lolos, jadi memutasi salah
+        // satu aturan saja (mis. .btn-refresh) tetap hijau selama dua lainnya
+        // utuh. Diperiksa per-aturan supaya regresi di aturan mana pun
+        // tertangkap sendiri-sendiri.
+        $this->assertStringContainsString(
+            'min-height: 44px',
+            $this->cssRuleBody($css, 'body.bagian-layout .search-filter-form input')
+        );
+
+        // .btn-refresh WAJIB !important (lihat komentar CSS-nya): partial
+        // GLOBAL compact-document-ui.blade.php mengunci height: 36px
+        // !important untuk semua role, jadi min-height: 44px polos di sini
+        // kalah dan tak pernah termanifestasi di browser — dibuktikan lewat
+        // pengujian produksi (tombol terukur 34px, bukan 44px).
+        $this->assertStringContainsString(
+            'min-height: 44px !important',
+            $this->cssRuleBody($css, 'body.bagian-layout .btn-refresh')
+        );
+
+        $this->assertStringContainsString(
+            'min-height: 44px',
+            $this->cssRuleBody($css, 'body.bagian-layout .pagination-container .page-link')
+        );
     }
 }
