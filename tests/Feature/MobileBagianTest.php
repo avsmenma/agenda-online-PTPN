@@ -2,6 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Dokumen;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -20,6 +24,33 @@ use Tests\TestCase;
  */
 class MobileBagianTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Query daftar dokumen Bagian memakai SUBSTRING_INDEX (fungsi MySQL) yang
+        // tak ada di SQLite. Polyfill sama dengan PerjalananDokumenBagianTest.
+        $pdo = DB::connection()->getPdo();
+        if ($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+            $pdo->sqliteCreateFunction('substring_index', function ($str, $delim, $count) {
+                $parts = explode($delim, (string) $str);
+
+                return implode($delim, array_slice($parts, 0, (int) $count));
+            });
+        }
+    }
+
+    private function userBagian(string $kode = 'AKN'): User
+    {
+        // CheckBagianRole menuntut role BERAWALAN 'bagian_' DAN bagian_code terisi.
+        return User::factory()->create([
+            'role'        => 'bagian_' . strtolower($kode),
+            'bagian_code' => $kode,
+        ]);
+    }
+
     private function mobileCss(): string
     {
         $path = public_path('css/mobile.css');
@@ -144,5 +175,111 @@ class MobileBagianTest extends TestCase
         $this->assertStringContainsString('translateX(-100%)', $css);
         // Konten mengambil lebar penuh — inilah yang mengembalikan 72px yang dicuri sidebar.
         $this->assertStringContainsString('margin-left: 0', $css);
+    }
+
+    public function test_kartu_mobile_terender_sebanyak_baris_tabel(): void
+    {
+        Dokumen::create([
+            'nomor_agenda'    => 'MOB001_2026',
+            'nomor_spp'       => 'SPP-MOB-1',
+            'bulan'           => 'Agustus',
+            'tahun'           => 2026,
+            'tanggal_masuk'   => '2026-08-01',
+            'status'          => 'sedang diproses',
+            'created_by'      => 'operator',
+            'current_handler' => 'team_verifikasi',
+            'bagian'          => 'AKN',
+            'nilai_rupiah'    => 42500000,
+            'dibayar_kepada'  => 'PT Sumber Makmur',
+        ]);
+
+        $html = $this->actingAs($this->userBagian())
+            ->get('/bagian/documents')
+            ->assertOk()
+            ->getContent();
+
+        // Satu dokumen → satu kartu.
+        $this->assertSame(1, substr_count($html, 'class="mob-card"'));
+        // Kartu memuat data yang sama dengan tabel.
+        $this->assertStringContainsString('MOB001_2026', $html);
+        $this->assertStringContainsString('PT Sumber Makmur', $html);
+        // Nilai diformat gaya Indonesia.
+        $this->assertStringContainsString('42.500.000', $html);
+        // Badge status ikut dirender di kartu (dari helper Task 1).
+        $this->assertStringContainsString('Belum Siap Dibayar', $html);
+    }
+
+    public function test_kartu_memakai_fungsi_modal_yang_sudah_ada(): void
+    {
+        Dokumen::create([
+            'nomor_agenda'    => 'MOB002_2026',
+            'bulan'           => 'Agustus',
+            'tahun'           => 2026,
+            'tanggal_masuk'   => '2026-08-01',
+            'status'          => 'sedang diproses',
+            'created_by'      => 'operator',
+            'current_handler' => 'team_verifikasi',
+            'bagian'          => 'AKN',
+        ]);
+
+        $html = $this->actingAs($this->userBagian())
+            ->get('/bagian/documents')
+            ->assertOk()
+            ->getContent();
+
+        // Kartu memanggil fungsi perjalanan yang SUDAH ADA, dengan membawa
+        // atribut data-perjalanan (kontrak fungsi tersebut).
+        $posisiKartu = strpos($html, 'class="mob-card"');
+        $this->assertNotFalse($posisiKartu, 'Kartu mobile tidak ditemukan.');
+
+        $potonganKartu = substr($html, $posisiKartu, 2000);
+        $this->assertStringContainsString('tampilkanPerjalanan(this)', $potonganKartu);
+        $this->assertStringContainsString('data-perjalanan', $potonganKartu);
+    }
+
+    public function test_pembungkus_kartu_hanya_tampil_di_ponsel(): void
+    {
+        $css = $this->mobileCss();
+        $layout = file_get_contents(resource_path('views/layouts/app.blade.php'));
+
+        // Pembungkus disembunyikan di desktop. Aturan display:none itu TIDAK boleh
+        // ada di mobile.css (berkas itu hanya berisi @media) — ia dibawa partial
+        // sendiri lewat @push('styles').
+        $partial = file_get_contents(
+            resource_path('views/bagian/partials/_kartuDokumenMobile.blade.php')
+        );
+
+        $this->assertStringContainsString("@push('styles')", $partial);
+        $this->assertStringContainsString('.mob-cards', $partial);
+        $this->assertStringContainsString('display: none', $partial);
+
+        // Di mobile.css pembungkus DITAMPILKAN kembali (di dalam @media).
+        $this->assertStringContainsString('.mob-cards', $css);
+    }
+
+    public function test_css_kartu_dipush_sebelum_markup(): void
+    {
+        // Regresi flash-of-unstyled: kalau CSS display:none ter-parse SETELAH
+        // markup, kartu berkedip muncul di desktop sebelum disembunyikan.
+        // Pelajaran dari program modal kustomisasi kolom (CLAUDE.md §7).
+        Dokumen::create([
+            'nomor_agenda'    => 'MOB003_2026',
+            'bulan'           => 'Agustus',
+            'tahun'           => 2026,
+            'tanggal_masuk'   => '2026-08-01',
+            'status'          => 'sedang diproses',
+            'created_by'      => 'operator',
+            'current_handler' => 'team_verifikasi',
+            'bagian'          => 'AKN',
+        ]);
+
+        // Urutan yang diuji: blok <style> dari @push('styles') (berisi
+        // ".mob-cards { display: none; }") WAJIB muncul sebelum markup kartu.
+        // Dicari string persis milik blok itu — bukan sekadar ".mob-cards",
+        // yang juga muncul di <link> mobile.css sehingga assertion jadi hampa.
+        $this->actingAs($this->userBagian())
+            ->get('/bagian/documents')
+            ->assertOk()
+            ->assertSeeInOrder(['.mob-cards { display: none; }', 'class="mob-card"'], false);
     }
 }

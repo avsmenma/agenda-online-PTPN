@@ -1491,6 +1491,10 @@
           </table>
         </div>
 
+        {{-- Kartu dokumen untuk ponsel — tampil hanya di ≤768px, menggantikan
+             tabel yang butuh gulir horizontal 1943px. --}}
+        @include('bagian.partials._kartuDokumenMobile')
+
         <!-- Pagination -->
         <div class="pagination-container">
           <div class="per-page-select">
