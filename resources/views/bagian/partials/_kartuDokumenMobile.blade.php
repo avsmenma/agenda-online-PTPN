@@ -17,8 +17,16 @@
 <style>
   /* Disembunyikan secara default (desktop). Ditampilkan kembali di
      public/css/mobile.css di dalam @media (max-width: 768px).
-     WAJIB lewat @push('styles') — bukan <style> inline di body — supaya
-     ter-parse SEBELUM markup dan kartu tak berkedip muncul di desktop. */
+     WAJIB lewat stack styles (lihat direktif di atas blok ini) — bukan
+     <style> inline di body — supaya ter-parse SEBELUM markup dan kartu tak
+     berkedip muncul di desktop.
+
+     JANGAN menulis nama direktif Blade itu secara literal di komentar ini:
+     Blade memproses direktif di dalam string/komentar CSS juga, sehingga
+     kemunculan keduanya membuka stack baru di tengah blok — akibatnya
+     </style> jadi milik push yang keliru, seluruh markup kartu tertelan ke
+     dalam <style>, dan halaman ponsel tampil KOSONG. Ini pernah terjadi dan
+     lolos ke produksi 2026-08-13. */
   .mob-cards { display: none; }
 </style>
 @endpush

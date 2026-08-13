@@ -364,10 +364,54 @@ class MobileBagianTest extends TestCase
         // ".mob-cards { display: none; }") WAJIB muncul sebelum markup kartu.
         // Dicari string persis milik blok itu — bukan sekadar ".mob-cards",
         // yang juga muncul di <link> mobile.css sehingga assertion jadi hampa.
-        $this->actingAs($this->userBagian())
+        $html = $this->actingAs($this->userBagian())
             ->get('/bagian/documents')
             ->assertOk()
-            ->assertSeeInOrder(['.mob-cards { display: none; }', 'class="mob-card"'], false);
+            ->assertSeeInOrder(['.mob-cards { display: none; }', 'class="mob-card"'], false)
+            ->getContent();
+
+        // Blok <style> milik kartu WAJIB ditutup sebelum markup kartu dimulai.
+        // Kalau tidak, browser menelan seluruh markup kartu ke dalam <style> dan
+        // halaman ponsel tampil KOSONG.
+        $posisiStyle  = strpos($html, '.mob-cards { display: none; }');
+        $posisiMarkup = strpos($html, 'class="mob-card"');
+        $this->assertNotFalse($posisiStyle, 'Blok <style> kartu tidak ditemukan.');
+        $this->assertNotFalse($posisiMarkup, 'Markup kartu tidak ditemukan.');
+
+        $antara = substr($html, $posisiStyle, $posisiMarkup - $posisiStyle);
+        $this->assertStringContainsString(
+            '</style>',
+            $antara,
+            'Blok <style> kartu tidak ditutup sebelum markup — markup akan tertelan ke dalam <style> dan halaman ponsel tampil kosong.'
+        );
+    }
+
+    public function test_direktif_push_partial_kartu_seimbang(): void
+    {
+        // Penjaga akar masalah insiden 2026-08-13: komentar CSS di partial memuat
+        // nama direktif push secara LITERAL, dan Blade memproses direktif di dalam
+        // komentar CSS juga. Akibatnya stack ketiga terbuka di tengah blok tanpa
+        // penutup — </style> jatuh ke push yang keliru, seluruh markup kartu
+        // tertelan ke dalam <style>, dan halaman ponsel tampil KOSONG di produksi.
+        //
+        // Diuji di SUMBER, bukan HTML hasil render: begitu jumlahnya timpang,
+        // render sudah rusak sedemikian rupa sehingga assertion atas HTML jadi
+        // sulit dibaca (assertSeeInOrder gagal lebih dulu dengan pesan yang
+        // menyesatkan). Menghitung direktif menunjuk langsung ke penyebabnya.
+        $partial = file_get_contents(
+            resource_path('views/bagian/partials/_kartuDokumenMobile.blade.php')
+        );
+
+        $jumlahPush    = preg_match_all('/@push\(/', $partial);
+        $jumlahEndpush = preg_match_all('/@endpush/', $partial);
+
+        $this->assertSame(
+            $jumlahPush,
+            $jumlahEndpush,
+            "Direktif push/endpush timpang ({$jumlahPush} push vs {$jumlahEndpush} endpush) — "
+            . 'biasanya karena nama direktif ditulis literal di dalam komentar; '
+            . 'Blade memprosesnya sebagai direktif sungguhan.'
+        );
     }
 
     public function test_kartu_punya_handler_keyboard_enter_dan_spasi(): void
