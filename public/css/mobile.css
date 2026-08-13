@@ -41,9 +41,16 @@
     transform: translateX(0);
   }
 
-  /* Latar gelap saat drawer terbuka. Tap di mana pun padanya menutup drawer. */
+  /* Latar gelap saat drawer terbuka. Tap di mana pun padanya menutup drawer.
+
+     display !important WAJIB: elemennya ber-atribut `hidden` (supaya nol aturan
+     berada di luar @media dan desktop tak tersentuh), dan Bootstrap menyetel
+     "[hidden] { display: none !important }". Tanpa !important yang menyamai,
+     scrim TAK PERNAH dirender — terukur di produksi 2026-08-13: ukuran 0x0,
+     display none. Akibatnya drawer terbuka dan TIDAK BISA DITUTUP: mengetuk di
+     luar drawer tak berefek karena tak ada apa pun untuk diketuk. */
   .mobile-drawer-scrim {
-    display: block;
+    display: block !important;
     position: fixed;
     inset: 0;
     background: rgba(15, 23, 42, 0.5);
@@ -176,6 +183,18 @@
     padding: 16px 12px 4px;
   }
 
+  /* Topbar WAJIB menang atas drawer (1200) di ponsel. Aturan lama di
+     layouts/app.blade.php memberinya 1100 — benar untuk desktop (drawer tak
+     ada di sana), fatal di ponsel: drawer menimbun tombol hamburger, sehingga
+     document.elementFromPoint di titik tombol mengembalikan isi drawer, bukan
+     tombolnya. Ketukan untuk menutup justru mengenai menu di baliknya, dan
+     drawer terkunci terbuka (bug produksi 2026-08-13).
+     Hamburger adalah jalan keluar KEDUA setelah scrim — keduanya sempat mati
+     bersamaan, itulah kenapa drawer sama sekali tak bisa ditutup. */
+  body.owner-layout .app-topbar {
+    z-index: 1300;
+  }
+
   /* Judul topbar dipendekkan agar muat bersama hamburger. */
   .app-topbar-sub {
     display: none;
@@ -304,7 +323,7 @@
        1260. Popup filter sengaja MENANG atas drawer menu: keduanya tak pernah
        terbuka bersamaan, dan bila itu terjadi, yang terakhir dibuka user yang
        harus terlihat. */
-    z-index: 1250;
+    z-index: 1315;
     cursor: pointer;
   }
 
@@ -318,7 +337,7 @@
     position: fixed;
     inset: 0;
     background: rgba(15, 23, 42, 0.5);
-    z-index: 1240;
+    z-index: 1310;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
@@ -343,7 +362,12 @@
     max-height: 70vh;
     overflow-y: auto;
     margin: 0;
-    z-index: 1260;
+    /* Di atas topbar (1300): popup berlabuh di bawah tapi tingginya sampai
+       70vh, jadi di layar pendek ia mencapai area topbar. Saat popup terbuka
+       topbar memang tak diperlukan — scrim-nya (1310) juga menutupi topbar
+       supaya satu ketukan di mana pun menutup popup, bukan malah membuka
+       drawer menu di baliknya. */
+    z-index: 1320;
     opacity: 0;
     visibility: hidden;
     transform: translateY(12px);

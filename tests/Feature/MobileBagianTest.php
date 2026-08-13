@@ -585,6 +585,43 @@ class MobileBagianTest extends TestCase
         );
     }
 
+    public function test_drawer_menu_punya_jalan_keluar_yang_berfungsi(): void
+    {
+        // Bug produksi 2026-08-13: drawer menu terbuka dan TIDAK BISA DITUTUP.
+        // Dua jalan keluarnya mati bersamaan:
+        //
+        //   1. Scrim tak pernah dirender. Elemennya ber-atribut `hidden`, dan
+        //      Bootstrap menyetel "[hidden] { display: none !important }" —
+        //      "display: block" polos di mobile.css KALAH. Terukur di produksi:
+        //      scrim 0x0, display none. Mengetuk di luar drawer tak berefek.
+        //   2. Hamburger tertimbun drawer. Drawer z-index 1200 > topbar 1100,
+        //      jadi document.elementFromPoint di titik tombol mengembalikan
+        //      DIV.owner-sidebar-section — ketukan mengenai isi drawer.
+        //
+        // Pembanding yang menyingkap akarnya: .filter-scrim (dibuat belakangan)
+        // memakai "display: block !important" dan BERFUNGSI dengan atribut
+        // hidden yang sama.
+        $css = $this->mobileCss();
+
+        $this->assertStringContainsString(
+            'display: block !important',
+            $this->cssRuleBody($css, '.mobile-drawer-scrim'),
+            'Scrim drawer wajib !important — tanpa itu atribut hidden ([hidden]{display:none!important} '
+            . 'dari Bootstrap) menang dan latar gelap tak pernah dirender, sehingga drawer tak bisa ditutup.'
+        );
+
+        // Topbar wajib MENANG atas drawer supaya hamburger tetap dapat diketuk
+        // untuk menutup. Angka diperiksa eksplisit: menaikkan z-index drawer
+        // kelak tanpa menaikkan topbar akan menghidupkan bug ini lagi.
+        $zTopbar = $this->cssRuleBody($css, 'body.owner-layout .app-topbar');
+        $this->assertStringContainsString('z-index: 1300', $zTopbar);
+        $this->assertStringContainsString(
+            'z-index: 1200',
+            $this->cssRuleBody($css, 'body.owner-layout .sidebar-owner'),
+            'Drawer harus tetap di bawah topbar (1300) agar hamburger terjangkau.'
+        );
+    }
+
     public function test_refresh_dan_uji_whatsapp_disembunyikan_dari_popup(): void
     {
         // Keputusan user 2026-08-13: popup filter untuk mencari & menyaring;
