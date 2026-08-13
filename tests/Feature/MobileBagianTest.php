@@ -615,10 +615,21 @@ class MobileBagianTest extends TestCase
         // kelak tanpa menaikkan topbar akan menghidupkan bug ini lagi.
         $zTopbar = $this->cssRuleBody($css, 'body.owner-layout .app-topbar');
         $this->assertStringContainsString('z-index: 1300', $zTopbar);
+        $badanDrawer = $this->cssRuleBody($css, 'body.owner-layout .sidebar-owner');
+
         $this->assertStringContainsString(
             'z-index: 1200',
-            $this->cssRuleBody($css, 'body.owner-layout .sidebar-owner'),
+            $badanDrawer,
             'Drawer harus tetap di bawah topbar (1300) agar hamburger terjangkau.'
+        );
+
+        // Konsekuensi topbar menang: 60px teratas drawer tertimbun. Tanpa
+        // padding-top, label "Menu" hilang di baliknya (terukur top 32px vs
+        // topbar setinggi 60px).
+        $this->assertStringContainsString(
+            'padding-top: 60px',
+            $badanDrawer,
+            'Isi drawer wajib digeser turun setinggi topbar — kalau tidak, label Menu tertimbun topbar.'
         );
     }
 
