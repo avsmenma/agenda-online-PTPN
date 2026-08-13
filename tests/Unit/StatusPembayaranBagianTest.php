@@ -3,52 +3,53 @@
 namespace Tests\Unit;
 
 use App\Models\Dokumen;
+use App\Models\DokumenRoleData;
 use App\Support\StatusPembayaranBagian;
-use Illuminate\Database\Capsule\Manager as Capsule;
-use PHPUnit\Framework\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 /**
  * Menguji aturan status pembayaran 3-state milik role Bagian.
  *
- * PHPUnit\TestCase (bukan Tests\TestCase): helper murni, tanpa DB.
- * Model dibuat via `new Dokumen()` + isi atribut — tidak disimpan.
+ * Harness: Feature-style (Tests\TestCase + RefreshDatabase), BUKAN model
+ * in-memory murni seperti draf awal. Alasan: mengisi atribut ber-cast 'date'
+ * (tanggal_dibayar) memanggil getDateFormat() -> getConnection(), dan
+ * getDataForRole('pembayaran') menjalankan query relasi roleData() sungguhan
+ * — keduanya menuntut connection resolver Eloquent yang nyata, yang tidak
+ * dipasang oleh PHPUnit\Framework\TestCase telanjang. Preseden persis di
+ * AkutansiDocumentRowTest (lihat docblock kelasnya): draf "model in-memory"
+ * gagal dengan alasan sejenis dan beralih ke harness yang sama ini. Pola
+ * helper (buatDokumen/buatRoleData) meniru AkutansiDocumentRowTest.
  */
 class StatusPembayaranBagianTest extends TestCase
 {
-    /**
-     * Infrastruktur murni (bukan aturan bisnis): PHPUnit\Framework\TestCase tidak
-     * memasang connection resolver Eloquent seperti Illuminate\Foundation\Testing\TestCase.
-     * Tanpa ini, MENGISI atribut ber-cast 'date' (tanggal_dibayar) maupun memanggil
-     * getDataForRole() (relasi roleData()) meledak "Call to a member function
-     * connection() on null" — gagal di infrastruktur Eloquent, bukan di logika
-     * StatusPembayaranBagian. Sqlite in-memory mandiri (Capsule, tanpa app container
-     * Laravel) dipasang di sini; model tetap TIDAK PERNAH disimpan (->save() tak
-     * dipanggil di test manapun pada berkas ini).
-     */
-    protected function setUp(): void
+    use RefreshDatabase;
+
+    private int $seq = 0;
+
+    /** Membuat & MENYIMPAN dokumen minimal + override. */
+    private function buatDokumen(array $overrides = []): Dokumen
     {
-        parent::setUp();
+        $this->seq++;
 
-        $capsule = new Capsule();
-        $capsule->addConnection([
-            'driver' => 'sqlite',
-            'database' => ':memory:',
-        ]);
-        $capsule->setAsGlobal();
-        $capsule->bootEloquent();
+        return Dokumen::create(array_merge([
+            'nomor_agenda'    => 'AG-' . $this->seq,
+            'bulan'           => 'Agustus',
+            'tahun'           => '2026',
+            'tanggal_masuk'   => now(),
+            'status'          => 'draft',
+            'created_by'      => 'operator',
+            'current_handler' => 'operator',
+        ], $overrides));
+    }
 
-        $capsule->schema()->create('dokumen_role_data', function ($table) {
-            $table->id();
-            $table->unsignedBigInteger('dokumen_id');
-            $table->string('role_code', 50);
-            $table->dateTime('received_at')->nullable();
-            $table->dateTime('processed_at')->nullable();
-            $table->dateTime('deadline_at')->nullable();
-            $table->integer('deadline_days')->nullable();
-            $table->string('deadline_note', 500)->nullable();
-            $table->json('role_specific_data')->nullable();
-            $table->timestamps();
-        });
+    /** Menambahkan satu record dokumen_role_data (received_at/processed_at/dll). */
+    private function buatRoleData(Dokumen $dokumen, string $roleCode, array $attrs = []): DokumenRoleData
+    {
+        return DokumenRoleData::create(array_merge([
+            'dokumen_id' => $dokumen->id,
+            'role_code'  => $roleCode,
+        ], $attrs));
     }
 
     public function test_sudah_dibayar_saat_status_pembayaran_final(): void
@@ -62,7 +63,11 @@ class StatusPembayaranBagianTest extends TestCase
         $this->assertSame('sudah-dibayar', $hasil['kelas']);
         $this->assertSame('Sudah Dibayar', $hasil['teks']);
         $this->assertSame('fa-check-circle', $hasil['ikon']);
-        $this->assertSame('2026-08-11 10:00:00', $hasil['tanggal']);
+        // 'tanggal_dibayar' ber-cast 'date' (bukan 'datetime') di Dokumen model —
+        // SELALU dikembalikan sebagai Carbon dengan jam terpangkas ke tengah malam.
+        // Yang perlu dijamin di sini: tanggalnya berasal dari tanggal_dibayar,
+        // bukan format penyimpanan mentahnya.
+        $this->assertSame('2026-08-11', $hasil['tanggal']->format('Y-m-d'));
     }
 
     public function test_sudah_dibayar_saat_hanya_tanggal_dibayar_terisi(): void
@@ -100,10 +105,17 @@ class StatusPembayaranBagianTest extends TestCase
     {
         // Kode lama memakai str_contains(strtolower(...), 'pembayaran').
         // Handler produksi pernah ditulis 'Team Pembayaran' berkapital.
-        $doc = new Dokumen();
-        $doc->status_pembayaran = null;
-        $doc->tanggal_dibayar = null;
-        $doc->current_handler = 'Team Pembayaran';
+        // Cabang ini memanggil getDataForRole('pembayaran') -> query relasi
+        // roleData() sungguhan, jadi dokumen WAJIB tersimpan + punya baris
+        // dokumen_role_data nyata (bukan model in-memory tanpa id).
+        $doc = $this->buatDokumen([
+            'status_pembayaran' => null,
+            'tanggal_dibayar'   => null,
+            'current_handler'   => 'Team Pembayaran',
+        ]);
+        $this->buatRoleData($doc, 'pembayaran', [
+            'received_at' => now(),
+        ]);
 
         $hasil = StatusPembayaranBagian::untuk($doc);
 
