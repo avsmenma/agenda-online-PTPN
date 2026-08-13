@@ -585,6 +585,36 @@ class MobileBagianTest extends TestCase
         );
     }
 
+    public function test_refresh_dan_uji_whatsapp_disembunyikan_dari_popup(): void
+    {
+        // Keputusan user 2026-08-13: popup filter untuk mencari & menyaring;
+        // Refresh dan Uji Kirim Pesan bukan filter dan hanya menambah tingginya.
+        //
+        // DISEMBUNYIKAN lewat CSS, BUKAN dihapus dari markup. Keduanya wajib
+        // tetap ada di HTML: partial bagian.partials._ujiWhatsApp mengikat
+        // tombolnya lewat id="btnUjiWhatsApp", dan UjiWhatsAppBagianTest
+        // menuntut tag <button> itu hadir lengkap dengan kelas .btn-refresh.
+        // Menghapusnya dari Blade akan mematikan fitur uji WhatsApp sekaligus
+        // memerahkan test tersebut.
+        $css = $this->mobileCss();
+
+        $this->assertStringContainsString(
+            'display: none !important',
+            $this->cssRuleBody($css, 'body.bagian-layout .search-box .btn-refresh'),
+            'Refresh & Uji Kirim Pesan harus disembunyikan dari popup filter di ponsel.'
+        );
+
+        // Markupnya WAJIB tetap ada — inilah yang membedakan "disembunyikan"
+        // dari "dihapus".
+        $html = $this->actingAs($this->userBagian())
+            ->get('/bagian/documents')
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('id="btnRefreshTable"', $html);
+        $this->assertStringContainsString('id="btnUjiWhatsApp"', $html);
+    }
+
     public function test_popup_filter_menyusun_kepala_di_atas_form(): void
     {
         // Kepala popup (judul + tombol tutup) adalah SAUDARA dari <form>, bukan
@@ -661,30 +691,27 @@ class MobileBagianTest extends TestCase
         $css = $this->mobileCss();
 
         // 44px = ambang target sentuh Apple HIG. "min-height: 44px" muncul di
-        // TIGA aturan berbeda (input/select filter, tombol .btn-refresh,
+        // BEBERAPA aturan berbeda (input/select filter, tombol Terapkan,
         // .page-link paginasi) — assertion mentah di seluruh berkas hanya
-        // butuh SATU dari ketiganya benar untuk lolos, jadi memutasi salah
-        // satu aturan saja (mis. .btn-refresh) tetap hijau selama dua lainnya
-        // utuh. Diperiksa per-aturan supaya regresi di aturan mana pun
-        // tertangkap sendiri-sendiri.
+        // butuh SATU di antaranya benar untuk lolos, jadi memutasi salah satu
+        // aturan saja tetap hijau selama yang lain utuh. Diperiksa per-aturan
+        // supaya regresi di aturan mana pun tertangkap sendiri-sendiri.
         //
-        // Aturan input/select WAJIB "!important" juga (sama seperti
-        // .btn-refresh di bawah): compact-document-ui.blade.php ~899-919
-        // (@media max-width: 1400px, selalu aktif di ponsel) mengunci
+        // Aturan input/select WAJIB "!important": compact-document-ui.blade.php
+        // ~899-919 (@media max-width: 1400px, selalu aktif di ponsel) mengunci
         // ".search-box .form-control" ke "min-height: 34px !important".
         $this->assertStringContainsString(
             'min-height: 44px !important',
             $this->cssRuleBody($css, 'body.bagian-layout .search-filter-form input')
         );
 
-        // .btn-refresh WAJIB !important (lihat komentar CSS-nya): partial
-        // GLOBAL compact-document-ui.blade.php mengunci height: 36px
-        // !important untuk semua role, jadi min-height: 44px polos di sini
-        // kalah dan tak pernah termanifestasi di browser — dibuktikan lewat
-        // pengujian produksi (tombol terukur 34px, bukan 44px).
+        // Tombol Terapkan menggantikan Refresh sebagai satu-satunya tombol yang
+        // TAMPIL di popup (Refresh & Uji Kirim Pesan disembunyikan 2026-08-13),
+        // jadi dialah yang kini wajib memenuhi ambang sentuh. !important-nya
+        // beralasan sama: partial global mengunci tinggi tombol lewat !important.
         $this->assertStringContainsString(
             'min-height: 44px !important',
-            $this->cssRuleBody($css, 'body.bagian-layout .btn-refresh')
+            $this->cssRuleBody($css, 'body.bagian-layout .filter-pop__terapkan')
         );
 
         $this->assertStringContainsString(

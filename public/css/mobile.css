@@ -381,6 +381,20 @@
     cursor: pointer;
   }
 
+  /* Refresh & Uji Kirim Pesan disembunyikan dari popup filter (keputusan user
+     2026-08-13): popup ini untuk mencari & menyaring, dua tombol itu bukan
+     filter dan hanya menambah tinggi popup.
+
+     DISEMBUNYIKAN lewat CSS, BUKAN dihapus dari markup — keduanya wajib tetap
+     ada di HTML: partial bagian.partials._ujiWhatsApp mengikat tombolnya lewat
+     id="btnUjiWhatsApp", dan UjiWhatsAppBagianTest menuntut tag <button> itu
+     hadir lengkap dengan kelas .btn-refresh. Menghapusnya dari Blade akan
+     mematikan fitur uji WhatsApp sekaligus memerahkan test itu. Di desktop
+     keduanya tetap tampil seperti semula. */
+  body.bagian-layout .search-box .btn-refresh {
+    display: none !important;
+  }
+
   body.bagian-layout .filter-pop__terapkan {
     display: inline-flex !important; /* menimpa atribut hidden */
     align-items: center;
@@ -481,22 +495,14 @@
     height: auto !important;
   }
 
-  /* Dua tombol toolbar menumpuk vertikal (konsisten dengan input/select di
-     atasnya lewat align-items: stretch pada .search-filter-form), masing-masing
-     melebar penuh — BUKAN berdampingan: parent flex-direction: column membuat
-     flex: 1 1 0 mengatur TINGGI, bukan lebar, jadi width: 100% dipakai di sini.
-     !important pada min-height & height WAJIB: partial GLOBAL
-     compact-document-ui.blade.php (baris ~28-45, dimuat semua role dari layout)
-     mengunci .btn-refresh ke "min-height: 36px !important; height: 36px
-     !important;" — tanpa !important yang menyamai di sini, aturan global itu
-     selalu menang dan tombol tetap 36px. Ini semata melawan !important global
-     yang sudah ada, BUKAN preferensi gaya (lihat CLAUDE.md §4). */
-  body.bagian-layout .btn-refresh {
-    width: 100%;
-    min-height: 44px !important;
-    height: auto !important;
-    justify-content: center;
-  }
+  /* Aturan ukuran .btn-refresh (width 100%, min-height 44px) DIHAPUS
+     2026-08-13 bersama keputusan menyembunyikan Refresh & Uji Kirim Pesan dari
+     popup: satu-satunya .btn-refresh di halaman ini berada di dalam .search-box
+     yang kini display:none di ponsel, sehingga aturan itu tak lagi menggigit
+     apa pun. Bila kelak ada tombol .btn-refresh yang TAMPIL di ponsel, ukurannya
+     perlu diatur ulang di sini — partial global compact-document-ui.blade.php
+     (~baris 28-45) mengunci .btn-refresh ke 36px lewat !important, jadi
+     aturannya wajib memakai !important yang menyamai. */
 
   body.bagian-layout .pagination-container {
     flex-direction: column;
