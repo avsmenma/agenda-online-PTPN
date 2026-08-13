@@ -17,13 +17,19 @@
   /* ===== Blok A — Shell: drawer, topbar, konten ===== */
 
   /* Sidebar jadi panel geser. transform (bukan display:none) supaya bisa
-     dianimasikan, dan supaya isinya tetap terbaca screen reader. */
+     dianimasikan, dan supaya isinya tetap terbaca screen reader.
+     width WAJIB !important: blok <style> lama di layouts/app.blade.php
+     (baris ~3021, di dalam @media (max-width: 768px) miliknya sendiri untuk
+     sidebar collapse desktop) menyetel width dengan !important pada selector
+     yang sama persis. Tanpa !important di sini, urutan dokumen TIDAK cukup —
+     importance selalu menang atas urutan. Ini semata untuk mengalahkan
+     !important lama di god-file, BUKAN preferensi gaya (lihat CLAUDE.md §4). */
   body.owner-layout .sidebar-owner {
     position: fixed;
     top: 0;
     left: 0;
     height: 100vh;
-    width: 82%;
+    width: 82% !important;
     max-width: 300px;
     transform: translateX(-100%);
     transition: transform 0.25s ease;
@@ -62,10 +68,25 @@
   }
 
   /* Sidebar yang ter-collapse dari preferensi desktop tak boleh menyempitkan
-     drawer — di ponsel lebar drawer ditentukan blok di atas. */
+     drawer — di ponsel lebar drawer ditentukan blok di atas. width !important
+     dengan alasan sama seperti selector dasarnya di atas: mengalahkan
+     !important lama pada `.sidebar-collapsed body.owner-layout .sidebar-owner`
+     (layouts/app.blade.php baris ~3013 & ~3022), bukan preferensi gaya. */
   html.sidebar-collapsed body.owner-layout .sidebar-owner {
-    width: 82%;
+    width: 82% !important;
     max-width: 300px;
+  }
+
+  /* Blok lama (app.blade.php:3021-3036) menyembunyikan label & mengecilkan
+     nav item jadi ikon-saja di ≤768px — benar untuk rel sempit, salah untuk
+     drawer lebar. Dikembalikan di sini. */
+  body.owner-layout .owner-sidebar-label,
+  body.owner-layout .owner-user-info {
+    display: block;
+  }
+  body.owner-layout .sidebar-owner .owner-nav-item {
+    justify-content: flex-start;
+    font-size: 13px;
   }
 
   /* Judul topbar dipendekkan agar muat bersama hamburger. */

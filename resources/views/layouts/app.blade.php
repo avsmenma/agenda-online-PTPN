@@ -25,9 +25,6 @@
   <!-- Mobile Responsive CSS -->
   <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/responsive.css') }}">
 
-  <!-- Gaya khusus layar ponsel (semua aturan terkurung @media max-width: 768px) -->
-  <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/mobile.css') }}">
-
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -3122,6 +3119,19 @@
       }
     })();
   </script>
+
+  {{-- Gaya khusus layar ponsel (semua aturan terkurung @media max-width: 768px).
+       WAJIB di sini — SETELAH blok <style> inline raksasa di atas (yang berakhir
+       baris ~3055 dan berisi @media (max-width: 768px) miliknya sendiri untuk
+       sidebar collapse desktop). Kedua blok menyetel margin-left dengan
+       !important pada selector yang identik (body.owner-layout .content); saat
+       importance seri begitu, urutan DOKUMEN yang menentukan pemenang cascade —
+       bukan urutan <link> vs <style>. Memindahkan link ini ke atas (dekat baris
+       ~26, tampak lebih "rapi") membuat aturan lama menang lagi dan
+       mematikan drawer/konten mobile secara diam-diam (dibuktikan di produksi:
+       sidebar 72px, margin-left 72px, bukan nilai yang diniatkan). JANGAN
+       dipindah tanpa memahami ini. --}}
+  <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/mobile.css') }}">
 </head>
 
 @php

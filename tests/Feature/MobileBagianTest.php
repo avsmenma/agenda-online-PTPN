@@ -7,9 +7,16 @@ use Tests\TestCase;
 /**
  * Menjaga kontrak tampilan ponsel role Bagian.
  *
- * Test paling penting di berkas ini adalah
- * test_seluruh_aturan_mobile_terkurung_media_query — ia menegakkan janji
- * "nol perubahan desktop" secara mekanis, bukan sekadar niat baik.
+ * Dua test paling penting di berkas ini bekerja BERSAMA untuk menegakkan janji
+ * "nol perubahan desktop" secara mekanis, bukan sekadar niat baik:
+ *   - test_seluruh_aturan_mobile_terkurung_media_query — memindai kurung kurawal
+ *     per-karakter (BUKAN regex bersarang) sehingga tetap benar walau isi
+ *     @media punya nesting lebih dari 1 tingkat (mis. @keyframes di dalam
+ *     @media, yang punya blok persentase bersarang lagi di dalamnya).
+ *   - test_setiap_media_query_berkondisi_max_width_768px — memastikan breakpoint-nya
+ *     sendiri tidak salah ketik (mis. "768px" jadi "786px"); test pertama di
+ *     atas HANYA memeriksa bahwa isi berkas terkurung SATU kondisi @media yang
+ *     konsisten, ia tidak memeriksa kondisi itu bernilai benar.
  */
 class MobileBagianTest extends TestCase
 {
@@ -28,15 +35,83 @@ class MobileBagianTest extends TestCase
         // Buang komentar /* ... */ agar contoh kode di dalamnya tak ikut terhitung.
         $tanpaKomentar = preg_replace('#/\*.*?\*/#s', '', $css);
 
-        // Buang setiap blok @media beserta isinya (kurung bersarang 1 tingkat).
-        $diLuarMedia = preg_replace('#@media[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}#s', '', $tanpaKomentar);
+        // Pindai kurung kurawal per-karakter, lacak kedalaman. Setiap kali kurung
+        // buka terjadi PERSIS di kedalaman 0 (yakni ia membuka blok top-level),
+        // teks yang mendahuluinya sejak kurung tutup terakhir WAJIB persis
+        // "@media (max-width: 768px)" — apa pun selain itu berarti ada deklarasi
+        // CSS (atau @media lain) yang hidup di luar blok media ponsel, dan akan
+        // ikut berlaku di desktop. Kurung di kedalaman >=1 (termasuk nesting
+        // berlapis milik @keyframes) tak diperiksa headernya — sudah berada
+        // aman di dalam blok top-level yang lolos verifikasi.
+        $depth = 0;
+        $headerBuffer = '';
+        $panjang = strlen($tanpaKomentar);
 
-        // Yang tersisa harus tak punya deklarasi CSS sama sekali.
-        $this->assertStringNotContainsString(
-            '{',
-            trim($diLuarMedia),
-            'Ada aturan CSS di LUAR @media — ini akan mengubah tampilan desktop.'
+        for ($i = 0; $i < $panjang; $i++) {
+            $char = $tanpaKomentar[$i];
+
+            if ($char === '{') {
+                if ($depth === 0) {
+                    $header = trim(preg_replace('/\s+/', ' ', $headerBuffer));
+                    $this->assertSame(
+                        '@media (max-width: 768px)',
+                        $header,
+                        "Aturan top-level ditemukan di luar @media (max-width: 768px): \"{$header}\" — ini akan mengubah tampilan desktop."
+                    );
+                }
+                $depth++;
+                $headerBuffer = '';
+            } elseif ($char === '}') {
+                $depth--;
+                $this->assertGreaterThanOrEqual(
+                    0,
+                    $depth,
+                    'Kurung kurawal tidak seimbang: kurung tutup berlebih di public/css/mobile.css.'
+                );
+                $headerBuffer = '';
+            } elseif ($depth === 0) {
+                $headerBuffer .= $char;
+            }
+        }
+
+        $this->assertSame(
+            0,
+            $depth,
+            'Kurung kurawal tidak seimbang: ada kurung buka yang tak tertutup di public/css/mobile.css.'
         );
+        $this->assertSame(
+            '',
+            trim(preg_replace('/\s+/', ' ', $headerBuffer)),
+            'Ada teks/deklarasi tersisa di luar blok @media setelah kurung terakhir.'
+        );
+    }
+
+    public function test_setiap_media_query_berkondisi_max_width_768px(): void
+    {
+        $css = $this->mobileCss();
+        $tanpaKomentar = preg_replace('#/\*.*?\*/#s', '', $css);
+
+        // Tangkap kondisi SETIAP kemunculan @media di berkas (berapa pun
+        // jumlahnya, di kedalaman berapa pun) — test di atas hanya menjaga
+        // konsistensi struktur, test ini menjaga breakpoint-nya sendiri tidak
+        // salah ketik (mis. "768px" jadi "786px" tetap akan lolos test
+        // sebelumnya selama konsisten, tapi salah secara bisnis).
+        preg_match_all('/@media\s*([^{]*)\{/', $tanpaKomentar, $cocok);
+
+        $this->assertNotEmpty(
+            $cocok[1],
+            'Tidak ada @media ditemukan di public/css/mobile.css — berkas ini wajib punya minimal satu blok @media.'
+        );
+
+        foreach ($cocok[1] as $kondisiMentah) {
+            $kondisiRapi = trim(preg_replace('/\s+/', ' ', $kondisiMentah));
+
+            $this->assertSame(
+                '(max-width: 768px)',
+                $kondisiRapi,
+                "Ditemukan @media dengan kondisi salah: \"{$kondisiRapi}\" — breakpoint WAJIB persis (max-width: 768px)."
+            );
+        }
     }
 
     public function test_mobile_css_ter_link_di_layout(): void
