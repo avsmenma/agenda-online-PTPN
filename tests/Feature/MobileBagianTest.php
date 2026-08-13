@@ -585,6 +585,24 @@ class MobileBagianTest extends TestCase
         );
     }
 
+    public function test_popup_filter_menyusun_kepala_di_atas_form(): void
+    {
+        // Kepala popup (judul + tombol tutup) adalah SAUDARA dari <form>, bukan
+        // anaknya. Tanpa flex-direction: column pada .search-box, keduanya
+        // berjajar menyamping: judul terdorong jadi kolom kiri, bukan baris di
+        // atas — terlihat saat QA produksi 2026-08-13.
+        $css = $this->mobileCss();
+
+        $posisi = strpos($css, 'body.bagian-layout .search-box {');
+        $this->assertNotFalse($posisi, 'Aturan popup .search-box tidak ditemukan.');
+
+        $akhir = strpos($css, '}', $posisi);
+        $badan = substr($css, $posisi, $akhir - $posisi);
+
+        $this->assertStringContainsString('flex-direction: column', $badan);
+        $this->assertStringContainsString('position: fixed', $badan);
+    }
+
     public function test_auto_submit_dropdown_dipulihkan_saat_desktop(): void
     {
         // Auto-submit dimatikan HANYA di ponsel (di popup ia menutup popup tiap

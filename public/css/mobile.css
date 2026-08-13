@@ -329,8 +329,13 @@
     pointer-events: auto;
   }
 
-  /* .search-box jadi popup: disembunyikan sampai tombol ditekan. */
+  /* .search-box jadi popup: disembunyikan sampai tombol ditekan.
+     display:flex + column WAJIB: kepala popup (judul + tombol tutup) adalah
+     SAUDARA dari <form>, bukan anaknya. Tanpa ini keduanya berjajar menyamping
+     dan judul terdorong jadi kolom kiri — bukan baris di atas. */
   body.bagian-layout .search-box {
+    display: flex;
+    flex-direction: column;
     position: fixed;
     left: 12px;
     right: 12px;
