@@ -282,4 +282,37 @@ class MobileBagianTest extends TestCase
             ->assertOk()
             ->assertSeeInOrder(['.mob-cards { display: none; }', 'class="mob-card"'], false);
     }
+
+    public function test_kartu_punya_handler_keyboard_enter_dan_spasi(): void
+    {
+        // Kartu ber-role="button" tabindex="0" TIDAK dapat aktivasi Enter/Space
+        // gratis seperti <button> asli — tanpa handler ini, kartu bisa difokus
+        // Tab (janji role="button") tapi menekan Enter/Space tak berbuat apa-apa.
+        // Dicari string SPESIFIK ('pembungkus.addEventListener(\'keydown\'' dan
+        // 'tampilkanPerjalanan(kartu)'), bukan sekadar "keydown" atau
+        // "tampilkanPerjalanan" telanjang — keduanya sudah muncul di tempat lain
+        // pada halaman ini (partial global _activeCellNav/_inlineEditEngine
+        // punya listener keydown sendiri; tampilkanPerjalanan juga dipanggil
+        // via onclick="tampilkanPerjalanan(this)" dan didefinisikan sebagai
+        // window.tampilkanPerjalanan) sehingga assertion longgar akan lolos
+        // tanpa benar-benar menguji handler baru ini.
+        Dokumen::create([
+            'nomor_agenda'    => 'MOB004_2026',
+            'bulan'           => 'Agustus',
+            'tahun'           => 2026,
+            'tanggal_masuk'   => '2026-08-01',
+            'status'          => 'sedang diproses',
+            'created_by'      => 'operator',
+            'current_handler' => 'team_verifikasi',
+            'bagian'          => 'AKN',
+        ]);
+
+        $html = $this->actingAs($this->userBagian())
+            ->get('/bagian/documents')
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString("pembungkus.addEventListener('keydown'", $html);
+        $this->assertStringContainsString('tampilkanPerjalanan(kartu)', $html);
+    }
 }

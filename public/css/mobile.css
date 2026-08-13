@@ -108,7 +108,7 @@
     gap: 10px;
   }
 
-  .mob-card {
+  body.bagian-layout .mob-card {
     background: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
@@ -117,7 +117,7 @@
     cursor: pointer;
   }
 
-  .mob-card__judul {
+  body.bagian-layout .mob-card__judul {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
@@ -125,36 +125,36 @@
     margin-bottom: 6px;
   }
 
-  .mob-card__agenda {
+  body.bagian-layout .mob-card__agenda {
     font-size: 15px;
     color: #0f172a;
   }
 
-  .mob-card__spp {
+  body.bagian-layout .mob-card__spp {
     font-size: 12px;
     color: #64748b;
     white-space: nowrap;
   }
 
-  .mob-card__penerima {
+  body.bagian-layout .mob-card__penerima {
     font-size: 14px;
     color: #334155;
     margin-bottom: 4px;
   }
 
-  .mob-card__nilai {
+  body.bagian-layout .mob-card__nilai {
     font-size: 16px;
     font-weight: 700;
     color: #0f172a;
     margin-bottom: 8px;
   }
 
-  .mob-card__status,
-  .mob-card__pengembalian {
+  body.bagian-layout .mob-card__status,
+  body.bagian-layout .mob-card__pengembalian {
     margin-bottom: 8px;
   }
 
-  .mob-card__kaki {
+  body.bagian-layout .mob-card__kaki {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -164,7 +164,7 @@
     padding-top: 8px;
   }
 
-  .mob-card__detail {
+  body.bagian-layout .mob-card__detail {
     color: #2563eb;
     font-weight: 600;
   }

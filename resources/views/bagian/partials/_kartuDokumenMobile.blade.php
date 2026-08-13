@@ -86,3 +86,34 @@
     </div>
   @endforeach
 </div>
+
+@push('scripts')
+<script>
+  // Aksesibilitas keyboard untuk kartu ber-role="button": <div role="button"
+  // tabindex="0"> TIDAK dapat aktivasi Enter/Space gratis seperti <button> asli,
+  // jadi harus ditangani manual di sini — tanpa ini kartu bisa difokus dengan
+  // Tab (janji role="button") tapi menekan Enter/Space tak melakukan apa pun.
+  //
+  // Event delegation: SATU listener di pembungkus .mob-cards, bukan per-kartu —
+  // halaman bisa memuat ratusan baris dokumen.
+  document.addEventListener('DOMContentLoaded', function () {
+    const pembungkus = document.querySelector('.mob-cards');
+    if (!pembungkus) return;
+
+    pembungkus.addEventListener('keydown', function (event) {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+
+      // Hanya kartu yang memang punya data-perjalanan yang ber-role="button"
+      // (lihat kondisi $jalan di markup) — kartu lain tak boleh bereaksi.
+      const kartu = event.target.closest('.mob-card[data-perjalanan]');
+      if (!kartu) return;
+
+      if (event.key === ' ') {
+        event.preventDefault(); // cegah halaman ikut menggulir
+      }
+
+      tampilkanPerjalanan(kartu);
+    });
+  });
+</script>
+@endpush
