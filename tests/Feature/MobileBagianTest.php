@@ -172,6 +172,23 @@ class MobileBagianTest extends TestCase
         // Wajib lewat Asset::versioned() — bukan asset() polos — agar cache
         // browser ter-bust saat berkas berubah (pola berkas CSS lain di layout).
         $this->assertStringContainsString("Asset::versioned('css/mobile.css')", $layout);
+
+        // Posisi WAJIB setelah @stack('styles') — bukan sekadar kehadiran
+        // string di atas. <link> ini harus datang SETELAH blok <style> inline
+        // raksasa (yang berisi @media (max-width: 768px) miliknya sendiri
+        // untuk sidebar collapse desktop): keduanya menyetel margin-left
+        // dengan !important pada selector identik (body.owner-layout
+        // .content), dan saat importance seri begitu, urutan DOKUMEN yang
+        // menentukan cascade. Memindahkan <link> ini ke atas <head> ("tampak
+        // lebih rapi") membuat aturan lama menang lagi dan mematikan
+        // drawer/margin konten mobile secara diam-diam — sudah pernah
+        // terjadi & diperbaiki di tengah program ini (lihat komentar di
+        // layout, baris ~3123-3133).
+        $this->assertGreaterThan(
+            strpos($layout, "@stack('styles')"),
+            strpos($layout, "Asset::versioned('css/mobile.css')"),
+            'mobile.css WAJIB di-link SETELAH @stack(styles) — lihat komentar di layout.'
+        );
     }
 
     public function test_layout_punya_scrim_dan_cabang_lebar_layar(): void
@@ -179,10 +196,37 @@ class MobileBagianTest extends TestCase
         $layout = file_get_contents(resource_path('views/layouts/app.blade.php'));
 
         $this->assertStringContainsString('mobile-drawer-scrim', $layout);
-        // Cabang lebar layar: di ponsel hamburger menggerakkan drawer, BUKAN
-        // menulis localStorage sidebar_collapsed milik desktop.
-        $this->assertStringContainsString('mobile-drawer-open', $layout);
-        $this->assertStringContainsString('max-width: 768px', $layout);
+
+        // Cabang lebar layar: di ponsel hamburger menggerakkan drawer
+        // (toggle), BUKAN menulis localStorage sidebar_collapsed milik
+        // desktop. Assertion longgar sebelumnya HAMPA di dua sisi:
+        // 'mobile-drawer-open' polos juga muncul di tutupDrawerPonsel()
+        // (classList.remove, bukan toggle — menghapus cabang toggle tetap
+        // lulus), dan 'max-width: 768px' polos sudah ada sejak sebelum
+        // branch ini di blok <style> sidebar-collapse desktop (dibuktikan:
+        // `git show c2db3358:resources/views/layouts/app.blade.php | grep -c
+        // "max-width: 768px"` → 1) — menghapus SELURUH cabang kueriPonsel
+        // tetap lulus kedua assertion lama.
+        //
+        // Dipersempit: matchMedia('(max-width: 768px)') hanya muncul SEKALI
+        // di berkas ini — di deklarasi kueriPonsel — jadi ini memastikan
+        // breakpoint JS-nya sendiri, bukan breakpoint CSS mana pun yang
+        // kebetulan cocok.
+        $this->assertStringContainsString("matchMedia('(max-width: 768px)')", $layout);
+
+        // Dan posisi "if (kueriPonsel.matches)" WAJIB diikuti toggle
+        // 'mobile-drawer-open' dalam jarak dekat (badan if yang sama) —
+        // memastikan toggle itu benar-benar terjadi DI DALAM cabang ponsel,
+        // bukan sekadar hadir di suatu tempat lain di berkas.
+        $posisiCabang = strpos($layout, 'if (kueriPonsel.matches)');
+        $this->assertNotFalse($posisiCabang, 'Cabang "if (kueriPonsel.matches)" tidak ditemukan.');
+
+        $badanCabang = substr($layout, $posisiCabang, 200);
+        $this->assertStringContainsString(
+            "classList.toggle('mobile-drawer-open')",
+            $badanCabang,
+            'Toggle drawer ponsel tidak ditemukan di dalam badan cabang "if (kueriPonsel.matches)".'
+        );
     }
 
     public function test_drawer_dan_konten_diatur_di_css(): void
@@ -190,11 +234,17 @@ class MobileBagianTest extends TestCase
         $css = $this->mobileCss();
 
         // Sidebar disembunyikan dengan transform (bukan display:none) supaya
-        // bisa dianimasikan menggeser masuk.
-        $this->assertStringContainsString('.sidebar-owner', $css);
-        $this->assertStringContainsString('translateX(-100%)', $css);
-        // Konten mengambil lebar penuh — inilah yang mengembalikan 72px yang dicuri sidebar.
-        $this->assertStringContainsString('margin-left: 0', $css);
+        // bisa dianimasikan menggeser masuk. Dipersempit ke BADAN aturan
+        // lewat cssRuleBody(): assertStringContainsString('.sidebar-owner', ...)
+        // mentah HAMPA karena selector itu juga disebut di KOMENTAR mobile.css
+        // (mis. baris ~102), jadi menghapus seluruh aturan drawer tetap lulus.
+        $badanSidebar = $this->cssRuleBody($css, 'body.owner-layout .sidebar-owner {');
+        $this->assertStringContainsString('translateX(-100%)', $badanSidebar);
+
+        // Konten mengambil lebar penuh — inilah yang mengembalikan 72px yang
+        // dicuri sidebar. Sama-sama dipersempit ke badan aturan.
+        $badanKonten = $this->cssRuleBody($css, 'body.owner-layout .content {');
+        $this->assertStringContainsString('margin-left: 0', $badanKonten);
     }
 
     public function test_kartu_mobile_terender_sebanyak_baris_tabel(): void
