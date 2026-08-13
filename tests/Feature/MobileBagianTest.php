@@ -443,7 +443,8 @@ class MobileBagianTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString("pembungkus.addEventListener('keydown'", $html);
+        $this->assertStringContainsString("document.addEventListener('keydown'", $html);
+        $this->assertStringContainsString(".closest('.mob-card[data-perjalanan]')", $html);
         $this->assertStringContainsString('tampilkanPerjalanan(kartu)', $html);
 
         // Handler WAJIB jalan langsung (IIFE), BUKAN dibungkus DOMContentLoaded.
@@ -461,6 +462,17 @@ class MobileBagianTest extends TestCase
             "document.addEventListener('DOMContentLoaded'",
             $partial,
             'Handler keyboard kartu tidak boleh dibungkus DOMContentLoaded — event itu sudah lewat saat stack scripts dirender, sehingga listener tak pernah terpasang.'
+        );
+
+        // Listener WAJIB di document, BUKAN di .mob-cards. Menyasar pembungkus
+        // membuat handler bergantung pada markup sudah ada saat skrip jalan —
+        // dan di halaman ini skrip menang duluan, sehingga
+        // "if (!pembungkus) return" menendang keluar diam-diam dan Enter/Space
+        // mati tanpa error. Terbukti di produksi 2026-08-13.
+        $this->assertStringNotContainsString(
+            "pembungkus.addEventListener('keydown'",
+            $partial,
+            'Listener keyboard tidak boleh dipasang di .mob-cards — pasang di document agar tidak bergantung urutan render stack scripts vs markup.'
         );
     }
 

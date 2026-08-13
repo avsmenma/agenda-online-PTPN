@@ -102,22 +102,26 @@
   // jadi harus ditangani manual di sini — tanpa ini kartu bisa difokus dengan
   // Tab (janji role="button") tapi menekan Enter/Space tak melakukan apa pun.
   //
-  // Event delegation: SATU listener di pembungkus .mob-cards, bukan per-kartu —
-  // halaman bisa memuat ratusan baris dokumen.
+  // Event delegation: SATU listener untuk ratusan kartu, bukan satu per kartu.
   //
-  // JANGAN membungkus ini dalam DOMContentLoaded: partial ini di-push ke
-  // stack scripts yang dirender di AKHIR <body> (layouts/app.blade.php:5946),
-  // jadi saat skrip ini jalan DOMContentLoaded SUDAH menyala dan callback-nya
-  // tak akan pernah dipanggil — listener senyap tak terpasang, Enter/Space
-  // mati tanpa satu pun error di konsol. Terbukti di produksi 2026-08-13:
-  // logika handler benar, tapi listener-nya memang tak pernah ada.
-  // Markup .mob-cards sudah ada di DOM di titik ini karena berada di atas
-  // stack scripts.
+  // Listener dipasang di DOCUMENT, bukan di .mob-cards. Dua jebakan nyata
+  // (keduanya terbukti di produksi 2026-08-13, keduanya GAGAL SENYAP tanpa
+  // satu pun error di konsol) memaksa pola ini:
+  //
+  //   1. Dibungkus DOMContentLoaded -> callback tak pernah jalan bila skrip
+  //      dieksekusi setelah event itu menyala.
+  //   2. Menyasar .mob-cards langsung -> "if (!pembungkus) return" menendang
+  //      keluar diam-diam bila skrip dieksekusi SEBELUM markup kartu ada.
+  //      Posisi render stack scripts relatif terhadap markup TIDAK dijamin,
+  //      dan di halaman ini nyatanya skrip menang duluan (dibuktikan dengan
+  //      menjalankan ulang isi skrip yang sama di konsol: listener langsung
+  //      terpasang dan Enter berfungsi).
+  //
+  // Menyasar document menghilangkan kedua ketergantungan itu: document selalu
+  // ada, dan closest() di dalam handler yang menentukan apakah event berasal
+  // dari kartu.
   (function () {
-    const pembungkus = document.querySelector('.mob-cards');
-    if (!pembungkus) return;
-
-    pembungkus.addEventListener('keydown', function (event) {
+    document.addEventListener('keydown', function (event) {
       if (event.key !== 'Enter' && event.key !== ' ') return;
 
       // Hanya kartu yang memang punya data-perjalanan yang ber-role="button"
