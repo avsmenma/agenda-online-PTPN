@@ -445,6 +445,23 @@ class MobileBagianTest extends TestCase
 
         $this->assertStringContainsString("pembungkus.addEventListener('keydown'", $html);
         $this->assertStringContainsString('tampilkanPerjalanan(kartu)', $html);
+
+        // Handler WAJIB jalan langsung (IIFE), BUKAN dibungkus DOMContentLoaded.
+        // Partial ini di-push ke stack scripts yang dirender di AKHIR <body>,
+        // jadi saat skripnya dieksekusi DOMContentLoaded SUDAH menyala dan
+        // callback-nya tak akan pernah dipanggil — listener senyap tak terpasang
+        // dan Enter/Space mati tanpa satu pun error di konsol. Lolos ke produksi
+        // 2026-08-13; assertion string di atas tetap hijau karena kodenya memang
+        // ada, cuma tak pernah dijalankan.
+        $partial = file_get_contents(
+            resource_path('views/bagian/partials/_kartuDokumenMobile.blade.php')
+        );
+
+        $this->assertStringNotContainsString(
+            "document.addEventListener('DOMContentLoaded'",
+            $partial,
+            'Handler keyboard kartu tidak boleh dibungkus DOMContentLoaded — event itu sudah lewat saat stack scripts dirender, sehingga listener tak pernah terpasang.'
+        );
     }
 
     public function test_input_filter_mencegah_zoom_ios(): void

@@ -142,6 +142,40 @@
     gap: 10px;
   }
 
+  /* Kaki drawer (kartu user + tombol keluar). Blok lama app.blade.php:3035-3046
+     memampatkannya jadi kotak 44x44 tanpa padding untuk mode REL SEMPIT — benar
+     untuk rel 72px, salah untuk drawer 300px: avatar terdorong ke tengah, nama
+     user ter-flex-shrink ke 0 sehingga tak terbaca, dan tombol keluar menyisakan
+     kotak kosong. Dikembalikan ke bentuk lebar di sini. Kembaran ber-prefiks
+     html.sidebar-collapsed WAJIB ikut (aturan lama app.blade.php:2965-3007 punya
+     spesifisitas lebih tinggi) — lihat catatan panjang di aturan --modern-sidebar-width
+     di atas. Diperbaiki utuh sekalian, bukan separuh: memperbaiki label saja
+     (tanpa kartu user) justru menghasilkan tampilan yang lebih janggal. */
+  body.owner-layout .owner-user-actions,
+  html.sidebar-collapsed body.owner-layout .owner-user-actions {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  body.owner-layout .owner-user-card,
+  html.sidebar-collapsed body.owner-layout .owner-user-card {
+    justify-content: flex-start;
+    flex: 1;
+    width: auto;
+    height: auto;
+    padding: 10px;
+  }
+
+  body.owner-layout .owner-profile-icon,
+  html.sidebar-collapsed body.owner-layout .owner-profile-icon {
+    display: block;
+  }
+
+  body.owner-layout .owner-sidebar-section,
+  html.sidebar-collapsed body.owner-layout .owner-sidebar-section {
+    padding: 16px 12px 4px;
+  }
+
   /* Judul topbar dipendekkan agar muat bersama hamburger. */
   .app-topbar-sub {
     display: none;
@@ -172,6 +206,7 @@
 
   body.bagian-layout .mob-card__judul {
     display: flex;
+    flex-wrap: wrap; /* nomor SPP turun baris daripada meluber keluar kartu */
     justify-content: space-between;
     align-items: baseline;
     gap: 8px;
@@ -183,10 +218,17 @@
     color: #0f172a;
   }
 
+  /* Nomor SPP produksi panjang (mis. "5SKH/PP/1064/UMUM/VIII/2026" = 27 karakter).
+     Dengan white-space: nowrap ia meluber ~25px keluar kartu dan terpotong tak
+     terbaca — terukur saat QA produksi 2026-08-13. Dibiarkan membungkus, dan
+     overflow-wrap: anywhere memaksa pemutusan di tengah token panjang tanpa
+     spasi (nomor SPP tak punya spasi sama sekali). */
   body.bagian-layout .mob-card__spp {
     font-size: 12px;
     color: #64748b;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    min-width: 0;
   }
 
   body.bagian-layout .mob-card__penerima {

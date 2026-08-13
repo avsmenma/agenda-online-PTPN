@@ -104,7 +104,16 @@
   //
   // Event delegation: SATU listener di pembungkus .mob-cards, bukan per-kartu —
   // halaman bisa memuat ratusan baris dokumen.
-  document.addEventListener('DOMContentLoaded', function () {
+  //
+  // JANGAN membungkus ini dalam DOMContentLoaded: partial ini di-push ke
+  // stack scripts yang dirender di AKHIR <body> (layouts/app.blade.php:5946),
+  // jadi saat skrip ini jalan DOMContentLoaded SUDAH menyala dan callback-nya
+  // tak akan pernah dipanggil — listener senyap tak terpasang, Enter/Space
+  // mati tanpa satu pun error di konsol. Terbukti di produksi 2026-08-13:
+  // logika handler benar, tapi listener-nya memang tak pernah ada.
+  // Markup .mob-cards sudah ada di DOM di titik ini karena berada di atas
+  // stack scripts.
+  (function () {
     const pembungkus = document.querySelector('.mob-cards');
     if (!pembungkus) return;
 
@@ -122,6 +131,6 @@
 
       tampilkanPerjalanan(kartu);
     });
-  });
+  })();
 </script>
 @endpush
