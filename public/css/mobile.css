@@ -431,17 +431,22 @@
     flex-wrap: nowrap;
   }
 
-  /* Kotak ikon selebar isinya; input mengisi sisanya. Tanpa ini keduanya
-     berbagi lebar rata dan ikon jadi separuh kotak cari. */
-  body.bagian-layout .search-box .input-group-text {
-    flex: 0 0 auto;
-    width: auto;
+  /* Kotak ikon selebar isinya; input mengisi sisanya.
+     !important WAJIB pada keduanya: aturan lebar di blok ini sendiri
+     (".search-filter-form input" dan ".search-box .form-control/.input-group-text"
+     di atas) menyetel width: 100% agar kontrol lain melebar penuh — di dalam
+     .input-group itu justru membuat ikon memakan 327px dan menyisakan 19px
+     untuk input. Terukur di produksi 2026-08-13. Dikecualikan HANYA untuk
+     pasangan di dalam .input-group. */
+  body.bagian-layout .search-box .input-group > .input-group-text {
+    flex: 0 0 auto !important;
+    width: auto !important;
   }
 
-  body.bagian-layout .search-box .input-group .form-control {
-    flex: 1 1 auto;
-    width: auto;
-    min-width: 0;
+  body.bagian-layout .search-box .input-group > .form-control {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
   }
 
   /* font-size 16px WAJIB: di bawah itu iOS otomatis memperbesar halaman saat
