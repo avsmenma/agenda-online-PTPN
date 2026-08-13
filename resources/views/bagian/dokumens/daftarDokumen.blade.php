@@ -3250,11 +3250,17 @@
 
   <script>
     (function() {
-      var modalEl = document.getElementById('totalNilaiFilterModal');
-      if (modalEl) {
-        var modal = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
-        // Tunda sedikit agar animasi halaman selesai dulu
-        setTimeout(function() { modal.show(); }, 300);
+      function showModalNilai() {
+        var modalEl = document.getElementById('totalNilaiFilterModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+          var modal = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
+          setTimeout(function() { modal.show(); }, 400);
+        }
+      }
+      if (document.readyState === 'complete') {
+        showModalNilai();
+      } else {
+        window.addEventListener('load', showModalNilai);
       }
     })();
   </script>
