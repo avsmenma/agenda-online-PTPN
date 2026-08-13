@@ -344,13 +344,22 @@ class MobileBagianTest extends TestCase
 
         // font-size minimal 16px pada input mencegah iOS auto-zoom saat field
         // difokus — penyebab keluhan "layarnya meloncat sendiri". Dipersempit
-        // ke badan aturan ".search-filter-form input/select": Blok B kartu
-        // (Task 3) sudah punya deklarasi "font-size: 16px" sendiri
-        // (.mob-card__nilai) sehingga assertStringContainsString mentah di
-        // seluruh berkas lolos terus, tak peduli nilai font-size input
-        // sebenarnya — terbukti hampa saat dicoba mutasi jadi 14px.
+        // ke badan aturan ".search-filter-form input/select, .search-box
+        // .form-control": Blok B kartu (Task 3) sudah punya deklarasi
+        // "font-size: 16px" sendiri (.mob-card__nilai) sehingga
+        // assertStringContainsString mentah di seluruh berkas lolos terus,
+        // tak peduli nilai font-size input sebenarnya — terbukti hampa saat
+        // dicoba mutasi jadi 14px. Selektor ".search-box .form-control" +
+        // "!important" WAJIB ada di badan aturan ini: partial GLOBAL
+        // compact-document-ui.blade.php baris ~899-919, di dalam
+        // @media (max-width: 1400px) miliknya sendiri, mengunci
+        // ".search-box .form-control" ke "font-size: 0.74rem !important"
+        // — breakpoint 1400px itu tetap aktif di viewport ponsel (375px < 1400px)
+        // sehingga tanpa selektor+!important yang menyamai di sini, input
+        // terukur ~11.84px di produksi, bukan 16px.
         $badanAturan = $this->cssRuleBody($css, 'body.bagian-layout .search-filter-form input');
-        $this->assertStringContainsString('font-size: 16px', $badanAturan);
+        $this->assertStringContainsString('.search-box .form-control', $badanAturan);
+        $this->assertStringContainsString('font-size: 16px !important', $badanAturan);
     }
 
     public function test_target_sentuh_minimal_44px(): void
@@ -364,8 +373,13 @@ class MobileBagianTest extends TestCase
         // satu aturan saja (mis. .btn-refresh) tetap hijau selama dua lainnya
         // utuh. Diperiksa per-aturan supaya regresi di aturan mana pun
         // tertangkap sendiri-sendiri.
+        //
+        // Aturan input/select WAJIB "!important" juga (sama seperti
+        // .btn-refresh di bawah): compact-document-ui.blade.php ~899-919
+        // (@media max-width: 1400px, selalu aktif di ponsel) mengunci
+        // ".search-box .form-control" ke "min-height: 34px !important".
         $this->assertStringContainsString(
-            'min-height: 44px',
+            'min-height: 44px !important',
             $this->cssRuleBody($css, 'body.bagian-layout .search-filter-form input')
         );
 

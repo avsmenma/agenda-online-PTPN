@@ -194,12 +194,25 @@
   }
 
   /* font-size 16px WAJIB: di bawah itu iOS otomatis memperbesar halaman saat
-     field difokus, dan user tak bisa mengembalikannya. */
+     field difokus, dan user tak bisa mengembalikannya. Selektor ketiga
+     (.search-box .form-control) + !important WAJIB: partial GLOBAL
+     compact-document-ui.blade.php baris ~899-919, di dalam
+     @media (max-width: 1400px) miliknya sendiri, mengunci
+     ".search-box .form-control" (antara lain) ke "font-size: 0.74rem
+     !important; min-height/height: 34px !important;". Breakpoint 1400px itu
+     jauh lebih lebar dari breakpoint ponsel (768px) sehingga blok itu SELALU
+     aktif di ponsel juga — bukan hanya di layar sedang. Tanpa !important yang
+     menyamai + selektor .form-control di sini, aturan global itu selalu
+     menang dan input tetap ~11.84px (dibuktikan terukur di produksi), bukan
+     16px. Ini semata melawan !important global yang sudah ada, BUKAN
+     preferensi gaya (lihat CLAUDE.md §4). */
   body.bagian-layout .search-filter-form input,
-  body.bagian-layout .search-filter-form select {
+  body.bagian-layout .search-filter-form select,
+  body.bagian-layout .search-box .form-control {
     width: 100%;
-    font-size: 16px;
-    min-height: 44px; /* ambang target sentuh Apple HIG */
+    font-size: 16px !important;
+    min-height: 44px !important; /* ambang target sentuh Apple HIG */
+    height: auto !important;
   }
 
   /* Dua tombol toolbar menumpuk vertikal (konsisten dengan input/select di
