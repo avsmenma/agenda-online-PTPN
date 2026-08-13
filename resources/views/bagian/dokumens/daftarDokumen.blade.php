@@ -1222,8 +1222,27 @@
       </div>
     @endif
 
+    {{-- Tombol bulat mengambang pembuka filter — HANYA tampil di ponsel
+         (disembunyikan atribut hidden, dinyalakan public/css/mobile.css di dalam
+         @media). Di desktop filter tetap tampil apa adanya di halaman. --}}
+    <button type="button" class="filter-fab" data-filter-toggle hidden
+            aria-label="Buka filter & pencarian" aria-expanded="false">
+      <i class="fa-solid fa-sliders"></i>
+    </button>
+    <div class="filter-scrim" data-filter-scrim hidden></div>
+
     <!-- Search & Filter -->
+    {{-- Di ponsel blok ini BERUBAH JADI POPUP lewat CSS (position: fixed), bukan
+         disalin: dua form dengan nama field sama akan saling bertabrakan saat
+         submit. Satu form, satu sumber — desktop merendernya di tempat. --}}
     <div class="search-box">
+      {{-- Kepala popup: hanya tampil di ponsel, sama seperti tombol di atas. --}}
+      <div class="filter-pop__head" hidden>
+        <span class="filter-pop__judul">Filter Dokumen</span>
+        <button type="button" class="filter-pop__tutup" data-filter-toggle aria-label="Tutup filter">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
       <form action="{{ route('bagian.documents.index') }}" method="GET" class="search-filter-form">
         <div class="search-input-group">
           <div class="input-group">
@@ -1259,6 +1278,15 @@
           <option value="sudah_dibayar" {{ request('status') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
         </select>
         
+        {{-- Tombol Terapkan: HANYA tampil di ponsel (lihat mobile.css). Di sana
+             auto-submit ketiga dropdown dimatikan supaya popup tidak menutup
+             sendiri tiap satu filter dipilih — user memilih tahun+bulan+status
+             sekaligus lalu menerapkannya dengan satu kali muat ulang.
+             type="submit" polos: form GET yang sama, nol JS untuk mengirim. --}}
+        <button type="submit" class="filter-pop__terapkan" hidden>
+          <i class="fa-solid fa-check"></i> Terapkan
+        </button>
+
         <button type="button" class="btn-refresh" id="btnRefreshTable" onclick="refreshDocumentTable()">
           <i class="fa-solid fa-arrows-rotate"></i> Refresh
         </button>
@@ -1272,6 +1300,64 @@
         </button>
       </form>
     </div>
+
+    <script>
+      // Popup filter ponsel. TIDAK dibungkus DOMContentLoaded dan tidak
+      // bergantung urutan render: skrip ini berada tepat di bawah markup yang
+      // disasarnya, jadi elemennya pasti sudah ada. (Pelajaran 2026-08-13:
+      // handler yang menunggu DOMContentLoaded atau menyasar markup yang belum
+      // dirender gagal SENYAP tanpa satu pun error di konsol.)
+      (function () {
+        const kueriPonsel = window.matchMedia('(max-width: 768px)');
+        const kotak  = document.querySelector('.search-box');
+        const scrim  = document.querySelector('[data-filter-scrim]');
+        if (!kotak || !scrim) return;
+
+        function setBuka(buka) {
+          document.documentElement.classList.toggle('filter-pop-open', buka);
+          document.querySelectorAll('[data-filter-toggle]').forEach(function (t) {
+            t.setAttribute('aria-expanded', buka ? 'true' : 'false');
+          });
+        }
+
+        document.addEventListener('click', function (event) {
+          if (event.target.closest('[data-filter-toggle]')) {
+            setBuka(!document.documentElement.classList.contains('filter-pop-open'));
+          } else if (event.target.closest('[data-filter-scrim]')) {
+            setBuka(false);
+          }
+        });
+
+        document.addEventListener('keydown', function (event) {
+          if (event.key === 'Escape') setBuka(false);
+        });
+
+        // Auto-submit ketiga dropdown dimatikan HANYA di ponsel: di popup ia
+        // membuat halaman dimuat ulang (dan popup tertutup) tiap satu filter
+        // dipilih. Atribut onchange aslinya dipindah ke data-onchange supaya
+        // bisa DIPULIHKAN persis bila layar melebar ke desktop — bukan dibuang.
+        const selectFilter = kotak.querySelectorAll('select[onchange]');
+
+        function terapkanModeSubmit() {
+          const ponsel = kueriPonsel.matches;
+          kotak.querySelectorAll('select[onchange], select[data-onchange]').forEach(function (s) {
+            if (ponsel && s.hasAttribute('onchange')) {
+              s.setAttribute('data-onchange', s.getAttribute('onchange'));
+              s.removeAttribute('onchange');
+              s.onchange = null;
+            } else if (!ponsel && s.hasAttribute('data-onchange')) {
+              
+              s.setAttribute('onchange', s.getAttribute('data-onchange'));
+              s.removeAttribute('data-onchange');
+            }
+          });
+          if (!ponsel) setBuka(false); // popup tak boleh tertinggal terbuka di desktop
+        }
+
+        if (selectFilter.length) terapkanModeSubmit();
+        kueriPonsel.addEventListener('change', terapkanModeSubmit);
+      })();
+    </script>
 
     <!-- Document Table -->
     <div class="table-container" id="bagianDaftarTable">

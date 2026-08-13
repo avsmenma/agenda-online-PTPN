@@ -551,6 +551,59 @@ class MobileBagianTest extends TestCase
         );
     }
 
+    public function test_popup_filter_ponsel_memakai_form_yang_sama(): void
+    {
+        $html = $this->actingAs($this->userBagian())
+            ->get('/bagian/documents')
+            ->assertOk()
+            ->getContent();
+
+        // Tombol mengambang, latar gelap, kepala popup, dan tombol Terapkan ada.
+        $this->assertStringContainsString('data-filter-toggle', $html);
+        $this->assertStringContainsString('data-filter-scrim', $html);
+        $this->assertStringContainsString('filter-pop__terapkan', $html);
+
+        // TEPAT SATU form filter. Menyalin blok filter jadi popup terpisah akan
+        // melahirkan dua <form> dengan nama field identik di satu halaman —
+        // keduanya mengirim "search"/"tahun"/"bulan"/"status" dan saling
+        // menimpa saat submit. Popup adalah elemen .search-box yang SAMA,
+        // hanya diubah jadi fixed lewat CSS.
+        $this->assertSame(
+            1,
+            substr_count($html, 'class="search-filter-form"'),
+            'Ditemukan lebih dari satu form filter — popup harus memakai form yang sama, bukan salinan.'
+        );
+
+        // Tombol Terapkan WAJIB type="submit": form GET yang sama mengirim
+        // sendiri, nol JS. Kalau jadi type="button", tombolnya tak berbuat apa pun.
+        $posisiTerapkan = strpos($html, 'filter-pop__terapkan');
+        $this->assertNotFalse($posisiTerapkan);
+        $this->assertStringContainsString(
+            'type="submit"',
+            substr($html, $posisiTerapkan - 120, 140),
+            'Tombol Terapkan harus type="submit".'
+        );
+    }
+
+    public function test_auto_submit_dropdown_dipulihkan_saat_desktop(): void
+    {
+        // Auto-submit dimatikan HANYA di ponsel (di popup ia menutup popup tiap
+        // satu filter dipilih). Atribut aslinya dipindah ke data-onchange, BUKAN
+        // dibuang, supaya bisa dipulihkan persis saat layar melebar ke desktop —
+        // tanpa itu pengguna yang memutar tablet kehilangan auto-submit permanen
+        // sampai memuat ulang halaman.
+        $html = $this->actingAs($this->userBagian())
+            ->get('/bagian/documents')
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString("s.setAttribute('data-onchange', s.getAttribute('onchange'))", $html);
+        $this->assertStringContainsString("s.setAttribute('onchange', s.getAttribute('data-onchange'))", $html);
+
+        // Popup tak boleh tertinggal terbuka saat layar melebar ke desktop.
+        $this->assertStringContainsString('if (!ponsel) setBuka(false)', $html);
+    }
+
     public function test_input_filter_mencegah_zoom_ios(): void
     {
         $css = $this->mobileCss();

@@ -273,6 +273,126 @@
     overflow-y: auto;
   }
 
+  /* ===== Blok B — .bagian-layout: popup filter mengambang =====
+
+     Blok filter (.search-box) TIDAK disalin jadi elemen kedua — ia elemen yang
+     SAMA, hanya diubah jadi popup lewat position: fixed. Menyalinnya berarti dua
+     <form> dengan nama field identik di satu halaman, yang saling bertabrakan
+     saat submit. Di desktop seluruh aturan di bawah ini tidak berlaku, jadi
+     filter tetap tampil di tempatnya semula. */
+
+  /* Tombol bulat mengambang — selalu terjangkau tanpa menggulir. Dinyalakan di
+     sini (markup-nya ber-atribut hidden) supaya nol aturan berada di luar
+     @media dan desktop tak tersentuh. */
+  body.bagian-layout .filter-fab {
+    display: inline-flex !important; /* menimpa atribut hidden */
+    position: fixed;
+    right: 16px;
+    bottom: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #0f766e 0%, #10b981 100%);
+    box-shadow: 0 6px 18px rgba(15, 118, 110, 0.4);
+    /* Urutan lapisan ponsel, dari bawah: topbar 1100, scrim menu 1150,
+       drawer menu 1200, scrim filter 1240, tombol filter 1250, popup filter
+       1260. Popup filter sengaja MENANG atas drawer menu: keduanya tak pernah
+       terbuka bersamaan, dan bila itu terjadi, yang terakhir dibuka user yang
+       harus terlihat. */
+    z-index: 1250;
+    cursor: pointer;
+  }
+
+  body.bagian-layout .filter-fab:active {
+    transform: scale(0.94);
+  }
+
+  /* Latar gelap popup. Sama polanya dengan .mobile-drawer-scrim milik menu. */
+  body.bagian-layout .filter-scrim {
+    display: block !important; /* menimpa atribut hidden */
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    z-index: 1240;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  html.filter-pop-open body.bagian-layout .filter-scrim {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* .search-box jadi popup: disembunyikan sampai tombol ditekan. */
+  body.bagian-layout .search-box {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 88px; /* di atas tombol bulat */
+    max-height: 70vh;
+    overflow-y: auto;
+    margin: 0;
+    z-index: 1260;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  }
+
+  html.filter-pop-open body.bagian-layout .search-box {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  /* Kepala popup + tombol Terapkan: dinyalakan di ponsel saja. */
+  body.bagian-layout .filter-pop__head {
+    display: flex !important; /* menimpa atribut hidden */
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  body.bagian-layout .filter-pop__judul {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a2340;
+  }
+
+  body.bagian-layout .filter-pop__tutup {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  body.bagian-layout .filter-pop__terapkan {
+    display: inline-flex !important; /* menimpa atribut hidden */
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 44px !important;
+    height: auto !important;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(135deg, #0f766e 0%, #10b981 100%);
+    cursor: pointer;
+  }
+
   /* ===== Blok B — .bagian-layout: filter, toolbar, paginasi ===== */
 
   /* align-items: stretch menimpa align-items: center dari aturan dasar
