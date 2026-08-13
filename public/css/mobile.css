@@ -519,6 +519,13 @@
   body.bagian-layout .search-box .form-control,
   body.bagian-layout .search-box .input-group-text {
     width: 100%;
+    /* Menetralkan max-width: 260px milik dropdown Vendor & Item Sub Kriteria
+       (daftarDokumen.blade.php). Batas itu untuk DESKTOP, tempat dropdown
+       berjajar menyamping dan nama vendor panjang mendorong tetangganya ke
+       baris berikutnya. Di popup ponsel semua kontrol memang melebar penuh
+       satu per baris — tanpa penetralan ini dua dropdown itu tampak sempit
+       sendiri di antara yang lain. */
+    max-width: none;
     font-size: 16px !important;
     min-height: 44px !important; /* ambang target sentuh Apple HIG */
     height: auto !important;

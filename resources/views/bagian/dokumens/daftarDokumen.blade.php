@@ -100,6 +100,17 @@
       background: #f8f9fa;
     }
 
+    /* Nama vendor di produksi bisa sangat panjang (mis. "221300096842 RS PTPN
+       Danau Salak"). Tanpa batas, <select> melebar mengikuti opsi TERPANJANG
+       dan mendorong dropdown lain ke baris berikutnya — toolbar filter jadi
+       berantakan (terlihat saat QA desktop 2026-08-13). Teks yang terpotong
+       tetap terbaca penuh saat dropdown dibuka. Batas ini TIDAK berlaku di
+       ponsel: di sana semua kontrol memang melebar penuh satu per baris. */
+    .btn-vendor-select,
+    .btn-subkriteria-select {
+      max-width: 260px;
+    }
+
     .btn-filter {
       padding: 10px 20px;
       background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
