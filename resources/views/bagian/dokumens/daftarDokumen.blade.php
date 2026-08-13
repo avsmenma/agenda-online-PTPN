@@ -1468,37 +1468,19 @@
                         </td>
                         <td class="col-status_pembayaran">
                           @php
-                            // Status pembayaran (kolom tetap paling kanan, beku).
-                            $isPaid = $doc->status_pembayaran === 'sudah_dibayar' || !empty($doc->tanggal_dibayar);
-                            $isInPembayaran = str_contains(strtolower($doc->current_handler ?? ''), 'pembayaran');
-                            $statusChangeDate = null;
-                            if ($isPaid) {
-                              $paymentStatusClass = 'sudah-dibayar';
-                              $paymentStatusText = 'Sudah Dibayar';
-                              $paymentStatusIcon = 'fa-check-circle';
-                              $statusChangeDate = $doc->tanggal_dibayar;
-                            } elseif ($isInPembayaran) {
-                              $paymentStatusClass = 'siap-dibayar';
-                              $paymentStatusText = 'Siap Dibayar';
-                              $paymentStatusIcon = 'fa-money-bill-wave';
-                              $pembayaranRoleData = $doc->getDataForRole('pembayaran');
-                              $statusChangeDate = $pembayaranRoleData?->received_at;
-                            } else {
-                              $paymentStatusClass = 'belum-dibayar';
-                              $paymentStatusText = 'Belum Siap Dibayar';
-                              $paymentStatusIcon = 'fa-clock';
-                              $statusChangeDate = $doc->sent_at ?? $doc->created_at;
-                            }
+                            // Aturan 3-state dipusatkan di App\Support\StatusPembayaranBagian agar
+                            // kartu mobile (_kartuDokumenMobile) membaca aturan yang sama.
+                            $status = \App\Support\StatusPembayaranBagian::untuk($doc);
                           @endphp
                           <div class="payment-status-container"
                             style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                            <span class="payment-status-badge {{ $paymentStatusClass }}">
-                              <i class="fa-solid {{ $paymentStatusIcon }}"></i>
-                              {{ $paymentStatusText }}
+                            <span class="payment-status-badge {{ $status['kelas'] }}">
+                              <i class="fa-solid {{ $status['ikon'] }}"></i>
+                              {{ $status['teks'] }}
                             </span>
-                            @if($statusChangeDate)
+                            @if($status['tanggal'])
                               <small style="font-size: 10px; color: #6c757d; text-align: center;">
-                                {{ \Carbon\Carbon::parse($statusChangeDate)->format('d M Y, H:i') }}
+                                {{ \Carbon\Carbon::parse($status['tanggal'])->format('d M Y, H:i') }}
                               </small>
                             @endif
                           </div>
