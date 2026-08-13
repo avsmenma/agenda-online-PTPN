@@ -264,6 +264,15 @@
     font-weight: 600;
   }
 
+  /* Modal perjalanan kini memuat Uraian SPP penuh (tak dipotong), yang bisa
+     panjang. Tanpa batas tinggi, isinya mendorong modal melewati tepi layar
+     ponsel dan tahapan di bawah uraian jadi tak terjangkau. Badan modal yang
+     menggulir, bukan halaman. */
+  body.bagian-layout #perjalananModal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
   /* ===== Blok B — .bagian-layout: filter, toolbar, paginasi ===== */
 
   /* align-items: stretch menimpa align-items: center dari aturan dasar

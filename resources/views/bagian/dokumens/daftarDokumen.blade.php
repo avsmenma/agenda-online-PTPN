@@ -1077,6 +1077,37 @@
 
     .dj-cell--action .dj-label { color: #b45309; }
 
+    /* Uraian SPP di dalam modal perjalanan. Ditampilkan penuh (tanpa dipotong):
+       uraian inilah informasi yang tak muat di kartu ponsel, jadi memotongnya
+       kembali menimbulkan masalah yang sama. Modal yang menggulir bila panjang. */
+    .dj-uraian {
+      margin-bottom: 1rem;
+      padding-bottom: 0.875rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .dj-uraian__label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 0.35rem;
+    }
+
+    .dj-uraian__teks {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #1f2937;
+      /* Uraian bisa memuat token panjang tanpa spasi (nomor kontrak/referensi) —
+         tanpa ini teksnya meluber keluar modal di layar sempit. */
+      overflow-wrap: anywhere;
+    }
+
+    .dark .dj-uraian { border-bottom-color: #334155; }
+    .dark .dj-uraian__teks { color: #e2e8f0; }
+
     .dj-list {
       list-style: none;
       margin: 0;
@@ -1450,6 +1481,11 @@
                                     class="dj-cell {{ $jalan['needs_action'] ? 'dj-cell--action' : '' }}"
                                     title="Klik untuk melihat perjalanan dokumen"
                                     data-perjalanan="{{ json_encode($jalan) }}"
+                                    {{-- Dipasang juga di desktop: modalnya SATU dan dipakai
+                                         bersama kartu ponsel. Tanpa atribut ini, pengguna
+                                         desktop membuka modal yang sama dan bagian Uraian
+                                         SPP-nya kosong. --}}
+                                    data-uraian="{{ $doc->uraian_spp }}"
                                     onclick="event.stopPropagation(); tampilkanPerjalanan(this)">
                               <span class="dj-track">
                                 @foreach($jalan['stages'] as $i => $tahap)
@@ -2726,6 +2762,13 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
         </div>
         <div class="modal-body" style="padding: 1.25rem 1.5rem;">
+          {{-- Uraian SPP: terlalu panjang untuk kartu ponsel, jadi ditampilkan
+               di sini. Disembunyikan bila dokumen tak punya uraian (lihat
+               tampilkanPerjalanan) — bukan menampilkan strip kosong. --}}
+          <div id="perjalananUraian" class="dj-uraian" style="display: none;">
+            <div class="dj-uraian__label">Uraian SPP</div>
+            <p class="dj-uraian__teks" id="perjalananUraianTeks"></p>
+          </div>
           <ul class="dj-list" id="perjalananList"></ul>
         </div>
       </div>
@@ -2853,6 +2896,20 @@
         jalan = JSON.parse(tombol.getAttribute('data-perjalanan') || '{}');
       } catch (err) {
         return;
+      }
+
+      // Uraian SPP — dibaca dari atribut data-uraian pada elemen yang sama.
+      // Dipasang BERSAMA data-perjalanan oleh sel tabel desktop maupun kartu
+      // ponsel, karena keduanya memanggil fungsi ini. Disisipkan lewat
+      // textContent, bukan innerHTML: isinya teks bebas dari database dan
+      // tidak boleh diperlakukan sebagai HTML (alasan yang sama dengan label
+      // nama bagian di bawah).
+      const kotakUraian = document.getElementById('perjalananUraian');
+      const teksUraian  = document.getElementById('perjalananUraianTeks');
+      if (kotakUraian && teksUraian) {
+        const uraian = (tombol.getAttribute('data-uraian') || '').trim();
+        teksUraian.textContent = uraian;
+        kotakUraian.style.display = uraian === '' ? 'none' : 'block';
       }
 
       const keterangan = {

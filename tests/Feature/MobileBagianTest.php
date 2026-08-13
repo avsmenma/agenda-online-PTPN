@@ -296,6 +296,58 @@ class MobileBagianTest extends TestCase
         $this->assertStringContainsString('Belum Siap Dibayar', $html);
     }
 
+    public function test_uraian_spp_dibawa_ke_modal_perjalanan(): void
+    {
+        // Uraian SPP sengaja TIDAK dirender di badan kartu (terlalu panjang,
+        // akan mendominasi) — dibawa ke modal lewat atribut data-uraian.
+        $uraian = 'Pembayaran jasa pemeliharaan instalasi listrik pabrik periode Juli 2026';
+
+        Dokumen::create([
+            'nomor_agenda'    => 'MOB005_2026',
+            'uraian_spp'      => $uraian,
+            'bulan'           => 'Agustus',
+            'tahun'           => 2026,
+            'tanggal_masuk'   => '2026-08-01',
+            'status'          => 'sedang diproses',
+            'created_by'      => 'operator',
+            'current_handler' => 'team_verifikasi',
+            'bagian'          => 'AKN',
+        ]);
+
+        $html = $this->actingAs($this->userBagian())
+            ->get('/bagian/documents')
+            ->assertOk()
+            ->getContent();
+
+        // Kartu ponsel membawa uraian sebagai atribut.
+        $posisiKartu = strpos($html, 'class="mob-card"');
+        $this->assertNotFalse($posisiKartu, 'Kartu mobile tidak ditemukan.');
+        $this->assertStringContainsString(
+            'data-uraian="' . $uraian . '"',
+            substr($html, $posisiKartu, 2000),
+            'Kartu ponsel tidak membawa data-uraian.'
+        );
+
+        // Sel tabel desktop WAJIB membawanya juga: modalnya SATU dan dipakai
+        // bersama. Tanpa ini, pengguna desktop membuka modal yang sama dan
+        // bagian Uraian SPP-nya kosong.
+        $posisiSel = strpos($html, 'class="dj-cell');
+        $this->assertNotFalse($posisiSel, 'Sel perjalanan desktop tidak ditemukan.');
+        $this->assertStringContainsString(
+            'data-uraian=',
+            substr($html, $posisiSel, 1200),
+            'Sel tabel desktop tidak membawa data-uraian — modal bersama akan kosong di desktop.'
+        );
+
+        // Markup penampung di modal + pengisian lewat textContent (bukan
+        // innerHTML): uraian adalah teks bebas dari database.
+        $this->assertStringContainsString('id="perjalananUraianTeks"', $html);
+        $this->assertStringContainsString('teksUraian.textContent = uraian', $html);
+
+        // Uraian kosong menyembunyikan seluruh bagian, bukan menampilkan strip.
+        $this->assertStringContainsString("uraian === '' ? 'none' : 'block'", $html);
+    }
+
     public function test_kartu_memakai_fungsi_modal_yang_sudah_ada(): void
     {
         Dokumen::create([

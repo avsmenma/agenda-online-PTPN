@@ -46,6 +46,9 @@
     <div class="mob-card"
       @if($jalan)
         data-perjalanan="{{ json_encode($jalan) }}"
+        {{-- Uraian SPP sengaja TIDAK dirender di badan kartu (terlalu panjang,
+             akan mendominasi); dibawa ke modal lewat atribut ini. --}}
+        data-uraian="{{ $doc->uraian_spp }}"
         onclick="tampilkanPerjalanan(this)"
         role="button"
         tabindex="0"
