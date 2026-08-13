@@ -386,6 +386,29 @@ class MobileBagianTest extends TestCase
         );
     }
 
+    public function test_aturan_kartu_benar_benar_aktif_bukan_sekadar_ada(): void
+    {
+        // Blok <style> kartu boleh memuat TEPAT SATU tag penutup style, yaitu
+        // penutup blok itu sendiri. Menulisnya lagi di dalam komentar membuat
+        // parser HTML mengakhiri blok LEBIH AWAL, sehingga aturan di bawah
+        // komentar (".mob-cards { display: none; }") tak pernah aktif — kartu
+        // ikut tampil di DESKTOP, dobel dengan tabel. Lolos ke produksi
+        // 2026-08-13; assertion urutan & keberadaan string tetap hijau karena
+        // teksnya memang ada, cuma tak pernah berlaku sebagai CSS.
+        $partial = file_get_contents(
+            resource_path('views/bagian/partials/_kartuDokumenMobile.blade.php')
+        );
+
+        $penutupStyle = substr_count($partial, '</' . 'style>');
+        $this->assertSame(
+            1,
+            $penutupStyle,
+            "Ditemukan {$penutupStyle} tag penutup style di partial kartu — harus tepat 1. "
+            . 'Menulisnya di dalam komentar memotong blok lebih awal sehingga aturan '
+            . 'display:none tak pernah aktif dan kartu tampil di desktop.'
+        );
+    }
+
     public function test_direktif_push_partial_kartu_seimbang(): void
     {
         // Penjaga akar masalah insiden 2026-08-13: komentar CSS di partial memuat

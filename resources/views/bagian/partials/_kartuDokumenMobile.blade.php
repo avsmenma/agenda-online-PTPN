@@ -21,12 +21,16 @@
      <style> inline di body — supaya ter-parse SEBELUM markup dan kartu tak
      berkedip muncul di desktop.
 
-     JANGAN menulis nama direktif Blade itu secara literal di komentar ini:
-     Blade memproses direktif di dalam string/komentar CSS juga, sehingga
-     kemunculan keduanya membuka stack baru di tengah blok — akibatnya
-     </style> jadi milik push yang keliru, seluruh markup kartu tertelan ke
-     dalam <style>, dan halaman ponsel tampil KOSONG. Ini pernah terjadi dan
-     lolos ke produksi 2026-08-13. */
+     DUA hal yang HARAM ditulis di komentar ini (keduanya sudah pernah lolos
+     ke produksi 2026-08-13 dan keduanya gagal SENYAP):
+     1. Nama direktif push Blade secara literal — Blade memprosesnya sebagai
+        direktif sungguhan meski di dalam komentar CSS, membuka stack baru di
+        tengah blok, sehingga tag penutup style jatuh ke push yang keliru dan
+        SELURUH markup kartu tertelan ke dalam blok style: halaman ponsel
+        tampil KOSONG.
+     2. Tag penutup style secara literal — parser HTML mengakhiri blok style
+        di situ juga, sehingga aturan di bawah komentar ini tak pernah aktif
+        dan kartu ikut tampil di DESKTOP (konten dobel dengan tabel). */
   .mob-cards { display: none; }
 </style>
 @endpush
