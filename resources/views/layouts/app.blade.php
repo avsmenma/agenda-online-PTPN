@@ -25,6 +25,9 @@
   <!-- Mobile Responsive CSS -->
   <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/responsive.css') }}">
 
+  <!-- Gaya khusus layar ponsel (semua aturan terkurung @media max-width: 768px) -->
+  <link rel="stylesheet" href="{{ \App\Support\Asset::versioned('css/mobile.css') }}">
+
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -3315,6 +3318,10 @@
       </div>
     </div>
   </header>
+
+  {{-- Latar gelap drawer ponsel. Selalu ada di DOM; disembunyikan di desktop
+       oleh CSS (display:none default di bawah), ditampilkan hanya di ≤768px. --}}
+  <div class="mobile-drawer-scrim" data-drawer-scrim hidden></div>
   @endif
 
   <!-- Sidebar (hidden for operator spreadsheet mode via CSS) -->
@@ -3835,8 +3842,23 @@
         });
       }
 
+      // Di ponsel tombol yang sama menggerakkan DRAWER, bukan menyempitkan sidebar.
+      // Sengaja tidak menulis localStorage: drawer selalu mulai tertutup tiap
+      // kunjungan, dan preferensi 'sidebar_collapsed' milik desktop tidak boleh
+      // tertimpa oleh sentuhan di ponsel (user produksi sudah punya preferensi).
+      const kueriPonsel = window.matchMedia('(max-width: 768px)');
+
+      function tutupDrawerPonsel() {
+        document.documentElement.classList.remove('mobile-drawer-open');
+      }
+
       sidebarToggleButtons.forEach(function(button) {
         button.addEventListener('click', function() {
+          if (kueriPonsel.matches) {
+            document.documentElement.classList.toggle('mobile-drawer-open');
+            return;
+          }
+
           const shouldCollapse = !document.documentElement.classList.contains('sidebar-collapsed');
           document.documentElement.classList.toggle('sidebar-collapsed', shouldCollapse);
 
@@ -3848,6 +3870,18 @@
 
           syncSidebarToggleState();
         });
+      });
+
+      // Tap latar gelap menutup drawer.
+      document.querySelectorAll('[data-drawer-scrim]').forEach(function(scrim) {
+        scrim.addEventListener('click', tutupDrawerPonsel);
+      });
+
+      // Drawer tak boleh tertinggal terbuka saat layar diputar/diperbesar ke desktop.
+      kueriPonsel.addEventListener('change', function(event) {
+        if (!event.matches) {
+          tutupDrawerPonsel();
+        }
       });
 
       syncSidebarToggleState();

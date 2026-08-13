@@ -1,0 +1,75 @@
+/**
+ * Gaya khusus layar ponsel — Agenda Online PTPN.
+ *
+ * ATURAN BERKAS INI: setiap deklarasi WAJIB berada di dalam @media
+ * (max-width: 768px). Tidak boleh ada satu pun aturan di luar blok media —
+ * dijaga test MobileBagianTest::test_seluruh_aturan_mobile_terkurung_media_query.
+ * Ini yang membuat janji "nol perubahan desktop" bisa ditegakkan mesin.
+ *
+ * Susunan per BLOK berlabel kelas layout di <body>:
+ *   Blok A — shell (topbar, drawer, konten): berlaku semua role.
+ *   Blok B — .bagian-layout: hanya halaman role Bagian.
+ * Role berikutnya MENAMBAH blok baru (.operator-layout, .payment-layout, dst),
+ * bukan mengubah blok yang sudah lulus QA.
+ */
+
+@media (max-width: 768px) {
+  /* ===== Blok A — Shell: drawer, topbar, konten ===== */
+
+  /* Sidebar jadi panel geser. transform (bukan display:none) supaya bisa
+     dianimasikan, dan supaya isinya tetap terbaca screen reader. */
+  body.owner-layout .sidebar-owner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 82%;
+    max-width: 300px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1200; /* di atas topbar (1100) */
+    overflow-y: auto;
+  }
+
+  html.mobile-drawer-open body.owner-layout .sidebar-owner {
+    transform: translateX(0);
+  }
+
+  /* Latar gelap saat drawer terbuka. Tap di mana pun padanya menutup drawer. */
+  .mobile-drawer-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    z-index: 1150;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  html.mobile-drawer-open .mobile-drawer-scrim {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Konten memakai lebar penuh — mengembalikan 72px yang dicuri sidebar.
+     !important diperlukan: aturan lama di layouts/app.blade.php menyetel
+     margin-left dengan !important juga (baris ~3047). */
+  body.owner-layout .content {
+    margin-left: 0 !important;
+    padding: 12px !important;
+    padding-top: 72px !important; /* topbar fixed setinggi 60px + jarak */
+  }
+
+  /* Sidebar yang ter-collapse dari preferensi desktop tak boleh menyempitkan
+     drawer — di ponsel lebar drawer ditentukan blok di atas. */
+  html.sidebar-collapsed body.owner-layout .sidebar-owner {
+    width: 82%;
+    max-width: 300px;
+  }
+
+  /* Judul topbar dipendekkan agar muat bersama hamburger. */
+  .app-topbar-sub {
+    display: none;
+  }
+}
