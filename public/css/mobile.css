@@ -58,13 +58,42 @@
     pointer-events: auto;
   }
 
+  /* Netralkan lebar sidebar di ponsel lewat variabel CSS-nya sendiri, bukan
+     lewat !important baru. Ini menutup DUA masalah sekaligus: (a) membuat
+     --modern-content-width (app.blade.php ~2776, calc(100vw - lebar sidebar))
+     jadi 100vw, dan (b) aturan lama ".sidebar-collapsed body.owner-layout
+     .content { margin-left: var(--modern-sidebar-width) !important }"
+     (app.blade.php ~3008), spesifisitas (0,3,1), MENANG atas
+     "body.owner-layout .content" polos di bawah, spesifisitas (0,2,1) —
+     dibiarkan menang, tapi karena variabelnya sudah 0 di sini, hasilnya
+     tetap 0. Kedua selector di bawah WAJIB: varian tanpa "html.sidebar-
+     collapsed" menang saat kelas TIDAK aktif (spesifisitas sama dengan
+     aturan mobile bawaan app.blade.php ~3014, urutan dokumen memutuskan —
+     mobile.css dimuat belakangan sehingga menang); varian "html.sidebar-
+     collapsed" WAJIB ditambah elemen "html" supaya spesifisitasnya (0,2,2)
+     mengalahkan ".sidebar-collapsed body.owner-layout" (0,2,1) yang
+     berlaku tanpa media query sama sekali. */
+  body.owner-layout,
+  html.sidebar-collapsed body.owner-layout {
+    --modern-sidebar-width: 0px;
+  }
+
   /* Konten memakai lebar penuh — mengembalikan 72px yang dicuri sidebar.
-     !important diperlukan: aturan lama di layouts/app.blade.php menyetel
-     margin-left dengan !important juga (baris ~3047). */
+     margin-left !important diperlukan: aturan lama di layouts/app.blade.php
+     menyetel margin-left dengan !important juga (baris ~3047). width: auto
+     WAJIB (bukan cukup menetralkan variabel di atas): 100vw menyertakan
+     lebar scrollbar, jadi calc(100vw - 0px) tetap melebihi layar (terukur
+     390px di viewport 375px) dan menimbulkan gulir horizontal — width: auto
+     membiarkan elemen block mengisi induknya secara alami. TIDAK ada
+     padding-top di sini: margin-top: 60px dari layout (app.blade.php ~2949,
+     di luar media query) sudah menangani jarak topbar; menambah padding-top
+     lagi menghasilkan offset dobel 132px (terukur di produksi sebelum
+     perbaikan ini). */
   body.owner-layout .content {
     margin-left: 0 !important;
+    width: auto !important;
+    max-width: 100% !important;
     padding: 12px !important;
-    padding-top: 72px !important; /* topbar fixed setinggi 60px + jarak */
   }
 
   /* Sidebar yang ter-collapse dari preferensi desktop tak boleh menyempitkan
@@ -87,6 +116,30 @@
   body.owner-layout .sidebar-owner .owner-nav-item {
     justify-content: flex-start;
     font-size: 13px;
+  }
+
+  /* Kembaran ber-prefiks html.sidebar-collapsed: localStorage
+     "sidebar_collapsed" dipasang ke <html> oleh app.blade.php TANPA
+     memandang lebar layar, jadi user yang pernah menekan hamburger di
+     desktop (atau di ponsel sebelum perbaikan ini) membawa kelas itu ke
+     ponsel juga. Aturan globalnya (app.blade.php ~2972-2985, DI LUAR media
+     query apa pun) punya spesifisitas lebih tinggi daripada pasangan
+     tanpa-prefiks di atas — (0,3,1) utk label/user-info vs (0,2,1) kita,
+     (0,4,1) utk nav-item vs (0,3,1) kita — sehingga tanpa kembaran ini
+     label tetap "display: none" dan nav-item tetap "font-size: 0" walau
+     drawer sudah selebar 300px (terukur di produksi). Kembarannya
+     menambah elemen "html" supaya menang: (0,3,2) & (0,4,2). gap: 10px
+     WAJIB ditambahkan eksplisit di sini: aturan lama menyetel "gap: 0"
+     pada spesifisitas yang kita kalahkan, jadi tanpa dikembalikan di sini
+     nav-item tetap rapat tanpa jarak ikon-label. */
+  html.sidebar-collapsed body.owner-layout .owner-sidebar-label,
+  html.sidebar-collapsed body.owner-layout .owner-user-info {
+    display: block;
+  }
+  html.sidebar-collapsed body.owner-layout .sidebar-owner .owner-nav-item {
+    justify-content: flex-start;
+    font-size: 13px;
+    gap: 10px;
   }
 
   /* Judul topbar dipendekkan agar muat bersama hamburger. */
