@@ -124,6 +124,17 @@ class BagianDokumenController extends Controller
             $query->where('jenis_sub_pekerjaan', $request->sub_kriteria);
         }
 
+        // Hitung total nilai dari SEMUA hasil filter (sebelum paginasi)
+        $totalNilaiFiltered = (clone $query)->sum('nilai_rupiah');
+
+        // Deteksi apakah ada filter aktif
+        $isFiltered = $request->filled('search')
+            || $request->filled('status')
+            || $request->filled('tahun')
+            || $request->filled('bulan')
+            || $request->filled('vendor')
+            || $request->filled('sub_kriteria');
+
         $perPage = $request->get('per_page', session('bagian_per_page', 10));
         if ($perPage === 'all') {
             $perPage = 999999;
@@ -283,7 +294,9 @@ class BagianDokumenController extends Controller
             'notifPengembalian',
             'perjalanan',
             'vendorList',
-            'subKriteriaList'
+            'subKriteriaList',
+            'totalNilaiFiltered',
+            'isFiltered'
         ));
     }
 

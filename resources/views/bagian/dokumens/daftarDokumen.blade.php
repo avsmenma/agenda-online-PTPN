@@ -3151,4 +3151,113 @@
 {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
 @include('partials._activeCellNav', ['tableSelector' => '.data-table'])
 
+{{-- ===== MODAL TOTAL NILAI FILTER =========================================
+     Muncul otomatis setelah user menerapkan filter, menampilkan total nilai
+     rupiah dari seluruh dokumen yang cocok (bukan hanya halaman saat ini). --}}
+@if($isFiltered)
+  <div class="modal fade" id="totalNilaiFilterModal" tabindex="-1"
+       aria-labelledby="totalNilaiFilterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+           style="border: none; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 80px rgba(0,0,0,0.3);">
+        {{-- Kepala --}}
+        <div class="modal-header"
+             style="background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%); color: white; border: none; padding: 1.5rem 2rem;">
+          <div class="d-flex align-items-center gap-3">
+            <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.15); border-radius: 14px;
+                        display: flex; align-items: center; justify-content: center; font-size: 22px;">
+              <i class="fa-solid fa-calculator"></i>
+            </div>
+            <div>
+              <h5 class="modal-title fw-bold" id="totalNilaiFilterModalLabel" style="font-size: 1.2rem;">
+                Total Nilai Dokumen
+              </h5>
+              <small style="opacity: 0.8; font-size: 0.8rem;">
+                Hasil filter —
+                @php
+                  $labelFilter = [];
+                  if (request('search'))      $labelFilter[] = 'pencarian "' . e(request('search')) . '"';
+                  if (request('status'))      $labelFilter[] = request('status') === 'sudah_dibayar' ? 'sudah dibayar' : 'belum dibayar';
+                  if (request('tahun'))       $labelFilter[] = 'tahun ' . request('tahun');
+                  if (request('bulan'))       $labelFilter[] = 'bulan ' . request('bulan');
+                  if (request('vendor'))      $labelFilter[] = 'vendor "' . e(request('vendor')) . '"';
+                  if (request('sub_kriteria')) $labelFilter[] = '"' . e(request('sub_kriteria')) . '"';
+                @endphp
+                {{ implode(', ', $labelFilter) ?: 'semua filter' }}
+              </small>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                  aria-label="Tutup" style="opacity: 0.9;"></button>
+        </div>
+
+        {{-- Body --}}
+        <div class="modal-body" style="padding: 2rem;">
+          {{-- Angka total nilai --}}
+          <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+                      border-radius: 16px; padding: 2rem; text-align: center; margin-bottom: 1.5rem;
+                      border: 1px solid #bbf7d0;">
+            <div style="font-size: 0.85rem; font-weight: 600; color: #166534; text-transform: uppercase;
+                        letter-spacing: 0.5px; margin-bottom: 0.5rem;">
+              <i class="fa-solid fa-coins me-2"></i>Total Nilai Rupiah
+            </div>
+            <div style="font-size: 2rem; font-weight: 800; color: #083E40;">
+              Rp {{ number_format($totalNilaiFiltered, 0, ',', '.') }}
+            </div>
+          </div>
+
+          {{-- Statistik tambahan --}}
+          <div class="row g-3">
+            <div class="col-6">
+              <div style="background: #f8f9fa; border-radius: 12px; padding: 1.25rem; text-align: center;
+                          border: 1px solid #e9ecef; height: 100%;">
+                <div style="font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase;
+                            letter-spacing: 0.5px; margin-bottom: 0.4rem;">
+                  <i class="fa-solid fa-file-lines me-1"></i>Jumlah Dokumen
+                </div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #083E40;">
+                  {{ $dokumens->total() }}
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div style="background: #f8f9fa; border-radius: 12px; padding: 1.25rem; text-align: center;
+                          border: 1px solid #e9ecef; height: 100%;">
+                <div style="font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase;
+                            letter-spacing: 0.5px; margin-bottom: 0.4rem;">
+                  <i class="fa-solid fa-layer-group me-1"></i>Rata-rata
+                </div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #083E40;">
+                  @php $rataRata = $dokumens->total() > 0 ? $totalNilaiFiltered / $dokumens->total() : 0; @endphp
+                  Rp {{ number_format($rataRata, 0, ',', '.') }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{-- Kaki --}}
+        <div class="modal-footer border-0 justify-content-center" style="padding: 1.25rem 2rem; background: #f8f9fa;">
+          <button type="button" class="btn" data-bs-dismiss="modal"
+                  style="background: #083E40; color: white; padding: 0.65rem 2rem; border-radius: 10px;
+                         font-weight: 600; font-size: 0.95rem;">
+            <i class="fa-solid fa-check me-2"></i>Mengerti
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var modalEl = document.getElementById('totalNilaiFilterModal');
+      if (modalEl) {
+        var modal = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
+        // Tunda sedikit agar animasi halaman selesai dulu
+        setTimeout(function() { modal.show(); }, 300);
+      }
+    })();
+  </script>
+@endif
+
 @endsection
