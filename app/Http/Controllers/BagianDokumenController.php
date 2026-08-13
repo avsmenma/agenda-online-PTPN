@@ -110,6 +110,20 @@ class BagianDokumenController extends Controller
             $query->where('tahun', $request->tahun);
         }
 
+        // Vendor filter — kolom `dibayar_kepada` (nama penerima pembayaran).
+        // Dicocokkan PERSIS, bukan LIKE: nilainya diambil dari daftar dropdown
+        // yang dibangun dari kolom yang sama, jadi selalu cocok utuh. LIKE akan
+        // membuat "PT Sumber" ikut menjaring "PT Sumber Makmur Jaya".
+        if ($request->filled('vendor')) {
+            $query->where('dibayar_kepada', $request->vendor);
+        }
+
+        // Item Sub Kriteria — disimpan di kolom `jenis_sub_pekerjaan`
+        // (lihat DokumenController: ItemSubKriteria dipetakan ke kolom ini).
+        if ($request->filled('sub_kriteria')) {
+            $query->where('jenis_sub_pekerjaan', $request->sub_kriteria);
+        }
+
         $perPage = $request->get('per_page', session('bagian_per_page', 10));
         if ($perPage === 'all') {
             $perPage = 999999;
@@ -183,6 +197,28 @@ class BagianDokumenController extends Controller
             $selectedColumns = $defaultColumns;
         }
 
+        // Pilihan dropdown Vendor & Item Sub Kriteria.
+        //
+        // Dibatasi ke dokumen milik BAGIAN INI (bukan seluruh database): daftar
+        // vendor global memuat ratusan nama dari bagian lain yang tak pernah
+        // muncul di halaman ini, sehingga memilihnya hanya menghasilkan tabel
+        // kosong. Sengaja TIDAK terpengaruh filter lain yang sedang aktif —
+        // kalau ikut menyempit, user tak bisa berpindah vendor setelah memilih
+        // satu (opsi lain lenyap dari dropdown-nya sendiri).
+        $vendorList = Dokumen::where('bagian', $bagianCode)
+            ->whereNotNull('dibayar_kepada')
+            ->where('dibayar_kepada', '!=', '')
+            ->distinct()
+            ->orderBy('dibayar_kepada')
+            ->pluck('dibayar_kepada');
+
+        $subKriteriaList = Dokumen::where('bagian', $bagianCode)
+            ->whereNotNull('jenis_sub_pekerjaan')
+            ->where('jenis_sub_pekerjaan', '!=', '')
+            ->distinct()
+            ->orderBy('jenis_sub_pekerjaan')
+            ->pluck('jenis_sub_pekerjaan');
+
         // Kartu informasi — total keseluruhan milik bagian ini (tidak terpengaruh filter).
         $totalDokumen = Dokumen::where('bagian', $bagianCode)->count();
         $totalSudahDibayar = Dokumen::where('bagian', $bagianCode)
@@ -245,7 +281,9 @@ class BagianDokumenController extends Controller
             'totalBelumDibayar',
             'totalSudahDibayar',
             'notifPengembalian',
-            'perjalanan'
+            'perjalanan',
+            'vendorList',
+            'subKriteriaList'
         ));
     }
 

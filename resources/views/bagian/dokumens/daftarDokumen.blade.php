@@ -67,8 +67,16 @@
       box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
     }
 
+    /* SEMUA dropdown filter memakai gaya yang sama. .btn-month-select dulu
+       TIDAK terdaftar di sini sehingga jatuh ke gaya bawaan browser dan
+       tampak berbeda sendiri di antara tetangganya — diperbaiki 2026-08-13.
+       Menambah dropdown filter baru? Daftarkan kelasnya di KEDUA blok
+       (dasar + :hover), atau ia akan bernasib sama. */
     .btn-year-select,
-    .btn-status-select {
+    .btn-month-select,
+    .btn-status-select,
+    .btn-vendor-select,
+    .btn-subkriteria-select {
       padding: 10px 16px;
       background: white;
       color: #495057;
@@ -84,7 +92,10 @@
     }
 
     .btn-year-select:hover,
-    .btn-status-select:hover {
+    .btn-month-select:hover,
+    .btn-status-select:hover,
+    .btn-vendor-select:hover,
+    .btn-subkriteria-select:hover {
       border-color: #889717;
       background: #f8f9fa;
     }
@@ -1277,6 +1288,34 @@
           <option value="belum_dibayar" {{ request('status') == 'belum_dibayar' ? 'selected' : '' }}>Belum Dibayar</option>
           <option value="sudah_dibayar" {{ request('status') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
         </select>
+
+        {{-- Vendor = kolom `dibayar_kepada`. Daftarnya dibatasi ke dokumen milik
+             bagian ini saja (lihat BagianDokumenController) supaya tak memuat
+             ratusan nama bagian lain yang tak pernah muncul di halaman ini. --}}
+        <select name="vendor" class="btn-vendor-select" onChange="this.form.submit()">
+          <option value="">Semua Vendor</option>
+          @foreach($vendorList as $vendor)
+            <option value="{{ $vendor }}" {{ request('vendor') === $vendor ? 'selected' : '' }}>
+              {{ $vendor }}
+            </option>
+          @endforeach
+        </select>
+
+        {{-- Item Sub Kriteria = kolom `jenis_sub_pekerjaan`. Dropdown SENGAJA
+             disembunyikan bila bagian ini belum punya satu pun nilai: per
+             2026-08-13 baru 3 dokumen se-database yang mengisinya, dan dropdown
+             berisi hanya "Semua" tampak seperti kontrol rusak. Ia muncul sendiri
+             begitu datanya terisi — nol perubahan kode yang diperlukan. --}}
+        @if($subKriteriaList->isNotEmpty())
+          <select name="sub_kriteria" class="btn-subkriteria-select" onChange="this.form.submit()">
+            <option value="">Semua Item Sub Kriteria</option>
+            @foreach($subKriteriaList as $sub)
+              <option value="{{ $sub }}" {{ request('sub_kriteria') === $sub ? 'selected' : '' }}>
+                {{ $sub }}
+              </option>
+            @endforeach
+          </select>
+        @endif
         
         {{-- Tombol Terapkan: HANYA tampil di ponsel (lihat mobile.css). Di sana
              auto-submit ketiga dropdown dimatikan supaya popup tidak menutup
