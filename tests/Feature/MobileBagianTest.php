@@ -184,9 +184,26 @@ class MobileBagianTest extends TestCase
         // drawer/margin konten mobile secara diam-diam — sudah pernah
         // terjadi & diperbaiki di tengah program ini (lihat komentar di
         // layout, baris ~3123-3133).
+        //
+        // assertNotFalse pada KEDUA strpos WAJIB mendahului assertGreaterThan:
+        // strpos mengembalikan false saat string yang dicari tak ditemukan,
+        // dan PHP membandingkan bool dengan int lewat konversi ke bool —
+        // integer posisi mana pun (bukan nol) dikonversi ke true, jadi
+        // "<posisi ditemukan> > false" selalu TRUE. Tanpa penjaga ini, kalau
+        // "@stack('styles')" kelak dihapus/di-rename, strpos-nya
+        // mengembalikan false dan assertGreaterThan(false, <posisi apa
+        // pun>) tetap LULUS diam-diam — assertion yang dibuat untuk menutup
+        // lubang hampa (Finding 5, revisi sebelumnya) menanam lubang dorman
+        // baru. Dibuktikan: `php -r 'var_dump(3134 > false);'` → bool(true).
+        $posisiStack = strpos($layout, "@stack('styles')");
+        $this->assertNotFalse($posisiStack, "Penanda \"@stack('styles')\" tidak ditemukan di layout.");
+
+        $posisiMobileCss = strpos($layout, "Asset::versioned('css/mobile.css')");
+        $this->assertNotFalse($posisiMobileCss, 'Link mobile.css tidak ditemukan di layout.');
+
         $this->assertGreaterThan(
-            strpos($layout, "@stack('styles')"),
-            strpos($layout, "Asset::versioned('css/mobile.css')"),
+            $posisiStack,
+            $posisiMobileCss,
             'mobile.css WAJIB di-link SETELAH @stack(styles) — lihat komentar di layout.'
         );
     }
