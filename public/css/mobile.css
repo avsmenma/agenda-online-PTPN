@@ -168,4 +168,55 @@
     color: #2563eb;
     font-weight: 600;
   }
+
+  /* ===== Blok B — .bagian-layout: filter, toolbar, paginasi ===== */
+
+  body.bagian-layout .search-filter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  body.bagian-layout .search-input-group,
+  body.bagian-layout .search-filter-form .input-group {
+    width: 100%;
+  }
+
+  /* font-size 16px WAJIB: di bawah itu iOS otomatis memperbesar halaman saat
+     field difokus, dan user tak bisa mengembalikannya. */
+  body.bagian-layout .search-filter-form input,
+  body.bagian-layout .search-filter-form select {
+    width: 100%;
+    font-size: 16px;
+    min-height: 44px; /* ambang target sentuh Apple HIG */
+  }
+
+  /* Dua tombol toolbar berdampingan, berbagi lebar sama rata. */
+  body.bagian-layout .btn-refresh {
+    flex: 1 1 0;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  body.bagian-layout .pagination-container {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  body.bagian-layout .pagination-container .page-link {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Panel notifikasi pengembalian: beri ruang baca, jangan dipepet tepi layar. */
+  body.bagian-layout .notif-pengembalian__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }

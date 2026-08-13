@@ -315,4 +315,35 @@ class MobileBagianTest extends TestCase
         $this->assertStringContainsString("pembungkus.addEventListener('keydown'", $html);
         $this->assertStringContainsString('tampilkanPerjalanan(kartu)', $html);
     }
+
+    public function test_input_filter_mencegah_zoom_ios(): void
+    {
+        $css = $this->mobileCss();
+
+        $this->assertStringContainsString('.search-filter-form', $css);
+
+        // font-size minimal 16px pada input mencegah iOS auto-zoom saat field
+        // difokus — penyebab keluhan "layarnya meloncat sendiri". Dipersempit
+        // ke badan aturan ".search-filter-form input/select": Blok B kartu
+        // (Task 3) sudah punya deklarasi "font-size: 16px" sendiri
+        // (.mob-card__nilai) sehingga assertStringContainsString mentah di
+        // seluruh berkas lolos terus, tak peduli nilai font-size input
+        // sebenarnya — terbukti hampa saat dicoba mutasi jadi 14px.
+        $posisiAturan = strpos($css, 'body.bagian-layout .search-filter-form input');
+        $this->assertNotFalse($posisiAturan, 'Aturan .search-filter-form input tidak ditemukan.');
+
+        $akhirAturan = strpos($css, '}', $posisiAturan);
+        $this->assertNotFalse($akhirAturan, 'Aturan .search-filter-form input tidak tertutup.');
+
+        $badanAturan = substr($css, $posisiAturan, $akhirAturan - $posisiAturan);
+        $this->assertStringContainsString('font-size: 16px', $badanAturan);
+    }
+
+    public function test_target_sentuh_minimal_44px(): void
+    {
+        $css = $this->mobileCss();
+
+        // 44px = ambang target sentuh Apple HIG.
+        $this->assertStringContainsString('min-height: 44px', $css);
+    }
 }
