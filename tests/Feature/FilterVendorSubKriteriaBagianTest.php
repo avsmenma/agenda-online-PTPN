@@ -92,6 +92,72 @@ class FilterVendorSubKriteriaBagianTest extends TestCase
         $this->assertStringNotContainsString('V004_2026', $html);
     }
 
+    public function test_setiap_opsi_dropdown_vendor_menghasilkan_minimal_satu_dokumen(): void
+    {
+        // Jaminan yang SESUNGGUHNYA dibutuhkan user: tak ada opsi dropdown yang
+        // "mati" — memilih opsi mana pun harus menghasilkan hasil, bukan tabel
+        // kosong. Ini yang menangkap regresi bila daftar dropdown kelak diambil
+        // dari sumber yang berbeda dengan sumber filternya.
+        //
+        // CATATAN penting soal kapitalisasi: di produksi (MySQL) operator menulis
+        // nama yang sama dengan kapitalisasi berbeda — "4 Orang Counterpart" (7
+        // dok) vs "4 orang Counterpart". MySQL membandingkan TANPA peka huruf,
+        // jadi dropdown menggabungkannya jadi satu entri DAN filternya tetap
+        // menangkap seluruh varian (diverifikasi langsung di produksi
+        // 2026-08-13: WHERE = '4 Orang Counterpart' -> 7 baris, sama dengan
+        // jumlah seluruh varian). SQLite yang dipakai test ini justru PEKA
+        // huruf, sehingga perilaku penggabungan itu TIDAK dapat diuji di sini —
+        // menuliskannya sebagai test hanya akan menghasilkan test yang lulus
+        // atau gagal karena alasan yang salah. Yang diuji di sini adalah
+        // jaminan yang berlaku di KEDUA database.
+        $this->dokumen('E001', ['dibayar_kepada' => 'PT Alpha']);
+        $this->dokumen('E002', ['dibayar_kepada' => 'PT Beta']);
+        $this->dokumen('E003', ['dibayar_kepada' => 'PT Gamma']);
+
+        // Dokumen milik bagian LAIN wajib ada di sini: tanpa ini, daftar
+        // dropdown yang keliru diambil dari seluruh bagian menghasilkan
+        // himpunan yang sama persis dengan yang benar, sehingga test lolos
+        // meski kodenya rusak (dibuktikan lewat mutasi 2026-08-13).
+        $this->dokumen('E004', [
+            'bagian'         => 'SKH',
+            'dibayar_kepada' => 'PT Milik Bagian Lain',
+        ]);
+
+        $html = $this->actingAs($this->userBagian())
+            ->get('/bagian/documents')
+            ->assertOk()
+            ->getContent();
+
+        // Ambil semua nilai opsi dropdown vendor.
+        $posisiSelect = strpos($html, 'name="vendor"');
+        $this->assertNotFalse($posisiSelect);
+        $akhirSelect = strpos($html, '</select>', $posisiSelect);
+        $badanSelect = substr($html, $posisiSelect, $akhirSelect - $posisiSelect);
+
+        preg_match_all('/<option value="([^"]+)"/', $badanSelect, $cocok);
+        $opsi = $cocok[1];
+
+        $this->assertNotEmpty($opsi, 'Dropdown vendor tidak punya satu pun opsi.');
+
+        foreach ($opsi as $vendor) {
+            $nilai = html_entity_decode($vendor, ENT_QUOTES);
+
+            $hasil = $this->actingAs($this->userBagian())
+                ->get('/bagian/documents?vendor=' . urlencode($nilai))
+                ->assertOk()
+                ->getContent();
+
+            // Dicari kelas .empty-state (penanda struktural), bukan kalimatnya:
+            // teks "Belum ada dokumen" mudah berubah saat copy diperbaiki, dan
+            // assertion yang bergantung padanya akan lolos palsu setelahnya.
+            $this->assertStringNotContainsString(
+                'class="empty-state"',
+                $hasil,
+                "Opsi vendor \"{$nilai}\" tidak menghasilkan dokumen apa pun — opsi mati di dropdown."
+            );
+        }
+    }
+
     public function test_filter_item_sub_kriteria_menyaring_dokumen(): void
     {
         $this->dokumen('S001', ['jenis_sub_pekerjaan' => 'Biaya Sumbangan dan Iuran']);
