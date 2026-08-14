@@ -253,4 +253,72 @@ class PerjalananDokumenBagianTest extends TestCase
             ->assertSee('window.tampilkanPerjalanan = function', false)
             ->assertSee('data-perjalanan', false);
     }
+
+    public function test_kartu_informasi_bagian_empat_kartu_dan_reaktif_terhadap_filter(): void
+    {
+        // 2 dokumen lunas di 2026
+        $this->dokumen('101', [
+            'tahun'            => 2026,
+            'bulan'            => 'Agustus',
+            'nilai_rupiah'     => 5000000,
+            'tanggal_dibayar'  => '2026-08-10',
+            'status_pembayaran'=> 'sudah_dibayar',
+            'dibayar_kepada'   => 'Vendor A',
+        ]);
+        $this->dokumen('102', [
+            'tahun'            => 2026,
+            'bulan'            => 'Agustus',
+            'nilai_rupiah'     => 3000000,
+            'tanggal_dibayar'  => '2026-08-11',
+            'status_pembayaran'=> 'sudah_dibayar',
+            'dibayar_kepada'   => 'Vendor B',
+        ]);
+
+        // 1 dokumen belum bayar di 2026
+        $this->dokumen('103', [
+            'tahun'            => 2026,
+            'bulan'            => 'Agustus',
+            'nilai_rupiah'     => 2000000,
+            'tanggal_dibayar'  => null,
+            'status_pembayaran'=> null,
+            'dibayar_kepada'   => 'Vendor A',
+        ]);
+
+        // 1 dokumen di tahun 2025
+        $this->dokumen('104', [
+            'tahun'            => 2025,
+            'bulan'            => 'Juli',
+            'nilai_rupiah'     => 1000000,
+            'tanggal_dibayar'  => null,
+            'status_pembayaran'=> null,
+            'dibayar_kepada'   => 'Vendor A',
+        ]);
+
+        $user = $this->userBagian('AKN');
+
+        // 1. Tanpa filter: total 4 dokumen (2 sudah bayar, 2 belum bayar, total nilai 11.000.000)
+        $resAll = $this->actingAs($user)->get(route('bagian.documents.index'))->assertOk();
+        $resAll->assertSee('Total Dokumen AKN', false);
+        $resAll->assertSee('Belum Dibayar', false);
+        $resAll->assertSee('Sudah Dibayar', false);
+        $resAll->assertSee('Nilai Dokumen', false);
+        $resAll->assertSee('Rp 11.000.000', false);
+
+        // 2. Filter tahun 2026: total 3 dokumen (2 sudah bayar, 1 belum bayar, total nilai 10.000.000)
+        $res2026 = $this->actingAs($user)->get(route('bagian.documents.index', ['tahun' => 2026]))->assertOk();
+        $res2026->assertSee('Rp 10.000.000', false);
+
+        // 3. Filter tahun 2026 + status belum_dibayar: 1 dokumen, total nilai 2.000.000
+        $resUnpaid2026 = $this->actingAs($user)->get(route('bagian.documents.index', [
+            'tahun'  => 2026,
+            'status' => 'belum_dibayar',
+        ]))->assertOk();
+        $resUnpaid2026->assertSee('Rp 2.000.000', false);
+        $resUnpaid2026->assertSee('nilai belum dibayar', false);
+
+        // 4. Filter vendor A: 3 dokumen (1 sudah bayar 5jt, 1 belum bayar 2jt, 1 2025 belum bayar 1jt = 8.000.000)
+        $resVendorA = $this->actingAs($user)->get(route('bagian.documents.index', ['vendor' => 'Vendor A']))->assertOk();
+        $resVendorA->assertSee('Rp 8.000.000', false);
+    }
 }
+
