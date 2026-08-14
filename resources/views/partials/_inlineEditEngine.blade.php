@@ -165,9 +165,10 @@
     nama_pengirim       : 'text',
     no_berita_acara     : 'text',
     no_spk              : 'text',
+    nomor_po            : 'text',
     nomor_miro          : 'text',
     no_faktur           : 'text',
-    pemaraf             : 'text',
+    pemaraf             : 'select_pemaraf',
     jenis_pph           : 'text',
     dpp_pph             : 'number',
     ppn_terhutang       : 'number',
@@ -463,6 +464,7 @@
     else if (field === 'select_jenis')    options = IE_JENIS_BAYAR.map(k => ({ value: k.nama_jenis_pembayaran, label: k.nama_jenis_pembayaran }));
     else if (field === 'select_bulan')    options = BULAN_LIST.map(b  => ({ value: b, label: b }));
     else if (field === 'select_bagian')   options = IE_BAGIAN.map(b   => ({ value: b.kode, label: (b.nama && b.nama !== b.kode) ? (b.kode + ' — ' + b.nama) : b.kode }));
+    else if (field === 'select_pemaraf')  options = [{ value: 'Yuni', label: 'Yuni' }, { value: 'Sekar', label: 'Sekar' }];
     const empty = document.createElement('option');
     empty.value = ''; empty.textContent = '-- Pilih --';
     sel.appendChild(empty);
