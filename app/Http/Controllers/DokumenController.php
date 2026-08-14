@@ -922,7 +922,7 @@ class DokumenController extends Controller
 
         // Normalize role aliases: 'verifikasi' and 'team_verifikasi' are the same role
         $normaliseRole = function (string $r): string {
-            return in_array($r, ['verifikasi', 'team_verifikasi']) ? 'team_verifikasi' : $r;
+            return in_array($r, ['verifikasi', 'team_verifikasi', 'team verifikasi']) ? 'team_verifikasi' : $r;
         };
         $userRoleNorm  = $normaliseRole($userRole);
         $handlerNorm   = $normaliseRole($currentHandler);
@@ -981,7 +981,7 @@ class DokumenController extends Controller
         $editableFields = [
             'nomor_agenda', 'nomor_spp', 'tanggal_spp', 'uraian_spp', 'nilai_rupiah',
             'kategori', 'jenis_dokumen', 'jenis_sub_pekerjaan', 'jenis_pembayaran',
-            'kebun', 'bagian', 'nama_pengirim', 'dibayar_kepada',
+            'kebun', 'bagian', 'nama_pengirim', 'dibayar_kepada', 'nomor_po',
             'no_berita_acara', 'tanggal_berita_acara',
             'no_spk', 'tanggal_spk', 'tanggal_berakhir_spk',
             'nomor_miro', 'tanggal_miro', 'no_faktur', 'tanggal_faktur',
@@ -1084,6 +1084,47 @@ class DokumenController extends Controller
                     'success'       => true,
                     'display_value' => $displayValue ?: '-',
                     'raw_value'     => $displayValue, // raw value = same as display for text input
+                ]);
+            } elseif ($field === 'nomor_po') {
+                // Save to dokumenPos relation
+                $dokumen->dokumenPos()->delete();
+                $rawValue = $value ?? '';
+                $normalized = preg_replace('/[\r\n]+/', ',', $rawValue);
+                $pos = array_filter(array_map('trim', explode(',', $normalized)));
+                foreach ($pos as $poNum) {
+                    if (!empty($poNum)) {
+                        \App\Models\DokumenPO::create(['dokumen_id' => $dokumen->id, 'nomor_po' => $poNum]);
+                    }
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('dokumens', 'NO_PO')) {
+                    $dokumen->NO_PO = !empty($pos) ? implode(', ', $pos) : null;
+                    $dokumen->save();
+                }
+                DB::commit();
+                $displayValue = $dokumen->dokumenPos()->pluck('nomor_po')->filter()->implode(', ');
+                return response()->json([
+                    'success'       => true,
+                    'display_value' => $displayValue ?: '-',
+                    'raw_value'     => $displayValue,
+                ]);
+            } elseif ($field === 'pemaraf') {
+                $saveValue = !empty($value) ? trim($value) : null;
+                $dokumen->pemaraf = $saveValue;
+                if ($saveValue && empty($dokumen->tanggal_paraf)) {
+                    $dokumen->tanggal_paraf = now();
+                } elseif (!$saveValue) {
+                    $dokumen->tanggal_paraf = null;
+                }
+                $dokumen->save();
+                DB::commit();
+                return response()->json([
+                    'success'           => true,
+                    'display_value'     => $saveValue ?: '-',
+                    'raw_value'         => $saveValue,
+                    'raw_tanggal_paraf' => $dokumen->tanggal_paraf ? $dokumen->tanggal_paraf->format('Y-m-d H:i:s') : null,
+                    'dates'             => [
+                        'tanggal_paraf' => $dokumen->tanggal_paraf ? $dokumen->tanggal_paraf->format('d/m/Y H:i') : '-',
+                    ],
                 ]);
             }
 
