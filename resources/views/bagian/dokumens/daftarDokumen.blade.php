@@ -1102,6 +1102,13 @@
     {{-- Kartu Informasi (partial bersama _infoCards — gaya kartu keuangan) --}}
     @php
       $status = request('status');
+      $queryWithoutStatus = request()->except(['status', 'page']);
+      $subNilai = match($status) {
+        'belum_dibayar' => 'nilai belum dibayar',
+        'sudah_dibayar' => 'nilai sudah dibayar',
+        default         => 'total nilai dokumen',
+      };
+
       $cards = [
         [
           'label'  => 'Total Dokumen ' . $bagianCode,
@@ -1109,7 +1116,7 @@
           'sub'    => 'seluruh dokumen bagian',
           'icon'   => '<svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>',
           'iconBg' => '#f0f4ff',
-          'href'   => route('bagian.documents.index'),
+          'href'   => route('bagian.documents.index', $queryWithoutStatus),
           'active' => empty($status),
         ],
         [
@@ -1119,7 +1126,7 @@
           'icon'       => '<svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
           'iconBg'     => '#fffbeb',
           'valueColor' => '#f59e0b',
-          'href'       => route('bagian.documents.index', ['status' => 'belum_dibayar']),
+          'href'       => route('bagian.documents.index', array_merge($queryWithoutStatus, ['status' => 'belum_dibayar'])),
           'active'     => $status === 'belum_dibayar',
         ],
         [
@@ -1129,8 +1136,19 @@
           'icon'       => '<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
           'iconBg'     => '#ecfdf5',
           'valueColor' => '#10b981',
-          'href'       => route('bagian.documents.index', ['status' => 'sudah_dibayar']),
+          'href'       => route('bagian.documents.index', array_merge($queryWithoutStatus, ['status' => 'sudah_dibayar'])),
           'active'     => $status === 'sudah_dibayar',
+        ],
+        [
+          'label'        => 'Nilai Dokumen',
+          'value'        => $totalNilaiDokumen ?? $totalNilaiFiltered ?? 0,
+          'displayValue' => 'Rp ' . number_format($totalNilaiDokumen ?? $totalNilaiFiltered ?? 0, 0, ',', '.'),
+          'sub'          => $subNilai,
+          'icon'         => '<svg viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>',
+          'iconBg'       => '#f5f3ff',
+          'valueColor'   => '#8b5cf6',
+          'href'         => null,
+          'active'       => false,
         ],
       ];
     @endphp
