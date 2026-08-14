@@ -81,9 +81,10 @@
     nama_pengirim: 'text',
     no_berita_acara: 'text',
     no_spk: 'text',
+    nomor_po: 'text',
     nomor_miro: 'text',
     no_faktur: 'text',
-    pemaraf: 'text',
+    pemaraf: 'select_pemaraf',
     jenis_pph: 'text',
     dpp_pph: 'number',
     ppn_terhutang: 'number',
@@ -289,6 +290,11 @@
       opts = (IE.bagian || []).map(function (b) {
         return { value: b.kode, label: (b.nama && b.nama !== b.kode) ? (b.kode + ' — ' + b.nama) : b.kode };
       });
+    } else if (type === 'select_pemaraf') {
+      opts = [
+        { value: 'Yuni', label: 'Yuni' },
+        { value: 'Sekar', label: 'Sekar' },
+      ];
     }
     return [{ value: '', label: '-- Pilih --' }].concat(opts);
   }
@@ -518,6 +524,19 @@
       patch.link_safe = raw || null;
     } else if (field === 'link_dokumen_pajak') {
       patch.link_dokumen_pajak_safe = raw || null;
+    } else if (field === 'nomor_po') {
+      patch.nomor_po = data.display_value || raw || '-';
+    } else if (field === 'pemaraf') {
+      patch.pemaraf = raw || null;
+      if (data.dates && data.dates.tanggal_paraf) {
+        const dates = {};
+        Object.assign(dates, rowData.dates || {});
+        dates.tanggal_paraf = data.dates.tanggal_paraf;
+        patch.dates = dates;
+      }
+      if (data.raw_tanggal_paraf) {
+        patch.tanggal_paraf = data.raw_tanggal_paraf;
+      }
     }
     return patch;
   }
@@ -984,16 +1003,21 @@
       }
       cols.push(buildColumnDef(c));
     });
-    // Kolom tetap terparameter per-role (mis. akutansi: Deadline + Status). Tanpa
-    // editor Tabulator; formatter merender objek server. Operator tak mengirim
-    // extraColumns → tak ada kolom tambahan (paritas).
+    // Kolom tetap terparameter per-role (mis. akutansi: Deadline + Status, verifikasi: Paraf).
+    // Mendukung editable: true bila disetel pada extraColumns (mis. kolom Pemaraf).
     (cfg.extraColumns || []).forEach(function (ec) {
+      const isEditable = ec.editable !== undefined ? ec.editable : false;
       const def = {
         title: ec.title,
         field: ec.field,
         formatter: EXTRA_FORMATTERS[ec.formatter] || fmtPlain,
-        editable: false,
+        editable: isEditable ? editableGate : false,
       };
+      if (isEditable) {
+        const ed = editorFor(ec.field);
+        def.editor = ed.editor;
+        if (ed.editorParams) def.editorParams = ed.editorParams;
+      }
       // Lebar opsional per kolom tetap. Tanpa ini layout 'fitDataStretch' menyetel
       // lebar dari isi terlebar — untuk kolom Deadline itu berarti pil status yang
       // memaksa kolom jadi lebar. Dipakai view peran lewat extraColumns[].width.
