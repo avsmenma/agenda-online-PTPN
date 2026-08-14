@@ -3098,7 +3098,7 @@
   position: fixed;
   top: 16px;
   right: 24px;
-  z-index: 1050;
+  z-index: 9999;
   display: flex;
   flex-direction: column;
   gap: 6px;
