@@ -3113,46 +3113,52 @@
 
 <style>
 .floating-total-wrap {
-  position: fixed;
-  top: 64px;
-  right: 24px;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  pointer-events: none;
+  display: none;
 }
-.floating-total-item {
-  pointer-events: auto;
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: 10px;
-  padding: 7px 13px;
-  box-shadow: 0 3px 14px rgba(0,0,0,0.10);
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  border: 1px solid rgba(0,0,0,0.05);
-  font-size: 13px;
-  font-weight: 600;
-  color: #083E40;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.floating-total-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 5px 18px rgba(0,0,0,0.13);
-}
-.floating-total-item i {
-  font-size: 14px;
-  color: #0a5f52;
-  opacity: 0.75;
-}
-.flt-value {
-  white-space: nowrap;
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .floating-total-item { background: rgba(255,255,255,0.98); }
+
+@media (max-width: 768px) {
+  .floating-total-wrap {
+    position: fixed;
+    top: 64px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;
+  }
+  .floating-total-item {
+    pointer-events: auto;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 10px;
+    padding: 7px 13px;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.10);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid rgba(0,0,0,0.05);
+    font-size: 13px;
+    font-weight: 600;
+    color: #083E40;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .floating-total-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 18px rgba(0,0,0,0.13);
+  }
+  .floating-total-item i {
+    font-size: 14px;
+    color: #0a5f52;
+    opacity: 0.75;
+  }
+  .flt-value {
+    white-space: nowrap;
+  }
+  @supports not (backdrop-filter: blur(1px)) {
+    .floating-total-item { background: rgba(255,255,255,0.98); }
+  }
 }
 </style>
 @endif
