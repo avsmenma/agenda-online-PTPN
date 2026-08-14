@@ -100,4 +100,79 @@ class InlineUpdateFieldWhitelistTest extends TestCase
             "FIELD_TYPE tidak memetakan tanggal_selesai_diproses ke 'date' — editornya akan jadi teks biasa."
         );
     }
+
+    public function test_inline_update_nomor_po_menyimpan_ke_relasi_dokumen_po(): void
+    {
+        $dokumen = $this->dokumen();
+
+        $res = $this->actingAs($this->operator())
+            ->patchJson(route('documents.inline-update', $dokumen), [
+                'field' => 'nomor_po',
+                'value' => 'PO-001/VIII/2026, PO-002/VIII/2026',
+            ]);
+
+        $res->assertOk()
+            ->assertJson([
+                'success'       => true,
+                'display_value' => 'PO-001/VIII/2026, PO-002/VIII/2026',
+                'raw_value'     => 'PO-001/VIII/2026, PO-002/VIII/2026',
+            ]);
+
+        $this->assertCount(2, $dokumen->fresh()->dokumenPos);
+        $this->assertEquals(['PO-001/VIII/2026', 'PO-002/VIII/2026'], $dokumen->fresh()->dokumenPos->pluck('nomor_po')->all());
+    }
+
+    public function test_inline_update_pemaraf_oleh_verifikasi_otomatis_mengisi_tanggal_paraf(): void
+    {
+        $verifikator = User::factory()->create(['role' => 'team_verifikasi']);
+        $dokumen = Dokumen::create([
+            'nomor_agenda'    => '2_2026',
+            'bulan'           => 'Agustus',
+            'tahun'           => 2026,
+            'tanggal_masuk'   => '2026-08-01',
+            'status'          => 'sedang diproses',
+            'created_by'      => 'operator',
+            'current_handler' => 'team_verifikasi',
+        ]);
+
+        $res = $this->actingAs($verifikator)
+            ->patchJson(route('documents.inline-update', $dokumen), [
+                'field' => 'pemaraf',
+                'value' => 'Yuni',
+            ]);
+
+        $res->assertOk()
+            ->assertJson([
+                'success'       => true,
+                'display_value' => 'Yuni',
+                'raw_value'     => 'Yuni',
+            ]);
+
+        $fresh = $dokumen->fresh();
+        $this->assertSame('Yuni', $fresh->pemaraf);
+        $this->assertNotNull($fresh->tanggal_paraf);
+    }
+
+    public function test_document_tabulator_js_memetakan_pemaraf_ke_select_pemaraf(): void
+    {
+        $js = file_get_contents(public_path('js/document-tabulator.js'));
+
+        $this->assertStringContainsString(
+            "pemaraf: 'select_pemaraf',",
+            $js,
+            "FIELD_TYPE tidak memetakan pemaraf ke 'select_pemaraf'."
+        );
+
+        $this->assertStringContainsString(
+            "{ value: 'Yuni', label: 'Yuni' }",
+            $js,
+            "buildSelectValues tidak memuat opsi Yuni."
+        );
+
+        $this->assertStringContainsString(
+            "{ value: 'Sekar', label: 'Sekar' }",
+            $js,
+            "buildSelectValues tidak memuat opsi Sekar."
+        );
+    }
 }
