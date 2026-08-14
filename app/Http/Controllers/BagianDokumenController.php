@@ -59,26 +59,62 @@ class BagianDokumenController extends Controller
             abort(403, 'Bagian code not configured for this user');
         }
 
-        // View-only monitoring: tampilkan semua dokumen milik bagian ini (kolom `bagian`)
-        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData', 'roleStatuses'])
-            ->where('bagian', $bagianCode)
-            // Urut TERBARU → TERLAMA berdasarkan angka nomor agenda (bagian sebelum "_",
-            // mis. "3075_2026" → 3075). REGEXP lama gagal karena ada sufiks "_2026".
-            ->orderByRaw('CAST(SUBSTRING_INDEX(nomor_agenda, "_", 1) AS UNSIGNED) DESC')
-            ->orderBy('created_at', 'desc');
+        // View-only monitoring: query dasar dokumen milik bagian ini
+        $baseQuery = Dokumen::where('bagian', $bagianCode);
 
         // Search functionality
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
+            $baseQuery->where(function ($q) use ($search) {
                 $q->where('nomor_agenda', 'like', "%{$search}%")
                     ->orWhere('nomor_spp', 'like', "%{$search}%")
                     ->orWhere('uraian_spp', 'like', "%{$search}%");
             });
         }
 
+        // Month filter
+        if ($request->filled('bulan')) {
+            $baseQuery->where('bulan', $request->bulan);
+        }
+    
+        // Year filter
+        if ($request->filled('tahun')) {
+            $baseQuery->where('tahun', $request->tahun);
+        }
+
+        // Vendor filter — kolom `dibayar_kepada` (nama penerima pembayaran).
+        // Dicocokkan PERSIS, bukan LIKE: nilainya diambil dari daftar dropdown
+        // yang dibangun dari kolom yang sama, jadi selalu cocok utuh. LIKE akan
+        // membuat "PT Sumber" ikut menjaring "PT Sumber Makmur Jaya".
+        if ($request->filled('vendor')) {
+            $baseQuery->where('dibayar_kepada', $request->vendor);
+        }
+
+        // Item Sub Kriteria — disimpan di kolom `jenis_sub_pekerjaan`
+        // (lihat DokumenController: ItemSubKriteria dipetakan ke kolom ini).
+        if ($request->filled('sub_kriteria')) {
+            $baseQuery->where('jenis_sub_pekerjaan', $request->sub_kriteria);
+        }
+
+        // Kartu informasi — dihitung dinamis mengikuti filter aktif (search, tahun, bulan, vendor, sub_kriteria).
+        $totalDokumen = (clone $baseQuery)->count();
+        $totalSudahDibayar = (clone $baseQuery)
+            ->where(function ($q) {
+                $q->whereNotNull('tanggal_dibayar')
+                    ->orWhere('status_pembayaran', 'sudah_dibayar');
+            })
+            ->count();
+        $totalBelumDibayar = $totalDokumen - $totalSudahDibayar;
+
+        // Query tabel: terapkan sorting, eager load, dan filter status bila dipilih
+        $query = (clone $baseQuery)->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'roleData', 'roleStatuses'])
+            // Urut TERBARU → TERLAMA berdasarkan angka nomor agenda (bagian sebelum "_",
+            // mis. "3075_2026" → 3075). REGEXP lama gagal karena ada sufiks "_2026".
+            ->orderByRaw('CAST(SUBSTRING_INDEX(nomor_agenda, "_", 1) AS UNSIGNED) DESC')
+            ->orderBy('created_at', 'desc');
+
         // Status filter with expanded options
-        if ($request->has('status') && $request->status) {
+        if ($request->filled('status')) {
             $statusFilter = $request->status;
 
             // Hanya 2 filter status (selaras dgn kartu info): sudah / belum dibayar.
@@ -99,33 +135,9 @@ class BagianDokumenController extends Controller
             // Nilai status lain (peninggalan lama) diabaikan.
         }
 
-        // Month filter
-
-        if ($request->has('bulan') && $request->bulan) {
-            $query->where('bulan', $request->bulan);
-        }
-    
-        // Year filter
-        if ($request->has('tahun') && $request->tahun) {
-            $query->where('tahun', $request->tahun);
-        }
-
-        // Vendor filter — kolom `dibayar_kepada` (nama penerima pembayaran).
-        // Dicocokkan PERSIS, bukan LIKE: nilainya diambil dari daftar dropdown
-        // yang dibangun dari kolom yang sama, jadi selalu cocok utuh. LIKE akan
-        // membuat "PT Sumber" ikut menjaring "PT Sumber Makmur Jaya".
-        if ($request->filled('vendor')) {
-            $query->where('dibayar_kepada', $request->vendor);
-        }
-
-        // Item Sub Kriteria — disimpan di kolom `jenis_sub_pekerjaan`
-        // (lihat DokumenController: ItemSubKriteria dipetakan ke kolom ini).
-        if ($request->filled('sub_kriteria')) {
-            $query->where('jenis_sub_pekerjaan', $request->sub_kriteria);
-        }
-
-        // Hitung total nilai dari SEMUA hasil filter (sebelum paginasi)
-        $totalNilaiFiltered = (clone $query)->sum('nilai_rupiah');
+        // Hitung total nilai dari SEMUA hasil filter aktif saat ini (sebelum paginasi)
+        $totalNilaiDokumen = (clone $query)->sum('nilai_rupiah');
+        $totalNilaiFiltered = $totalNilaiDokumen;
 
         // Deteksi apakah ada filter aktif
         $isFiltered = $request->filled('search')
@@ -230,16 +242,6 @@ class BagianDokumenController extends Controller
             ->orderBy('jenis_sub_pekerjaan')
             ->pluck('jenis_sub_pekerjaan');
 
-        // Kartu informasi — total keseluruhan milik bagian ini (tidak terpengaruh filter).
-        $totalDokumen = Dokumen::where('bagian', $bagianCode)->count();
-        $totalSudahDibayar = Dokumen::where('bagian', $bagianCode)
-            ->where(function ($q) {
-                $q->whereNotNull('tanggal_dibayar')
-                    ->orWhere('status_pembayaran', 'sudah_dibayar');
-            })
-            ->count();
-        $totalBelumDibayar = $totalDokumen - $totalSudahDibayar;
-
         // Notifikasi pengembalian yang belum dibaca (in-app). Ditulis oleh
         // App\Services\DocumentReturnNotifier saat dokumen dikembalikan ke bagian ini.
         // Bagian hanya punya SATU halaman, jadi panel di sini sudah setara "lonceng
@@ -291,6 +293,7 @@ class BagianDokumenController extends Controller
             'totalDokumen',
             'totalBelumDibayar',
             'totalSudahDibayar',
+            'totalNilaiDokumen',
             'notifPengembalian',
             'perjalanan',
             'vendorList',
