@@ -45,7 +45,7 @@
             ['field' => 'deadline',      'title' => 'Deadline',       'formatter' => 'deadline', 'width' => 110],
             ['field' => 'status_badge',  'title' => 'Status',         'formatter' => 'akutansiStatus'],
             ['field' => 'tanggal_paraf', 'title' => 'Tanggal Paraf',  'formatter' => 'date'],
-            ['field' => 'pemaraf',       'title' => 'Pemaraf',        'formatter' => 'parafBadge'],
+            ['field' => 'pemaraf',       'title' => 'Pemaraf',        'formatter' => 'parafBadge', 'editable' => true],
         ],
         'ie'               => [
             'kategori' => $ieKategoriList ?? [],
