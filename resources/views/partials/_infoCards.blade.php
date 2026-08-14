@@ -18,7 +18,7 @@
         <{{ $tag }} class="wd-card{{ $isActive ? ' wd-card--active' : '' }}"@if ($hasHref) href="{{ $card['href'] }}"@endif>
             <div class="wd-card-label">{{ $card['label'] }}</div>
             <div class="wd-card-icon" style="background:{{ $card['iconBg'] }}">{!! $card['icon'] !!}</div>
-            <div class="wd-card-value" style="color:{{ $valueColor }}">{{ number_format($card['value'], 0, ',', '.') }}</div>
+            <div class="wd-card-value" style="color:{{ $valueColor }}">{{ $card['displayValue'] ?? (is_numeric($card['value']) ? number_format($card['value'], 0, ',', '.') : $card['value']) }}</div>
             <div class="wd-card-sub">{{ $card['sub'] }}</div>
         </{{ $tag }}>
     @endforeach
@@ -50,8 +50,8 @@
 
   .wd-card-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
     color: #a0aec0; margin-bottom: 10px; padding-right: 44px; line-height: 1.3; }
-  .wd-card-value { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; font-size: 26px; font-weight: 700;
-    color: #1a2340; line-height: 1; margin-bottom: 6px; }
+  .wd-card-value { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 700;
+    color: #1a2340; line-height: 1.15; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .wd-card-sub { font-size: 11px; font-weight: 500; color: #a0aec0; }
   .wd-card-icon { position: absolute; right: 16px; top: 16px; width: 36px; height: 36px; border-radius: 9px;
     display: flex; align-items: center; justify-content: center; }
