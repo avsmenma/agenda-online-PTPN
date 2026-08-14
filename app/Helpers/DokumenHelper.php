@@ -213,8 +213,10 @@ class DokumenHelper
             $userRoleLower = strtolower($userRole);
             $currentHandlerLower = strtolower($dokumen->current_handler ?? '');
 
+            $norm = fn(string $r): string => in_array($r, ['verifikasi', 'team_verifikasi', 'team verifikasi']) ? 'team_verifikasi' : $r;
+
             // Untuk role lain, gunakan logic standar
-            return $currentHandlerLower === $userRoleLower;
+            return $norm($currentHandlerLower) === $norm($userRoleLower);
         }
 
         return true;
