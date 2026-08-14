@@ -451,7 +451,7 @@
        agar public/js/document-tabulator.js membaca nama filter langsung dari DOM
        (CLAUDE.md §7 — toolbarFilterControls() generik lintas-role). Aturan global
        .tabulator-toolbar (public/css/tabulator-agenda.css) men-set display:flex;
-       form ini punya dua anak blok (.filter-row + .advanced-filter-panel) yang
+       form ini punya anak blok (.filter-row) dan modal popup filter lanjutan yang
        harus tetap bertumpuk vertikal — netralkan di sini (spesifisitas ID menang
        tanpa !important). */
     #filterForm.tabulator-toolbar {
@@ -1395,20 +1395,6 @@
       transform: translateY(-1px);
     }
 
-    .advanced-filter-toggle.active {
-      background: var(--brand-primary);
-      color: white;
-      border-color: var(--brand-primary);
-    }
-
-    .advanced-filter-toggle i {
-      transition: transform 0.3s ease;
-    }
-
-    .advanced-filter-toggle.active i.fa-chevron-down {
-      transform: rotate(180deg);
-    }
-
     .active-filters-badge {
       display: inline-flex;
       align-items: center;
@@ -1421,32 +1407,6 @@
       font-weight: 700;
       border-radius: 50%;
       margin-left: 0.25rem;
-    }
-
-    .advanced-filter-toggle.active .active-filters-badge {
-      background: white;
-      color: var(--brand-primary);
-    }
-
-    .advanced-filter-panel {
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      transition: all 0.4s ease;
-      margin-top: 0;
-    }
-
-    .advanced-filter-panel.show {
-      max-height: 500px;
-      opacity: 1;
-      margin-top: 1rem;
-    }
-
-    .advanced-filter-content {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-lighter);
-      border-radius: var(--radius-lg);
-      padding: 1.25rem;
     }
 
     .advanced-filter-grid {
@@ -1500,14 +1460,6 @@
       box-shadow: 0 0 0 3px var(--brand-primary-glow);
     }
 
-    .advanced-filter-actions {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 1rem;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-
     .btn-advanced-reset {
       padding: 0.625rem 1.25rem;
       background: var(--bg-tertiary);
@@ -1533,10 +1485,6 @@
     @media (max-width: 768px) {
       .advanced-filter-grid {
         grid-template-columns: 1fr 1fr;
-      }
-
-      .advanced-filter-actions {
-        flex-direction: column;
       }
 
       .btn-advanced-reset {
@@ -1840,6 +1788,96 @@
       visibility: hidden;
     }
 
+    /* Advanced Filter Modal Overlay — mengikuti pola modal kustomisasi kolom */
+    .advanced-filter-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+      overflow-y: auto;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .advanced-filter-modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: afFadeIn 0.2s ease;
+    }
+    @keyframes afFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .afm-content {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+      width: 100%;
+      max-width: 750px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: afSlideIn 0.25s ease;
+    }
+    @keyframes afSlideIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .afm-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+      flex-shrink: 0;
+    }
+    .afm-header h5 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .afm-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      font-size: 1.25rem;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.15s;
+    }
+    .afm-close:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .afm-body {
+      padding: 1.25rem 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .afm-footer {
+      display: flex;
+      justify-content: flex-end;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e2e8f0;
+      background: #f8fafc;
+      flex-shrink: 0;
+    }
+
     @media (max-width: 768px) {
       #documentTableContainer .dtable-toolbar {
         align-items: flex-start;
@@ -2017,11 +2055,10 @@
               $activeAdvancedFilterCount++;
           @endphp
 
-          <button type="button" class="advanced-filter-toggle {{ $activeAdvancedFilterCount > 0 ? 'active' : '' }}"
-            id="advancedFilterToggle">
+          <button type="button" class="advanced-filter-toggle"
+            id="advancedFilterToggle" onclick="openAdvancedFilterModal()">
             <i class="fa-solid fa-sliders-h"></i>
             Filter Lanjutan
-            <i class="fa-solid fa-chevron-down"></i>
             @if($activeAdvancedFilterCount > 0)
               <span class="active-filters-badge">{{ $activeAdvancedFilterCount }}</span>
             @endif
@@ -2030,95 +2067,102 @@
         </div>
       </div>
 
-      <!-- Advanced Filter Panel -->
-      <div class="advanced-filter-panel {{ $activeAdvancedFilterCount > 0 ? 'show' : '' }}" id="advancedFilterPanel">
-        <div class="advanced-filter-content">
-          <div class="advanced-filter-grid">
-            <!-- Bagian Filter -->
-            <div class="filter-group">
-              <label for="filterBagian"><i class="fa-solid fa-building"></i> Bagian</label>
-              <select id="filterBagian" name="filter_bagian">
-                <option value="">Semua Bagian</option>
-                @foreach($availableBagians ?? [] as $key => $value)
-                  <option value="{{ $key }}" {{ request('filter_bagian') == $key ? 'selected' : '' }}>{{ $value }}</option>
-                @endforeach
-              </select>
-            </div>
+      <!-- Advanced Filter Modal -->
+      <div class="advanced-filter-modal" id="advancedFilterModal">
+        <div class="afm-content">
+          <div class="afm-header">
+            <h5><i class="fa-solid fa-sliders-h"></i> Filter Lanjutan</h5>
+            <button type="button" class="afm-close" onclick="closeAdvancedFilterModal()" aria-label="Tutup">
+              <i class="fa-solid fa-times"></i>
+            </button>
+          </div>
+          <div class="afm-body">
+            <div class="advanced-filter-grid">
+              <!-- Bagian Filter -->
+              <div class="filter-group">
+                <label for="filterBagian"><i class="fa-solid fa-building"></i> Bagian</label>
+                <select id="filterBagian" name="filter_bagian">
+                  <option value="">Semua Bagian</option>
+                  @foreach($availableBagians ?? [] as $key => $value)
+                    <option value="{{ $key }}" {{ request('filter_bagian') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                  @endforeach
+                </select>
+              </div>
 
-            <!-- Vendor Filter -->
-            <div class="filter-group">
-              <label for="filterVendor"><i class="fa-solid fa-store"></i> Vendor</label>
-              <select id="filterVendor" name="filter_vendor">
-                <option value="">Semua Vendor</option>
-                @foreach($availableDibayarKepada ?? [] as $key => $value)
-                  <option value="{{ $key }}" {{ request('filter_vendor') == $key ? 'selected' : '' }}>
-                    {{ Str::limit($value, 30) }}
-                  </option>
-                @endforeach
-              </select>
-            </div>
+              <!-- Vendor Filter -->
+              <div class="filter-group">
+                <label for="filterVendor"><i class="fa-solid fa-store"></i> Vendor</label>
+                <select id="filterVendor" name="filter_vendor">
+                  <option value="">Semua Vendor</option>
+                  @foreach($availableDibayarKepada ?? [] as $key => $value)
+                    <option value="{{ $key }}" {{ request('filter_vendor') == $key ? 'selected' : '' }}>
+                      {{ Str::limit($value, 30) }}
+                    </option>
+                  @endforeach
+                </select>
+              </div>
 
-            <!-- Kriteria Filter -->
-            <div class="filter-group">
-              <label for="filterKategori"><i class="fa-solid fa-tags"></i> Kriteria CF</label>
-              <select id="filterKategori" name="filter_kategori">
-                <option value="">Semua Kriteria</option>
-                @foreach($availableKategori ?? [] as $key => $value)
-                  <option value="{{ $key }}" {{ request('filter_kategori') == $key ? 'selected' : '' }}>{{ $value }}</option>
-                @endforeach
-              </select>
-            </div>
+              <!-- Kriteria Filter -->
+              <div class="filter-group">
+                <label for="filterKategori"><i class="fa-solid fa-tags"></i> Kriteria CF</label>
+                <select id="filterKategori" name="filter_kategori">
+                  <option value="">Semua Kriteria</option>
+                  @foreach($availableKategori ?? [] as $key => $value)
+                    <option value="{{ $key }}" {{ request('filter_kategori') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                  @endforeach
+                </select>
+              </div>
 
-            <!-- Sub Kriteria Filter -->
-            <div class="filter-group">
-              <label for="filterJenisDokumen"><i class="fa-solid fa-tag"></i> Sub Kriteria</label>
-              <select id="filterJenisDokumen" name="filter_jenis_dokumen">
-                <option value="">Semua Sub Kriteria</option>
-                @foreach($availableJenisDokumen ?? [] as $key => $value)
-                  <option value="{{ $key }}" {{ request('filter_jenis_dokumen') == $key ? 'selected' : '' }}>{{ $value }}
-                  </option>
-                @endforeach
-              </select>
-            </div>
+              <!-- Sub Kriteria Filter -->
+              <div class="filter-group">
+                <label for="filterJenisDokumen"><i class="fa-solid fa-tag"></i> Sub Kriteria</label>
+                <select id="filterJenisDokumen" name="filter_jenis_dokumen">
+                  <option value="">Semua Sub Kriteria</option>
+                  @foreach($availableJenisDokumen ?? [] as $key => $value)
+                    <option value="{{ $key }}" {{ request('filter_jenis_dokumen') == $key ? 'selected' : '' }}>{{ $value }}
+                    </option>
+                  @endforeach
+                </select>
+              </div>
 
-            <!-- Item Sub Kriteria Filter -->
-            <div class="filter-group">
-              <label for="filterJenisSubPekerjaan"><i class="fa-solid fa-th-list"></i> Item Sub Kriteria</label>
-              <select id="filterJenisSubPekerjaan" name="filter_jenis_sub_pekerjaan">
-                <option value="">Semua Item</option>
-                @foreach($availableJenisSubPekerjaan ?? [] as $key => $value)
-                  <option value="{{ $key }}" {{ request('filter_jenis_sub_pekerjaan') == $key ? 'selected' : '' }}>
-                    {{ Str::limit($value, 30) }}
-                  </option>
-                @endforeach
-              </select>
-            </div>
+              <!-- Item Sub Kriteria Filter -->
+              <div class="filter-group">
+                <label for="filterJenisSubPekerjaan"><i class="fa-solid fa-th-list"></i> Item Sub Kriteria</label>
+                <select id="filterJenisSubPekerjaan" name="filter_jenis_sub_pekerjaan">
+                  <option value="">Semua Item</option>
+                  @foreach($availableJenisSubPekerjaan ?? [] as $key => $value)
+                    <option value="{{ $key }}" {{ request('filter_jenis_sub_pekerjaan') == $key ? 'selected' : '' }}>
+                      {{ Str::limit($value, 30) }}
+                    </option>
+                  @endforeach
+                </select>
+              </div>
 
-            <!-- Kebun Filter -->
-            <div class="filter-group">
-              <label for="filterKebun"><i class="fa-solid fa-seedling"></i> Kebun</label>
-              <select id="filterKebun" name="filter_kebun">
-                <option value="">Semua Kebun</option>
-                @foreach($availableKebuns ?? [] as $key => $value)
-                  <option value="{{ $key }}" {{ request('filter_kebun') == $key ? 'selected' : '' }}>{{ $value }}</option>
-                @endforeach
-              </select>
-            </div>
+              <!-- Kebun Filter -->
+              <div class="filter-group">
+                <label for="filterKebun"><i class="fa-solid fa-seedling"></i> Kebun</label>
+                <select id="filterKebun" name="filter_kebun">
+                  <option value="">Semua Kebun</option>
+                  @foreach($availableKebuns ?? [] as $key => $value)
+                    <option value="{{ $key }}" {{ request('filter_kebun') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                  @endforeach
+                </select>
+              </div>
 
-            <!-- Jenis Pembayaran Filter -->
-            <div class="filter-group">
-              <label for="filterJenisPembayaran"><i class="fa-solid fa-money-bill-wave"></i> Jenis Pembayaran</label>
-              <select id="filterJenisPembayaran" name="filter_jenis_pembayaran">
-                <option value="">Semua Jenis</option>
-                @foreach($availableJenisPembayaran ?? [] as $key => $value)
-                  <option value="{{ $key }}" {{ request('filter_jenis_pembayaran') == $key ? 'selected' : '' }}>{{ $value }}
-                  </option>
-                @endforeach
-              </select>
+              <!-- Jenis Pembayaran Filter -->
+              <div class="filter-group">
+                <label for="filterJenisPembayaran"><i class="fa-solid fa-money-bill-wave"></i> Jenis Pembayaran</label>
+                <select id="filterJenisPembayaran" name="filter_jenis_pembayaran">
+                  <option value="">Semua Jenis</option>
+                  @foreach($availableJenisPembayaran ?? [] as $key => $value)
+                    <option value="{{ $key }}" {{ request('filter_jenis_pembayaran') == $key ? 'selected' : '' }}>{{ $value }}
+                    </option>
+                  @endforeach
+                </select>
+              </div>
             </div>
           </div>
-
-          <div class="advanced-filter-actions">
+          <div class="afm-footer">
             <button type="button" class="btn-advanced-reset" onclick="resetAdvancedFilters()">
               <i class="fa-solid fa-times"></i>
               Reset Filter Lanjutan
@@ -2426,15 +2470,21 @@
       });
     });
 
-    // Advanced Filter Panel Toggle
-    document.getElementById('advancedFilterToggle')?.addEventListener('click', function () {
-      const panel = document.getElementById('advancedFilterPanel');
-      const toggle = this;
-
-      panel.classList.toggle('show');
-      toggle.classList.toggle('active');
+    // Advanced Filter Modal Toggle
+    function openAdvancedFilterModal() {
+      document.getElementById('advancedFilterModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeAdvancedFilterModal() {
+      document.getElementById('advancedFilterModal').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    // Close modal on backdrop click
+    document.getElementById('advancedFilterModal')?.addEventListener('click', function (e) {
+      if (e.target === this) {
+        closeAdvancedFilterModal();
+      }
     });
-
     // Reset Advanced Filters
     function resetAdvancedFilters() {
       document.getElementById('filterBagian').value = '';
