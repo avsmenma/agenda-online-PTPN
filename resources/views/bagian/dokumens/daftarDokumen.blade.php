@@ -3096,7 +3096,7 @@
 <style>
 .floating-total-wrap {
   position: fixed;
-  top: 16px;
+  top: 64px;
   right: 24px;
   z-index: 9999;
   display: flex;
