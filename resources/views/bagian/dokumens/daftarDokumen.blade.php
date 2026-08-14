@@ -494,81 +494,8 @@
       margin-bottom: 20px;
     }
 
-    /* Modal Popup */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      padding: 20px;
-    }
 
-    .modal-overlay.show {
-      display: flex;
-    }
-
-    .modal-content-custom {
-      background: white;
-      border-radius: 20px;
-      max-width: 90%;
-      width: 90%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
-    }
-
-    .modal-header-custom {
-      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
-      color: white;
-      padding: 20px 24px;
-      border-radius: 16px 16px 0 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-header-custom h4 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .modal-close {
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      color: white;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .modal-close:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
-
-    .modal-body-custom {
-      padding: 24px;
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
-
-    .detail-item {
+.detail-item {
       background: #f8f9fa;
       padding: 14px;
       border-radius: 10px;
@@ -3151,119 +3078,65 @@
 {{-- Active Cell Navigation (Spreadsheet-style arrow key navigation) --}}
 @include('partials._activeCellNav', ['tableSelector' => '.data-table'])
 
-{{-- ===== MODAL TOTAL NILAI FILTER =========================================
-     Muncul otomatis setelah user menerapkan filter, menampilkan total nilai
-     rupiah dari seluruh dokumen yang cocok (bukan hanya halaman saat ini). --}}
+{{-- ===== FLOATING LABEL TOTAL NILAI FILTER =================================
+     Muncul setelah user menerapkan filter: menampilkan total nilai rupiah
+     dan jumlah dokumen dari hasil filter — tetap terlihat saat scroll. --}}
 @if($isFiltered)
-  <div class="modal fade" id="totalNilaiFilterModal" tabindex="-1"
-       aria-labelledby="totalNilaiFilterModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content"
-           style="border: none; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 80px rgba(0,0,0,0.3);">
-        {{-- Kepala --}}
-        <div class="modal-header"
-             style="background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%); color: white; border: none; padding: 1.5rem 2rem;">
-          <div class="d-flex align-items-center gap-3">
-            <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.15); border-radius: 14px;
-                        display: flex; align-items: center; justify-content: center; font-size: 22px;">
-              <i class="fa-solid fa-calculator"></i>
-            </div>
-            <div>
-              <h5 class="modal-title fw-bold" id="totalNilaiFilterModalLabel" style="font-size: 1.2rem;">
-                Total Nilai Dokumen
-              </h5>
-              <small style="opacity: 0.8; font-size: 0.8rem;">
-                Hasil filter —
-                @php
-                  $labelFilter = [];
-                  if (request('search'))      $labelFilter[] = 'pencarian "' . e(request('search')) . '"';
-                  if (request('status'))      $labelFilter[] = request('status') === 'sudah_dibayar' ? 'sudah dibayar' : 'belum dibayar';
-                  if (request('tahun'))       $labelFilter[] = 'tahun ' . request('tahun');
-                  if (request('bulan'))       $labelFilter[] = 'bulan ' . request('bulan');
-                  if (request('vendor'))      $labelFilter[] = 'vendor "' . e(request('vendor')) . '"';
-                  if (request('sub_kriteria')) $labelFilter[] = '"' . e(request('sub_kriteria')) . '"';
-                @endphp
-                {{ implode(', ', $labelFilter) ?: 'semua filter' }}
-              </small>
-            </div>
-          </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                  aria-label="Tutup" style="opacity: 0.9;"></button>
-        </div>
-
-        {{-- Body --}}
-        <div class="modal-body" style="padding: 2rem;">
-          {{-- Angka total nilai --}}
-          <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-                      border-radius: 16px; padding: 2rem; text-align: center; margin-bottom: 1.5rem;
-                      border: 1px solid #bbf7d0;">
-            <div style="font-size: 0.85rem; font-weight: 600; color: #166534; text-transform: uppercase;
-                        letter-spacing: 0.5px; margin-bottom: 0.5rem;">
-              <i class="fa-solid fa-coins me-2"></i>Total Nilai Rupiah
-            </div>
-            <div style="font-size: 2rem; font-weight: 800; color: #083E40;">
-              Rp {{ number_format($totalNilaiFiltered, 0, ',', '.') }}
-            </div>
-          </div>
-
-          {{-- Statistik tambahan --}}
-          <div class="row g-3">
-            <div class="col-6">
-              <div style="background: #f8f9fa; border-radius: 12px; padding: 1.25rem; text-align: center;
-                          border: 1px solid #e9ecef; height: 100%;">
-                <div style="font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase;
-                            letter-spacing: 0.5px; margin-bottom: 0.4rem;">
-                  <i class="fa-solid fa-file-lines me-1"></i>Jumlah Dokumen
-                </div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #083E40;">
-                  {{ $dokumens->total() }}
-                </div>
-              </div>
-            </div>
-            <div class="col-6">
-              <div style="background: #f8f9fa; border-radius: 12px; padding: 1.25rem; text-align: center;
-                          border: 1px solid #e9ecef; height: 100%;">
-                <div style="font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase;
-                            letter-spacing: 0.5px; margin-bottom: 0.4rem;">
-                  <i class="fa-solid fa-layer-group me-1"></i>Rata-rata
-                </div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #083E40;">
-                  @php $rataRata = $dokumens->total() > 0 ? $totalNilaiFiltered / $dokumens->total() : 0; @endphp
-                  Rp {{ number_format($rataRata, 0, ',', '.') }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {{-- Kaki --}}
-        <div class="modal-footer border-0 justify-content-center" style="padding: 1.25rem 2rem; background: #f8f9fa;">
-          <button type="button" class="btn" data-bs-dismiss="modal"
-                  style="background: #083E40; color: white; padding: 0.65rem 2rem; border-radius: 10px;
-                         font-weight: 600; font-size: 0.95rem;">
-            <i class="fa-solid fa-check me-2"></i>Mengerti
-          </button>
-        </div>
-      </div>
-    </div>
+<div class="floating-total-wrap">
+  <div class="floating-total-item">
+    <i class="fa-solid fa-coins"></i>
+    <span class="flt-value">Rp {{ number_format($totalNilaiFiltered, 0, ',', '.') }}</span>
   </div>
+  <div class="floating-total-item">
+    <i class="fa-solid fa-file-lines"></i>
+    <span class="flt-value">{{ $dokumens->total() }} dokumen</span>
+  </div>
+</div>
 
-  <script>
-    (function() {
-      function showModalNilai() {
-        var modalEl = document.getElementById('totalNilaiFilterModal');
-        if (modalEl && typeof bootstrap !== 'undefined') {
-          var modal = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
-          setTimeout(function() { modal.show(); }, 400);
-        }
-      }
-      if (document.readyState === 'complete') {
-        showModalNilai();
-      } else {
-        window.addEventListener('load', showModalNilai);
-      }
-    })();
-  </script>
+<style>
+.floating-total-wrap {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+.floating-total-item {
+  pointer-events: auto;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 10px;
+  padding: 7px 13px;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.10);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(0,0,0,0.05);
+  font-size: 13px;
+  font-weight: 600;
+  color: #083E40;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.floating-total-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 18px rgba(0,0,0,0.13);
+}
+.floating-total-item i {
+  font-size: 14px;
+  color: #0a5f52;
+  opacity: 0.75;
+}
+.flt-value {
+  white-space: nowrap;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .floating-total-item { background: rgba(255,255,255,0.98); }
+}
+</style>
 @endif
 
 @endsection
