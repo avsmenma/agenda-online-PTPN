@@ -50,8 +50,8 @@
 
   .wd-card-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
     color: #a0aec0; margin-bottom: 10px; padding-right: 44px; line-height: 1.3; }
-  .wd-card-value { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 700;
-    color: #1a2340; line-height: 1.15; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wd-card-value { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; font-size: clamp(16px, 2vw, 24px); font-weight: 700;
+    color: #1a2340; line-height: 1.15; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 38px; }
   .wd-card-sub { font-size: 11px; font-weight: 500; color: #a0aec0; }
   .wd-card-icon { position: absolute; right: 16px; top: 16px; width: 36px; height: 36px; border-radius: 9px;
     display: flex; align-items: center; justify-content: center; }
