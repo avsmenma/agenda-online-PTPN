@@ -2039,6 +2039,8 @@
 
           @php
             $activeAdvancedFilterCount = 0;
+            if (request('month') || request('filter_bulan'))
+              $activeAdvancedFilterCount++;
             if (request('filter_vendor'))
               $activeAdvancedFilterCount++;
             if (request('filter_kategori'))
@@ -2078,6 +2080,36 @@
           </div>
           <div class="afm-body">
             <div class="advanced-filter-grid">
+              <!-- Bulan Filter -->
+              <div class="filter-group">
+                <label for="filterBulan"><i class="fa-solid fa-calendar-alt"></i> Bulan</label>
+                <select id="filterBulan" name="month">
+                  <option value="">Semua Bulan</option>
+                  @php
+                    $bulanOptions = [
+                      1 => 'Januari',
+                      2 => 'Februari',
+                      3 => 'Maret',
+                      4 => 'April',
+                      5 => 'Mei',
+                      6 => 'Juni',
+                      7 => 'Juli',
+                      8 => 'Agustus',
+                      9 => 'September',
+                      10 => 'Oktober',
+                      11 => 'November',
+                      12 => 'Desember'
+                    ];
+                    $selectedBulan = request('month', request('filter_bulan', $selectedMonth ?? ''));
+                  @endphp
+                  @foreach($bulanOptions as $num => $namaBulan)
+                    <option value="{{ $num }}" {{ (string)$selectedBulan === (string)$num || strtolower((string)$selectedBulan) === strtolower($namaBulan) ? 'selected' : '' }}>
+                      {{ $namaBulan }}
+                    </option>
+                  @endforeach
+                </select>
+              </div>
+
               <!-- Bagian Filter -->
               <div class="filter-group">
                 <label for="filterBagian"><i class="fa-solid fa-building"></i> Bagian</label>
@@ -2487,6 +2519,8 @@
     });
     // Reset Advanced Filters
     function resetAdvancedFilters() {
+      const filterBulan = document.getElementById('filterBulan');
+      if (filterBulan) filterBulan.value = '';
       document.getElementById('filterBagian').value = '';
       document.getElementById('filterVendor').value = '';
       document.getElementById('filterKategori').value = '';
