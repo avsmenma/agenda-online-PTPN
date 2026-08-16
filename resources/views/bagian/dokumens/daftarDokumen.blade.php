@@ -286,9 +286,9 @@
       position: -webkit-sticky !important;
       position: sticky !important;
       left: 64px !important; /* selebar kolom No */
-      width: 195px;
-      min-width: 195px;
-      max-width: 195px;
+      width: 250px;
+      min-width: 250px;
+      max-width: 250px;
       z-index: 5;
       box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.25);
     }
@@ -337,25 +337,29 @@
     }
 
     /* Responsivitas Layar Lipat & Tablet (≤ 1150px):
-       Lepaskan freeze kolom kanan (Status Pembayaran) dan kolom SPP di kiri.
-       Hanya kolom No (64px) yang tetap sticky di kiri, sehingga tabel
-       mengalir lancar dan data tengah langsung terbaca luas tanpa celah sempit. */
+       Lepaskan freeze pada seluruh kolom (No, SPP, Status) agar tabel menggulir
+       alami tanpa tumpang-tindih teks atau celah sempit di tengah. */
     @media (max-width: 1150px) {
+      #bagianDaftarTable .data-table th.col-no,
+      #bagianDaftarTable .data-table td.col-no,
+      #bagianDaftarTable .data-table thead th.col-no,
       #bagianDaftarTable .data-table th.col-nomor_spp,
       #bagianDaftarTable .data-table td.col-nomor_spp,
-      #bagianDaftarTable .data-table thead th.col-nomor_spp {
-        position: static !important;
-        left: auto !important;
-        box-shadow: none !important;
-        z-index: auto !important;
-      }
+      #bagianDaftarTable .data-table thead th.col-nomor_spp,
       #bagianDaftarTable .data-table th.col-status_pembayaran,
       #bagianDaftarTable .data-table td.col-status_pembayaran,
       #bagianDaftarTable .data-table thead th.col-status_pembayaran {
         position: static !important;
+        left: auto !important;
         right: auto !important;
         box-shadow: none !important;
         z-index: auto !important;
+        max-width: none !important;
+      }
+      #bagianDaftarTable .data-table th.col-nomor_spp,
+      #bagianDaftarTable .data-table td.col-nomor_spp {
+        min-width: 240px !important;
+        white-space: nowrap !important;
       }
     }
 
