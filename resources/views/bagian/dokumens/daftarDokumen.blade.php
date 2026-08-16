@@ -336,6 +336,101 @@
       background: #f3faf9;
     }
 
+    /* Responsivitas Layar Lipat & Tablet (≤ 1150px):
+       Lepaskan freeze kolom kanan (Status Pembayaran) dan kolom SPP di kiri.
+       Hanya kolom No (64px) yang tetap sticky di kiri, sehingga tabel
+       mengalir lancar dan data tengah langsung terbaca luas tanpa celah sempit. */
+    @media (max-width: 1150px) {
+      #bagianDaftarTable .data-table th.col-nomor_spp,
+      #bagianDaftarTable .data-table td.col-nomor_spp,
+      #bagianDaftarTable .data-table thead th.col-nomor_spp {
+        position: static !important;
+        left: auto !important;
+        box-shadow: none !important;
+        z-index: auto !important;
+      }
+      #bagianDaftarTable .data-table th.col-status_pembayaran,
+      #bagianDaftarTable .data-table td.col-status_pembayaran,
+      #bagianDaftarTable .data-table thead th.col-status_pembayaran {
+        position: static !important;
+        right: auto !important;
+        box-shadow: none !important;
+        z-index: auto !important;
+      }
+    }
+
+    /* Header Toolbar Atas Tabel + View Switcher (Tabel vs Kartu) */
+    .bagian-table-top-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .bagian-table-top-toolbar .perpage-top-bar {
+      margin-bottom: 0 !important;
+      flex: 1 1 auto;
+    }
+    .bagian-view-switcher {
+      display: inline-flex;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 9px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .dark .bagian-view-switcher {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    .btn-view-mode {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      background: transparent;
+      padding: 6px 12px;
+      border-radius: 7px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .dark .btn-view-mode {
+      color: #94a3b8;
+    }
+    .btn-view-mode.active {
+      background: #ffffff;
+      color: #083E40;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+    .dark .btn-view-mode.active {
+      background: #0f172a;
+      color: #38bdf8;
+    }
+    .btn-view-mode:hover:not(.active) {
+      color: #083E40;
+    }
+
+    /* Kontrol Tampilan Tabel vs Kartu saat Mode Aktif */
+    #bagianDaftarTable.mode-cards-active .table-wrapper {
+      display: none !important;
+    }
+    #bagianDaftarTable.mode-cards-active .mob-cards {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+      gap: 12px !important;
+      margin-bottom: 16px;
+    }
+    #bagianDaftarTable.mode-table-active .mob-cards {
+      display: none !important;
+    }
+    #bagianDaftarTable.mode-table-active .table-wrapper {
+      display: block !important;
+    }
+
     .badge-status {
       display: inline-flex;
       align-items: center;
@@ -1357,8 +1452,18 @@
     <!-- Document Table -->
     <div class="table-container" id="bagianDaftarTable">
       @if($dokumens->count() > 0)
-        <!-- Per-page dropdown at the top -->
-        @include('partials.pagination-perpage-top', ['paginator' => $dokumens])
+        <!-- Per-page dropdown at the top + View Switcher -->
+        <div class="bagian-table-top-toolbar">
+          @include('partials.pagination-perpage-top', ['paginator' => $dokumens])
+          <div class="bagian-view-switcher" role="group" aria-label="Mode Tampilan Dokumen">
+            <button type="button" class="btn-view-mode active" data-view="table" title="Tampilan Tabel">
+              <i class="fa-solid fa-table-list"></i> <span class="view-mode-label">Tabel</span>
+            </button>
+            <button type="button" class="btn-view-mode" data-view="cards" title="Tampilan Kartu">
+              <i class="fa-solid fa-grip-vertical"></i> <span class="view-mode-label">Kartu</span>
+            </button>
+          </div>
+        </div>
         <div class="table-wrapper">
           <table class="data-table">
             <thead>
@@ -1640,6 +1745,55 @@
       @endif
     </div>
   </div>
+
+    <script>
+      // Inisialisasi Mode Tampilan (Tabel vs Kartu) untuk Layar Lipat & Tablet
+      (function initBagianViewMode() {
+        const STORAGE_KEY = 'bagian_doc_view_mode';
+        const container = document.getElementById('bagianDaftarTable');
+        if (!container) return;
+
+        const buttons = container.querySelectorAll('.btn-view-mode');
+        if (!buttons.length) return;
+
+        function getEffectiveMode() {
+          try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved === 'cards' || saved === 'table') return saved;
+          } catch (e) {}
+          return window.innerWidth <= 768 ? 'cards' : 'table';
+        }
+
+        function applyViewMode(mode) {
+          if (mode === 'cards') {
+            container.classList.add('mode-cards-active');
+            container.classList.remove('mode-table-active');
+          } else {
+            container.classList.add('mode-table-active');
+            container.classList.remove('mode-cards-active');
+          }
+
+          buttons.forEach(function (btn) {
+            const isActive = btn.getAttribute('data-view') === mode;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          });
+        }
+
+        buttons.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            const targetMode = this.getAttribute('data-view');
+            if (!targetMode) return;
+            try {
+              localStorage.setItem(STORAGE_KEY, targetMode);
+            } catch (e) {}
+            applyViewMode(targetMode);
+          });
+        });
+
+        applyViewMode(getEffectiveMode());
+      })();
+    </script>
 
   <!-- Delete Confirmation Modal -->
   <div id="deleteConfirmModal" class="confirm-modal-overlay">
