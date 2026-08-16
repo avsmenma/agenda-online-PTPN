@@ -15,3 +15,7 @@ ssh -i "C:\Users\ASUS\.ssh\crypto_bot_vps" root@163.61.58.92 "cd /var/www/agenda
 - **User**: `root`
 - **SSH Key**: `C:\Users\ASUS\.ssh\crypto_bot_vps`
 - **Direktori Project VPS**: `/var/www/agenda-online-PTPN`
+
+## 3. Pembersihan File Screenshot Testing
+- **Bersihkan Gambar Testing**: Setiap kali selesai melakukan testing mandiri (Playwright, dsb.), selalu hapus/bersihkan seluruh file gambar screenshot hasil pengujian dari folder project agar tidak menumpuk dan workspace tetap bersih.
+
