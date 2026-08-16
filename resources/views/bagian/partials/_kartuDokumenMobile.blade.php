@@ -15,23 +15,135 @@
 
 @push('styles')
 <style>
-  /* Disembunyikan secara default (desktop). Ditampilkan kembali di
-     public/css/mobile.css di dalam @media (max-width: 768px).
-     WAJIB lewat stack styles (lihat direktif di atas blok ini) — bukan
-     <style> inline di body — supaya ter-parse SEBELUM markup dan kartu tak
-     berkedip muncul di desktop.
+  .mob-cards {
+    display: none;
+    gap: 12px;
+  }
 
-     DUA hal yang HARAM ditulis di komentar ini (keduanya sudah pernah lolos
-     ke produksi 2026-08-13 dan keduanya gagal SENYAP):
-     1. Nama direktif push Blade secara literal — Blade memprosesnya sebagai
-        direktif sungguhan meski di dalam komentar CSS, membuka stack baru di
-        tengah blok, sehingga tag penutup style jatuh ke push yang keliru dan
-        SELURUH markup kartu tertelan ke dalam blok style: halaman ponsel
-        tampil KOSONG.
-     2. Tag penutup style secara literal — parser HTML mengakhiri blok style
-        di situ juga, sehingga aturan di bawah komentar ini tak pernah aktif
-        dan kartu ikut tampil di DESKTOP (konten dobel dengan tabel). */
-  .mob-cards { display: none; }
+  /* Desain Kartu Dokumen (Konsisten di ponsel 1 layar & ponsel lipat 2 layar) */
+  .mob-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    box-sizing: border-box;
+  }
+  .mob-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.09);
+    border-color: #cbd5e1;
+  }
+  .dark .mob-card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  .dark .mob-card:hover {
+    border-color: #475569;
+  }
+
+  .mob-card__judul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .mob-card__agenda {
+    font-size: 15px;
+    font-weight: 700;
+    color: #083E40;
+    letter-spacing: -0.01em;
+  }
+  .dark .mob-card__agenda {
+    color: #38bdf8;
+  }
+  .mob-card__spp {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  .dark .mob-card__spp {
+    color: #94a3b8;
+  }
+
+  .mob-card__penerima {
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .dark .mob-card__penerima {
+    color: #cbd5e1;
+  }
+
+  .mob-card__nilai {
+    font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+    font-size: 16.5px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 10px;
+  }
+  .dark .mob-card__nilai {
+    color: #f8fafc;
+  }
+
+  .mob-card__status,
+  .mob-card__pengembalian {
+    margin-bottom: 10px;
+  }
+
+  .mob-card__kaki {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #64748b;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+    margin-top: auto;
+  }
+  .dark .mob-card__kaki {
+    border-top-color: #334155;
+    color: #94a3b8;
+  }
+
+  .mob-card__detail {
+    color: #083E40;
+    font-weight: 600;
+    font-size: 12.5px;
+  }
+  .dark .mob-card__detail {
+    color: #38bdf8;
+  }
+
+  /* Grid layout untuk kartu di layar lipat/tablet/desktop */
+  #bagianDaftarTable.mode-cards-active .mob-cards {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    gap: 14px !important;
+    margin-bottom: 16px;
+  }
+  #bagianDaftarTable.mode-cards-active .table-wrapper {
+    display: none !important;
+  }
+  #bagianDaftarTable.mode-table-active .mob-cards {
+    display: none !important;
+  }
+  #bagianDaftarTable.mode-table-active .table-wrapper {
+    display: block !important;
+  }
 </style>
 @endpush
 
