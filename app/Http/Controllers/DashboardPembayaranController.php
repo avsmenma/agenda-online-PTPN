@@ -94,7 +94,7 @@ class DashboardPembayaranController extends Controller
         // Get filter parameters
         $statusPembayaran = request('status_pembayaran');
         $year = request('year');
-        $month = request('month');
+        $month = request('month', request('filter_bulan'));
         $date = request('date');
         $dateFilter = $this->normalizeDateFilter($date);
         $search = request('search');
@@ -188,7 +188,7 @@ class DashboardPembayaranController extends Controller
         $baseStatsFilter = function() use ($year, $month, $dateFilter) {
             $q = Dokumen::whereNotNull('nomor_agenda');
             if ($year) { $q->whereYear('created_at', $year); }
-            if ($month) { $q->whereMonth('created_at', $month); }
+            if ($month) { $this->applyMonthFilter($q, $month); }
             if ($dateFilter) { $q->whereDate('tanggal_masuk', $dateFilter); }
             return $q;
         };
@@ -331,7 +331,7 @@ class DashboardPembayaranController extends Controller
             $query->whereYear('created_at', $year);
         }
         if ($month) {
-            $query->whereMonth('created_at', $month);
+            $this->applyMonthFilter($query, $month);
         }
         if ($dateFilter) {
             $query->whereDate('tanggal_masuk', $dateFilter);
@@ -502,7 +502,7 @@ class DashboardPembayaranController extends Controller
                 $q->whereYear('created_at', $year);
             }
             if ($month) {
-                $q->whereMonth('created_at', $month);
+                $this->applyMonthFilter($q, $month);
             }
             if ($dateFilter) {
                 $q->whereDate('tanggal_masuk', $dateFilter);
@@ -687,7 +687,7 @@ class DashboardPembayaranController extends Controller
     {
         $statusPembayaran = $request->get('status_pembayaran');
         $year = $request->get('year');
-        $month = $request->get('month');
+        $month = $request->get('month', $request->get('filter_bulan'));
         $dateFilter = $this->normalizeDateFilter($request->get('date'));
         $search = $request->get('filter_search', $request->get('search'));
         $search = is_array($search) ? '' : $search;
@@ -730,7 +730,7 @@ class DashboardPembayaranController extends Controller
             $query->whereYear('created_at', $year);
         }
         if ($month) {
-            $query->whereMonth('created_at', $month);
+            $this->applyMonthFilter($query, $month);
         }
         if ($dateFilter) {
             $query->whereDate('tanggal_masuk', $dateFilter);
@@ -1410,5 +1410,54 @@ class DashboardPembayaranController extends Controller
         ];
 
         return $statusMap[$status] ?? ucfirst(str_replace('_', ' ', $status));
+    }
+
+    /**
+     * Apply month filter supporting month number (1-12), month name (Januari/January),
+     * and checking both `bulan` column, `tanggal_masuk`, and `created_at`.
+     */
+    private function applyMonthFilter($query, $month): void
+    {
+        if (!$month) {
+            return;
+        }
+
+        $monthMap = [
+            'januari' => 1, 'january' => 1, '1' => 1, '01' => 1,
+            'februari' => 2, 'february' => 2, '2' => 2, '02' => 2,
+            'maret' => 3, 'march' => 3, '3' => 3, '03' => 3,
+            'april' => 4, '4' => 4, '04' => 4,
+            'mei' => 5, 'may' => 5, '5' => 5, '05' => 5,
+            'juni' => 6, 'june' => 6, '6' => 6, '06' => 6,
+            'juli' => 7, 'july' => 7, '7' => 7, '07' => 7,
+            'agustus' => 8, 'august' => 8, '8' => 8, '08' => 8,
+            'september' => 9, '9' => 9, '09' => 9,
+            'oktober' => 10, 'october' => 10, '10' => 10,
+            'november' => 11, '11' => 11,
+            'desember' => 12, 'december' => 12, '12' => 12,
+        ];
+
+        $indoMonths = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        $normalized = strtolower(trim((string) $month));
+        $monthNum = $monthMap[$normalized] ?? (is_numeric($month) ? (int) $month : null);
+        $monthName = $monthNum && isset($indoMonths[$monthNum]) ? $indoMonths[$monthNum] : null;
+
+        $query->where(function ($q) use ($monthNum, $monthName, $month) {
+            if ($monthNum) {
+                $q->whereMonth('created_at', $monthNum)
+                  ->orWhereMonth('tanggal_masuk', $monthNum);
+            }
+            if ($monthName) {
+                $q->orWhere('bulan', $monthName);
+            }
+            if (is_string($month) && $month !== '') {
+                $q->orWhere('bulan', $month);
+            }
+        });
     }
 }
