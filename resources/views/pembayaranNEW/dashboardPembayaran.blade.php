@@ -692,39 +692,6 @@
       cursor: pointer;
     }
 
-    .table-toggle {
-      display: flex;
-      background: var(--bg-secondary);
-      border-radius: var(--radius-md);
-      padding: 0.25rem;
-      border: 1px solid rgba(226, 232, 240, 0.95);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
-    }
-
-    .table-toggle-btn {
-      padding: 0.55rem 0.95rem;
-      font-size: 0.8125rem;
-      font-weight: 650;
-      font-family: inherit;
-      color: var(--text-secondary);
-      background: transparent;
-      border: none;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: var(--transition-fast);
-    }
-
-    .table-toggle-btn.active {
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
-    }
-
-    .table-toggle-btn:hover:not(.active) {
-      color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.56);
-    }
-
     /* Data Table */
     .data-table-wrapper {
       position: relative;
@@ -961,112 +928,6 @@
       font-size: 0.875rem;
     }
 
-    /* ===== VENDOR GROUP VIEW ===== */
-    .vendor-groups {
-      padding: 1rem 1.5rem;
-    }
-
-    .vendor-group {
-      margin-bottom: 0.75rem;
-      border: 1px solid var(--border-lighter);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      transition: var(--transition-base);
-    }
-
-    .vendor-group:hover {
-      border-color: var(--border-light);
-    }
-
-    .vendor-group-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 1.25rem;
-      background: var(--bg-secondary);
-      cursor: pointer;
-      transition: var(--transition-fast);
-    }
-
-    .vendor-group-header:hover {
-      background: var(--bg-primary);
-    }
-
-    .vendor-group-header.expanded {
-      background: var(--brand-primary-soft);
-    }
-
-    .vendor-group-info {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .vendor-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-md);
-      background: var(--brand-primary-soft);
-      color: var(--brand-primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .vendor-name {
-      font-weight: 600;
-      color: var(--text-primary);
-      font-size: 0.9375rem;
-    }
-
-    .vendor-count {
-      font-size: 0.8125rem;
-      color: var(--text-tertiary);
-      margin-left: 0.5rem;
-    }
-
-    .vendor-group-stats {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-    }
-
-    .vendor-stat {
-      text-align: right;
-    }
-
-    .vendor-stat-label {
-      font-size: 0.6875rem;
-      color: var(--text-tertiary);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .vendor-stat-value {
-      font-size: 0.9375rem;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .vendor-chevron {
-      color: var(--text-tertiary);
-      transition: var(--transition-fast);
-    }
-
-    .vendor-group-header.expanded .vendor-chevron {
-      transform: rotate(180deg);
-      color: var(--brand-primary);
-    }
-
-    .vendor-group-body {
-      display: none;
-      border-top: 1px solid var(--border-lighter);
-    }
-
-    .vendor-group-body.show {
-      display: block;
-    }
-
     /* ===== PAGINATION ===== */
     .pagination-wrapper {
       display: flex;
@@ -1258,18 +1119,8 @@
         justify-content: stretch;
       }
 
-      .per-page-selector,
-      .table-toggle {
+      .per-page-selector {
         width: 100%;
-      }
-
-      .table-toggle {
-        overflow-x: auto;
-      }
-
-      .table-toggle-btn {
-        flex: 1;
-        white-space: nowrap;
       }
 
       .data-table-wrapper {
@@ -1617,36 +1468,6 @@
     #documentTableContainer .btn-fullscreen:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(15, 23, 42, 0.24);
-    }
-
-    #documentTableContainer .table-toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 0.25rem;
-    }
-
-    #documentTableContainer .table-toggle-btn {
-      min-height: 36px;
-      padding: 0.45rem 0.8rem;
-      border-radius: 6px;
-      color: #475569;
-      font-size: 0.8125rem;
-      font-weight: 700;
-      background: transparent;
-      border: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    #documentTableContainer .table-toggle-btn.active {
-      background: #ffffff;
-      color: #0f172a;
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
     }
 
     #documentTableContainer .data-table-wrapper {
@@ -2283,128 +2104,11 @@
             <i class="fa-solid fa-table-columns"></i>
             Kustomisasi Kolom Tabel
           </button>
-          <div class="table-toggle">
-            <button type="button" class="table-toggle-btn {{ $mode != 'rekapan_table' ? 'active' : '' }}"
-              onclick="setViewMode('normal')">
-              <i class="fa-solid fa-table-list"></i> Normal
-            </button>
-            <button type="button" class="table-toggle-btn {{ $mode == 'rekapan_table' ? 'active' : '' }}"
-              onclick="setViewMode('rekapan_table')">
-              <i class="fa-solid fa-layer-group"></i> Group Vendor
-            </button>
-          </div>
-          {{-- Tombol fullscreen lokal halaman ini DIHAPUS: ia menduplikasi tombol
-               fullscreen global yang disuntik app.blade.php (muncul di sebelah tombol
-               "Kustomisasi Kolom Tabel"), dan mekanismenya (togglePembayaranTableFullscreen)
-               hanya menyetel class document-table-only-fullscreen yang langsung dibatalkan
-               oleh observer di compact-document-ui. Fullscreen kini memakai tombol global
-               yang sama dengan 4 halaman role lain. --}}
         </div>
       </div>
 
-      @if($mode != 'rekapan_table' || $dokumens->count() > 0)
-        @if($mode == 'rekapan_table' && $rekapanByVendor)
-          <!-- Vendor Grouped View -->
-          <div class="vendor-groups">
-            @foreach($rekapanByVendor as $vendorData)
-              <div class="vendor-group">
-                <div class="vendor-group-header" onclick="toggleVendorGroup(this)">
-                  <div class="vendor-group-info">
-                    <div class="vendor-icon">
-                      <i class="fa-solid fa-building"></i>
-                    </div>
-                    <span class="vendor-name">{{ $vendorData['vendor'] }}</span>
-                    <span class="vendor-count">{{ $vendorData['count'] }} dokumen</span>
-                  </div>
-                  <div class="vendor-group-stats">
-                    <div class="vendor-stat">
-                      <div class="vendor-stat-label">Total Nilai</div>
-                      <div class="vendor-stat-value">Rp {{ number_format($vendorData['total_nilai'], 0, ',', '.') }}</div>
-                    </div>
-                    <i class="fa-solid fa-chevron-down vendor-chevron"></i>
-                  </div>
-                </div>
-                <div class="vendor-group-body">
-                  <table class="data-table">
-                    <thead>
-                      <tr>
-                        <th>No. Agenda</th>
-                        <th>No. SPP</th>
-                        <th>Uraian</th>
-                        <th>Nilai (Rp)</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @foreach($vendorData['documents'] as $doc)
-                        <tr>
-                          <td class="cell-primary cell-mono">{{ $doc->nomor_agenda }}</td>
-                          <td class="cell-mono">{{ $doc->nomor_spp ?? '-' }}</td>
-                          <td class="cell-uraian">{{ Str::limit($doc->uraian_spp, 50) }}</td>
-                          <td class="cell-rupiah">{{ number_format($doc->nilai_rupiah ?? 0, 0, ',', '.') }}</td>
-                          <td>
-                            @if($doc->computed_status == 'siap_dibayar')
-                              <span class="status-pill status-pill--ready">
-                                <i class="fa-solid fa-circle"></i> Siap Dibayar
-                              </span>
-                            @elseif($doc->computed_status == 'sudah_dibayar')
-                              <span class="status-pill status-pill--paid">
-                                <i class="fa-solid fa-circle"></i> Sudah Dibayar
-                              </span>
-                            @elseif(in_array($doc->current_handler, ['operator', 'team_verifikasi', 'perpajakan', 'akutansi'], true))
-                              {{-- Dokumen BELUM sampai ke Pembayaran (masih di hulu) →
-                                   status "Draft", disamakan dengan role lain. --}}
-                              <span class="status-pill status-pill--pending">
-                                <i class="fa-solid fa-circle"></i> Draft
-                              </span>
-                            @else
-                              <span class="status-pill status-pill--pending">
-                                <i class="fa-solid fa-circle"></i> Belum Siap
-                              </span>
-                            @endif
-                          </td>
-                        </tr>
-                      @endforeach
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            @endforeach
-          </div>
-        @else
-          <!-- Normal Table View (Tabulator, Rollout 4) -->
-          <div id="pembayaranTabulatorTable" class="doc-tabulator"></div>
-        @endif
-
-        <!-- Pagination -->
-        @if($mode == 'rekapan_table')
-          <div class="pagination-wrapper" id="paginationWrapper" style="{{ $dokumens->hasPages() ? '' : 'display:none;' }}">
-            <div class="pagination-info" id="paginationInfo">
-              @if($dokumens->hasPages())
-                Menampilkan {{ $dokumens->firstItem() }} - {{ $dokumens->lastItem() }} dari {{ $dokumens->total() }}
-              @endif
-            </div>
-            <div id="paginationLinks">
-              @if($dokumens->hasPages())
-                {{ $dokumens->links('pagination::bootstrap-4') }}
-              @endif
-            </div>
-          </div>
-        @endif
-      @else
-        <!-- Empty State -->
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <i class="fa-solid fa-inbox"></i>
-          </div>
-          <h3 class="empty-state-title">Tidak ada dokumen ditemukan</h3>
-          <p class="empty-state-desc">Coba ubah filter pencarian atau reset filter untuk melihat semua dokumen.</p>
-          <a href="{{ route('documents.pembayaran.index') }}" class="btn-empty">
-            <i class="fa-solid fa-redo"></i>
-            Reset Filter
-          </a>
-        </div>
-      @endif
+      <!-- Normal Table View (Tabulator) -->
+      <div id="pembayaranTabulatorTable" class="doc-tabulator"></div>
     </div>
   </div>
 
@@ -2418,13 +2122,6 @@
   <script src="{{ \App\Support\Asset::versioned('js/column-customization.js') }}"></script>
 
   <script>
-    // View Mode Toggle
-    function setViewMode(mode) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('mode', mode);
-      window.location.href = url.toString();
-    }
-
     function refreshPembayaranTable() {
       if (typeof window.refreshPembayaranDataTable === 'function') {
         window.refreshPembayaranDataTable();
@@ -2432,30 +2129,6 @@
       }
 
       window.location.reload();
-    }
-
-    // togglePembayaranTableFullscreen() dihapus — lihat komentar di toolbar.
-    // Fullscreen halaman ini kini ditangani tombol global (app.blade.php).
-
-    function changePerPage(value) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('per_page', value);
-      url.searchParams.delete('page'); // Reset to page 1
-      window.location.href = url.toString();
-    }
-
-    // Vendor Group Toggle
-    function toggleVendorGroup(header) {
-      const body = header.nextElementSibling;
-      const isExpanded = header.classList.contains('expanded');
-
-      if (isExpanded) {
-        header.classList.remove('expanded');
-        body.classList.remove('show');
-      } else {
-        header.classList.add('expanded');
-        body.classList.add('show');
-      }
     }
 
     // Number Counter Animation
@@ -2525,7 +2198,6 @@
 
   </script>
 
-  @if($mode != 'rekapan_table')
     {{-- Rollout 4: engine Tabulator bersama menggantikan renderer bespoke di atas.
          window.DOCUMENT_TABULATOR_CONFIG dibangun dari $pembayaranTabulatorConfig
          (dihitung dekat "Table Section" di atas — columns via FrozenColumnLayout::
@@ -2547,7 +2219,6 @@
         if (window.documentTable) { window.documentTable.replaceData(); }
       };
     </script>
-  @endif
 
   {{-- ── Tombol keluar fullscreen (khusus halaman pembayaran) ──────────────
        Fullscreen global (compact-document-ui) menyembunyikan .dtable-toolbar —
