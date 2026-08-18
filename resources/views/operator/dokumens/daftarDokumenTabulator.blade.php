@@ -164,16 +164,18 @@
     </div>
 </div>
 
-{{-- ==== Toast sukses hapus (disalin daftarDokumen.blade.php:4493-4503) ==== --}}
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11000;">
-    <div id="deleteSuccessToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px;">
-        <div class="d-flex">
-            <div class="toast-body" style="padding: 16px 20px; font-size: 14px;">
-                <i class="fa-solid fa-check-circle me-2"></i>
-                <strong>Berhasil!</strong> Dokumen telah dihapus.
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+{{-- ==== Floating Label Notifikasi Sukses Hapus (Pojok Kanan Atas, 3 Detik) ==== --}}
+<div id="deleteSuccessFloatingToast" class="floating-toast-container" style="display: none;">
+    <div class="floating-toast-card">
+        <div class="floating-toast-icon">
+            <i class="fa-solid fa-circle-check"></i>
         </div>
+        <div class="floating-toast-text">
+            Dokumen Berhasil Dihapus
+        </div>
+        <button type="button" class="floating-toast-close" onclick="hideDeleteToast()" aria-label="Tutup">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
     </div>
 </div>
 
@@ -223,6 +225,89 @@
     /* Toolbar filter Tabulator */
     .tabulator-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
     .tabulator-toolbar-search { max-width: 320px; }
+
+    /* Floating Label Notifikasi Sukses Hapus (Pojok Kanan Atas) */
+    .floating-toast-container {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 999999;
+        pointer-events: none;
+        animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .floating-toast-container.toast-hiding {
+        animation: toastSlideOut 0.3s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+    }
+    .floating-toast-card {
+        pointer-events: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #064e3b;
+        color: #ffffff;
+        padding: 12px 20px;
+        border-radius: 50px;
+        box-shadow: 0 10px 25px -5px rgba(6, 78, 59, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(8px);
+    }
+    .floating-toast-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        color: #34d399;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+    .floating-toast-text {
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+        color: #ffffff;
+    }
+    .floating-toast-close {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        margin-left: 4px;
+        border-radius: 50%;
+        transition: color 0.15s ease, background 0.15s ease;
+    }
+    .floating-toast-close:hover {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.15);
+    }
+    @keyframes toastSlideIn {
+        0% {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    @keyframes toastSlideOut {
+        0% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-15px) scale(0.95);
+        }
+    }
     </style>
 @endpush
 
@@ -272,17 +357,36 @@
         form.submit();
     }
 
+    function showDeleteToast() {
+        const toastEl = document.getElementById('deleteSuccessFloatingToast');
+        if (!toastEl) return;
+        toastEl.style.display = 'block';
+        toastEl.classList.remove('toast-hiding');
+        setTimeout(() => {
+            hideDeleteToast();
+        }, 3000);
+    }
+
+    function hideDeleteToast() {
+        const toastEl = document.getElementById('deleteSuccessFloatingToast');
+        if (!toastEl) return;
+        toastEl.classList.add('toast-hiding');
+        setTimeout(() => {
+            toastEl.style.display = 'none';
+            toastEl.classList.remove('toast-hiding');
+        }, 300);
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
-        @if(session('success') && str_contains(session('success'), 'hapus'))
+        @if(session('success') && str_contains(strtolower(session('success')), 'hapus'))
             const openModals = document.querySelectorAll('.modal.show');
             openModals.forEach(modal => {
                 const bsModal = bootstrap.Modal.getInstance(modal);
                 if (bsModal) bsModal.hide();
             });
             setTimeout(() => {
-                const toast = new bootstrap.Toast(document.getElementById('deleteSuccessToast'), { autohide: true, delay: 5000 });
-                toast.show();
-            }, 500);
+                showDeleteToast();
+            }, 300);
         @endif
     });
 </script>
