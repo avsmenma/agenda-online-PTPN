@@ -459,8 +459,8 @@
     }
 
     .filter-search {
-      flex: 1;
-      min-width: 280px;
+      flex: 0 0 280px;
+      max-width: 280px;
       position: relative;
     }
 
@@ -1431,28 +1431,30 @@
       font-weight: 500;
     }
 
-    #documentTableContainer .btn-customize-columns-inline {
-      min-height: 44px;
-      border-radius: 8px;
+    .btn-customize-columns-inline {
+      height: 44px;
+      border-radius: var(--radius-md);
       border: none;
       color: #ffffff;
-      font-size: 14px;
-      font-weight: 700;
+      font-size: 0.8125rem;
+      font-weight: 600;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 10px 16px;
+      gap: 0.5rem;
+      padding: 0 1rem;
       box-shadow: 0 2px 6px rgba(15, 23, 42, 0.16);
       transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
       white-space: nowrap;
       cursor: pointer;
       background: linear-gradient(135deg, #889717 0%, #9cab15 100%);
+      font-family: inherit;
     }
 
-    #documentTableContainer .btn-customize-columns-inline:hover {
+    .btn-customize-columns-inline:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(15, 23, 42, 0.24);
+      filter: brightness(1.05);
     }
 
     #documentTableContainer .data-table-wrapper {
@@ -1872,6 +1874,10 @@
             @endif
           </button>
 
+          <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
+            <i class="fa-solid fa-table-columns"></i>
+            Kustomisasi Kolom Tabel
+          </button>
         </div>
       </div>
 
@@ -2068,27 +2074,6 @@
 
     <!-- Table Section -->
     <div class="table-section table-dokumen" id="documentTableContainer">
-      <div class="dtable-toolbar">
-        <div class="dtable-toolbar-left">
-          <div class="dtable-toolbar-icon">
-            <i class="fa-solid fa-list"></i>
-          </div>
-          <div>
-            <div class="dtable-toolbar-title">
-              Daftar Dokumen
-              <span class="table-count" id="tableCount">{{ $dokumens->total() }}</span>
-            </div>
-            <div class="dtable-toolbar-subtitle">Nomor agenda, SPP, vendor, nilai, dan status pembayaran.</div>
-          </div>
-        </div>
-        <div class="dtable-toolbar-right">
-          <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
-            <i class="fa-solid fa-table-columns"></i>
-            Kustomisasi Kolom Tabel
-          </button>
-        </div>
-      </div>
-
       <!-- Normal Table View (Tabulator) -->
       <div id="pembayaranTabulatorTable" class="doc-tabulator"></div>
     </div>
