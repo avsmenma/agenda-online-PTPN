@@ -226,17 +226,20 @@
     .tabulator-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
     .tabulator-toolbar-search { max-width: 320px; }
 
-    /* Floating Label Notifikasi Sukses Hapus (Pojok Kanan Atas) */
+    /* Floating Label Notifikasi Sukses Hapus (Pojok Kanan Atas, 3 Detik) */
     .floating-toast-container {
         position: fixed;
         top: 24px;
         right: 24px;
-        z-index: 999999;
+        z-index: 9999999 !important;
         pointer-events: none;
-        animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+        transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .floating-toast-container.toast-hiding {
-        animation: toastSlideOut 0.3s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+    .floating-toast-container.show {
+        opacity: 1;
+        transform: translateY(0) scale(1);
     }
     .floating-toast-card {
         pointer-events: auto;
@@ -247,8 +250,8 @@
         color: #ffffff;
         padding: 12px 20px;
         border-radius: 50px;
-        box-shadow: 0 10px 25px -5px rgba(6, 78, 59, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(6, 78, 59, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.22);
         backdrop-filter: blur(8px);
     }
     .floating-toast-icon {
@@ -287,26 +290,6 @@
     .floating-toast-close:hover {
         color: #ffffff;
         background: rgba(255, 255, 255, 0.15);
-    }
-    @keyframes toastSlideIn {
-        0% {
-            opacity: 0;
-            transform: translateY(-20px) scale(0.95);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
-    @keyframes toastSlideOut {
-        0% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-        100% {
-            opacity: 0;
-            transform: translateY(-15px) scale(0.95);
-        }
     }
     </style>
 @endpush
@@ -357,12 +340,18 @@
         form.submit();
     }
 
+    let deleteToastTimer = null;
+
     function showDeleteToast() {
         const toastEl = document.getElementById('deleteSuccessFloatingToast');
         if (!toastEl) return;
+        
+        clearTimeout(deleteToastTimer);
         toastEl.style.display = 'block';
-        toastEl.classList.remove('toast-hiding');
-        setTimeout(() => {
+        void toastEl.offsetWidth; // trigger reflow
+        toastEl.classList.add('show');
+
+        deleteToastTimer = setTimeout(() => {
             hideDeleteToast();
         }, 3000);
     }
@@ -370,10 +359,11 @@
     function hideDeleteToast() {
         const toastEl = document.getElementById('deleteSuccessFloatingToast');
         if (!toastEl) return;
-        toastEl.classList.add('toast-hiding');
-        setTimeout(() => {
+        
+        toastEl.classList.remove('show');
+        clearTimeout(deleteToastTimer);
+        deleteToastTimer = setTimeout(() => {
             toastEl.style.display = 'none';
-            toastEl.classList.remove('toast-hiding');
         }, 300);
     }
 
