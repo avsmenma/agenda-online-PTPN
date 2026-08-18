@@ -1381,10 +1381,6 @@
           <i class="fa-solid fa-check"></i> Terapkan
         </button>
 
-        <button type="button" class="btn-refresh" id="btnRefreshTable" onclick="refreshDocumentTable()">
-          <i class="fa-solid fa-arrows-rotate"></i> Refresh
-        </button>
-
         {{-- SEMENTARA — pemicu modal uji kiriman WhatsApp. type="button" WAJIB:
              toolbar ini ada di dalam <form method="GET">, tanpa itu tombolnya
              men-submit form dan memuat ulang halaman. Hapus bersama partial
@@ -2930,48 +2926,6 @@
     document.getElementById('sendSuccessModal').addEventListener('click', function (e) {
       if (e.target === this) closeSuccessAndReload();
     });
-
-
-    // AJAX Refresh Document Table
-    function refreshDocumentTable() {
-      const btn = document.getElementById('btnRefreshTable');
-      const container = document.getElementById('bagianDaftarTable');
-
-      if (!btn || !container) return;
-
-      btn.classList.add('loading');
-      btn.disabled = true;
-
-      fetch(window.location.href, {
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'Accept': 'text/html'
-        }
-      })
-        .then(response => {
-          if (!response.ok) throw new Error('Network response was not ok');
-          return response.text();
-        })
-        .then(html => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const newTable = doc.getElementById('bagianDaftarTable');
-          if (newTable) {
-            container.innerHTML = newTable.innerHTML;
-            showRefreshToast('success', 'Data berhasil diperbarui!');
-          } else {
-            showRefreshToast('error', 'Gagal memperbarui data.');
-          }
-        })
-        .catch(error => {
-          console.error('Refresh error:', error);
-          showRefreshToast('error', 'Gagal memperbarui data. Coba lagi.');
-        })
-        .finally(() => {
-          btn.classList.remove('loading');
-          btn.disabled = false;
-        });
-    }
 
     function showRefreshToast(type, message) {
       // Remove existing toasts
