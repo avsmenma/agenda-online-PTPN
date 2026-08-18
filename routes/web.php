@@ -413,9 +413,8 @@ Route::middleware(['auth', 'role:pembayaran'])->prefix('documents/pembayaran')->
     Route::get('/data', [DashboardPembayaranController::class, 'datatableTabulator'])->name('data');
     // Task 3 fitur export bersama: tombol Export toolbar Tabulator (CFG.exportUrl) — Excel/PDF
     // dependency-free lewat DocumentExporter/ExportsDocuments, ganti exportToExcel() PhpSpreadsheet
-    // yang FATAL. Statis, aman di atas /{dokumen}/detail (beda jumlah segmen, tak pernah bentrok).
+    // yang FATAL.
     Route::get('/export', [DashboardPembayaranController::class, 'exportDocuments'])->name('export');
-    Route::get('/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('detail')->whereNumber('dokumen');
 });
 
 // Professional Reports Routes - Pembayaran
