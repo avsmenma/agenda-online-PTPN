@@ -1011,6 +1011,29 @@ class DashboardPembayaranController extends Controller
     /**
      * Normalize date filter values from browser date input or localized URLs.
      */
+    private function normalizeDateFilter($value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        $value = trim($value);
+        $formats = ['Y-m-d', 'd/m/Y', 'd-m-Y'];
+
+        foreach ($formats as $format) {
+            try {
+                return Carbon::createFromFormat($format, $value)->format('Y-m-d');
+            } catch (\Exception $e) {
+                // Try the next supported format.
+            }
+        }
+
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
 
     /**
      * Apply month filter supporting month number (1-12), month name (Januari/January),
