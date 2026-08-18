@@ -293,23 +293,23 @@ Route::middleware(['auth', 'role:operator'])->prefix('documents')->name('documen
 
     // Routes with {dokumen} parameter - MUST be after static routes
     // Halaman edit dihapus 2026-07-09 — semua pengeditan via inline edit (documents.inline-update).
-    Route::get('/{dokumen}/progress', [DokumenController::class, 'getDocumentProgressForOperator'])->name('progress');
-    Route::delete('/{dokumen}', [DokumenController::class, 'destroy'])->name('destroy');
-    Route::post('/{dokumen}/approve', [DokumenController::class, 'approveDocument'])->name('approve');
+    Route::get('/{dokumen}/progress', [DokumenController::class, 'getDocumentProgressForOperator'])->name('progress')->whereNumber('dokumen');
+    Route::delete('/{dokumen}', [DokumenController::class, 'destroy'])->name('destroy')->whereNumber('dokumen');
+    Route::post('/{dokumen}/approve', [DokumenController::class, 'approveDocument'])->name('approve')->whereNumber('dokumen');
 });
 
 // Inline edit — accessible by all roles that can handle documents
 Route::middleware(['auth', 'role:operator,team_verifikasi,verifikasi,perpajakan,akutansi,pembayaran'])
     ->prefix('documents')->name('documents.')
     ->group(function () {
-        Route::patch('/{dokumen}/inline-update', [DokumenController::class, 'inlineUpdate'])->name('inline-update');
+        Route::patch('/{dokumen}/inline-update', [DokumenController::class, 'inlineUpdate'])->name('inline-update')->whereNumber('dokumen');
     });
 
 // Pengurus Dokumen dropdown - available for all operational roles, guarded in controller.
 Route::middleware(['auth'])
     ->prefix('documents')->name('documents.')
     ->group(function () {
-        Route::patch('/{dokumen}/handler', [DocumentHandlerController::class, 'update'])->name('handler.update');
+        Route::patch('/{dokumen}/handler', [DocumentHandlerController::class, 'update'])->name('handler.update')->whereNumber('dokumen');
     });
 
 
