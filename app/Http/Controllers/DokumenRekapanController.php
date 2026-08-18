@@ -67,7 +67,6 @@ class DokumenRekapanController extends Controller
             "menuDokumen" => "active",
             "menuRekapan" => "active",
             "menuDaftarDokumen" => "",
-            "menuTambahDokumen" => "",
             "menuDaftarDokumenDikembalikan" => "",
             "menuDashboard" => "",
             "dokumens" => $dokumens,
