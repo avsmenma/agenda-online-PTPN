@@ -76,7 +76,7 @@
             <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Dokumen Ditolak</option>
         </select>
 
-        <select name="filter_dari" class="form-select" style="max-width: 200px;">
+        <select name="filter_dari" class="form-select" style="max-width: 140px;">
             <option value="">Semua Bagian</option>
             @foreach(($filterDariOptions ?? []) as $bagianVal => $bagianLabel)
                 <option value="{{ $bagianVal }}" {{ request('filter_dari') == $bagianVal ? 'selected' : '' }}>{{ $bagianLabel }}</option>
