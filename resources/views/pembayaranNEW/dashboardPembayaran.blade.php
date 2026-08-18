@@ -242,6 +242,34 @@
         max-width: 260px;
     }
 
+    /* Status Pills Pembayaran (Belum Siap: Oranye, Siap Dibayar: Ungu, Sudah Dibayar: Hijau) */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.35rem 0.8rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        white-space: nowrap;
+        box-shadow: inset 0 0 0 1px currentColor;
+    }
+    .status-pill i {
+        font-size: 0.55rem;
+    }
+    .status-pill--pending {
+        background: rgba(245, 158, 11, 0.12) !important;
+        color: #f59e0b !important;
+    }
+    .status-pill--ready {
+        background: rgba(139, 92, 246, 0.12) !important;
+        color: #8b5cf6 !important;
+    }
+    .status-pill--paid {
+        background: rgba(16, 185, 129, 0.12) !important;
+        color: #10b981 !important;
+    }
+
     /* Modal Filter Lanjutan */
     .afm-backdrop {
         display: none;
