@@ -191,6 +191,13 @@
   padding-right: 24px !important;
 }
 
+.tabulator-toolbar .form-select[name="status"],
+.tabulator-toolbar .form-select[name="status_filter"],
+.tabulator-toolbar .form-select[name="year"],
+.tabulator-toolbar .form-select[name="filter_dari"] {
+  max-width: 140px !important;
+}
+
 .tabulator-toolbar .tabulator-toolbar-search {
   flex: 1 1 260px;
   min-width: 200px;
