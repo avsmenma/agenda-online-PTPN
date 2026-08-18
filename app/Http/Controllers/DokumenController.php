@@ -961,6 +961,13 @@ class DokumenController extends Controller
 
             DB::commit();
 
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Dokumen Berhasil Dihapus',
+                ]);
+            }
+
             return redirect()->route('documents.index')
                 ->with('success', 'Dokumen Berhasil Dihapus');
 
@@ -968,6 +975,13 @@ class DokumenController extends Controller
             DB::rollback();
 
             \Log::error('Error deleting dokumen: ' . $e->getMessage());
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat menghapus dokumen.',
+                ], 500);
+            }
 
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat menghapus dokumen. Silakan coba lagi.');
