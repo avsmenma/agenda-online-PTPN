@@ -45,9 +45,14 @@ Setiap kali selesai melakukan update kode atau refactor, WAJIB menjalankan sesi 
    - Uji input kosong, format salah, atau tipe data yang tidak sesuai secara sengaja.
    - Pastikan pesan validasi muncul secara rapi dan user-friendly di UI.
    - Pastikan TIDAK ADA layar error debug mentah (seperti Laravel Ignition/Whoops error pages) yang bocor ke user.
+6. **SERVER-SIDE VERIFICATION (Non-Browser)**:
+   - After route deletion, run `php artisan route:list --path={affected_path}` via SSH to confirm the route is truly absent from the compiled route table, not just visually gone in browser.
+   - Run `curl -I` against the live URL from server-side to bypass any browser/client caching.
+   - If OPcache is enabled, explicitly reload/restart PHP-FPM after deployment — `route:clear` alone does not invalidate OPcache.
 
 **REPORTING**:
-Sertakan ringkasan poin-poin dari 5 checklist di atas dalam laporan akhir setiap pengujian. Jika ada langkah yang gagal, langsung perbaiki kodenya dan jalankan ulang pengujian sebelum meminta review.
+Sertakan ringkasan poin-poin checklist di atas dalam laporan akhir setiap pengujian. Jika ada langkah yang gagal, langsung perbaiki kodenya dan jalankan ulang pengujian sebelum meminta review.
+
 
 
 
