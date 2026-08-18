@@ -330,18 +330,6 @@
         }
       };
 
-      window.toggleDocumentTableFullscreen = function () {
-        const table = document.getElementById('documentTableContainer');
-        if (!table) return;
-        window.setDocumentTableFullscreen(!document.body.classList.contains(FS_CLASS));
-      };
-
-      document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && document.body.classList.contains(FS_CLASS)) {
-          window.setDocumentTableFullscreen(false);
-        }
-      });
-
       // Toggle panel filter lanjutan + sinkron badge jumlah filter aktif.
       function initRoleFilterToggle() {
         const toggle = document.getElementById('rftFilterToggle');
@@ -410,14 +398,8 @@
       <div class="rft-spacer"></div>
 
       <div class="rft-actions">
-        <button type="button" class="rft-iconbtn rft-refresh" data-tip="Refresh" id="btnRefreshTable" onclick="refreshDocumentTable()">
-          <i class="fa-solid fa-arrows-rotate"></i>
-        </button>
         <button type="button" class="rft-iconbtn rft-cols" data-tip="Kustomisasi Kolom Tabel" onclick="openColumnCustomizationModal()">
           <i class="fa-solid fa-table-columns"></i>
-        </button>
-        <button type="button" class="rft-iconbtn rft-full btn-fullscreen-toggle" data-tip="Fullscreen" onclick="toggleDocumentTableFullscreen()">
-          <i class="fa-solid fa-expand"></i>
         </button>
       </div>
     </div>
