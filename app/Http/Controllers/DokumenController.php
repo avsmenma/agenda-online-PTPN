@@ -1219,7 +1219,7 @@ class DokumenController extends Controller
             DB::commit();
 
             return redirect()->route('documents.index')
-                ->with('success', 'Dokumen berhasil dihapus.');
+                ->with('success', 'Dokumen Berhasil Dihapus');
 
         } catch (Exception $e) {
             DB::rollback();
