@@ -275,8 +275,6 @@ Route::middleware(['auth', 'role:operator'])->prefix('documents')->name('documen
     // dependency-free lewat DocumentExporter/ExportsDocuments (pola Task 3 pembayaran).
     // Statis, aman di atas route {dokumen} lain di grup ini.
     Route::get('/export', [DokumenController::class, 'exportDocuments'])->name('export');
-    Route::get('/create', [DokumenController::class, 'create'])->name('create');
-    Route::post('/', [DokumenController::class, 'store'])->name('store');
 
     // CSV Import Routes - MUST be before {dokumen} routes to avoid conflict
     Route::get('/import', [\App\Http\Controllers\OperatorCsvImportController::class, 'index'])->name('import.index');
