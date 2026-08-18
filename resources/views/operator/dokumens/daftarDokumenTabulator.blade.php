@@ -57,7 +57,7 @@
             @endfor
         </select>
 
-        <select name="status_filter" class="form-select" style="max-width: 260px;">
+        <select name="status_filter" class="form-select" style="max-width: 140px;">
             <option value="">Semua Status</option>
             <option value="belum_dikirim" {{ request('status_filter') == 'belum_dikirim' ? 'selected' : '' }}>Belum Dikirim</option>
             <option value="menunggu_approval" {{ request('status_filter') == 'menunggu_approval' ? 'selected' : '' }}>Menunggu Approve Team Verifikasi</option>
