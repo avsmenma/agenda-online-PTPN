@@ -1431,9 +1431,7 @@
       font-weight: 500;
     }
 
-    #documentTableContainer .btn-customize-columns-inline,
-    #documentTableContainer .btn-refresh,
-    #documentTableContainer .btn-fullscreen {
+    #documentTableContainer .btn-customize-columns-inline {
       min-height: 44px;
       border-radius: 8px;
       border: none;
@@ -1449,23 +1447,10 @@
       transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
       white-space: nowrap;
       cursor: pointer;
-    }
-
-    #documentTableContainer .btn-customize-columns-inline {
       background: linear-gradient(135deg, #889717 0%, #9cab15 100%);
     }
 
-    #documentTableContainer .btn-refresh {
-      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-    }
-
-    #documentTableContainer .btn-fullscreen {
-      background: linear-gradient(135deg, #083E40 0%, #052f31 100%);
-    }
-
-    #documentTableContainer .btn-customize-columns-inline:hover,
-    #documentTableContainer .btn-refresh:hover,
-    #documentTableContainer .btn-fullscreen:hover {
+    #documentTableContainer .btn-customize-columns-inline:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(15, 23, 42, 0.24);
     }
@@ -2097,9 +2082,6 @@
           </div>
         </div>
         <div class="dtable-toolbar-right">
-          <button type="button" class="btn-refresh" onclick="refreshPembayaranTable()">
-            <i class="fa-solid fa-arrows-rotate"></i> Refresh
-          </button>
           <button type="button" class="btn-customize-columns-inline" onclick="openColumnCustomizationModal()">
             <i class="fa-solid fa-table-columns"></i>
             Kustomisasi Kolom Tabel
@@ -2122,15 +2104,6 @@
   <script src="{{ \App\Support\Asset::versioned('js/column-customization.js') }}"></script>
 
   <script>
-    function refreshPembayaranTable() {
-      if (typeof window.refreshPembayaranDataTable === 'function') {
-        window.refreshPembayaranDataTable();
-        return;
-      }
-
-      window.location.reload();
-    }
-
     // Number Counter Animation
     document.addEventListener('DOMContentLoaded', function () {
       const counters = document.querySelectorAll('.stat-value');
@@ -2209,74 +2182,6 @@
     <script>window.DOCUMENT_TABULATOR_CONFIG = @json($pembayaranTabulatorConfig);</script>
     <script src="{{ asset('vendor/tabulator/tabulator.min.js') }}"></script>
     <script src="{{ \App\Support\Asset::versioned('js/document-tabulator.js') }}"></script>
-    <script>
-      // Tombol Refresh toolbar (dtable-toolbar) memanggil window.refreshPembayaranDataTable
-      // bila terdefinisi (lihat refreshPembayaranTable() di atas) — arahkan ke replaceData()
-      // Tabulator (AJAX, tanpa reload halaman) alih-alih window.location.reload() bawaan.
-      // window.documentTable diset SINKRON oleh document-tabulator.js saat skrip di atas
-      // dieksekusi (elemen mount sudah ada di DOM sebelum tag <script> ini).
-      window.refreshPembayaranDataTable = function () {
-        if (window.documentTable) { window.documentTable.replaceData(); }
-      };
-    </script>
-
-  {{-- ── Tombol keluar fullscreen (khusus halaman pembayaran) ──────────────
-       Fullscreen global (compact-document-ui) menyembunyikan .dtable-toolbar —
-       tempat tombol keluar berada — dan menampilkan .search-box sebagai bar atas.
-       Halaman pembayaran TIDAK punya .search-box, sehingga tombol keluar ikut
-       tersembunyi. Tombol mengambang ini disisipkan ke <body> (di luar .content,
-       agar tak ikut disembunyikan aturan `.content > :not(...)`) dan hanya tampil
-       saat mode fullscreen. Kliknya memicu mekanisme keluar milik tombol global. --}}
-  <style>
-    .pembayaran-fs-exit {
-      display: none;
-      position: fixed;
-      top: 14px;
-      right: 18px;
-      z-index: 2147483600; /* di atas konten fullscreen (.content = 2147483000) */
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 10px;
-      background: #0f4c3a;
-      color: #ffffff;
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.32);
-    }
-    .pembayaran-fs-exit:hover { background: #0d3f30; }
-    body.document-table-only-fullscreen .pembayaran-fs-exit,
-    body.is-fullscreen .pembayaran-fs-exit { display: inline-flex; }
-  </style>
-  <script>
-    (function () {
-      var exitBtn = document.createElement('button');
-      exitBtn.type = 'button';
-      exitBtn.id = 'pembayaranFsExit';
-      exitBtn.className = 'pembayaran-fs-exit';
-      // Teks tombol TIDAK boleh mengandung "keluar fullscreen": observer di
-      // compact-document-ui memakai regex /keluar fullscreen/i pada textContent
-      // setiap tombol untuk menyimpulkan "masih di mode fullscreen". Bila label ini
-      // cocok, aksi keluar langsung dianulir (fullscreen aktif lagi seketika).
-      // "Keluar Layar Penuh" aman dari regex itu dan tetap jelas.
-      exitBtn.title = 'Keluar layar penuh (Esc)';
-      exitBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Keluar Layar Penuh';
-      exitBtn.addEventListener('click', function () {
-        // Picu mekanisme keluar milik tombol fullscreen global (app.blade.php).
-        var globalFsBtn = document.querySelector('.btn-fullscreen-toggle');
-        if (globalFsBtn) {
-          globalFsBtn.click();
-          return;
-        }
-        // Cadangan: kirim tombol Escape.
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-      });
-      document.body.appendChild(exitBtn);
-    })();
-  </script>
-
 @endsection
 
 @push('styles')
