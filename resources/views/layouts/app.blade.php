@@ -1164,7 +1164,6 @@
     .dark .btn-create,
     .dark .btn-add-document,
     .dark a.btn-create,
-    .dark a[href*="tambahDokumen"],
     .dark .btn-primary-action {
       color: #ffffff !important;
     }
@@ -3409,10 +3408,6 @@
         'perpajakan'      => '/documents/perpajakan',
         default           => '/documents'
       };
-      $tambahDokumenUrl = match ($module) {
-        'operator' => '/documents/create',
-        default    => null
-      };
     @endphp
 
     <script>window._userModule = @json($module);</script>
@@ -3426,7 +3421,6 @@
         @php
           $isOperatorDocumentsActive = request()->routeIs('documents.index') ||
             request()->is('documents');
-          $isOperatorCreateActive = request()->routeIs('documents.create') || request()->is('documents/create');
           $isOperatorImportActive = request()->routeIs('documents.import.*') || request()->is('documents/import*');
           $isOperatorReportActive = request()->routeIs('reports.analytics') || request()->is('reports/analytics');
         @endphp
@@ -3437,12 +3431,6 @@
             <polyline points="14,2 14,8 20,8"/>
           </svg>
           Daftar Dokumen
-        </a>
-        <a href="{{ route('documents.create') }}" class="owner-nav-item {{ $isOperatorCreateActive ? 'active' : '' }}" title="Tambah Dokumen">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
-            <path d="M12 5v14M5 12h14"/>
-          </svg>
-          Tambah Dokumen
         </a>
         <a href="{{ route('documents.import.index') }}" class="owner-nav-item {{ $isOperatorImportActive ? 'active' : '' }}" title="Import CSV">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0">
@@ -5414,31 +5402,6 @@ document.addEventListener('DOMContentLoaded', function() {
     box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);
   }
 
-  /* ── Tambah Dokumen button (fullscreen only) ── */
-  .btn-tambah-dokumen-fs {
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(8, 62, 64, 0.2);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 44px;
-    white-space: nowrap;
-    text-decoration: none;
-    margin-left: 8px;
-  }
-  .btn-tambah-dokumen-fs:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(8, 62, 64, 0.3);
-    color: white;
-  }
 
   /* ── Container when fullscreen ── */
   body.is-fullscreen .fs-content-area {
@@ -5632,27 +5595,6 @@ document.addEventListener('DOMContentLoaded', function() {
     fsBtn.classList.add('active');
     fsBtn.innerHTML = '<i class="fas fa-compress"></i> Keluar Fullscreen';
     fsBtn.title = 'Keluar dari mode fullscreen (Esc)';
-
-    // ── Inject "Tambah Dokumen" button only for operator role ──
-    var _mod = (window._userModule || '').toLowerCase();
-    var _noTambah = ['team_verifikasi', 'perpajakan', 'akutansi', 'pembayaran'];
-    if (_noTambah.indexOf(_mod) === -1 && !document.getElementById('btn-tambah-dokumen-fs')) {
-      var tambahBtn = document.createElement('button');
-      tambahBtn.type = 'button';
-      tambahBtn.id = 'btn-tambah-dokumen-fs';
-      tambahBtn.className = 'btn-tambah-dokumen-fs';
-      tambahBtn.innerHTML = '✚ Tambah Dokumen';
-      tambahBtn.title = 'Tambah dokumen baru';
-      tambahBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        try {
-          sessionStorage.setItem('return_to_fullscreen', '1');
-          sessionStorage.setItem('return_url', window.location.pathname + window.location.search);
-        } catch(err) {}
-        window.location.href = '/documents/create';
-      });
-      fsBtn.parentNode.insertBefore(tambahBtn, fsBtn.nextSibling);
-    }
   }
 
   // ── Exit fullscreen ───────────────────────────────────────────
@@ -5676,10 +5618,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       document.body.style.overflow = '';
     }, 250);
-
-    // ── Remove "Tambah Dokumen" button ──
-    var tambahBtn = document.getElementById('btn-tambah-dokumen-fs');
-    if (tambahBtn) tambahBtn.remove();
 
     document.querySelectorAll('.btn-fullscreen-toggle').forEach(function (b) {
       b.classList.remove('active');
