@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Requests\StoreDokumenRequest;
 use App\Models\Dokumen;
 use App\Models\DokumenPO;
 use App\Models\DokumenPR;
@@ -351,7 +350,6 @@ class DokumenController extends Controller
             "module" => "Operator",
             "menuDokumen" => "active",
             "menuDaftarDokumen" => "active",
-            "menuTambahDokumen" => "",
             "menuDaftarDokumenDikembalikan" => "",
             "menuDashboard" => "",
             "dokumens" => $dokumens,
@@ -464,87 +462,7 @@ class DokumenController extends Controller
 
 
 
-    public function create()
-    {
-        // Ambil data dari database cash_bank_new
-        // Tambahkan try-catch untuk menangani error koneksi database
-        $isDropdownAvailable = false;
-        try {
-            $kategoriKriteria = KategoriKriteria::where('tipe', 'Keluar')->get();
-            $subKriteria = SubKriteria::all();
-            $itemSubKriteria = ItemSubKriteria::all();
-            $isDropdownAvailable = $kategoriKriteria->count() > 0;
-        } catch (\Exception $e) {
-            \Log::error('Error fetching cash_bank data: ' . $e->getMessage());
-            $kategoriKriteria = collect([]);
-            $subKriteria = collect([]);
-            $itemSubKriteria = collect([]);
-        }
 
-        // Fallback: load distinct values from dokumens table when cash_bank is unavailable
-        if ($kategoriKriteria->isEmpty()) {
-            $kategoriKriteria = Dokumen::whereNotNull('kategori')->where('kategori', '!=', '')
-                ->distinct()->orderBy('kategori')->pluck('kategori')
-                ->map(fn($v) => (object)['id_kategori_kriteria' => $v, 'nama_kriteria' => $v, 'tipe' => 'Keluar']);
-        }
-        if ($subKriteria->isEmpty()) {
-            $subKriteria = Dokumen::whereNotNull('jenis_dokumen')->where('jenis_dokumen', '!=', '')
-                ->distinct()->orderBy('jenis_dokumen')->get(['jenis_dokumen', 'kategori'])
-                ->unique('jenis_dokumen')
-                ->map(fn($d) => (object)['id_sub_kriteria' => $d->jenis_dokumen, 'nama_sub_kriteria' => $d->jenis_dokumen, 'id_kategori_kriteria' => $d->kategori]);
-        }
-        if ($itemSubKriteria->isEmpty()) {
-            $itemSubKriteria = Dokumen::whereNotNull('jenis_sub_pekerjaan')->where('jenis_sub_pekerjaan', '!=', '')
-                ->distinct()->orderBy('jenis_sub_pekerjaan')->get(['jenis_sub_pekerjaan', 'jenis_dokumen'])
-                ->unique('jenis_sub_pekerjaan')
-                ->map(fn($d) => (object)['id_item_sub_kriteria' => $d->jenis_sub_pekerjaan, 'nama_item_sub_kriteria' => $d->jenis_sub_pekerjaan, 'id_sub_kriteria' => $d->jenis_dokumen]);
-        }
-        $isDropdownAvailable = $kategoriKriteria->isNotEmpty();
-
-        // Ambil data jenis pembayaran dari database cash_bank_new
-        $jenisPembayaranList = collect([]);
-        $isJenisPembayaranAvailable = false;
-        try {
-            $jenisPembayaranList = \App\Models\JenisPembayaran::orderBy('nama_jenis_pembayaran')->get();
-            $isJenisPembayaranAvailable = $jenisPembayaranList->count() > 0;
-        } catch (\Exception $e) {
-            \Log::error('Error fetching jenis pembayaran data (create): ' . $e->getMessage());
-            $jenisPembayaranList = collect([]);
-        }
-        if ($jenisPembayaranList->isEmpty()) {
-            $jenisPembayaranList = Dokumen::whereNotNull('jenis_pembayaran')->where('jenis_pembayaran', '!=', '')
-                ->distinct()->orderBy('jenis_pembayaran')->pluck('jenis_pembayaran')
-                ->map(fn($v) => (object)['id_jenis_pembayaran' => $v, 'nama_jenis_pembayaran' => $v]);
-            $isJenisPembayaranAvailable = $jenisPembayaranList->isNotEmpty();
-        }
-
-        // Ambil data bagian dari database
-        $bagianList = collect([]);
-        try {
-            $bagianList = Bagian::active()->ordered()->get();
-        } catch (\Exception $e) {
-            \Log::error('Error fetching bagian data (create): ' . $e->getMessage());
-            $bagianList = collect([]);
-        }
-
-        $data = array(
-            "title" => "Tambah Dokumen",
-            "module" => "Operator",
-            "menuDokumen" => "active",
-            "menuDaftarDokumen" => "",
-            "menuTambahDokumen" => "active",
-            "menuDaftarDokumenDikembalikan" => "",
-            "menuDashboard" => "",
-            "kategoriKriteria" => $kategoriKriteria,
-            "subKriteria" => $subKriteria,
-            "itemSubKriteria" => $itemSubKriteria,
-            "isDropdownAvailable" => $isDropdownAvailable,
-            "jenisPembayaranList" => $jenisPembayaranList,
-            "isJenisPembayaranAvailable" => $isJenisPembayaranAvailable,
-            "bagianList" => $bagianList,
-        );
-        return view('operator.dokumens.tambahDokumen', $data);
-    }
 
 
     /**
@@ -731,182 +649,7 @@ class DokumenController extends Controller
         ];
     }
 
-    public function store(StoreDokumenRequest $request)
-    {
 
-        try {
-            DB::beginTransaction();
-
-            // Format nilai rupiah - remove dots, commas, spaces, and "Rp" text (nullable)
-            $nilaiRupiah = null;
-            if ($request->filled('nilai_rupiah')) {
-                $nilaiRupiah = preg_replace('/[^0-9]/', '', $request->nilai_rupiah);
-                if (!empty($nilaiRupiah) && $nilaiRupiah > 0) {
-                    $nilaiRupiah = (float) $nilaiRupiah;
-                } else {
-                    $nilaiRupiah = null;
-                }
-            }
-
-            // Extract bulan dan tahun from computer timestamp (Carbon::now())
-            $now = Carbon::now();
-            $bulanIndonesia = [
-                1 => 'Januari',
-                2 => 'Februari',
-                3 => 'Maret',
-                4 => 'April',
-                5 => 'Mei',
-                6 => 'Juni',
-                7 => 'Juli',
-                8 => 'Agustus',
-                9 => 'September',
-                10 => 'Oktober',
-                11 => 'November',
-                12 => 'Desember'
-            ];
-            $bulan = $bulanIndonesia[$now->month];
-            $tahun = $now->year;
-
-            // Get nama from ID untuk field baru (kriteria_cf, sub_kriteria, item_sub_kriteria)
-            $kategoriKriteria = null;
-            $subKriteria = null;
-            $itemSubKriteria = null;
-
-            try {
-                if ($request->has('kriteria_cf') && $request->kriteria_cf) {
-                    $kategoriKriteria = KategoriKriteria::find($request->kriteria_cf);
-                }
-
-                if ($request->has('sub_kriteria') && $request->sub_kriteria) {
-                    $subKriteria = SubKriteria::find($request->sub_kriteria);
-                }
-
-                if ($request->has('item_sub_kriteria') && $request->item_sub_kriteria) {
-                    $itemSubKriteria = ItemSubKriteria::find($request->item_sub_kriteria);
-                }
-            } catch (\Exception $e) {
-                \Log::error('Error fetching cash_bank data for store: ' . $e->getMessage());
-                // Continue dengan null values, akan menggunakan fallback ke request->kategori/jenis_dokumen/jenis_sub_pekerjaan
-            }
-
-            // Create dokumen
-            $dokumen = Dokumen::create([
-                'nomor_agenda' => $request->nomor_agenda,
-                'bulan' => $bulan,
-                'tahun' => $tahun,
-                'tanggal_masuk' => $now, // Always use current timestamp
-                'nomor_spp' => $request->nomor_spp,
-                'tanggal_spp' => $request->tanggal_spp,
-                'uraian_spp' => $request->uraian_spp,
-                'nilai_rupiah' => $nilaiRupiah,
-                // Simpan nama dari ID untuk backward compatibility
-                'kategori' => $kategoriKriteria ? $kategoriKriteria->nama_kriteria : ($request->kategori ?? null),
-                'jenis_dokumen' => $subKriteria ? $subKriteria->nama_sub_kriteria : ($request->jenis_dokumen ?? null),
-                'jenis_sub_pekerjaan' => $itemSubKriteria ? $itemSubKriteria->nama_item_sub_kriteria : ($request->jenis_sub_pekerjaan ?? null),
-                'jenis_pembayaran' => $request->jenis_pembayaran,
-                'kebun' => $request->kebun,
-                'bagian' => $request->bagian,
-                'nama_pengirim' => $request->nama_pengirim,
-                // Remove old dibayar_kepada field, will handle separately
-                'no_berita_acara' => $request->no_berita_acara,
-                'tanggal_berita_acara' => $request->tanggal_berita_acara,
-                'no_spk' => $request->no_spk,
-                'tanggal_spk' => $request->tanggal_spk,
-                'tanggal_berakhir_spk' => $request->tanggal_berakhir_spk,
-                'status' => 'draft',
-                'keterangan' => null,
-                'created_by' => 'operator',
-                'current_handler' => 'operator',
-            ]);
-
-            // Save PO numbers
-            if ($request->has('nomor_po')) {
-                foreach ($request->nomor_po as $nomorPO) {
-                    if (!empty($nomorPO)) {
-                        DokumenPO::create([
-                            'dokumen_id' => $dokumen->id,
-                            'nomor_po' => $nomorPO,
-                        ]);
-                    }
-                }
-            }
-
-            // Save PR numbers
-            if ($request->has('nomor_pr')) {
-                foreach ($request->nomor_pr as $nomorPR) {
-                    if (!empty($nomorPR)) {
-                        DokumenPR::create([
-                            'dokumen_id' => $dokumen->id,
-                            'nomor_pr' => $nomorPR,
-                        ]);
-                    }
-                }
-            }
-
-            // Save dibayar_kepada (multiple recipients)
-            if ($request->has('dibayar_kepada')) {
-                foreach ($request->dibayar_kepada as $penerima) {
-                    if (!empty(trim($penerima))) {
-                        DibayarKepada::create([
-                            'dokumen_id' => $dokumen->id,
-                            'nama_penerima' => trim($penerima),
-                        ]);
-                    }
-                }
-            }
-
-            DB::commit();
-
-            // Log activity: dokumen dOperatort
-            try {
-                ActivityLogHelper::logCreated($dokumen);
-            } catch (\Exception $logException) {
-                \Log::error('Failed to log document creation: ' . $logException->getMessage());
-            }
-
-            $successMessage = 'Dokumen berhasil ditambahkan.';
-            if ($dokumen->nomor_agenda) {
-                $successMessage .= ' Nomor agenda: ' . $dokumen->nomor_agenda;
-            }
-
-            // Check if user should return to fullscreen mode
-            $returnFullscreen = $request->input('return_to_fullscreen', false);
-            $returnUrl = $request->input('return_url', route('documents.index'));
-
-            if ($returnFullscreen) {
-                $urlWithFullscreen = $returnUrl .
-                    (str_contains($returnUrl, '?') ? '&' : '?') .
-                    'fullscreen=1';
-
-                return redirect($urlWithFullscreen)
-                    ->with('success', $successMessage);
-            }
-
-            return redirect()->route('documents.index')
-                ->with('success', $successMessage);
-
-        } catch (\Exception $e) {
-            DB::rollback();
-
-            \Log::error('Error creating dokumen: ' . $e->getMessage(), [
-                'exception' => $e,
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->except(['_token', 'password']),
-            ]);
-
-            // Provide more detailed error message
-            $errorMessage = 'Terjadi kesalahan saat menyimpan dokumen.';
-            if (str_contains($e->getMessage(), 'SQLSTATE') || str_contains($e->getMessage(), 'Column')) {
-                $errorMessage .= ' Pastikan semua field yang diperlukan sudah diisi dengan benar.';
-            } else {
-                $errorMessage .= ' Silakan coba lagi atau hubungi administrator.';
-            }
-
-            return redirect()->back()
-                ->withInput()
-                ->with('error', $errorMessage);
-        }
-    }
 
 
 
