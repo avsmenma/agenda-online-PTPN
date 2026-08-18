@@ -32,10 +32,7 @@
   .form-select,
   .btn-year-filter,
   .btn-filter,
-  .btn-refresh,
-  .btn-customize-columns-inline,
-  .btn-fullscreen,
-  .btn-fullscreen-toggle {
+  .btn-customize-columns-inline {
     min-height: 36px !important;
     height: 36px !important;
     padding: 0.38rem 0.68rem !important;
@@ -45,10 +42,7 @@
   }
 
   .btn-filter,
-  .btn-refresh,
   .btn-customize-columns-inline,
-  .btn-fullscreen,
-  .btn-fullscreen-toggle,
   .btn-year-filter {
     display: inline-flex !important;
     align-items: center !important;
@@ -58,10 +52,7 @@
   }
 
   .btn-filter i,
-  .btn-refresh i,
   .btn-customize-columns-inline i,
-  .btn-fullscreen i,
-  .btn-fullscreen-toggle i,
   .btn-year-filter i {
     font-size: 0.76rem !important;
   }
