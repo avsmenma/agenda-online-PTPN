@@ -98,7 +98,6 @@ class DashboardPembayaranController extends Controller
         $date = request('date');
         $dateFilter = $this->normalizeDateFilter($date);
         $search = request('search');
-        $mode = request('mode', 'normal'); // normal or rekapan_table
         $defaultColumns = $this->getPembayaranDashboardDefaultColumns();
         $selectedColumns = request('columns', []); // Array of selected columns in order
         $selectedColumns = is_array($selectedColumns) ? array_values(array_filter($selectedColumns)) : [];
@@ -381,106 +380,13 @@ class DashboardPembayaranController extends Controller
             $query->where('bagian', $filterBagian);
         }
 
-        // Apply rekapan detail filters
-        if ($mode === 'rekapan_table') {
-            $filterDibayarKepada = request('filter_dibayar_kepada_column');
-            if ($filterDibayarKepada) {
-                $query->where('dibayar_kepada', $filterDibayarKepada);
-            }
-            $filterKategori = request('filter_kategori_column');
-            if ($filterKategori) {
-                $query->where('kategori', $filterKategori);
-            }
-            $filterJenisDokumen = request('filter_jenis_dokumen_column');
-            if ($filterJenisDokumen) {
-                $query->where('jenis_dokumen', $filterJenisDokumen);
-            }
-            $filterJenisSubPekerjaan = request('filter_jenis_sub_pekerjaan_column');
-            if ($filterJenisSubPekerjaan) {
-                $query->where('jenis_sub_pekerjaan', $filterJenisSubPekerjaan);
-            }
-            $filterJenisPembayaran = request('filter_jenis_pembayaran_column');
-            if ($filterJenisPembayaran) {
-                $query->where('jenis_pembayaran', $filterJenisPembayaran);
-            }
-            $filterKebun = request('filter_jenis_kebuns_column');
-            if ($filterKebun) {
-                $query->where(function ($q) use ($filterKebun) {
-                    $q->where('kebun', $filterKebun)
-                        ->orWhere('nama_kebuns', $filterKebun);
-                });
-            }
-        }
-
-        // For rekapan table mode - group by vendor
-        $rekapanByVendor = null;
-        if ($mode === 'rekapan_table' && !empty($selectedColumns)) {
-            $allDocsForRekapan = $query->orderBy('dibayar_kepada')->get();
-            $allDocsForRekapan->each(function ($doc) use ($getComputedStatus) {
-                $doc->computed_status = $getComputedStatus($doc);
-            });
-            $allDocsForRekapan = $allDocsForRekapan->filter(function ($doc) {
-                return in_array($doc->computed_status, ['siap_dibayar', 'sudah_dibayar']);
-            })->values();
-
-            if ($statusPembayaran && in_array($statusPembayaran, ['siap_dibayar', 'sudah_dibayar'])) {
-                $allDocsForRekapan = $allDocsForRekapan->filter(function ($doc) use ($statusPembayaran) {
-                    return $doc->computed_status === $statusPembayaran;
-                })->values();
-            }
-
-            $rekapanByVendor = $allDocsForRekapan->groupBy(function ($doc) {
-                return $doc->dibayar_kepada ?: null;
-            })->map(function ($docs, $vendor) {
-                return [
-                    'vendor' => $vendor ?: 'Tidak Diketahui',
-                    'documents' => $docs,
-                    'total_nilai' => $docs->sum('nilai_rupiah'),
-                    'total_belum_dibayar' => $docs->where('computed_status', 'belum_siap_dibayar')->sum('nilai_rupiah'),
-                    'total_siap_dibayar' => $docs->where('computed_status', 'siap_dibayar')->sum('nilai_rupiah'),
-                    'total_sudah_dibayar' => $docs->where('computed_status', 'sudah_dibayar')->sum('nilai_rupiah'),
-                    'count' => $docs->count(),
-                ];
-            });
-        }
-
         $perPage = 50;
-        if ($mode === 'rekapan_table') {
-            // Get all results first (before pagination) to apply computed_status filter
-            $allDokumens = $query->orderBy('created_at', 'desc')->get();
-            $allDokumens->each(function ($doc) use ($getComputedStatus) {
-                $doc->computed_status = $getComputedStatus($doc);
-            });
-
-            // Only filter by status if a specific status is selected
-            if ($statusPembayaran && in_array($statusPembayaran, ['belum_siap_dibayar', 'siap_dibayar', 'sudah_dibayar'])) {
-                $allDokumens = $allDokumens->filter(function ($doc) use ($statusPembayaran) {
-                    return $doc->computed_status === $statusPembayaran;
-                })->values();
-            }
-
-            // Paginate manually
-            $currentPage = request()->get('page', 1);
-            $perPage = request()->get('per_page', session('pembayaran_per_page', 15));
-            if ($perPage === 'all') {
-                $perPage = 999999;
-            } else {
-                $perPage = in_array((int) $perPage, [10, 15, 25, 50, 100]) ? (int) $perPage : 15;
-            }
-            session(['pembayaran_per_page' => $perPage]);
-            $total = $allDokumens->count();
-            $currentItems = $allDokumens->slice(($currentPage - 1) * $perPage, $perPage)->values();
-        } else {
-            $currentPage = 1;
-            $total = (clone $query)->count();
-            $currentItems = collect();
-        }
-
+        $total = (clone $query)->count();
         $dokumens = new LengthAwarePaginator(
-            $currentItems,
+            collect(),
             $total,
             $perPage,
-            $currentPage,
+            1,
             [
                 'path' => request()->url(),
                 'query' => request()->except('page')
@@ -591,7 +497,6 @@ class DashboardPembayaranController extends Controller
             'selectedDate' => $dateFilter ?? $date,
             'search' => $search,
             'availableYears' => $availableYears,
-            'mode' => $mode,
             'selectedColumns' => $selectedColumns,
             'frozenColumns' => $frozenColumns,
             'pinnedColumns' => $pinnedColumns,
@@ -599,7 +504,6 @@ class DashboardPembayaranController extends Controller
             'frozenLeft' => $frozenLeft,
             'frozenRight' => $frozenRight,
             'renderColumns' => $renderColumns,
-            'rekapanByVendor' => $rekapanByVendor,
             // Dropdown data
             'availableDibayarKepada' => $availableDibayarKepada,
             'availableKategori' => $availableKategori,
