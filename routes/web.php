@@ -584,13 +584,13 @@ Route::middleware(['auth', 'role:programmer'])
         // User Management - View and edit all users
         Route::get('/user-management', [\App\Http\Controllers\ProgrammerController::class, 'userManagement'])
             ->name('user-management');
-        Route::get('/user-management/{id}', [\App\Http\Controllers\ProgrammerController::class, 'getUserData'])
-            ->name('user-management.get')
-            ->whereNumber('id');
         Route::post('/user-management/store', [\App\Http\Controllers\ProgrammerController::class, 'storeUser'])
             ->name('user-management.store');
         Route::post('/user-management/update', [\App\Http\Controllers\ProgrammerController::class, 'updateUser'])
             ->name('user-management.update');
+        Route::get('/user-management/{id}', [\App\Http\Controllers\ProgrammerController::class, 'getUserData'])
+            ->name('user-management.get')
+            ->whereNumber('id');
         Route::delete('/user-management/{id}', [\App\Http\Controllers\ProgrammerController::class, 'destroyUser'])
             ->name('user-management.destroy')
             ->whereNumber('id');
