@@ -172,9 +172,23 @@
 }
 
 .tabulator-toolbar .form-control,
+.tabulator-toolbar .form-select,
+.tabulator-toolbar .btn {
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0.38rem 0.75rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500;
+  line-height: 1.2 !important;
+  border-radius: 8px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .tabulator-toolbar .form-select {
-  height: 38px;
-  font-size: 13px;
+  display: block;
+  padding-right: 24px !important;
 }
 
 .tabulator-toolbar .tabulator-toolbar-search {
