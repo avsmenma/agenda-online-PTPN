@@ -606,3 +606,36 @@ Aditif (47 baris, nol penghapusan), berlaku ke kelima role keuangan sekaligus.
 - Seluruh isi blok dapat disalin sekaligus dengan Ctrl+C.
 - Data hasil salinan dapat ditempel ke dalam blok dengan Ctrl+V, mengikuti aturan penempelan ala Excel.
 - Setiap perubahan dapat dibatalkan dengan Ctrl+Z dan diulang kembali dengan Ctrl+Y.
+
+---
+
+## 9. ROUTING SAFETY RULES (wajib dipatuhi setiap membuat/menghapus route)
+
+1. **Constraint Eksplisit pada Route Dinamis**:
+   SETIAP route dengan parameter dinamis (`{id}`, `{dokumen}`, `{user}`, dst) WAJIB diberi constraint
+   eksplisit: `->whereNumber()` untuk ID integer, `->whereUuid()` untuk UUID, atau `->where()` dengan
+   regex custom. Route parameter TANPA constraint dilarang, kecuali ada alasan eksplisit yang
+   didokumentasikan di komentar kode.
+
+2. **Urutan Pendaftaran Route (Statis Sebelum Dinamis)**:
+   Route statis (`/create`, `/edit`, `/export`, `/import`, dst) WAJIB didaftarkan SEBELUM route
+   berparameter (`{id}`) untuk prefix URL yang sama. Contoh urutan benar:
+   ```php
+   Route::get('/create', ...);        // statis dulu
+   Route::get('/{id}', ...);          // parameter setelahnya
+   ```
+
+3. **Verifikasi HTTP Status Code Saat Menghapus Route**:
+   SETIAP kali menghapus route (termasuk `/create`, `/edit`, dsb), WAJIB verifikasi hasil akhir
+   dengan HTTP status code, bukan cuma tampilan visual browser:
+   - Target: `404 Not Found`
+   - Kalau hasilnya `405 Method Not Allowed` → curiga ada route parameter lain yang menangkap
+     path tersebut secara tidak sengaja (root-cause sama seperti kasus `/documents/create`).
+   - Verifikasi via `curl` server-side (bukan cuma browser) DAN via `route:list` untuk konfirmasi ganda.
+
+4. **Audit Singkat Setelah Perubahan Route**:
+   Setelah menambah/mengubah/menghapus route apapun, WAJIB jalankan audit singkat:
+   ```bash
+   php artisan route:list --path={prefix_terkait}
+   ```
+   dan review manual apakah ada potensi collision antara route statis dan route berparameter di prefix yang sama.
