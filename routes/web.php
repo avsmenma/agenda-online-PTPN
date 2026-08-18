@@ -83,11 +83,14 @@ Route::middleware('auth')->group(function () {
     Route::prefix('api')->name('api.')->group(function () {
         // Document Preview
         Route::get('/documents/{id}/preview', [\App\Http\Controllers\Api\DocumentPreviewController::class, 'getPreviewData'])
-            ->name('documents.preview');
+            ->name('documents.preview')
+            ->whereNumber('id');
         Route::post('/documents/{id}/quick-approve', [\App\Http\Controllers\Api\DocumentPreviewController::class, 'quickApprove'])
-            ->name('documents.quick-approve');
+            ->name('documents.quick-approve')
+            ->whereNumber('id');
         Route::post('/documents/{id}/quick-reject', [\App\Http\Controllers\Api\DocumentPreviewController::class, 'quickReject'])
-            ->name('documents.quick-reject');
+            ->name('documents.quick-reject')
+            ->whereNumber('id');
 
         // Advanced Search & Filters
         Route::post('/search/documents', [\App\Http\Controllers\Api\AdvancedSearchController::class, 'search'])
@@ -101,9 +104,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/search/presets', [\App\Http\Controllers\Api\AdvancedSearchController::class, 'savePreset'])
             ->name('search.presets.store');
         Route::post('/search/presets/{id}/use', [\App\Http\Controllers\Api\AdvancedSearchController::class, 'usePreset'])
-            ->name('search.presets.use');
+            ->name('search.presets.use')
+            ->whereNumber('id');
         Route::delete('/search/presets/{id}', [\App\Http\Controllers\Api\AdvancedSearchController::class, 'deletePreset'])
-            ->name('search.presets.destroy');
+            ->name('search.presets.destroy')
+            ->whereNumber('id');
     });
 });
 
@@ -156,13 +161,15 @@ Route::get('/api/documents/rejected/check', [DashboardController::class, 'checkR
     ->name('api.documents.rejected.check');
 Route::get('/api/documents/rejected/{dokumen}', [DashboardController::class, 'showRejectedDocument'])
     ->middleware('auth', 'role:operator,bagian')
-    ->name('api.documents.rejected.show');
+    ->name('api.documents.rejected.show')
+    ->whereNumber('dokumen');
 Route::get('/api/documents/verifikasi/rejected/check', [TeamVerifikasiController::class, 'checkRejectedDocuments'])
     ->middleware('auth', 'role:team_verifikasi')
     ->name('api.documents.verifikasi.rejected.check');
 Route::get('/api/documents/verifikasi/rejected/{dokumen}', [TeamVerifikasiController::class, 'showRejectedDocument'])
     ->middleware('auth', 'role:team_verifikasi')
-    ->name('api.documents.verifikasi.rejected.show');
+    ->name('api.documents.verifikasi.rejected.show')
+    ->whereNumber('dokumen');
 
 // Backward compatibility routes removed — old rejected document URLs (Phase 2 cleanup)
 
@@ -244,11 +251,13 @@ Route::get('owner/analytics', fn() => redirect()->route('rekapan-keterlambatan.i
 // Urgency Alert Routes (Admin/Owner only for send/reset)
 Route::post('owner/dokumen/{id}/urgency', [OwnerDashboardController::class, 'sendUrgency'])
     ->middleware('auth', 'role:admin,owner')
-    ->name('owner.dokumen.urgency.send');
+    ->name('owner.dokumen.urgency.send')
+    ->whereNumber('id');
 
 Route::delete('owner/dokumen/{id}/urgency', [OwnerDashboardController::class, 'resetUrgency'])
     ->middleware('auth', 'role:admin,owner')
-    ->name('owner.dokumen.urgency.reset');
+    ->name('owner.dokumen.urgency.reset')
+    ->whereNumber('id');
 
 Route::delete('owner/urgency/reset-all', [OwnerDashboardController::class, 'resetAllUrgencies'])
     ->middleware('auth', 'role:admin,owner')
@@ -257,7 +266,8 @@ Route::delete('owner/urgency/reset-all', [OwnerDashboardController::class, 'rese
 // Notifikasi WhatsApp prioritas dari owner/kabag ke role verifikasi/perpajakan/akutansi
 Route::post('owner/dokumen/{id}/priority-whatsapp', [OwnerDashboardController::class, 'sendPriorityWhatsApp'])
     ->middleware('auth', 'role:admin,owner')
-    ->name('owner.dokumen.priority-whatsapp');
+    ->name('owner.dokumen.priority-whatsapp')
+    ->whereNumber('id');
 
 // Route owner/dokumen/{id}/history DIHAPUS 2026-07-11: nol pemanggil frontend.
 
@@ -352,7 +362,7 @@ Route::middleware(['auth', 'role:team_verifikasi,verifikasi'])->prefix('returns/
     // "dokumen ditolak downstream" tanpa menu, tak dipakai lagi (dikonfirmasi pemilik).
     // Halaman pengembalian yang hidup ada di '/bagian' (menu "Pengembalian Ke Bagian").
     Route::get('/bagian', [TeamVerifikasiController::class, 'pengembalianKeBidang'])->name('bagian');
-    Route::post('/{dokumen}/to-bidang', [TeamVerifikasiController::class, 'returnToBidang'])->name('to-bidang');
+    Route::post('/{dokumen}/to-bidang', [TeamVerifikasiController::class, 'returnToBidang'])->name('to-bidang')->whereNumber('dokumen');
 });
 
 
@@ -366,11 +376,14 @@ Route::middleware(['auth', 'role:team_verifikasi,verifikasi'])->prefix('returns/
 // Document Activity Tracking Routes
 Route::middleware(['auth', 'web'])->prefix('api/documents')->name('api.documents.')->group(function () {
     Route::post('/{dokumen}/activity', [\App\Http\Controllers\InboxController::class, 'trackActivity'])
-        ->name('activity.track');
+        ->name('activity.track')
+        ->whereNumber('dokumen');
     Route::get('/{dokumen}/activities', [\App\Http\Controllers\InboxController::class, 'getActivities'])
-        ->name('activity.get');
+        ->name('activity.get')
+        ->whereNumber('dokumen');
     Route::post('/{dokumen}/activity/stop', [\App\Http\Controllers\InboxController::class, 'stopActivity'])
-        ->name('activity.stop');
+        ->name('activity.stop')
+        ->whereNumber('dokumen');
 });
 
 // Universal Approval DIHAPUS TOTAL 2026-07-09: getDetail & checkNotifications
@@ -388,9 +401,9 @@ Route::middleware(['auth', 'role:team_verifikasi,verifikasi,perpajakan,akutansi,
     // Bulk approve route (static, before parameterized routes)
     Route::post('/inbox/bulk-approve', [\App\Http\Controllers\InboxController::class, 'bulkApprove'])->name('inbox.bulk-approve');
 
-    Route::get('/inbox/{dokumen}', [\App\Http\Controllers\InboxController::class, 'show'])->name('inbox.show');
-    Route::post('/inbox/{dokumen}/approve', [\App\Http\Controllers\InboxController::class, 'approve'])->name('inbox.approve');
-    Route::post('/inbox/{dokumen}/reject', [\App\Http\Controllers\InboxController::class, 'reject'])->name('inbox.reject');
+    Route::get('/inbox/{dokumen}', [\App\Http\Controllers\InboxController::class, 'show'])->name('inbox.show')->whereNumber('dokumen');
+    Route::post('/inbox/{dokumen}/approve', [\App\Http\Controllers\InboxController::class, 'approve'])->name('inbox.approve')->whereNumber('dokumen');
+    Route::post('/inbox/{dokumen}/reject', [\App\Http\Controllers\InboxController::class, 'reject'])->name('inbox.reject')->whereNumber('dokumen');
 });
 
 // Professional Document Routes - Pembayaran
@@ -402,7 +415,7 @@ Route::middleware(['auth', 'role:pembayaran'])->prefix('documents/pembayaran')->
     // dependency-free lewat DocumentExporter/ExportsDocuments, ganti exportToExcel() PhpSpreadsheet
     // yang FATAL. Statis, aman di atas /{dokumen}/detail (beda jumlah segmen, tak pernah bentrok).
     Route::get('/export', [DashboardPembayaranController::class, 'exportDocuments'])->name('export');
-    Route::get('/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('detail');
+    Route::get('/{dokumen}/detail', [DashboardPembayaranController::class, 'getDocumentDetail'])->name('detail')->whereNumber('dokumen');
 });
 
 // Professional Reports Routes - Pembayaran
@@ -481,12 +494,13 @@ Route::middleware(['auth', 'bagian'])
         // Document — VIEW ONLY (kemampuan tulis Bagian dicabut: Bagian hanya memantau dokumennya)
         Route::prefix('bagian/documents')->name('bagian.documents.')->group(function () {
             Route::get('/', [\App\Http\Controllers\BagianDokumenController::class, 'index'])->name('index');
-            Route::get('/{dokumen}/detail', [\App\Http\Controllers\BagianDokumenController::class, 'getDocumentDetail'])->name('detail');
+            Route::get('/{dokumen}/detail', [\App\Http\Controllers\BagianDokumenController::class, 'getDocumentDetail'])->name('detail')->whereNumber('dokumen');
         });
 
         // Return detail API - reads return_reason directly from dokumens table
         Route::get('/api/bagian/documents/{dokumen}/return-detail', [\App\Http\Controllers\BagianDokumenController::class, 'getReturnDetail'])
-            ->name('api.bagian.documents.return-detail');
+            ->name('api.bagian.documents.return-detail')
+            ->whereNumber('dokumen');
 
         // Tandai notifikasi pengembalian sebagai sudah dibaca
         Route::post('/bagian/notifikasi/tandai-dibaca', [\App\Http\Controllers\BagianDokumenController::class, 'tandaiNotifikasiDibaca'])
@@ -571,15 +585,18 @@ Route::middleware(['auth', 'role:programmer'])
         Route::get('/user-management', [\App\Http\Controllers\ProgrammerController::class, 'userManagement'])
             ->name('user-management');
         Route::get('/user-management/{id}', [\App\Http\Controllers\ProgrammerController::class, 'getUserData'])
-            ->name('user-management.get');
+            ->name('user-management.get')
+            ->whereNumber('id');
         Route::post('/user-management/store', [\App\Http\Controllers\ProgrammerController::class, 'storeUser'])
             ->name('user-management.store');
         Route::post('/user-management/update', [\App\Http\Controllers\ProgrammerController::class, 'updateUser'])
             ->name('user-management.update');
         Route::delete('/user-management/{id}', [\App\Http\Controllers\ProgrammerController::class, 'destroyUser'])
-            ->name('user-management.destroy');
+            ->name('user-management.destroy')
+            ->whereNumber('id');
         Route::post('/user-management/{id}/reset-2fa', [\App\Http\Controllers\ProgrammerController::class, 'resetUserTwoFactor'])
-            ->name('user-management.reset-2fa');
+            ->name('user-management.reset-2fa')
+            ->whereNumber('id');
 
         // Database Tools - Cleanup database
         Route::get('/database-tools', [\App\Http\Controllers\ProgrammerController::class, 'databaseTools'])
@@ -603,9 +620,11 @@ Route::middleware(['auth', 'role:programmer'])
         Route::get('/2fa-reset-requests', [\App\Http\Controllers\TwoFactorResetController::class, 'index'])
             ->name('2fa-reset-requests.index');
         Route::post('/2fa-reset-requests/{id}/approve', [\App\Http\Controllers\TwoFactorResetController::class, 'approve'])
-            ->name('2fa-reset-requests.approve');
+            ->name('2fa-reset-requests.approve')
+            ->whereNumber('id');
         Route::post('/2fa-reset-requests/{id}/reject', [\App\Http\Controllers\TwoFactorResetController::class, 'reject'])
-            ->name('2fa-reset-requests.reject');
+            ->name('2fa-reset-requests.reject')
+            ->whereNumber('id');
 
         Route::get('/notification-logs', [\App\Http\Controllers\WhatsAppNotificationLogController::class, 'index'])
             ->name('notification-logs');
