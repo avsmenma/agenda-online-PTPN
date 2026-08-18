@@ -53,6 +53,23 @@ Setiap kali selesai melakukan update kode atau refactor, WAJIB menjalankan sesi 
 **REPORTING**:
 Sertakan ringkasan poin-poin checklist di atas dalam laporan akhir setiap pengujian. Jika ada langkah yang gagal, langsung perbaiki kodenya dan jalankan ulang pengujian sebelum meminta review.
 
+## 6. Routing Safety Rules (Wajib dipatuhi setiap membuat/menghapus route)
+1. **Constraint Eksplisit pada Route Dinamis**:
+   SETIAP route dengan parameter dinamis (`{id}`, `{dokumen}`, `{user}`, dst) WAJIB diberi constraint eksplisit: `->whereNumber()` untuk ID integer, `->whereUuid()` untuk UUID, atau `->where()` dengan regex custom. Route parameter TANPA constraint dilarang.
+2. **Urutan Pendaftaran Route (Statis Sebelum Dinamis)**:
+   Route statis (`/create`, `/edit`, `/export`, `/import`, dst) WAJIB didaftarkan SEBELUM route berparameter (`{id}`) untuk prefix URL yang sama.
+3. **Verifikasi HTTP Status Code Saat Menghapus Route**:
+   SETIAP kali menghapus route (termasuk `/create`, `/edit`, dsb), WAJIB verifikasi hasil akhir dengan HTTP status code:
+   - Target: `404 Not Found`
+   - Kalau hasilnya `405 Method Not Allowed` → curiga ada route parameter lain yang menangkap path tersebut secara tidak sengaja.
+   - Verifikasi via `curl` server-side (bukan cuma browser) DAN via `route:list` untuk konfirmasi ganda.
+4. **Audit Singkat Setelah Perubahan Route**:
+   Setelah menambah/mengubah/menghapus route apapun, WAJIB jalankan audit:
+   ```bash
+   php artisan route:list --path={prefix_terkait}
+   ```
+   dan review manual apakah ada potensi collision antara route statis dan route berparameter.
+
 
 
 
