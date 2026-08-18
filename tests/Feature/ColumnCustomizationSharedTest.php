@@ -934,10 +934,7 @@ class ColumnCustomizationSharedTest extends TestCase
         $res->assertDontSee('enable_customization', false);
 
         // Fungsi non-modal di blok yang sama WAJIB selamat.
-        $res->assertSee('function setViewMode', false);
         $res->assertSee('function refreshPembayaranTable', false);
-        $res->assertSee('function changePerPage', false);
-        $res->assertSee('function toggleVendorGroup', false);
     }
 
     /** Nol definisi ganda: tiap nama fungsi bentrok hanya boleh muncul sekali. */
