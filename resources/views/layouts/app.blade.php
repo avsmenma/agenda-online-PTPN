@@ -3730,7 +3730,8 @@
   <div class="content">
     <!-- Notifikasi Success/Error -->
     @php
-      $showGlobalFlash = !request()->routeIs('profile.account');
+      $isOperatorDocumentDelete = request()->routeIs('documents.index') && session('success') && str_contains(strtolower(session('success')), 'hapus');
+      $showGlobalFlash = !request()->routeIs('profile.account') && !$isOperatorDocumentDelete;
     @endphp
 
     @if($showGlobalFlash && session('success'))
