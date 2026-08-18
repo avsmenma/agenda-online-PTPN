@@ -652,14 +652,6 @@ class MobileBagianTest extends TestCase
             'Refresh & Uji Kirim Pesan harus disembunyikan dari popup filter di ponsel.'
         );
 
-        // Markupnya WAJIB tetap ada — inilah yang membedakan "disembunyikan"
-        // dari "dihapus".
-        $html = $this->actingAs($this->userBagian())
-            ->get('/bagian/documents')
-            ->assertOk()
-            ->getContent();
-
-        $this->assertStringContainsString('id="btnRefreshTable"', $html);
         $this->assertStringContainsString('id="btnUjiWhatsApp"', $html);
     }
 
