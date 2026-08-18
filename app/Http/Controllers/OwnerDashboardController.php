@@ -293,11 +293,9 @@ class OwnerDashboardController extends Controller
             ->with('menuRekapKeterlambatan', '')
             ->with('menuDaftarDokumenDikembalikan', '')
             ->with('menuPengembalianKeBidang', '')
-            ->with('menuTambahDokumen', '')
             ->with('dashboardUrl', '/owner/home')
             ->with('dokumenUrl', '/owner/dokumen')
             ->with('pengembalianUrl', '#')
-            ->with('tambahDokumenUrl', '#')
             ->with('search', $request->get('search', ''));
     }
 
