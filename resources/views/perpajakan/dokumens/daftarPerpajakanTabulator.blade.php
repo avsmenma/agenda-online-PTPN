@@ -47,7 +47,7 @@
         <input type="text" name="search" class="form-control tabulator-toolbar-search"
                placeholder="Cari dokumen..." autocomplete="off" value="{{ request('search') }}">
 
-        <select name="status" class="form-select" style="max-width: 240px;">
+        <select name="status" class="form-select" style="max-width: 140px;">
             <option value="">Semua Status</option>
             <option value="sedang_proses" {{ request('status') == 'sedang_proses' ? 'selected' : '' }}>Sedang Proses</option>
             <option value="terkirim_akutansi" {{ request('status') == 'terkirim_akutansi' ? 'selected' : '' }}>Terkirim ke Akutansi</option>
@@ -56,7 +56,7 @@
             <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Dokumen Ditolak</option>
         </select>
 
-        <select name="filter_dari" class="form-select" style="max-width: 200px;">
+        <select name="filter_dari" class="form-select" style="max-width: 140px;">
             <option value="">Semua Bagian</option>
             @foreach(($filterDariOptions ?? []) as $bagianVal => $bagianLabel)
                 <option value="{{ $bagianVal }}" {{ request('filter_dari') == $bagianVal ? 'selected' : '' }}>{{ $bagianLabel }}</option>
