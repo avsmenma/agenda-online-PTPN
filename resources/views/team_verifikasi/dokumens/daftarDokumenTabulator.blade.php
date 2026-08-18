@@ -66,7 +66,7 @@
         {{-- Opsi status IDENTIK partial partials.document-role-filter-toolbar
              (dipakai view legacy team_verifikasi/dokumens/daftarDokumen.blade.php:3009-3021),
              diverifikasi thd TeamVerifikasiController::buildVerifikasiQuery() switch status. --}}
-        <select name="status" class="form-select" style="max-width: 240px;">
+        <select name="status" class="form-select" style="max-width: 140px;">
             <option value="">Semua Status</option>
             <option value="menunggu_approve" {{ request('status') == 'menunggu_approve' ? 'selected' : '' }}>Menunggu Approve</option>
             <option value="sedang_proses" {{ request('status') == 'sedang_proses' ? 'selected' : '' }}>Sedang Proses</option>
