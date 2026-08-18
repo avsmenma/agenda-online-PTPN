@@ -2333,7 +2333,6 @@
                         <th>Uraian</th>
                         <th>Nilai (Rp)</th>
                         <th>Status</th>
-                        <th>Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2363,12 +2362,6 @@
                                 <i class="fa-solid fa-circle"></i> Belum Siap
                               </span>
                             @endif
-                          </td>
-                          <td>
-                            <a href="{{ route('documents.pembayaran.detail', $doc->id) }}" class="btn-action"
-                              title="Lihat Detail">
-                              <i class="fa-solid fa-eye"></i>
-                            </a>
                           </td>
                         </tr>
                       @endforeach
