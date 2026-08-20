@@ -140,8 +140,19 @@ class DocumentRowCache
      * sehingga tugas terjadwal bukan pilihan. Karena itu pemangkasan menumpang
      * request, seperti garbage collection sesi.
      *
-     * Dibatasi 1.000 baris per jalan supaya tak pernah menahan satu request lama,
-     * dan dibungkus try/catch karena ini jalur kebersihan — bukan jalur kritis.
+     * ANGKA LOTERE & BATASNYA DIUKUR, bukan ditebak. Kolom `expiration` TIDAK
+     * ber-indeks (hanya `key` yang PRIMARY — diperiksa 2026-08-20), jadi biayanya
+     * didominasi jumlah baris yang benar-benar terhapus:
+     *     hapus ~1.000 baris  -> 188-460 ms   (terlalu lama untuk menumpang request)
+     *     hapus <=  300 baris ->  ~22-60 ms   (aman)
+     * Karena itu batasnya 300, dengan lotere 1:20 supaya rata-rata pemangkasan
+     * (~15 baris/request) tetap mengimbangi laju pembuatan tanpa pernah membuat
+     * satu request pun terasa tersendat.
+     *
+     * Menambahkan indeks pada `expiration` akan membuat ini jauh lebih murah, tetapi
+     * itu perubahan SKEMA — butuh keputusan user (CLAUDE.md §6), belum dikerjakan.
+     *
+     * Dibungkus try/catch karena ini jalur kebersihan, bukan jalur kritis.
      */
     private static function pangkasKedaluwarsaSesekali(): void
     {
@@ -150,13 +161,13 @@ class DocumentRowCache
         }
 
         try {
-            if (random_int(1, 50) !== 1) {
+            if (random_int(1, 20) !== 1) {
                 return;
             }
 
             \Illuminate\Support\Facades\DB::table(config('cache.stores.database.table', 'cache'))
                 ->where('expiration', '<=', time())
-                ->limit(1000)
+                ->limit(300)
                 ->delete();
         } catch (\Throwable $e) {
             // Sengaja dibiarkan: gagal memangkas tidak boleh menggagalkan respons tabel.
