@@ -174,7 +174,12 @@ class TeamVerifikasiController extends Controller
         // Base query - akan dimodifikasi oleh filter status jika ada.
         // Dokumen yang dikembalikan ke bagian tetap ditampilkan di daftar ini;
         // dropdown Pengurus Dokumen menunjukkan bagian tujuan sampai fisiknya kembali.
-        $query = Dokumen::with('activityLogs');
+        // Eager-load 'activityLogs' DIHAPUS 2026-08-20 — nol pembaca: VerifikasiDocumentRow
+        // & DocumentRow::baseRow tak menyentuhnya, nol pemakai di view/JS, dan method lain
+        // (checkRejectedDocuments) memanggil ->activityLogs() sebagai QUERY baru sehingga
+        // relasi ter-load memang tak pernah terpakai. Tabel dokumen_activity_logs adalah
+        // yang terbesar (28.574 baris / 7,5 MB) — ditarik lalu dibuang tiap request.
+        $query = Dokumen::query();
 
         // Exclude CSV imported documents - they are exclusive to Pembayaran module
         $hasImportedFromCsvColumn = \Schema::hasColumn('dokumens', 'imported_from_csv');
@@ -1369,13 +1374,15 @@ class TeamVerifikasiController extends Controller
                         ->where('status', 'rejected')
                         ->where('status_changed_at', '>=', $checkFrom);
                 })
+                // 'activityLogs' DIHAPUS 2026-08-20 — koleksi ter-load tak pernah dibaca;
+                // di bawah dipakai $doc->activityLogs() (QUERY baru, berfilter action/stage),
+                // jadi eager-load ini murni beban tambahan di endpoint polling.
                 ->with([
                     'roleStatuses' => function ($query) {
                         $query->whereIn('role_code', ['perpajakan', 'akutansi'])
                             ->where('status', 'rejected')
                             ->latest('status_changed_at');
                     },
-                    'activityLogs'
                 ])
                 ->get()
                 ->filter(function ($doc) {

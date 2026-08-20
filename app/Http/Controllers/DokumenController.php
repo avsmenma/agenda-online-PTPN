@@ -27,7 +27,14 @@ class DokumenController extends Controller
      */
     private function buildOperatorQuery(Request $request): \Illuminate\Database\Eloquent\Builder
     {
-        $query = Dokumen::with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas', 'activityLogs', 'roleStatuses', 'roleData'])
+        // Eager-load DIBATASI pada relasi yang benar-benar dibaca OperatorDocumentRow
+        // (lewat DocumentRow::baseRow): dokumenPos, dibayarKepadas, roleStatuses, roleData.
+        // 'dokumenPrs' & 'activityLogs' DIHAPUS 2026-08-20 — nol pembaca di seluruh
+        // kelas *DocumentRow, view, dan JS; 'activityLogs' menarik dokumen_activity_logs
+        // (28.574 baris / 7,5 MB, tabel terbesar) tiap request lalu dibuang.
+        // Terukur: hydrate 100 baris 23,2 ms -> 13,6 ms. Lihat DokumenController::destroy()
+        // yang tetap memakai ->dokumenPrs()/->activityLogs() sebagai QUERY, bukan relasi ter-load.
+        $query = Dokumen::with(['dokumenPos', 'dibayarKepadas', 'roleStatuses', 'roleData'])
             ->where(function ($q) {
                 $q->whereRaw('LOWER(created_by) IN (?, ?, ?)', ['operator', 'Operator', 'operator'])
                     ->orWhere('created_by', 'operator')
