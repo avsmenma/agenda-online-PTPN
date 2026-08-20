@@ -156,7 +156,10 @@ class DashboardPerpajakanController extends Controller
         $query = Dokumen::query()
             ->where('status', '!=', 'returned_to_bidang')
             ->excludeCsvImports()
-            ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+            // 'dokumenPrs' DIHAPUS 2026-08-20 — nol pembaca (PerpajakanDocumentRow &
+            // DocumentRow::baseRow hanya membaca dokumenPos/dibayarKepadas; nol pemakai
+            // di view maupun JS; config/document_columns.php tak punya kolom PR).
+            ->with(['dokumenPos', 'dibayarKepadas']);
 
         // Enhanced search functionality - search across all relevant fields
         if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {

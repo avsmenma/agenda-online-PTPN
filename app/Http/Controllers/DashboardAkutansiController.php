@@ -131,7 +131,7 @@ class DashboardAkutansiController extends Controller
      * SUMBER TUNGGAL dipakai dokumens() (view) & datatable() (JSON). Meliputi
      * base query, search, filter (dari/tanggal/nilai), switch status 5 bucket,
      * eager-load (roleData akutansi-only + roleStatuses semua role terkait +
-     * dokumenPos/dokumenPrs/dibayarKepadas), dan sort natural nomor_agenda.
+     * dokumenPos/dibayarKepadas), dan sort natural nomor_agenda.
      *
      * PENTING: roleData sengaja di-load HANYA role_code='akutansi' (paritas
      * tampilan lama; AkutansiDocumentRow bergantung padanya). Jangan diperluas.
@@ -143,7 +143,10 @@ class DashboardAkutansiController extends Controller
         $query = Dokumen::query()
             ->where('status', '!=', 'returned_to_bidang')
             ->excludeCsvImports()
-            ->with(['dokumenPos', 'dokumenPrs', 'dibayarKepadas']);
+            // 'dokumenPrs' DIHAPUS 2026-08-20 — nol pembaca (AkutansiDocumentRow &
+            // DocumentRow::baseRow hanya membaca dokumenPos/dibayarKepadas; nol pemakai
+            // di view maupun JS; config/document_columns.php tak punya kolom PR).
+            ->with(['dokumenPos', 'dibayarKepadas']);
 
         // Enhanced search functionality - search across all relevant fields
         if ($request->has('search') && !empty($request->search) && trim((string) $request->search) !== '') {
