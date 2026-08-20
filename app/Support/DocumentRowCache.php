@@ -122,9 +122,45 @@ class DocumentRowCache
 
         if (! empty($baru)) {
             Cache::putMany($baru, $ttl);
+            self::pangkasKedaluwarsaSesekali();
         }
 
         return $hasil;
+    }
+
+    /**
+     * Buang baris cache kedaluwarsa, sesekali saja (lotere 1:50).
+     *
+     * Driver cache `database` TIDAK punya pemangkas bawaan di Laravel: entri hanya
+     * dihapus kalau kebetulan dibaca lagi setelah lewat waktu. Padahal begitu versi
+     * global naik, SELURUH kunci lama jadi tak akan pernah dibaca lagi — jadi tanpa
+     * pemangkasan mereka mengendap selamanya. Di server ini itu berbahaya: disk
+     * tinggal 4,5 GB dari 20 GB, dan cron `schedule:run` untuk project ini TIDAK
+     * terpasang (crontab root hanya memuat project lain — diperiksa 2026-08-20),
+     * sehingga tugas terjadwal bukan pilihan. Karena itu pemangkasan menumpang
+     * request, seperti garbage collection sesi.
+     *
+     * Dibatasi 1.000 baris per jalan supaya tak pernah menahan satu request lama,
+     * dan dibungkus try/catch karena ini jalur kebersihan — bukan jalur kritis.
+     */
+    private static function pangkasKedaluwarsaSesekali(): void
+    {
+        if (config('cache.default') !== 'database') {
+            return;
+        }
+
+        try {
+            if (random_int(1, 50) !== 1) {
+                return;
+            }
+
+            \Illuminate\Support\Facades\DB::table(config('cache.stores.database.table', 'cache'))
+                ->where('expiration', '<=', time())
+                ->limit(1000)
+                ->delete();
+        } catch (\Throwable $e) {
+            // Sengaja dibiarkan: gagal memangkas tidak boleh menggagalkan respons tabel.
+        }
     }
 
     /**
