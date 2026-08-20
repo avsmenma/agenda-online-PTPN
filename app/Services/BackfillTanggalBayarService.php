@@ -140,6 +140,16 @@ class BackfillTanggalBayarService
             }
         }
 
+        // Backfill menulis lewat DB::table() dan SENGAJA tidak menyentuh updated_at
+        // (lihat alasan di dalam loop: mencegah push-balik poller sync-cashbank).
+        // Akibatnya dua lapis invalidasi cache baris dokumen tak tersentuh — event
+        // Eloquent tidak menyala, sidik jari updated_at tidak bergerak. Karena itu
+        // versinya dinaikkan di sini secara eksplisit, sekali per proses, supaya
+        // tanggal_dibayar hasil backfill langsung terlihat tanpa menunggu TTL habis.
+        if (! $dryRun && ($summary['diisi'] ?? 0) > 0) {
+            \App\Support\DocumentRowCache::naikkanVersi();
+        }
+
         return $summary;
     }
 

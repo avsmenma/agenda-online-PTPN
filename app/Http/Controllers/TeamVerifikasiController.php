@@ -79,8 +79,13 @@ class TeamVerifikasiController extends Controller
 
         $bagianMap = \App\Support\HandlerOptions::bagianMap();
 
-        $data = collect($paginator->items())
-            ->map(fn ($d) => \App\Support\VerifikasiDocumentRow::fromDokumen(
+        // Cache per-baris — lihat App\Support\DocumentRowCache (query tetap jalan penuh;
+        // filter/sortir tidak pernah masuk kunci). Peran penonton di sini SELALU
+        // 'team_verifikasi' (bukan dari Auth), jadi penandanya tetap.
+        $data = \App\Support\DocumentRowCache::petakan(
+            $paginator->items(),
+            'verifikasi|team_verifikasi',
+            fn ($d) => \App\Support\VerifikasiDocumentRow::fromDokumen(
                 $d,
                 \App\Support\HandlerOptions::forDokumen(
                     $d->bagian,
@@ -89,8 +94,8 @@ class TeamVerifikasiController extends Controller
                     \App\Support\DocumentRow::handlerTampilanMentah($d)
                 ),
                 'team_verifikasi'
-            ))
-            ->all();
+            )
+        );
 
         return response()->json([
             'last_page' => $paginator->lastPage(),

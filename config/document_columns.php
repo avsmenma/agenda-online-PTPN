@@ -76,4 +76,21 @@ return [
         'npwp' => 'NPWP',
         'link_dokumen_pajak' => 'Link Dokumen Pajak',
     ],
+
+    /**
+     * Cache per-baris DTO tabel dokumen — lihat App\Support\DocumentRowCache
+     * untuk desain kunci & tiga lapis invalidasinya.
+     *
+     * `enabled` sengaja dapat dimatikan lewat env tanpa deploy ulang: kalau suatu
+     * saat muncul dugaan data basi di tabel, setel DOCUMENT_ROW_CACHE=false lalu
+     * `php artisan config:clear` untuk kembali ke perhitungan langsung.
+     *
+     * `ttl` (detik) adalah jaring TERAKHIR, bukan mekanisme utama — invalidasi
+     * sebenarnya datang dari sidik jari updated_at & versi global. Menaikkannya
+     * memperpanjang jendela basi untuk penulisan yang melewati event model.
+     */
+    'cache' => [
+        'enabled' => env('DOCUMENT_ROW_CACHE', true),
+        'ttl'     => (int) env('DOCUMENT_ROW_CACHE_TTL', 300),
+    ],
 ];
