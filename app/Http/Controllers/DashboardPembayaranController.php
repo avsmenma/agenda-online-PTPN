@@ -567,8 +567,13 @@ class DashboardPembayaranController extends Controller
         // paling butuh tahu posisi tiap dokumen. Peta bagian dibangun sekali per-request.
         $bagianMap = \App\Support\HandlerOptions::bagianMap();
 
-        $data = collect($paginator->items())
-            ->map(fn ($d) => \App\Support\PembayaranDocumentRow::fromDokumen(
+        // Cache per-baris — lihat App\Support\DocumentRowCache (query tetap jalan penuh;
+        // filter/sortir/mode rekapan tidak pernah masuk kunci). Peran penonton di sini
+        // SELALU 'pembayaran' (bukan dari Auth), jadi penandanya tetap.
+        $data = \App\Support\DocumentRowCache::petakan(
+            $paginator->items(),
+            'pembayaran|pembayaran',
+            fn ($d) => \App\Support\PembayaranDocumentRow::fromDokumen(
                 $d,
                 \App\Support\HandlerOptions::forDokumen(
                     $d->bagian,
@@ -577,8 +582,8 @@ class DashboardPembayaranController extends Controller
                     \App\Support\DocumentRow::handlerTampilanMentah($d)
                 ),
                 'pembayaran'
-            ))
-            ->all();
+            )
+        );
 
         return response()->json([
             'last_page' => $paginator->lastPage(),

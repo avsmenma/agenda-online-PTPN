@@ -52,8 +52,12 @@ class DashboardAkutansiController extends Controller
         $bagianMap = \App\Support\HandlerOptions::bagianMap();
         $viewerRole = Auth::user()?->role;
 
-        $data = collect($paginator->items())
-            ->map(fn ($d) => \App\Support\AkutansiDocumentRow::fromDokumen(
+        // Cache per-baris — lihat App\Support\DocumentRowCache (query tetap jalan penuh;
+        // filter/sortir tidak pernah masuk kunci).
+        $data = \App\Support\DocumentRowCache::petakan(
+            $paginator->items(),
+            'akutansi|' . ($viewerRole ?? '-'),
+            fn ($d) => \App\Support\AkutansiDocumentRow::fromDokumen(
                 $d,
                 \App\Support\HandlerOptions::forDokumen(
                     $d->bagian,
@@ -62,8 +66,8 @@ class DashboardAkutansiController extends Controller
                     \App\Support\DocumentRow::handlerTampilanMentah($d)
                 ),
                 $viewerRole
-            ))
-            ->all();
+            )
+        );
 
         return response()->json([
             'last_page' => $paginator->lastPage(),

@@ -150,8 +150,14 @@ class DokumenController extends Controller
         $bagianMap  = \App\Support\HandlerOptions::bagianMap();
         $viewerRole = auth()->user()?->role;
 
-        $data = collect($paginator->items())
-            ->map(fn ($d) => \App\Support\OperatorDocumentRow::fromDokumen(
+        // Cache per-baris: query di atas TETAP dijalankan penuh (filter/sortir/paginasi
+        // tak pernah masuk kunci cache), yang di-cache hanya hasil derivasi DTO-nya.
+        // Penanda memuat kelas DTO + peran penonton karena handler_options &
+        // can_change_handler berbeda antar peran. Lihat App\Support\DocumentRowCache.
+        $data = \App\Support\DocumentRowCache::petakan(
+            $paginator->items(),
+            'operator|' . ($viewerRole ?? '-'),
+            fn ($d) => \App\Support\OperatorDocumentRow::fromDokumen(
                 $d,
                 \App\Support\HandlerOptions::forDokumen(
                     $d->bagian,
@@ -160,8 +166,8 @@ class DokumenController extends Controller
                     \App\Support\DocumentRow::handlerTampilanMentah($d)
                 ),
                 $viewerRole
-            ))
-            ->all();
+            )
+        );
 
         return response()->json([
             'last_page' => $paginator->lastPage(),

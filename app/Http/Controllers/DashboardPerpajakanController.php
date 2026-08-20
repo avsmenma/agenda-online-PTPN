@@ -61,8 +61,12 @@ class DashboardPerpajakanController extends Controller
         $bagianMap = \App\Support\HandlerOptions::bagianMap();
         $viewerRole = Auth::user()?->role;
 
-        $data = collect($paginator->items())
-            ->map(fn ($d) => \App\Support\PerpajakanDocumentRow::fromDokumen(
+        // Cache per-baris — lihat App\Support\DocumentRowCache (query tetap jalan penuh;
+        // filter/sortir tidak pernah masuk kunci).
+        $data = \App\Support\DocumentRowCache::petakan(
+            $paginator->items(),
+            'perpajakan|' . ($viewerRole ?? '-'),
+            fn ($d) => \App\Support\PerpajakanDocumentRow::fromDokumen(
                 $d,
                 \App\Support\HandlerOptions::forDokumen(
                     $d->bagian,
@@ -71,8 +75,8 @@ class DashboardPerpajakanController extends Controller
                     \App\Support\DocumentRow::handlerTampilanMentah($d)
                 ),
                 $viewerRole
-            ))
-            ->all();
+            )
+        );
 
         return response()->json([
             'last_page' => $paginator->lastPage(),
