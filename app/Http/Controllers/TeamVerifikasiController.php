@@ -177,8 +177,9 @@ class TeamVerifikasiController extends Controller
         // Eager-load 'activityLogs' DIHAPUS 2026-08-20 — nol pembaca: VerifikasiDocumentRow
         // & DocumentRow::baseRow tak menyentuhnya, nol pemakai di view/JS, dan method lain
         // (checkRejectedDocuments) memanggil ->activityLogs() sebagai QUERY baru sehingga
-        // relasi ter-load memang tak pernah terpakai. Tabel dokumen_activity_logs adalah
-        // yang terbesar (28.574 baris / 7,5 MB) — ditarik lalu dibuang tiap request.
+        // relasi ter-load memang tak pernah terpakai. Tiap request menarik log milik 100
+        // dokumen halaman itu lalu membuangnya — 0-792 baris tergantung halaman (28.574
+        // log tersebar di 3.562 dari 6.068 dokumen). Hemat terukur 13-46 ms per request.
         $query = Dokumen::query();
 
         // Exclude CSV imported documents - they are exclusive to Pembayaran module

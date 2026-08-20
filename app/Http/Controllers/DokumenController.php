@@ -32,7 +32,11 @@ class DokumenController extends Controller
         // 'dokumenPrs' & 'activityLogs' DIHAPUS 2026-08-20 — nol pembaca di seluruh
         // kelas *DocumentRow, view, dan JS; 'activityLogs' menarik dokumen_activity_logs
         // (28.574 baris / 7,5 MB, tabel terbesar) tiap request lalu dibuang.
-        // Terukur: hydrate 100 baris 23,2 ms -> 13,6 ms. Lihat DokumenController::destroy()
+        // Terukur di produksi (A/B 5 rentang halaman, min-of-5): hydrate 100 baris hemat
+        // 13-46 ms tergantung padatnya log halaman itu (0-792 baris log per 100 dokumen;
+        // 28.574 log tersebar di 3.562 dari 6.068 dokumen). Halaman terbaru hemat paling
+        // sedikit (~17 ms), halaman dalam paling banyak (~46 ms) — jadi justru menolong
+        // saat user menggulir ke bawah. Lihat DokumenController::destroy()
         // yang tetap memakai ->dokumenPrs()/->activityLogs() sebagai QUERY, bukan relasi ter-load.
         $query = Dokumen::with(['dokumenPos', 'dibayarKepadas', 'roleStatuses', 'roleData'])
             ->where(function ($q) {
