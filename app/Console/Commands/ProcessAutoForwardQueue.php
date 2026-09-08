@@ -71,7 +71,7 @@ class ProcessAutoForwardQueue extends Command
             ->whereNotIn('id', function ($query) {
                 $query->select('dokumen_id')
                       ->from('dokumen_auto_forward_queue')
-                      ->whereIn('status', ['pending', 'processing', 'done', 'failed']);
+                      ->whereIn('status', ['pending', 'processing']);
             })
             ->pluck('id');
 
