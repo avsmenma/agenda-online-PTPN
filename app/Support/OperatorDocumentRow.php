@@ -41,8 +41,12 @@ class OperatorDocumentRow extends DocumentRow
             $isRejected = $statuses->where('status', DokumenStatus::STATUS_REJECTED)->isNotEmpty();
         }
 
+        $isPaid = $dokumen->status_pembayaran === 'sudah_dibayar' || !empty($dokumen->tanggal_dibayar);
+
         // === Pohon keputusan display_status ===
-        if ($statusLower === 'returned_to_operator') {
+        if ($isPaid) {
+            $code = 'terkirim';
+        } elseif ($statusLower === 'returned_to_operator') {
             $code = 'dikembalikan';
         } elseif ($tvRejected) {
             $code = 'ditolak_verifikasi';
@@ -69,9 +73,9 @@ class OperatorDocumentRow extends DocumentRow
         };
 
         // === Aturan can_edit operator (&& mengikat lebih kuat dari ||) ===
-        $canEdit = ($currentHandlerOperator
+        $canEdit = ! $isPaid && (($currentHandlerOperator
                 && in_array($statusLower, ['draft', 'returned_to_operator', 'belum_dikirim', 'belum dikirim', 'menunggu_approval_keuangan'], true))
-            || ($isRejected && $currentHandlerOperator);
+            || ($isRejected && $currentHandlerOperator));
 
         // === Alasan penolakan dari status verifikasi/team_verifikasi ===
         $rejectReason = null;
