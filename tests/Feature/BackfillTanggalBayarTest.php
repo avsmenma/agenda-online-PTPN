@@ -192,4 +192,21 @@ class BackfillTanggalBayarTest extends TestCase
         $this->assertSame(1, $s['diisi']);
         $this->assertSame(0, DB::table('sync_logs')->count());
     }
+
+    public function test_memperbaiki_status_pembayaran_bila_tanggal_sudah_sama(): void
+    {
+        // Kasus: tanggal_dibayar sudah terisi dari sinkron awal, tapi status_pembayaran masih null
+        $id = $this->buatDokumen([
+            'nomor_agenda'      => '0011',
+            'tanggal_dibayar'   => '2026-03-10',
+            'status_pembayaran' => null,
+        ]);
+        $this->buatBankKeluar(['dokumen_id' => $id, 'tanggal' => '2026-03-10']);
+
+        $s = $this->service()->run(false);
+
+        $this->assertSame('2026-03-10', $this->tanggalDibayar($id));
+        $this->assertSame('sudah_dibayar', DB::table('dokumens')->where('id', $id)->value('status_pembayaran'));
+        $this->assertSame(1, $s['diisi']);
+    }
 }
