@@ -401,7 +401,8 @@ class VerifikasiDocumentRow extends DocumentRow
         }
 
         $isCompleted = in_array($dokumen->status, ['selesai', 'completed', 'approved_data_sudah_terkirim'], true)
-            || ($dokumen->status_pembayaran === 'sudah_dibayar');
+            || ($dokumen->status_pembayaran === 'sudah_dibayar')
+            || ! empty($dokumen->tanggal_dibayar);
 
         // === Path C: belum diterima ===
         if (! $receivedAt) {
