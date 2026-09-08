@@ -91,6 +91,7 @@ class PerpajakanDocumentRow extends DocumentRow
                 $dokumen->current_handler === 'pembayaran'
                 || $dokumen->status === 'completed'
                 || $dokumen->status_pembayaran === 'sudah_dibayar'
+                || ! empty($dokumen->tanggal_dibayar)
                 || ($pembayaranRoleData && $pembayaranRoleData->received_at)
             ) && ! $perpajakanRoleData?->received_at;
 
@@ -125,7 +126,8 @@ class PerpajakanDocumentRow extends DocumentRow
         if (! ($perpajakanRoleData?->received_at)
             && in_array($dokumen->current_handler, ['operator', 'team_verifikasi'], true)
             && ! in_array($dokumen->status, ['completed', 'selesai'], true)
-            && $dokumen->status_pembayaran !== 'sudah_dibayar') {
+            && $dokumen->status_pembayaran !== 'sudah_dibayar'
+            && empty($dokumen->tanggal_dibayar)) {
             return ['class' => 'badge-proses', 'icon' => null, 'text' => '⏳ Draft', 'link' => null];
         }
         if ($ctx['is_pending_downstream']) {
@@ -164,7 +166,8 @@ class PerpajakanDocumentRow extends DocumentRow
 
         $isSent = in_array($dokumen->status, ['sent_to_akutansi', 'sent_to_pembayaran', 'pending_approval_akutansi', 'pending_approval_pembayaran'], true);
         $isCompleted = in_array($dokumen->status, ['selesai', 'completed', 'approved_data_sudah_terkirim'], true)
-            || ($dokumen->status_pembayaran === 'sudah_dibayar');
+            || ($dokumen->status_pembayaran === 'sudah_dibayar')
+            || ! empty($dokumen->tanggal_dibayar);
         $isReturned = $dokumen->status === 'returned_to_verifikasi';
 
         // === Path A: sudah diterima perpajakan ===
