@@ -29,7 +29,7 @@ class BackfillTanggalBayarService
         $idsByNomorTahun = [];   // "nomor|tahun" => [id, ...]
 
         Dokumen::query()
-            ->select(['id', 'nomor_agenda', 'tahun', 'tanggal_dibayar'])
+            ->select(['id', 'nomor_agenda', 'tahun', 'tanggal_dibayar', 'status_pembayaran'])
             ->chunk(500, function ($rows) use (&$dokById, &$idsByNomor, &$idsByNomorTahun) {
                 foreach ($rows as $d) {
                     $dokById[$d->id] = $d;
@@ -91,6 +91,7 @@ class BackfillTanggalBayarService
 
             $dok = $dokById[$dokId];
             $existing = $dok->tanggal_dibayar ? substr((string) $dok->tanggal_dibayar, 0, 10) : null;
+            $existingStatus = $dok->status_pembayaran ?? null;
 
             if ($existing === null || $existing === '' || $existing === '0000-00-00') {
                 if (!$dryRun) {
@@ -116,7 +117,15 @@ class BackfillTanggalBayarService
                 }
                 $summary['diisi']++;
             } elseif ($existing === $earliest) {
-                $summary['sama']++;
+                // Tanggal sudah sama. Jika status_pembayaran belum 'sudah_dibayar', perbarui statusnya!
+                if (!$tanggalSaja && $existingStatus !== 'sudah_dibayar') {
+                    if (!$dryRun) {
+                        DB::table('dokumens')->where('id', $dokId)->update(['status_pembayaran' => 'sudah_dibayar']);
+                    }
+                    $summary['diisi']++;
+                } else {
+                    $summary['sama']++;
+                }
             } else {
                 $summary['konflik']++;
                 $summary['konflik_detail'][] = [
