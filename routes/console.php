@@ -54,11 +54,10 @@ Schedule::command('dokumen:sync-cashbank --since="5 minutes ago"')
     ->appendOutputTo(storage_path('logs/sync-cashbank.log'));
 
 // Jaring pengaman arah sebaliknya: tanggal transaksi Cash Bank -> tanggal_dibayar
-// Agenda. Jalur input Cash Bank sudah menyinkronkan sendiri saat menyimpan;
-// backfill ini menutup sisa celah (jalur input baru, atau sinkron yang gagal
-// karena database kedua sedang tak terjangkau). Hanya mengisi yang kosong,
-// jadi aman diulang.
-Schedule::command('dokumen:backfill-tanggal-bayar --tanggal-saja')
+// dan status_pembayaran Agenda. Jalur input Cash Bank sudah menyinkronkan sendiri
+// saat menyimpan; backfill ini menutup sisa celah (jalur input baru, atau sinkron
+// yang gagal karena database kedua sedang tak terjangkau).
+Schedule::command('dokumen:backfill-tanggal-bayar')
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->runInBackground()
