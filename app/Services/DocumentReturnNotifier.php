@@ -29,12 +29,6 @@ use Illuminate\Support\Facades\Log;
 class DocumentReturnNotifier
 {
     /**
-     * SEMENTARA (2026-08-07) — penanda pesan uji coba. Hapus bersama pesanUjiCoba()
-     * saat fitur uji coba dicabut.
-     */
-    private const PENANDA_UJI = "🧪 *[UJI COBA — BUKAN PENGEMBALIAN SUNGGUHAN]*\n\n";
-
-    /**
      * @param  string  $bagianCode  kode bagian tujuan (huruf besar, mis. 'AKN')
      */
     public static function kirim(Dokumen $dokumen, string $bagianCode, string $alasan): void
@@ -109,38 +103,14 @@ class DocumentReturnNotifier
      * Nama bagian dibaca dari tabel `bagians`, BUKAN peta kode→nama yang di-hardcode
      * seperti dulu di returnToBidang(). Peta hardcode itu ikut membusuk setiap kali
      * daftar bagian berubah.
-     *
-     * PUBLIK sejak 2026-08-07: dipakai juga UjiWhatsAppBagianController supaya panel
-     * uji tidak melahirkan peta kode→nama ketiga.
      */
-    public static function namaBagian(string $bagianCode): string
+    private static function namaBagian(string $bagianCode): string
     {
         $bagian = Bagian::whereRaw('UPPER(TRIM(kode)) = ?', [$bagianCode])->first();
 
         $nama = trim((string) ($bagian->nama ?? ''));
 
         return $nama !== '' ? $nama : $bagianCode;
-    }
-
-    /**
-     * SEMENTARA (2026-08-07) — pesan contoh untuk panel uji di halaman Bagian.
-     *
-     * Sengaja memanggil susunPesan() yang sama dengan jalur produksi, bukan menyalin
-     * templatenya: pesan uji yang menyimpang dari pesan sungguhan akan menipu
-     * responden uji coba tanpa ada yang menyadarinya.
-     *
-     * Nomor agenda 9999_2026 dipilih karena mustahil bertabrakan dengan dokumen nyata.
-     *
-     * Hapus method ini + konstanta PENANDA_UJI saat fitur uji coba dicabut.
-     */
-    public static function pesanUjiCoba(string $namaBagian, string $tautan): string
-    {
-        return self::PENANDA_UJI . self::susunPesan(
-            '9999_2026',
-            $namaBagian,
-            'Lampiran faktur belum lengkap. (contoh)',
-            $tautan
-        );
     }
 
     private static function susunPesan(
