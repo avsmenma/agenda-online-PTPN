@@ -100,6 +100,42 @@
       background: #f8f9fa;
     }
 
+    /* Dark Mode Filter & Search */
+    .dark .search-box {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+    }
+    .dark .search-box .input-group-text {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #94a3b8 !important;
+    }
+    .dark .search-box .form-control {
+      background: #334155 !important;
+      border-color: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+    .dark .search-box .form-control::placeholder {
+      color: #94a3b8 !important;
+    }
+    .dark .btn-year-select,
+    .dark .btn-month-select,
+    .dark .btn-status-select,
+    .dark .btn-vendor-select,
+    .dark .btn-subkriteria-select {
+      background: #1e293b !important;
+      color: #e2e8f0 !important;
+      border-color: #334155 !important;
+    }
+    .dark .btn-year-select:hover,
+    .dark .btn-month-select:hover,
+    .dark .btn-status-select:hover,
+    .dark .btn-vendor-select:hover,
+    .dark .btn-subkriteria-select:hover {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+
     /* Nama vendor di produksi bisa sangat panjang (mis. "221300096842 RS PTPN
        Danau Salak"). Tanpa batas, <select> melebar mengikuti opsi TERPANJANG
        dan mendorong dropdown lain ke baris berikutnya — toolbar filter jadi
@@ -531,6 +567,38 @@
     #bagianDaftarTable .data-table tbody tr:hover td.col-nomor_spp,
     #bagianDaftarTable .data-table tbody tr:hover td.col-status_pembayaran {
       background: #f0f4f9;
+    }
+
+    /* Dark Mode Table & Sticky Columns */
+    .dark .table-container {
+      background: #1e293b !important;
+      border: 1px solid #334155 !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    }
+    .dark .data-table {
+      background: #1e293b !important;
+    }
+    .dark .data-table td {
+      background: #1e293b;
+      color: #e2e8f0 !important;
+      border-bottom: 1px solid #334155 !important;
+      border-right: 1px solid #334155 !important;
+    }
+    .dark .data-table tbody tr:hover td {
+      background: #283548 !important;
+    }
+    .dark #bagianDaftarTable .data-table tbody td.col-no,
+    .dark #bagianDaftarTable .data-table tbody td.col-nomor_spp,
+    .dark #bagianDaftarTable .data-table tbody td.col-status_pembayaran {
+      background: #1e293b !important;
+      color: #e2e8f0 !important;
+      border-bottom: 1px solid #334155 !important;
+      border-right: 1px solid #334155 !important;
+    }
+    .dark #bagianDaftarTable .data-table tbody tr:hover td.col-no,
+    .dark #bagianDaftarTable .data-table tbody tr:hover td.col-nomor_spp,
+    .dark #bagianDaftarTable .data-table tbody tr:hover td.col-status_pembayaran {
+      background: #283548 !important;
     }
 
     /* Responsivitas Layar Lipat & Tablet (≤ 1150px):
@@ -1392,6 +1460,220 @@
     .dj-list li.is-perlu_diperbaiki .dj-ket  { color: #b45309; }
     .dj-list li.is-dilewati .dj-nama { color: #94a3b8; }
 
+    /* Dark Mode: Perjalanan Dokumen */
+    .dark .dj-cell:hover,
+    .dark .dj-cell:focus-visible {
+      background: #334155 !important;
+      border-color: #475569 !important;
+    }
+    .dark .dj-label {
+      color: #94a3b8 !important;
+    }
+    .dark .dj-cell--action .dj-label {
+      color: #fbbf24 !important;
+    }
+    .dark .dj-list li {
+      border-bottom-color: #334155 !important;
+    }
+    .dark .dj-list .dj-nama {
+      color: #f1f5f9 !important;
+    }
+    .dark .dj-list .dj-ket {
+      color: #94a3b8 !important;
+    }
+    .dark .dj-list li.is-sekarang .dj-nama,
+    .dark .dj-list li.is-sekarang .dj-ket,
+    .dark .dj-list li.is-menunggu_diterima .dj-nama,
+    .dark .dj-list li.is-menunggu_diterima .dj-ket {
+      color: #38bdf8 !important;
+    }
+    .dark .dj-list li.is-perlu_diperbaiki .dj-nama,
+    .dark .dj-list li.is-perlu_diperbaiki .dj-ket {
+      color: #fbbf24 !important;
+    }
+
+    /* Dark Mode: Document Agenda & Rupiah Numbers */
+    .doc-agenda-num {
+      color: #1e293b;
+    }
+    .doc-nilai-num {
+      color: #0f172a;
+    }
+    .dark .doc-agenda-num {
+      color: #f1f5f9 !important;
+    }
+    .dark .doc-nilai-num {
+      color: #34d399 !important;
+    }
+
+    /* Dark Mode: Notifikasi Pengembalian */
+    .dark .notif-pengembalian {
+      background: #451a03 !important;
+      border-color: #78350f !important;
+    }
+    .dark .notif-pengembalian__judul {
+      color: #fde68a !important;
+    }
+    .dark .notif-pengembalian__tandai {
+      background: #78350f !important;
+      border-color: #92400e !important;
+      color: #fef3c7 !important;
+    }
+    .dark .notif-pengembalian__daftar li {
+      background: #291505 !important;
+      border-color: #78350f !important;
+      color: #fef3c7 !important;
+    }
+    .dark .notif-pengembalian__alasan {
+      color: #fde68a !important;
+    }
+
+    /* Dark Mode: Modals */
+    .dark .modal-content-custom {
+      background: #1e293b !important;
+      color: #f1f5f9 !important;
+    }
+    .dark .modal-tabs {
+      background: #0f172a !important;
+      border-bottom-color: #334155 !important;
+    }
+    .dark .tab-btn {
+      color: #94a3b8 !important;
+    }
+    .dark .tab-btn:hover {
+      background: rgba(255, 255, 255, 0.05) !important;
+      color: #f1f5f9 !important;
+    }
+    .dark .tab-btn.active {
+      background: #0D3B6E !important;
+      color: white !important;
+    }
+    .dark .stat-card {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+    }
+    .dark .stat-label {
+      color: #94a3b8 !important;
+    }
+    .dark .stat-value {
+      color: #f1f5f9 !important;
+    }
+    .dark .section-header {
+      border-bottom-color: #334155 !important;
+    }
+    .dark .section-header h5 {
+      color: #f1f5f9 !important;
+    }
+    .dark .info-card {
+      background: #0f172a !important;
+      border-left-color: #38bdf8 !important;
+    }
+    .dark .info-label {
+      color: #94a3b8 !important;
+    }
+    .dark .info-value {
+      color: #f1f5f9 !important;
+    }
+    .dark .info-value.mono {
+      background: #334155 !important;
+      color: #f1f5f9 !important;
+    }
+    .dark .uraian-box {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+      color: #cbd5e1 !important;
+    }
+    .dark .vendor-card {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+    }
+    .dark .vendor-name {
+      color: #f1f5f9 !important;
+    }
+    .dark .vendor-detail {
+      color: #94a3b8 !important;
+    }
+    .dark .modal-footer-custom {
+      background: #0f172a !important;
+      border-top-color: #334155 !important;
+    }
+    .dark .confirm-modal {
+      background: #1e293b !important;
+      color: #f1f5f9 !important;
+      border: 1px solid #334155 !important;
+    }
+    .dark .confirm-title {
+      color: #f1f5f9 !important;
+    }
+    .dark .confirm-message {
+      color: #94a3b8 !important;
+    }
+    .dark .btn-confirm-cancel {
+      background: #334155 !important;
+      color: #cbd5e1 !important;
+      border: 1px solid #475569 !important;
+    }
+    .dark .btn-confirm-cancel:hover {
+      background: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+    .dark .success-modal {
+      background: #1e293b !important;
+      color: #f1f5f9 !important;
+      border: 1px solid #334155 !important;
+    }
+    .dark .success-title {
+      color: #f1f5f9 !important;
+    }
+    .dark .success-message {
+      color: #94a3b8 !important;
+    }
+    .dark #rejectionDetailModal .modal-content {
+      background: #1e293b !important;
+      color: #f1f5f9 !important;
+    }
+    .dark #rejectionDetailModal .card {
+      background: #0f172a !important;
+      color: #f1f5f9 !important;
+      border: 1px solid #334155 !important;
+    }
+    .dark #rejectionDetailModal .card:last-child {
+      background: linear-gradient(135deg, #450a0a 0%, #2a0808 100%) !important;
+      border-left: 4px solid #ef4444 !important;
+    }
+    .dark #rejectionDetailModal .card-title {
+      color: #60a5fa !important;
+    }
+    .dark #rejectionDetailModal .card:last-child .card-title {
+      color: #fca5a5 !important;
+    }
+    .dark #perjalananModal .modal-content {
+      background: #1e293b !important;
+      color: #f1f5f9 !important;
+      border: 1px solid #334155 !important;
+    }
+    .dark #perjalananModal .modal-header {
+      border-bottom-color: #334155 !important;
+    }
+    .dark #perjalananModal .modal-title {
+      color: #f1f5f9 !important;
+    }
+    .dark #perjalananModal .btn-close {
+      filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    /* Dark Mode: Pagination & Empty State */
+    .dark .pagination-container {
+      border-top-color: #334155 !important;
+    }
+    .dark .per-page-select label {
+      color: #cbd5e1 !important;
+    }
+    .dark .per-page-select select {
+      background: #1e293b !important;
+      color: #f1f5f9 !important;
+      border-color: #475569 !important;
+    }
   </style>
 
   <div class="container-fluid py-4">
@@ -1790,7 +2072,7 @@
                         @foreach($selectedColumns as $col)
                           <td class="col-{{ $col }}">
                             @if($col == 'nomor_agenda')
-                              <strong style="color: #000000;">{{ $doc->nomor_agenda }}</strong>
+                              <strong class="doc-agenda-num">{{ $doc->nomor_agenda }}</strong>
                               <br>
                               <small class="text-muted">{{ $doc->bulan ?? '' }} {{ $doc->tahun ?? '' }}</small>
                             @elseif($col == 'nomor_spp')
@@ -1800,7 +2082,7 @@
                             @elseif($col == 'tanggal_masuk')
                               {{ $doc->tanggal_masuk ? $doc->tanggal_masuk->format('d-m-Y H:i') : '-' }}
                             @elseif($col == 'nilai_rupiah')
-                              <strong style="color: #000000;">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong>
+                              <strong class="doc-nilai-num">Rp. {{ number_format($doc->nilai_rupiah, 0, ',', '.') }}</strong>
                             @elseif($col == 'pengembalian')
                               {{-- Kolom sempit khusus pengembalian. Badge + modal alasan dulu
                                    berada di cabang $col == 'status' yang TIDAK PERNAH bisa tampil
