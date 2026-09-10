@@ -982,14 +982,20 @@
     }
 
     .dark .btn-year-select,
-    .dark .btn-status-select {
+    .dark .btn-month-select,
+    .dark .btn-status-select,
+    .dark .btn-vendor-select,
+    .dark .btn-subkriteria-select {
       background: #334155;
       color: #e2e8f0;
       border-color: #475569;
     }
 
     .dark .btn-year-select:hover,
-    .dark .btn-status-select:hover {
+    .dark .btn-month-select:hover,
+    .dark .btn-status-select:hover,
+    .dark .btn-vendor-select:hover,
+    .dark .btn-subkriteria-select:hover {
       background: #475569;
       border-color: #64748b;
     }
