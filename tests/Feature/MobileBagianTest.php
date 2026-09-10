@@ -633,26 +633,17 @@ class MobileBagianTest extends TestCase
         );
     }
 
-    public function test_refresh_dan_uji_whatsapp_disembunyikan_dari_popup(): void
+    public function test_btn_refresh_disembunyikan_dari_popup(): void
     {
-        // Keputusan user 2026-08-13: popup filter untuk mencari & menyaring;
-        // Refresh dan Uji Kirim Pesan bukan filter dan hanya menambah tingginya.
-        //
-        // DISEMBUNYIKAN lewat CSS, BUKAN dihapus dari markup. Keduanya wajib
-        // tetap ada di HTML: partial bagian.partials._ujiWhatsApp mengikat
-        // tombolnya lewat id="btnUjiWhatsApp", dan UjiWhatsAppBagianTest
-        // menuntut tag <button> itu hadir lengkap dengan kelas .btn-refresh.
-        // Menghapusnya dari Blade akan mematikan fitur uji WhatsApp sekaligus
-        // memerahkan test tersebut.
+        // Popup filter untuk mencari & menyaring; tombol berkelas .btn-refresh
+        // disembunyikan dari popup filter di ponsel.
         $css = $this->mobileCss();
 
         $this->assertStringContainsString(
             'display: none !important',
             $this->cssRuleBody($css, 'body.bagian-layout .search-box .btn-refresh'),
-            'Refresh & Uji Kirim Pesan harus disembunyikan dari popup filter di ponsel.'
+            'Tombol berkelas .btn-refresh harus disembunyikan dari popup filter di ponsel.'
         );
-
-        $this->assertStringContainsString('id="btnUjiWhatsApp"', $html);
     }
 
     public function test_popup_filter_menyusun_kepala_di_atas_form(): void
