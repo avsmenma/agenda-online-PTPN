@@ -419,9 +419,9 @@
       min-width: 160px;
     }
 
-    /* Header tabel hijau solid seperti gambar */
+    /* Header tabel solid #0D3B6E */
     .data-table thead {
-      background: #083E40;
+      background: #0D3B6E;
     }
 
     .data-table th {
@@ -434,6 +434,7 @@
       letter-spacing: 0.5px;
       white-space: nowrap;
       border-right: 1px solid rgba(255, 255, 255, 0.15);
+      background-color: #0D3B6E;
     }
 
     .data-table th:last-child {
@@ -509,7 +510,7 @@
     #bagianDaftarTable .data-table thead th.col-no,
     #bagianDaftarTable .data-table thead th.col-nomor_spp,
     #bagianDaftarTable .data-table thead th.col-status_pembayaran {
-      background: #083E40; /* samakan dengan thead hijau */
+      background: #0D3B6E; /* samakan dengan thead #0D3B6E */
       z-index: 6;          /* header di atas sel body yang beku */
     }
     /* Paksa header kiri ikut beku (spesifisitas thead th.col- + !important agar
@@ -1576,14 +1577,6 @@
              type="submit" polos: form GET yang sama, nol JS untuk mengirim. --}}
         <button type="submit" class="filter-pop__terapkan" hidden>
           <i class="fa-solid fa-check"></i> Terapkan
-        </button>
-
-        {{-- SEMENTARA — pemicu modal uji kiriman WhatsApp. type="button" WAJIB:
-             toolbar ini ada di dalam <form method="GET">, tanpa itu tombolnya
-             men-submit form dan memuat ulang halaman. Hapus bersama partial
-             bagian.partials._ujiWhatsApp. --}}
-        <button type="button" class="btn-refresh uwa-tombol-toolbar" id="btnUjiWhatsApp">
-          <i class="fa-solid fa-flask"></i> Uji Kirim Pesan
         </button>
       </form>
     </div>
@@ -3281,11 +3274,6 @@
       </div>
     </div>
   </div>
-
-  {{-- SEMENTARA — modal uji kiriman WhatsApp untuk sesi uji coba pengguna.
-       Hapus baris ini bersama partialnya (lihat docblock
-       App\Http\Controllers\UjiWhatsAppBagianController). --}}
-  @include('bagian.partials._ujiWhatsApp')
 
   <!-- Modal: Rejection Detail - Bagian -->
   <div class="modal fade" id="rejectionDetailModal" tabindex="-1" aria-labelledby="rejectionDetailModalLabel"
