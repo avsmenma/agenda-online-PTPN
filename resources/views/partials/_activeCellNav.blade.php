@@ -108,6 +108,27 @@
   .table-responsive {
     scroll-behavior: smooth;
   }
+
+  /* Dark mode */
+  .dark td.acn-active {
+    outline: 3px solid #38bdf8 !important;
+    outline-offset: -2px !important;
+    background-color: rgba(56, 189, 248, 0.12) !important;
+  }
+  .dark tr.acn-active-row > td {
+    background-color: rgba(56, 189, 248, 0.05) !important;
+  }
+  .dark th.acn-active-col {
+    background: linear-gradient(135deg, #1e3a8a 0%, #0D3B6E 100%) !important;
+    box-shadow: inset 0 -3px 0 #38bdf8 !important;
+  }
+  .dark td.acn-active::before {
+    border-color: #38bdf8 transparent transparent transparent !important;
+  }
+  .dark .acn-indicator {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    border-top: 1px solid #334155 !important;
+  }
 </style>
 
 <script>
