@@ -231,9 +231,16 @@ class BagianDokumenController extends Controller
         $vendorList = Dokumen::where('bagian', $bagianCode)
             ->whereNotNull('dibayar_kepada')
             ->where('dibayar_kepada', '!=', '')
-            ->distinct()
-            ->orderBy('dibayar_kepada')
-            ->pluck('dibayar_kepada');
+            ->pluck('dibayar_kepada')
+            ->map(function ($name) {
+                return trim(preg_replace('/\s+/', ' ', (string) $name));
+            })
+            ->filter(function ($name) {
+                return $name !== '' && !preg_match('/^\d{10,}$/', $name);
+            })
+            ->unique()
+            ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
 
         $subKriteriaList = Dokumen::where('bagian', $bagianCode)
             ->whereNotNull('jenis_sub_pekerjaan')
