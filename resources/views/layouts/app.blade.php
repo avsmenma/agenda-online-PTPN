@@ -2855,6 +2855,184 @@
     .dark .app-topbar-title { color: #f1f5f9; }
     .dark .app-topbar-sub { color: #94a3b8; }
 
+    /* ===== Topbar Right Section (Profile & Logout Pojok Kanan Atas) ===== */
+    .app-topbar-right {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .topbar-theme-btn {
+      width: 38px;
+      height: 38px;
+      margin-right: 0 !important;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #E2E8F0;
+      color: #64748b;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .topbar-theme-btn:hover {
+      background: #f1f5f9;
+      color: #0f4c3a;
+      border-color: #cbd5e1;
+    }
+    .dark .topbar-theme-btn {
+      background: #0f172a;
+      border-color: #334155;
+      color: #fbbf24;
+    }
+    .dark .topbar-theme-btn:hover {
+      background: #334155;
+    }
+
+    .topbar-user-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 14px 4px 5px;
+      border-radius: 10px;
+      border: 1px solid #E2E8F0;
+      background: #ffffff;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      color: inherit;
+    }
+    .topbar-user-card:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      color: inherit;
+    }
+    .dark .topbar-user-card {
+      background: #0f172a;
+      border-color: #334155;
+    }
+    .dark .topbar-user-card:hover {
+      background: #1e293b;
+      border-color: #475569;
+    }
+
+    .topbar-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #0d6b5e 0%, #083e40 100%);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .topbar-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .topbar-user-info {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+      text-align: left;
+    }
+    .topbar-user-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a2340;
+      white-space: nowrap;
+      max-width: 170px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dark .topbar-user-name {
+      color: #f1f5f9;
+    }
+    .topbar-user-role {
+      font-size: 11px;
+      color: #64748b;
+      white-space: nowrap;
+    }
+    .dark .topbar-user-role {
+      color: #94a3b8;
+    }
+
+    .topbar-logout-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 12px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid #fee2e2;
+      background: #fef2f2;
+      color: #dc2626;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .topbar-logout-btn:hover {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #b91c1c;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.15);
+    }
+    .dark .topbar-logout-btn {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.25);
+      color: #f87171;
+    }
+    .dark .topbar-logout-btn:hover {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+
+    /* Layout khusus Bagian tanpa sidebar: full-width */
+    body.bagian-layout .content {
+      margin-left: 0 !important;
+      margin-top: 60px !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 24px 32px !important;
+      box-sizing: border-box !important;
+    }
+
+    @media (max-width: 768px) {
+      body.bagian-layout .content {
+        padding: 16px !important;
+      }
+      .topbar-user-info {
+        display: none;
+      }
+      .topbar-user-card {
+        padding: 3px;
+      }
+      .topbar-logout-text {
+        display: none;
+      }
+      .topbar-logout-btn {
+        padding: 0 10px;
+        width: 38px;
+        justify-content: center;
+      }
+      .app-topbar-sub {
+        display: none;
+      }
+    }
+
     /* Owner sidebar nav section */
     .owner-sidebar-section { padding: 16px 12px 4px; }
     .owner-sidebar-label {
@@ -3191,13 +3369,13 @@
   $usesOperatorShell = $layoutUserRoleLower === 'operator' || $layoutModuleLower === 'operator';
   $usesPaymentShell = $layoutUserRoleLower === 'pembayaran' || (($module ?? null) === 'pembayaran');
   $usesWorkflowShell = in_array($layoutUserRoleLower, $modernWorkflowRoles, true) || in_array($layoutModuleLower, $modernWorkflowModules, true);
-  // Bagian (role diawali "bagian_") kini memakai sidebar modern yang sama dengan role keuangan.
-  $usesBagianShell = str_starts_with($layoutUserRoleLower, 'bagian_');
+  // Bagian (role diawali "bagian_" atau URL bagian): mandiri tanpa sidebar.
+  $usesBagianShell = str_starts_with($layoutUserRoleLower, 'bagian_') || request()->is('bagian/*') || request()->routeIs('bagian.*');
   // Programmer di halaman berbagi (layouts/app: 2FA, dsb) — dapat sidebar modern minimal.
   $usesProgrammerShell = $layoutUserRoleLower === 'programmer';
-  // Sidebar legacy sudah dihapus total: SEMUA role kini memakai modern sidebar shell.
-  // Role yang tak terpetakan ke sub-shell tertentu jatuh ke fallback menu minimal.
-  $usesModernSidebarShell = true;
+  // Sidebar legacy sudah dihapus total: SEMUA role selain Bagian kini memakai modern sidebar shell.
+  // Role Bagian tidak memakai sidebar (hanya topbar dengan profil & logout di kanan atas).
+  $usesModernSidebarShell = !$usesBagianShell;
 @endphp
 <body class="{{ $usesModernSidebarShell ? 'owner-layout' : '' }} {{ $usesOperatorShell ? 'operator-layout' : '' }} {{ $usesPaymentShell ? 'payment-layout' : '' }} {{ $usesWorkflowShell ? 'workflow-layout' : '' }} {{ $usesBagianShell ? 'bagian-layout' : '' }} {{ $usesProgrammerShell ? 'programmer-shared-layout' : '' }}">
   @php
@@ -3361,13 +3539,15 @@
 
   @endif
 
-  <!-- Topbar global (semua role): hamburger + logo + judul aplikasi -->
+  <!-- Topbar global: hamburger + logo + judul aplikasi, plus profil & logout di kanan atas untuk role Bagian -->
   @if(!($isOperatorSpreadsheet ?? false))
   <header class="app-topbar">
+    @if(!$isBagianShell)
     <button type="button" class="app-topbar-burger" data-sidebar-toggle
             aria-label="Buka/tutup sidebar" title="Buka/tutup sidebar">
       <i class="fa-solid fa-bars"></i>
     </button>
+    @endif
     <div class="app-topbar-brand">
       <img src="{{ asset('images/logoPTPNNew.png') }}" alt="Logo PTPN">
       <div style="min-width:0;">
@@ -3375,6 +3555,49 @@
         <div class="app-topbar-sub">Sistem Monitoring Dokumen Keuangan</div>
       </div>
     </div>
+
+    @if($isBagianShell)
+      @php
+        $authUser = auth()->user();
+        $authUserPhotoUrl = $authUser?->profile_photo_url;
+        $initials = $authUser ? strtoupper(substr($authUser->name ?? 'U', 0, 1) . (strpos($authUser->name ?? '', ' ') !== false ? substr($authUser->name, strpos($authUser->name, ' ') + 1, 1) : '')) : 'U';
+        $userRoleLabel = ucfirst(str_replace('_', ' ', $authUser->role ?? 'Bagian'));
+      @endphp
+      <div class="app-topbar-right">
+        <!-- Dark Mode Toggle -->
+        <button id="theme-toggle" class="theme-toggle-btn topbar-theme-btn" aria-label="Ganti tema" title="Ganti tema">
+          <i class="fas fa-moon theme-toggle-icon moon"></i>
+          <i class="fas fa-sun theme-toggle-icon sun"></i>
+        </button>
+
+        <!-- Profile Link / Card -->
+        <a class="topbar-user-card" href="{{ route('profile.account') }}" title="Buka profil {{ $authUser->name ?? 'Pengguna' }}">
+          <div class="topbar-avatar">
+            @if($authUserPhotoUrl)
+              <img src="{{ $authUserPhotoUrl }}" alt="Foto {{ $authUser->name ?? 'Pengguna' }}">
+            @else
+              {{ $initials }}
+            @endif
+          </div>
+          <div class="topbar-user-info">
+            <div class="topbar-user-name">{{ $authUser->name ?? 'Pengguna' }}</div>
+            <div class="topbar-user-role">{{ $userRoleLabel }}</div>
+          </div>
+        </a>
+
+        <!-- Logout Button -->
+        <form id="logout-form-topbar" action="{{ route('logout') }}" method="POST" style="display: none;">
+          @csrf
+        </form>
+        <button type="button" class="topbar-logout-btn" title="Keluar" aria-label="Keluar"
+          onclick="event.preventDefault(); document.getElementById('logout-form-topbar').submit();">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 17px; height: 17px;">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+          <span class="topbar-logout-text">Keluar</span>
+        </button>
+      </div>
+    @endif
   </header>
 
   {{-- Latar gelap drawer ponsel. Selalu ada di DOM; disembunyikan di desktop
@@ -3382,8 +3605,8 @@
   <div class="mobile-drawer-scrim" data-drawer-scrim hidden></div>
   @endif
 
-  <!-- Sidebar (hidden for operator spreadsheet mode via CSS) -->
-  @if(!($isOperatorSpreadsheet ?? false))
+  <!-- Sidebar (hidden for operator spreadsheet mode & role bagian) -->
+  @if(!($isOperatorSpreadsheet ?? false) && !$isBagianShell)
   <div class="sidebar-owner">
     @php
       // Normalize module to lowercase untuk konsistensi
