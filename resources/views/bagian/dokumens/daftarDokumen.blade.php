@@ -3,7 +3,7 @@
 
   <style>
     h2 {
-      background: linear-gradient(135deg, #083E40 0%, #889717 100%);
+      background: linear-gradient(135deg, #0D3B6E 0%, #1a5ca6 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -63,8 +63,8 @@
 
     .search-box .form-control:focus {
       outline: none;
-      border-color: #889717;
-      box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.1);
+      border-color: #0D3B6E;
+      box-shadow: 0 0 0 3px rgba(13, 59, 110, 0.12);
     }
 
     /* SEMUA dropdown filter memakai gaya yang sama. .btn-month-select dulu
@@ -96,7 +96,7 @@
     .btn-status-select:hover,
     .btn-vendor-select:hover,
     .btn-subkriteria-select:hover {
-      border-color: #889717;
+      border-color: #0D3B6E;
       background: #f8f9fa;
     }
 
@@ -134,13 +134,13 @@
     }
 
     .bagian-vendor-control:hover {
-      border-color: #889717;
+      border-color: #0D3B6E;
       background: #f8f9fa;
     }
 
     .bagian-vendor-combo.is-focused .bagian-vendor-control {
-      border-color: #889717;
-      box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.15);
+      border-color: #0D3B6E;
+      box-shadow: 0 0 0 3px rgba(13, 59, 110, 0.15);
       background: #fff;
     }
 
@@ -235,8 +235,8 @@
 
     .bagian-vendor-opt:hover,
     .bagian-vendor-opt.is-active {
-      background: #eef5ea;
-      color: #083E40;
+      background: #e9f0f8;
+      color: #0D3B6E;
       font-weight: 600;
     }
 
@@ -250,10 +250,10 @@
     .bagian-vendor-hint {
       padding: 6px 12px;
       font-size: 11px;
-      color: #889717;
+      color: #0D3B6E;
       text-align: center;
-      background: #fbfdf8;
-      border-top: 1px solid #f0f4ec;
+      background: #f4f8fc;
+      border-top: 1px solid #e2e8f0;
       border-radius: 0 0 6px 6px;
       font-weight: 500;
     }
@@ -309,7 +309,7 @@
 
     .btn-filter {
       padding: 10px 20px;
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      background: linear-gradient(135deg, #0D3B6E 0%, #154c8a 100%);
       color: white;
       border: none;
       border-radius: 8px;
@@ -317,7 +317,7 @@
       font-size: 14px;
       font-weight: 600;
       transition: all 0.3s ease;
-      box-shadow: 0 2px 6px rgba(8, 62, 64, 0.2);
+      box-shadow: 0 2px 6px rgba(13, 59, 110, 0.2);
       min-height: 44px;
     }
 
@@ -460,10 +460,10 @@
     }
 
     .data-table tbody tr:hover {
-      background: linear-gradient(90deg, rgba(136, 151, 23, 0.05) 0%, transparent 100%);
+      background: linear-gradient(90deg, rgba(13, 59, 110, 0.05) 0%, transparent 100%);
     }
 
-    /* Kolom beku Bagian (tema hijau #083E40).
+    /* Kolom beku Bagian (tema #0D3B6E).
        KIRI : No + Nomor SPP.  KANAN : Status Pembayaran (kolom paling kanan,
        tunggal — tak ada kolom beku tambahan). Lebar dikunci agar header & body
        sejajar dan offset sticky presisi. */
@@ -530,7 +530,7 @@
     #bagianDaftarTable .data-table tbody tr:hover td.col-no,
     #bagianDaftarTable .data-table tbody tr:hover td.col-nomor_spp,
     #bagianDaftarTable .data-table tbody tr:hover td.col-status_pembayaran {
-      background: #f3faf9;
+      background: #f0f4f9;
     }
 
     /* Responsivitas Layar Lipat & Tablet (≤ 1150px):
@@ -604,7 +604,7 @@
     }
     .btn-view-mode.active {
       background: #ffffff;
-      color: #083E40;
+      color: #0D3B6E;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     }
     .dark .btn-view-mode.active {
@@ -612,7 +612,7 @@
       color: #38bdf8;
     }
     .btn-view-mode:hover:not(.active) {
-      color: #083E40;
+      color: #0D3B6E;
     }
 
     /* Kontrol Tampilan Tabel vs Kartu saat Mode Aktif */
@@ -689,22 +689,22 @@
     }
 
     .btn-edit {
-      background: #083E40;
+      background: #0D3B6E;
       color: white;
     }
 
     .btn-edit:hover {
-      background: #0a4f52;
+      background: #0a2d54;
       color: white;
     }
 
     .btn-send {
-      background: #083E40;
+      background: #0D3B6E;
       color: white;
     }
 
     .btn-send:hover {
-      background: #0a4f52;
+      background: #0a2d54;
       color: white;
     }
 
@@ -720,7 +720,7 @@
 
     .btn-create {
       padding: 12px 24px;
-      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      background: linear-gradient(135deg, #0D3B6E 0%, #154c8a 100%);
       color: white;
       border: none;
       border-radius: 10px;
@@ -728,7 +728,7 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(8, 62, 64, 0.25);
+      box-shadow: 0 4px 12px rgba(13, 59, 110, 0.25);
       text-decoration: none;
       display: inline-flex;
       align-items: center;
@@ -795,7 +795,7 @@
       background: #f8f9fa;
       padding: 14px;
       border-radius: 10px;
-      border-left: 4px solid #083E40;
+      border-left: 4px solid #0D3B6E;
     }
 
     .detail-item.full-width {
@@ -2200,7 +2200,7 @@
     }
 
     .modal-header-custom {
-      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      background: linear-gradient(135deg, #0D3B6E 0%, #154c8a 100%);
       color: white;
       padding: 24px 28px;
       display: flex;
@@ -2299,14 +2299,14 @@
     }
 
     .tab-btn:hover {
-      background: rgba(8, 62, 64, 0.08);
-      color: #083E40;
+      background: rgba(13, 59, 110, 0.08);
+      color: #0D3B6E;
     }
 
     .tab-btn.active {
-      background: #083E40;
+      background: #0D3B6E;
       color: white;
-      box-shadow: 0 4px 15px rgba(8, 62, 64, 0.3);
+      box-shadow: 0 4px 15px rgba(13, 59, 110, 0.3);
     }
 
     .tab-btn i {
@@ -2435,7 +2435,7 @@
     .section-header i {
       width: 32px;
       height: 32px;
-      background: #083E40;
+      background: #0D3B6E;
       color: white;
       border-radius: 8px;
       display: flex;
@@ -2469,7 +2469,7 @@
       background: #f8f9fa;
       padding: 16px;
       border-radius: 12px;
-      border-left: 4px solid #083E40;
+      border-left: 4px solid #0D3B6E;
     }
 
     .info-card.highlight {
@@ -2503,7 +2503,7 @@
     }
 
     .info-value.tag {
-      background: #083E40;
+      background: #0D3B6E;
       color: white;
       padding: 4px 12px;
       border-radius: 20px;
@@ -2533,7 +2533,7 @@
 
     /* Money Display */
     .money-display {
-      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      background: linear-gradient(135deg, #0D3B6E 0%, #154c8a 100%);
       border-radius: 16px;
       padding: 28px;
       text-align: center;
@@ -2566,7 +2566,7 @@
     .vendor-icon {
       width: 60px;
       height: 60px;
-      background: linear-gradient(135deg, #083E40 0%, #0a5f52 100%);
+      background: linear-gradient(135deg, #0D3B6E 0%, #154c8a 100%);
       border-radius: 16px;
       display: flex;
       align-items: center;
@@ -2794,7 +2794,7 @@
 
     .btn-confirm-send {
       padding: 12px 24px;
-      background: linear-gradient(135deg, #083E40 0%, #0a4f52 100%);
+      background: linear-gradient(135deg, #0D3B6E 0%, #154c8a 100%);
       color: white;
       border: none;
       border-radius: 10px;
@@ -2805,12 +2805,12 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 4px 14px rgba(8, 62, 64, 0.3);
+      box-shadow: 0 4px 14px rgba(13, 59, 110, 0.3);
     }
 
     .btn-confirm-send:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(8, 62, 64, 0.4);
+      box-shadow: 0 6px 20px rgba(13, 59, 110, 0.4);
     }
 
     /* Success Modal Styles */
@@ -3299,8 +3299,8 @@
             <div class="card mb-4" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 12px;">
               <div class="card-body" style="padding: 1.5rem;">
                 <h6 class="card-title mb-3"
-                  style="color: #083E40; font-weight: 600; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                  <i class="fa-solid fa-file-lines me-2" style="color: #889717;"></i>Informasi Dokumen
+                  style="color: #0D3B6E; font-weight: 600; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <i class="fa-solid fa-file-lines me-2" style="color: #0D3B6E;"></i>Informasi Dokumen
                 </h6>
                 <div class="row g-3">
                   <div class="col-md-6">
@@ -3555,7 +3555,7 @@
     border: 1px solid rgba(0,0,0,0.05);
     font-size: 13px;
     font-weight: 600;
-    color: #083E40;
+    color: #0D3B6E;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
   .floating-total-item:hover {
@@ -3564,7 +3564,7 @@
   }
   .floating-total-item i {
     font-size: 14px;
-    color: #0a5f52;
+    color: #0D3B6E;
     opacity: 0.75;
   }
   .flt-value {
