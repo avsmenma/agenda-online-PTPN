@@ -177,9 +177,8 @@ class NotifikasiPengembalianBagianTest extends TestCase
     }
 
     /**
-     * susunPesan() diubah 2026-08-07 dari menerima objek Dokumen menjadi menerima
-     * nilai biasa (agenda, nama bagian, alasan, tautan) supaya template pesannya
-     * bisa dipakai bersama panel uji coba WhatsApp (lihat UjiWhatsAppBagianTest).
+     * susunPesan() diubah dari menerima objek Dokumen menjadi menerima nilai biasa
+     * (agenda, nama bagian, alasan, tautan).
      * Tak satu pun test lain di berkas ini mengisi phone_number dengan nilai asli,
      * sehingga cabang WhatsApp di kirim() (satu-satunya pemanggil susunPesan() di
      * jalur produksi) sebelumnya TIDAK PERNAH tereksekusi oleh suite ini — kalau
