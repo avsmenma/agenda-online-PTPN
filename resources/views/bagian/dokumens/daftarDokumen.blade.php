@@ -106,9 +106,205 @@
        berantakan (terlihat saat QA desktop 2026-08-13). Teks yang terpotong
        tetap terbaca penuh saat dropdown dibuka. Batas ini TIDAK berlaku di
        ponsel: di sana semua kontrol memang melebar penuh satu per baris. */
-    .btn-vendor-select,
     .btn-subkriteria-select {
       max-width: 260px;
+    }
+
+    /* ===== Searchable Vendor Combobox ===== */
+    .bagian-vendor-combo {
+      position: relative;
+      display: inline-block;
+      max-width: 240px;
+      min-width: 170px;
+    }
+
+    .bagian-vendor-control {
+      display: flex;
+      align-items: center;
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      min-height: 44px;
+      height: 44px;
+      padding: 0 12px 0 14px;
+      cursor: text;
+      transition: all 0.2s ease;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .bagian-vendor-control:hover {
+      border-color: #889717;
+      background: #f8f9fa;
+    }
+
+    .bagian-vendor-combo.is-focused .bagian-vendor-control {
+      border-color: #889717;
+      box-shadow: 0 0 0 3px rgba(136, 151, 23, 0.15);
+      background: #fff;
+    }
+
+    .bagian-vendor-input {
+      border: none !important;
+      outline: none !important;
+      background: transparent !important;
+      font-size: 14px !important;
+      font-weight: 500;
+      color: #495057 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+      min-height: auto !important;
+      height: 100% !important;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      box-shadow: none !important;
+    }
+
+    .bagian-vendor-input::placeholder {
+      color: #6c757d;
+      font-weight: 500;
+    }
+
+    .bagian-vendor-clear {
+      border: none;
+      background: transparent;
+      color: #adb5bd;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 4px;
+      margin-right: 4px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease;
+    }
+
+    .bagian-vendor-clear:hover {
+      color: #dc3545;
+    }
+
+    .bagian-vendor-combo.has-value .bagian-vendor-clear {
+      display: inline-flex;
+    }
+
+    .bagian-vendor-chevron {
+      font-size: 11px;
+      color: #6c757d;
+      pointer-events: none;
+      transition: transform 0.2s ease;
+      margin-left: 2px;
+      flex-shrink: 0;
+    }
+
+    .bagian-vendor-combo.is-open .bagian-vendor-chevron {
+      transform: rotate(180deg);
+    }
+
+    .bagian-vendor-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 260px;
+      max-width: 380px;
+      width: max-content;
+      max-height: 280px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+      z-index: 1050;
+      padding: 4px;
+    }
+
+    .bagian-vendor-opt {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .bagian-vendor-opt:hover,
+    .bagian-vendor-opt.is-active {
+      background: #eef5ea;
+      color: #083E40;
+      font-weight: 600;
+    }
+
+    .bagian-vendor-empty {
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #6c757d;
+      text-align: center;
+    }
+
+    .bagian-vendor-hint {
+      padding: 6px 12px;
+      font-size: 11px;
+      color: #889717;
+      text-align: center;
+      background: #fbfdf8;
+      border-top: 1px solid #f0f4ec;
+      border-radius: 0 0 6px 6px;
+      font-weight: 500;
+    }
+
+    /* Dark mode support */
+    .dark .bagian-vendor-control {
+      background: #1e293b;
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+    .dark .bagian-vendor-control:hover {
+      background: #334155;
+      border-color: #475569;
+    }
+    .dark .bagian-vendor-input {
+      color: #f1f5f9 !important;
+    }
+    .dark .bagian-vendor-input::placeholder {
+      color: #94a3b8;
+    }
+    .dark .bagian-vendor-menu {
+      background: #1e293b;
+      border-color: #334155;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+    .dark .bagian-vendor-opt {
+      color: #cbd5e1;
+    }
+    .dark .bagian-vendor-opt:hover,
+    .dark .bagian-vendor-opt.is-active {
+      background: #0f172a;
+      color: #a3e635;
+    }
+    .dark .bagian-vendor-empty {
+      color: #94a3b8;
+    }
+    .dark .bagian-vendor-hint {
+      background: #0f172a;
+      color: #a3e635;
+      border-top-color: #334155;
+    }
+
+    @media (max-width: 768px) {
+      .bagian-vendor-combo {
+        width: 100% !important;
+        max-width: none !important;
+      }
+      .bagian-vendor-menu {
+        max-width: 100% !important;
+        width: 100% !important;
+      }
     }
 
     .btn-filter {
@@ -1344,17 +1540,18 @@
           <option value="sudah_dibayar" {{ request('status') == 'sudah_dibayar' ? 'selected' : '' }}>Sudah Dibayar</option>
         </select>
 
-        {{-- Vendor = kolom `dibayar_kepada`. Daftarnya dibatasi ke dokumen milik
-             bagian ini saja (lihat BagianDokumenController) supaya tak memuat
-             ratusan nama bagian lain yang tak pernah muncul di halaman ini. --}}
-        <select name="vendor" class="btn-vendor-select" onChange="this.form.submit()">
-          <option value="">Semua Vendor</option>
-          @foreach($vendorList as $vendor)
-            <option value="{{ $vendor }}" {{ request('vendor') === $vendor ? 'selected' : '' }}>
-              {{ $vendor }}
-            </option>
-          @endforeach
-        </select>
+        {{-- Vendor Searchable Combobox: pencarian instan, terpotong elipsis, rapi seperti dropdown lain --}}
+        <div class="bagian-vendor-combo {{ request('vendor') ? 'has-value' : '' }}" id="bagianVendorCombo" data-vendor-combo>
+          <input type="hidden" name="vendor" value="{{ request('vendor', '') }}" id="bagianVendorValue" data-vendor-value>
+          <div class="bagian-vendor-control">
+            <input type="text" class="bagian-vendor-input" id="bagianVendorDisplay"
+              placeholder="Semua Vendor" autocomplete="off"
+              value="{{ request('vendor', '') }}" data-vendor-display aria-label="Cari vendor" title="{{ request('vendor', 'Semua Vendor') }}">
+            <button type="button" class="bagian-vendor-clear" data-vendor-clear aria-label="Reset vendor" title="Reset">&times;</button>
+            <i class="fa-solid fa-chevron-down bagian-vendor-chevron"></i>
+          </div>
+          <div class="bagian-vendor-menu" data-vendor-menu hidden></div>
+        </div>
 
         {{-- Item Sub Kriteria = kolom `jenis_sub_pekerjaan`. Dropdown SENGAJA
              disembunyikan bila bagian ini belum punya satu pun nilai: per
@@ -1446,6 +1643,123 @@
 
         if (selectFilter.length) terapkanModeSubmit();
         kueriPonsel.addEventListener('change', terapkanModeSubmit);
+      })();
+
+      // Script Searchable Combobox Vendor Bagian
+      (function () {
+        const combo = document.querySelector('[data-vendor-combo]');
+        if (!combo) return;
+
+        const input = combo.querySelector('[data-vendor-display]');
+        const hidden = combo.querySelector('[data-vendor-value]');
+        const clearBtn = combo.querySelector('[data-vendor-clear]');
+        const menu = combo.querySelector('[data-vendor-menu]');
+        const form = combo.closest('form');
+        const kueriPonsel = window.matchMedia('(max-width: 768px)');
+
+        const vendors = @json($vendorList);
+        const MAX_DISPLAY = 50;
+
+        function syncHasValue() {
+          const val = (hidden.value || '').trim();
+          combo.classList.toggle('has-value', val !== '');
+          if (val) {
+            input.setAttribute('title', val);
+          } else {
+            input.removeAttribute('title');
+          }
+        }
+
+        function renderMenu(query) {
+          const q = (query || '').trim().toLowerCase();
+          const matches = q
+            ? vendors.filter(function (v) { return String(v).toLowerCase().includes(q); })
+            : vendors;
+          const shown = matches.slice(0, MAX_DISPLAY);
+
+          let html = '<div class="bagian-vendor-opt" data-value="">Semua Vendor</div>';
+          html += shown.map(function (v) {
+            const esc = String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const isSelected = (hidden.value === v) ? ' is-active' : '';
+            return '<div class="bagian-vendor-opt' + isSelected + '" data-value="' + esc + '" title="' + esc + '">' + esc + '</div>';
+          }).join('');
+
+          if (q && shown.length === 0) {
+            html += '<div class="bagian-vendor-empty">Vendor tidak ditemukan</div>';
+          } else if (matches.length > shown.length) {
+            html += '<div class="bagian-vendor-hint">+' + (matches.length - shown.length) + ' vendor lain, ketik untuk mempersempit</div>';
+          }
+          menu.innerHTML = html;
+        }
+
+        function openMenu() {
+          combo.classList.add('is-open', 'is-focused');
+          renderMenu(input.value === hidden.value ? '' : input.value);
+          menu.hidden = false;
+        }
+
+        function closeMenu() {
+          combo.classList.remove('is-open', 'is-focused');
+          menu.hidden = true;
+          input.value = hidden.value;
+        }
+
+        function selectVendor(val) {
+          hidden.value = val;
+          input.value = val;
+          syncHasValue();
+          closeMenu();
+
+          // Auto-submit di mode desktop
+          if (!kueriPonsel.matches && form) {
+            form.submit();
+          }
+        }
+
+        input.addEventListener('focus', openMenu);
+        input.addEventListener('input', function () {
+          if (menu.hidden) {
+            combo.classList.add('is-open', 'is-focused');
+            menu.hidden = false;
+          }
+          renderMenu(input.value);
+        });
+
+        menu.addEventListener('mousedown', function (e) {
+          const opt = e.target.closest('.bagian-vendor-opt');
+          if (!opt) return;
+          e.preventDefault();
+          selectVendor(opt.getAttribute('data-value') || '');
+        });
+
+        clearBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          selectVendor('');
+        });
+
+        document.addEventListener('click', function (e) {
+          if (!combo.contains(e.target)) {
+            closeMenu();
+          }
+        });
+
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') {
+            closeMenu();
+            input.blur();
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const firstOpt = menu.querySelector('.bagian-vendor-opt');
+            if (!menu.hidden && firstOpt) {
+              selectVendor(firstOpt.getAttribute('data-value') || '');
+            } else if (form && !kueriPonsel.matches) {
+              form.submit();
+            }
+          }
+        });
+
+        syncHasValue();
       })();
     </script>
 
