@@ -12,13 +12,13 @@
         @php
             $hasHref    = ! empty($card['href']);
             $tag        = $hasHref ? 'a' : 'div';
-            $valueColor = $card['valueColor'] ?? '#1a2340';
+            $valueColor = $card['valueColor'] ?? null;
             $isActive   = ! empty($card['active']);
         @endphp
         <{{ $tag }} class="wd-card{{ $isActive ? ' wd-card--active' : '' }}"@if ($hasHref) href="{{ $card['href'] }}"@endif>
             <div class="wd-card-label">{{ $card['label'] }}</div>
             <div class="wd-card-icon" style="background:{{ $card['iconBg'] }}">{!! $card['icon'] !!}</div>
-            <div class="wd-card-value" style="color:{{ $valueColor }}">{{ $card['displayValue'] ?? (is_numeric($card['value']) ? number_format($card['value'], 0, ',', '.') : $card['value']) }}</div>
+            <div class="wd-card-value"@if($valueColor) style="color:{{ $valueColor }}"@endif>{{ $card['displayValue'] ?? (is_numeric($card['value']) ? number_format($card['value'], 0, ',', '.') : $card['value']) }}</div>
             <div class="wd-card-sub">{{ $card['sub'] }}</div>
         </{{ $tag }}>
     @endforeach
@@ -61,4 +61,32 @@
 
   @media (max-width: 1100px) { .wd-cards { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 560px)  { .wd-cards { grid-template-columns: 1fr; } }
+
+  /* Dark mode */
+  .dark .wd-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.2) !important;
+  }
+  .dark .wd-card:hover {
+    background: #24344d !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4) !important;
+    color: #f1f5f9 !important;
+  }
+  .dark .wd-card--active {
+    box-shadow: 0 0 0 2px #38bdf8, 0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.2) !important;
+  }
+  .dark .wd-card-label {
+    color: #94a3b8 !important;
+  }
+  .dark .wd-card-value {
+    color: #f1f5f9;
+  }
+  .dark .wd-card-sub {
+    color: #94a3b8 !important;
+  }
+  .dark .wd-card-icon {
+    background: rgba(255, 255, 255, 0.08) !important;
+  }
 </style>
