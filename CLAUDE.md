@@ -531,19 +531,9 @@ kini ikut dijaga.
 - Recovery code disimpan `encrypt(json_encode(...))` — **bisa didekripsi** dengan `APP_KEY`,
   bukan hash. Jadi akun terkunci sebenarnya masih bisa ditolong tanpa mereset 2FA.
 
-**Tombol "Uji Kirim Pesan" WhatsApp di halaman Bagian — SEMENTARA, dibuat 2026-08-07.**
-Menjawab butir C4 kuesioner uji coba pengguna role Bagian (lewat apa responden ingin diberi
-tahu saat dokumennya dikembalikan) sekaligus membuktikan Fonnte benar-benar bisa mengirim
-dari produksi — nol dari delapan akun Bagian punya `phone_number` terisi, sehingga cabang
-WhatsApp di `DocumentReturnNotifier` belum pernah sekali pun berjalan di produksi. Tombolnya
-mengirim satu pesan **contoh** berpenanda `[UJI COBA]` ke nomor yang diketik saat itu juga,
-lewat template yang sama dengan pesan pengembalian sungguhan
-(`DocumentReturnNotifier::pesanUjiCoba()`). **Ini bukan fitur permanen — DAFTAR PENCABUTAN
-lengkap ada di docblock `App\Http\Controllers\UjiWhatsAppBagianController`**, baca itu
-sebelum menyentuh berkas mana pun terkait fitur ini.
+**Tombol "Uji Kirim Pesan" WhatsApp di halaman Bagian — DICABUT/DIHAPUS TOTAL.**
+Fitur uji coba sementara yang dibuat 2026-08-07 telah dihapus seluruhnya (controller, route, partials, method uji, dan tombol UI).
 
-- Spec/plan: `docs/superpowers/specs/2026-08-07-tombol-uji-whatsapp-bagian-design.md`,
-  `docs/superpowers/plans/2026-08-07-tombol-uji-whatsapp-bagian.md`
 
 **Larangan jalur mundur ke Operator & Bagian (perpajakan, akutansi, pembayaran) —
 SELESAI 2026-08-09.** Ketiga role tak lagi bisa memindahkan dokumen ke Operator
