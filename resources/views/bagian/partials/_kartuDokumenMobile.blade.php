@@ -59,7 +59,7 @@
   .mob-card__agenda {
     font-size: 15px;
     font-weight: 700;
-    color: #083E40;
+    color: #0D3B6E;
     letter-spacing: -0.01em;
   }
   .dark .mob-card__agenda {
@@ -120,7 +120,7 @@
   }
 
   .mob-card__detail {
-    color: #083E40;
+    color: #0D3B6E;
     font-weight: 600;
     font-size: 12.5px;
   }
