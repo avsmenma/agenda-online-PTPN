@@ -55,23 +55,6 @@
             object-fit: cover;
         }
 
-        .video-background .background-poster {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .video-background video {
-            opacity: 0;
-            transition: opacity 0.35s ease;
-        }
-
-        .video-background video.is-ready {
-            opacity: 1;
-        }
-
         /* ==================== LOGIN WRAPPER ==================== */
         .login-wrapper {
             position: fixed;
@@ -394,15 +377,8 @@
 <body>
     <!-- Video Background -->
     <div class="video-background" aria-hidden="true">
-        <img
-            class="background-poster"
-            src="{{ asset('images/landing-bg-poster.jpg') }}"
-            width="1600"
-            height="679"
-            alt=""
-            fetchpriority="high">
-        <video muted loop playsinline preload="none" poster="{{ asset('images/landing-bg-poster.jpg') }}" aria-hidden="true">
-            <source data-src="{{ asset('videos/landing-bg.mp4') }}" type="video/mp4">
+        <video autoplay muted loop playsinline preload="auto" aria-hidden="true">
+            <source src="{{ asset('videos/landing-bg.mp4') }}" type="video/mp4">
         </video>
     </div>
 
@@ -541,30 +517,16 @@
             }
 
             const backgroundVideo = document.querySelector('.video-background video');
-            const backgroundSource = backgroundVideo ? backgroundVideo.querySelector('source[data-src]') : null;
-
-            if (!backgroundVideo || !backgroundSource) {
+            if (!backgroundVideo) {
                 return;
             }
 
-            setTimeout(function () {
-                backgroundSource.src = backgroundSource.dataset.src;
-                backgroundVideo.load();
-
-                const playPromise = backgroundVideo.play();
-
-                if (playPromise && typeof playPromise.then === 'function') {
-                    playPromise
-                        .then(function () {
-                            backgroundVideo.classList.add('is-ready');
-                        })
-                        .catch(function () {
-                            // Keep the poster image visible when autoplay is blocked.
-                        });
-                } else {
-                    backgroundVideo.classList.add('is-ready');
-                }
-            }, 5000);
+            const playPromise = backgroundVideo.play();
+            if (playPromise && typeof playPromise.then === 'function') {
+                playPromise.catch(function () {
+                    // Autoplay might be restricted by browser policy until interaction
+                });
+            }
         });
 
         // ── Form submission loading state ───────────────────────────────
