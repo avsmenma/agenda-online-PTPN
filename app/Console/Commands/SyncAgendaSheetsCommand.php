@@ -89,7 +89,8 @@ class SyncAgendaSheetsCommand extends Command
         $skipFirstColumn = $headerData['skip_first'];
         $validIndices = $headerData['valid_indices'];
 
-        $dokumenColumns = array_flip(Schema::getColumnListing('dokumens'));
+        $cols = Schema::getColumnListing('dokumens');
+        $dokumenColumns = !empty($cols) ? array_flip($cols) : [];
         $now = now()->format('Y-m-d H:i:s');
         $batchId = 'AUTO_SHEETS_' . now()->format('YmdHis');
 
@@ -145,7 +146,16 @@ class SyncAgendaSheetsCommand extends Command
                 $dokumenData['csv_imported_at'] = $now;
             }
 
-            $candidateRows[] = array_intersect_key($dokumenData, $dokumenColumns);
+            if (!empty($dokumenColumns)) {
+                $filteredRow = array_intersect_key($dokumenData, $dokumenColumns);
+                if (isset($filteredRow['nomor_agenda'])) {
+                    $candidateRows[] = $filteredRow;
+                } else {
+                    $candidateRows[] = $dokumenData;
+                }
+            } else {
+                $candidateRows[] = $dokumenData;
+            }
         }
         fclose($handle);
 
@@ -170,7 +180,8 @@ class SyncAgendaSheetsCommand extends Command
         $updatesCount = 0;
 
         foreach ($candidateRows as $cRow) {
-            $agenda = $cRow['nomor_agenda'];
+            $agenda = $cRow['nomor_agenda'] ?? null;
+            if (!$agenda) continue;
             if (!isset($existingAgendaMap[$agenda])) {
                 $rowsToInsert[] = $cRow;
             } else {
