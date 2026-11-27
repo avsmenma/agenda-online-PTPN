@@ -132,9 +132,7 @@ class SyncAgendaSheetsCommand extends Command
             $dokumenData['created_at'] = $now;
             $dokumenData['updated_at'] = $now;
 
-            if ($this->isMarkedPaid($dokumenData)) {
-                $dokumenData['status_pembayaran'] = 'sudah_dibayar';
-            }
+            $dokumenData['status_pembayaran'] = $this->isMarkedPaid($dokumenData) ? 'sudah_dibayar' : null;
 
             if (isset($dokumenColumns['imported_from_csv'])) {
                 $dokumenData['imported_from_csv'] = true;
@@ -217,10 +215,42 @@ class SyncAgendaSheetsCommand extends Command
         $this->info("Dokumen yang diperbarui (update): " . $updatesCount . " baris.");
 
         if (!$isDryRun && !empty($rowsToInsert)) {
+            // Normalisasi key agar seluruh baris memiliki struktur kolom yang identik
+            $canonicalKeys = array_keys($rowsToInsert[0]);
+            foreach ($rowsToInsert as &$rowItem) {
+                $normalizedRow = [];
+                foreach ($canonicalKeys as $cKey) {
+                    $normalizedRow[$cKey] = $rowItem[$cKey] ?? null;
+                }
+                $rowItem = $normalizedRow;
+            }
+            unset($rowItem);
+
             $inserted = 0;
             foreach (array_chunk($rowsToInsert, 500) as $chunk) {
-                DB::table('dokumens')->insert($chunk);
-                $inserted += count($chunk);
+                try {
+                    DB::table('dokumens')->insert($chunk);
+                    $inserted += count($chunk);
+                } catch (\Throwable $chunkEx) {
+                    $this->warn("Insert batch (chunk) gagal ({$chunkEx->getMessage()}), mencoba insert per baris...");
+                    Log::warning('[AgendaSync] Chunk insert failed, retrying row-by-row', [
+                        'error' => $chunkEx->getMessage(),
+                        'chunk_size' => count($chunk),
+                    ]);
+
+                    foreach ($chunk as $singleRow) {
+                        try {
+                            DB::table('dokumens')->insert($singleRow);
+                            $inserted++;
+                        } catch (\Throwable $rowEx) {
+                            $this->error("Gagal insert baris {$singleRow['nomor_agenda']}: " . $rowEx->getMessage());
+                            Log::error('[AgendaSync] Single row insert failed', [
+                                'error' => $rowEx->getMessage(),
+                                'nomor_agenda' => $singleRow['nomor_agenda'] ?? 'N/A',
+                            ]);
+                        }
+                    }
+                }
             }
             $this->info("Berhasil meng-insert {$inserted} dokumen baru ke Agenda Online!");
         }
