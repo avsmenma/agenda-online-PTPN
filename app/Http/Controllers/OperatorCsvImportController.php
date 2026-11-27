@@ -516,9 +516,7 @@ class OperatorCsvImportController extends Controller
             // manual di sini agar scheduler `dokumen:process-auto-forward`
             // (polling fallback) otomatis meneruskan dokumen ke role Pembayaran
             // beserta seluruh record workflow-nya.
-            if ($this->isMarkedPaid($dokumenData)) {
-                $dokumenData['status_pembayaran'] = 'sudah_dibayar';
-            }
+            $dokumenData['status_pembayaran'] = $this->isMarkedPaid($dokumenData) ? 'sudah_dibayar' : null;
 
             // CSV import tracking
             if (isset($dokumenColumns['imported_from_csv'])) {
@@ -572,6 +570,18 @@ class OperatorCsvImportController extends Controller
             }
 
             $rowsToInsert[] = $dokumenData;
+        }
+
+        if (!empty($rowsToInsert)) {
+            $canonicalKeys = array_keys($rowsToInsert[0]);
+            foreach ($rowsToInsert as &$rowItem) {
+                $normalizedRow = [];
+                foreach ($canonicalKeys as $cKey) {
+                    $normalizedRow[$cKey] = $rowItem[$cKey] ?? null;
+                }
+                $rowItem = $normalizedRow;
+            }
+            unset($rowItem);
         }
 
         foreach (array_chunk($rowsToInsert, 500) as $chunk) {
